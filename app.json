@@ -1,0 +1,51 @@
+﻿{
+  "expo": {
+    "name": "Decide",
+    "slug": "decide-app",
+    "scheme": "decide",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#00191f"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.decide.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundColor": "#00191f"
+      },
+      "package": "com.decide.app",
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Decide needs your location to find things nearby."
+        }
+      ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "a84696d4-bc4c-435f-b3fc-86071ed410f1"
+      }
+    },
+    "owner": "webgenerations77"
+  }
+}
