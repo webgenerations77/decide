@@ -7,6 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import OfflineBanner from '../components/OfflineBanner';
+import { COLORS } from '../constants/theme';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -34,7 +35,7 @@ function SplashScreen() {
     <View style={styles.splash}>
       <Text style={styles.splashEmoji}>🧭</Text>
       <Text style={styles.splashTitle}>Decide</Text>
-      <ActivityIndicator color="#00d2be" size="large" style={{ marginTop: 24 }} />
+      <ActivityIndicator color={COLORS.teal} size="large" style={{ marginTop: 24 }} />
     </View>
   );
 }
@@ -117,17 +118,17 @@ const styles = StyleSheet.create({
   banner: {
     position: 'absolute', left: 0, right: 0,
     height: 32, zIndex: 9999, elevation: 20,
-    backgroundColor: '#00d2be',
+    backgroundColor: COLORS.teal,
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 12,
   },
   bannerSide: { width: 32, alignItems: 'flex-end', justifyContent: 'center' },
-  bannerText: { flex: 1, fontSize: 12, fontWeight: '700', color: '#00191f', textAlign: 'center' },
-  bannerX:    { fontSize: 14, fontWeight: '700', color: '#00191f' },
+  bannerText: { flex: 1, fontSize: 12, fontWeight: '700', color: COLORS.bg, textAlign: 'center' },
+  bannerX:    { fontSize: 14, fontWeight: '700', color: COLORS.bg },
   splash: {
-    flex: 1, backgroundColor: '#00191f',
+    flex: 1, backgroundColor: COLORS.bg,
     alignItems: 'center', justifyContent: 'center',
   },
   splashEmoji: { fontSize: 64, marginBottom: 12 },
-  splashTitle: { fontSize: 36, fontWeight: '800', color: '#ffffff', letterSpacing: 1 },
+  splashTitle: { fontSize: 36, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: 1 },
 });

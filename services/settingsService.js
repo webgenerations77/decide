@@ -8,6 +8,7 @@ export const KEYS = {
   CUISINES:           '@decide/cuisines',
   DIETARY:            '@decide/dietary',
   ACTIVITY_STYLES:    '@decide/activity_styles',
+  SENSITIVITIES:      '@decide/sensitivities',    // array of sensitivity names (food + environmental)
   MAX_DISTANCE:       '@decide/max_distance',
   DEFAULT_PACE:       '@decide/default_pace',
   DEFAULT_BUDGET:     '@decide/default_budget',
@@ -15,6 +16,7 @@ export const KEYS = {
   DEFAULT_START_TIME: '@decide/default_start_time',
   DEFAULT_END_TIME:   '@decide/default_end_time',
   NOTIFICATIONS:      '@decide/notifications',
+  TOS_ACCEPTED:       '@decide/tos_accepted',     // ISO timestamp of acceptance
 };
 
 const DEFAULTS = {
@@ -25,6 +27,7 @@ const DEFAULTS = {
   cuisines:       [],
   dietary:        [],
   activityStyles: [],
+  sensitivities:  [],
   maxDistance:    10,
   pace:           'moderate',
   budget:         '$$',
@@ -32,6 +35,7 @@ const DEFAULTS = {
   startTime:      '11:00 AM',
   endTime:        '8:00 PM',
   notifications:  false,
+  tosAccepted:    null,
 };
 
 function parse(raw) {
@@ -41,7 +45,7 @@ function parse(raw) {
 
 export async function loadAllSettings() {
   try {
-    const pairs = await AsyncStorage.multiGet(Object.values(KEYS));
+    const pairs = await AsyncStorage.multiGet(Object.values(KEYS).filter((k) => k !== KEYS.TOS_ACCEPTED));
     const map = Object.fromEntries(pairs.map(([k, v]) => [k, parse(v)]));
     return {
       displayName:    map[KEYS.DISPLAY_NAME]       ?? DEFAULTS.displayName,
@@ -51,6 +55,7 @@ export async function loadAllSettings() {
       cuisines:       map[KEYS.CUISINES]            ?? DEFAULTS.cuisines,
       dietary:        map[KEYS.DIETARY]             ?? DEFAULTS.dietary,
       activityStyles: map[KEYS.ACTIVITY_STYLES]     ?? DEFAULTS.activityStyles,
+      sensitivities:  map[KEYS.SENSITIVITIES]       ?? DEFAULTS.sensitivities,
       maxDistance:    map[KEYS.MAX_DISTANCE]        ?? DEFAULTS.maxDistance,
       pace:           map[KEYS.DEFAULT_PACE]        ?? DEFAULTS.pace,
       budget:         map[KEYS.DEFAULT_BUDGET]      ?? DEFAULTS.budget,

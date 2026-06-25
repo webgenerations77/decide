@@ -18,6 +18,7 @@ export async function generateItinerary({
   startTime = '11:00 AM', endTime = '8:00 PM',
   date = null,
   feedback = {},
+  maxDistanceMiles = 25,
 }) {
   try {
     const demoRaw = await AsyncStorage.getItem('@decide/demo_mode');
@@ -31,7 +32,7 @@ export async function generateItinerary({
   const res  = await fetch(`${base}/api/itinerary`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ latitude, longitude, date, preferences, startTime, endTime, feedback }),
+    body: JSON.stringify({ latitude, longitude, date, preferences, startTime, endTime, feedback, maxDistanceMiles }),
   });
 
   if (!res.ok) {

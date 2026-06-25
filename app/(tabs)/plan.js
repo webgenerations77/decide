@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
   Linking, ActivityIndicator, Animated, Modal, Platform, Dimensions,
@@ -11,6 +11,8 @@ import { generateItinerary, swapStop } from '../../services/itineraryService';
 import { loadPlanDefaults, KEYS } from '../../services/settingsService';
 import { isAtDecisionLimit, incrementDecisionCount, getRemainingDecisions, LIMITS } from '../../services/subscriptionService';
 import { scheduleItineraryAlerts, cancelItineraryAlerts } from '../../services/notificationService';
+import { COLORS, CATEGORY_COLORS, CATEGORY_EMOJIS, PRICE_LEGEND } from '../../constants/theme';
+import { getLocalKnowledge, getAllergyAlerts } from '../../constants/localKnowledge';
 
 const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 
@@ -75,24 +77,51 @@ const GROUP_OPTIONS = [
   { id: 'friends', label: 'Friends', emoji: '👥' },
 ];
 
-// ─── Category display maps ────────────────────────────────────────────────────
-const CATEGORY_COLORS = {
-  food: '#00d2be', activity: '#00a896', shopping: '#7c3aed', outdoor: '#00D2BE',
-};
-const CATEGORY_EMOJIS = {
-  food: '🍽️', activity: '🎭', shopping: '🛍️', outdoor: '🌿',
-};
-
 // ─── Feedback reasons ─────────────────────────────────────────────────────────
 const FEEDBACK_REASONS = ['Closed', 'Too crowded', 'Not my style', 'Too far', 'Too expensive', 'Other'];
 
 // ─── Highlight config ─────────────────────────────────────────────────────────
 const highlightConfig = {
-  entertainment: { icon: '🎵', borderColor: '#7c3aed' },
-  special:       { icon: '🏷️', borderColor: '#00d2be' },
-  feature:       { icon: '✨', borderColor: '#00a896' },
-  buzz:          { icon: '📰', borderColor: '#4a6a6e' },
+  entertainment: { icon: '🎵', borderColor: COLORS.teal },
+  special:       { icon: '🏷️', borderColor: COLORS.gold },
+  feature:       { icon: '✨', borderColor: COLORS.teal },
+  buzz:          { icon: '📰', borderColor: COLORS.textMuted },
 };
+
+// ─── Open maps with destination ──────────────────────────────────────────────
+function openMaps(stop) {
+  const target = stop.lat && stop.lng
+    ? `${stop.lat},${stop.lng}`
+    : encodeURIComponent(stop.address || stop.name);
+  const url = Platform.OS === 'ios'
+    ? `maps://?daddr=${target}`
+    : `https://maps.google.com/?daddr=${target}`;
+  Linking.openURL(url).catch(() => {
+    Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${target}`);
+  });
+}
+
+// ─── Price legend modal ───────────────────────────────────────────────────────
+function PriceLegendModal({ visible, onClose }) {
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={onClose}>
+        <TouchableOpacity activeOpacity={1} onPress={() => {}}>
+          <View style={styles.legendCard}>
+            <Text style={styles.legendTitle}>PRICE GUIDE</Text>
+            {PRICE_LEGEND.map((row) => (
+              <View key={row.symbol} style={styles.legendRow}>
+                <Text style={styles.legendSymbol}>{row.symbol}</Text>
+                <Text style={styles.legendLabel}>{row.label}</Text>
+              </View>
+            ))}
+            <Text style={styles.legendSub}>Estimated per-person cost including a typical meal or entry</Text>
+          </View>
+        </TouchableOpacity>
+      </TouchableOpacity>
+    </Modal>
+  );
+}
 
 // ─── TimePickerPill ───────────────────────────────────────────────────────────
 function TimePickerPill({ label, value, options, onChange, disabled }) {
@@ -170,6 +199,7 @@ function FeedbackModal({ visible, placeName, onClose, onSelect }) {
 function PlaceDetailModal({ visible, stop, onClose }) {
   const [placeDetails,  setPlaceDetails]  = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [showLegend,    setShowLegend]    = useState(false);
   const screenHeight = Dimensions.get('window').height;
 
   useEffect(() => {
@@ -195,7 +225,7 @@ function PlaceDetailModal({ visible, stop, onClose }) {
 
   if (!stop) return null;
 
-  const color    = CATEGORY_COLORS[stop.category] ?? '#00D2BE';
+  const color    = CATEGORY_COLORS[stop.category] ?? COLORS.teal;
   const catEmoji = CATEGORY_EMOJIS[stop.category] ?? '⚡';
   const priceLvl = [null, '$', '$$', '$$$', '$$$$'];
 
@@ -209,13 +239,6 @@ function PlaceDetailModal({ visible, stop, onClose }) {
   const phone   = stop.phone   ?? placeDetails?.formatted_phone_number ?? null;
   const website = stop.website ?? placeDetails?.website ?? null;
 
-  const handleNavigate = () => {
-    const target = stop.lat && stop.lng
-      ? `${stop.lat},${stop.lng}`
-      : encodeURIComponent(stop.address || stop.name);
-    Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${target}`);
-  };
-
   const hasInfoRow = rating > 0 || priceStr || openNow != null;
 
   return (
@@ -223,11 +246,8 @@ function PlaceDetailModal({ visible, stop, onClose }) {
       <TouchableOpacity style={styles.detailOverlay} activeOpacity={1} onPress={onClose}>
         <TouchableOpacity activeOpacity={1} onPress={() => {}}>
           <View style={[styles.detailSheet, { height: screenHeight * 0.75 }]}>
-
-            {/* Drag handle */}
             <View style={styles.dragHandle} />
 
-            {/* Header: category pill + close */}
             <View style={styles.detailHeader}>
               <View style={[styles.detailCatPill, { backgroundColor: color + '22' }]}>
                 <Text style={[styles.detailCatPillTxt, { color }]}>{catEmoji} {(stop.category ?? '').toUpperCase()}</Text>
@@ -242,11 +262,9 @@ function PlaceDetailModal({ visible, stop, onClose }) {
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{ paddingBottom: 32 }}
             >
-              {/* Name + address */}
               <Text style={styles.detailName}>{stop.name}</Text>
               {stop.address ? <Text style={styles.detailAddr}>{stop.address}</Text> : null}
 
-              {/* Info row: rating • price • open status */}
               {hasInfoRow && (
                 <View style={styles.detailInfoRow}>
                   {rating > 0 && (
@@ -255,12 +273,17 @@ function PlaceDetailModal({ visible, stop, onClose }) {
                     </Text>
                   )}
                   {priceStr && (
-                    <><Text style={styles.detailInfoDot}>•</Text><Text style={styles.detailInfoTxt}>{priceStr}</Text></>
+                    <>
+                      <Text style={styles.detailInfoDot}>•</Text>
+                      <TouchableOpacity onPress={() => setShowLegend(true)} activeOpacity={0.7}>
+                        <Text style={[styles.detailInfoTxt, { color: COLORS.gold }]}>{priceStr} ⓘ</Text>
+                      </TouchableOpacity>
+                    </>
                   )}
                   {openNow != null && (
                     <>
                       <Text style={styles.detailInfoDot}>•</Text>
-                      <Text style={[styles.detailInfoTxt, { color: openNow ? '#4ade80' : '#f87171' }]}>
+                      <Text style={[styles.detailInfoTxt, { color: openNow ? COLORS.success : COLORS.error }]}>
                         {openNow ? '● Open' : '● Closed'}
                       </Text>
                     </>
@@ -271,21 +294,26 @@ function PlaceDetailModal({ visible, stop, onClose }) {
                 </View>
               )}
 
-              {detailLoading && <ActivityIndicator color="#00D2BE" style={{ marginVertical: 20 }} />}
+              {/* Admission / cost */}
+              {stop.admission_cost && (
+                <View style={styles.admissionRow}>
+                  <Text style={styles.admissionLabel}>🎟 ADMISSION</Text>
+                  <Text style={styles.admissionValue}>{stop.admission_cost}</Text>
+                </View>
+              )}
 
-              {/* Source badge */}
+              {detailLoading && <ActivityIndicator color={COLORS.teal} style={{ marginVertical: 20 }} />}
+
               {stop.place_id?.startsWith('nps_')  && <View style={styles.detailSourceBadge}><Text style={styles.detailSourceTxt}>🌲 National Park Service</Text></View>}
               {stop.place_id?.startsWith('ridb_') && <View style={styles.detailSourceBadge}><Text style={styles.detailSourceTxt}>🏕️ Recreation.gov</Text></View>}
 
-              {/* Why we picked this */}
               {stop.reason ? (
                 <View style={styles.detailSection}>
-                  <Text style={styles.detailSectionLabel}>💬 WHY WE PICKED THIS</Text>
+                  <Text style={styles.detailSectionLabel}>💬 CHEDDAR'S TAKE</Text>
                   <Text style={styles.detailReasonText}>{stop.reason}</Text>
                 </View>
               ) : null}
 
-              {/* Highlights */}
               {stop.highlights?.length > 0 && (
                 <View style={styles.detailSection}>
                   <Text style={styles.detailSectionLabel}>✨ HIGHLIGHTS</Text>
@@ -301,13 +329,13 @@ function PlaceDetailModal({ visible, stop, onClose }) {
                 </View>
               )}
 
-              {/* Stats row */}
               {(stop.distance || stop.excitement_score > 0) && (
                 <View style={styles.detailStatsRow}>
-                  {stop.distance
-                    ? <Text style={styles.detailStatTxt}>📍 {stop.distance} away</Text>
-                    : <View />
-                  }
+                  {stop.distance ? (
+                    <TouchableOpacity onPress={() => openMaps(stop)} activeOpacity={0.7} style={styles.distanceLink}>
+                      <Text style={styles.distanceLinkTxt}>📍 {stop.distance} ›</Text>
+                    </TouchableOpacity>
+                  ) : <View />}
                   {stop.excitement_score > 0 && (
                     <View style={styles.detailExciteBadge}>
                       <Text style={styles.detailExciteTxt}>⚡ Score: {stop.excitement_score}</Text>
@@ -316,12 +344,10 @@ function PlaceDetailModal({ visible, stop, onClose }) {
                 </View>
               )}
 
-              {/* Navigate button */}
-              <TouchableOpacity style={styles.detailNavBtn} onPress={handleNavigate} activeOpacity={0.7}>
+              <TouchableOpacity style={styles.detailNavBtn} onPress={() => openMaps(stop)} activeOpacity={0.7}>
                 <Text style={styles.detailNavBtnTxt}>NAVIGATE HERE →</Text>
               </TouchableOpacity>
 
-              {/* Call + Website */}
               {(phone || website) && (
                 <View style={styles.detailSecondaryBtns}>
                   {phone ? (
@@ -348,15 +374,18 @@ function PlaceDetailModal({ visible, stop, onClose }) {
           </View>
         </TouchableOpacity>
       </TouchableOpacity>
+
+      <PriceLegendModal visible={showLegend} onClose={() => setShowLegend(false)} />
     </Modal>
   );
 }
 
 // ─── StopCard ─────────────────────────────────────────────────────────────────
-function StopCard({ stop, isLast, onSwap, isSwapping, onViewDetails }) {
+function StopCard({ stop, isLast, onSwap, isSwapping, onViewDetails, weather, planDate, sensitivities }) {
   const [feedback,          setFeedback]          = useState(null);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
-  const color = CATEGORY_COLORS[stop.category] ?? '#00D2BE';
+  const [showLegend,        setShowLegend]        = useState(false);
+  const color = CATEGORY_COLORS[stop.category] ?? COLORS.teal;
   const emoji = CATEGORY_EMOJIS[stop.category] ?? '⚡';
 
   useEffect(() => {
@@ -372,6 +401,11 @@ function StopCard({ stop, isLast, onSwap, isSwapping, onViewDetails }) {
     AsyncStorage.setItem(`@decide/feedback_${stop.place_id}`, JSON.stringify(data)).catch(() => {});
     setFeedback(type);
   };
+
+  const localTips    = getLocalKnowledge({ stopName: stop.name, stopAddress: stop.address ?? '', category: stop.category, weather, date: planDate });
+  const allergyAlerts = getAllergyAlerts({ category: stop.category, stopName: stop.name, stopAddress: stop.address ?? '', sensitivities });
+
+  const isFood = stop.category === 'food';
 
   return (
     <>
@@ -391,9 +425,47 @@ function StopCard({ stop, isLast, onSwap, isSwapping, onViewDetails }) {
               <Text style={[styles.catLabel, { color }]}>{stop.category}</Text>
             </View>
           </View>
+
           <Text style={styles.stopName} numberOfLines={1}>{stop.name}</Text>
           {stop.address ? <Text style={styles.stopAddress} numberOfLines={1}>{stop.address}</Text> : null}
-          {stop.reason  ? <Text style={styles.stopReason}>💬 {stop.reason}</Text> : null}
+
+          {/* Clickable distance + drive time */}
+          {stop.distance ? (
+            <TouchableOpacity onPress={() => openMaps(stop)} activeOpacity={0.7} style={styles.distancePill}>
+              <Text style={styles.distancePillTxt}>📍 {stop.distance} ›</Text>
+            </TouchableOpacity>
+          ) : null}
+
+          {/* Admission cost (non-food) */}
+          {stop.admission_cost && (
+            <Text style={styles.admissionBadge}>🎟 {stop.admission_cost}</Text>
+          )}
+
+          {/* Price tier (food cards) */}
+          {isFood && stop.price_level ? (
+            <TouchableOpacity onPress={() => setShowLegend(true)} activeOpacity={0.7} style={styles.pricePill}>
+              <Text style={styles.pricePillTxt}>{['', '$', '$$', '$$$', '$$$$'][stop.price_level] ?? ''} ⓘ</Text>
+            </TouchableOpacity>
+          ) : null}
+
+          {stop.reason ? <Text style={styles.stopReason}>💬 {stop.reason}</Text> : null}
+
+          {/* Local knowledge tips from Cheddar */}
+          {localTips.map((tip) => (
+            <View key={tip.id} style={[styles.localKnowledgeBadge, tip.severity === 'warning' ? styles.lkWarning : tip.severity === 'info' ? styles.lkInfo : styles.lkTip]}>
+              <Text style={styles.lkIcon}>{tip.severity === 'warning' ? '⚠' : tip.severity === 'info' ? 'ℹ' : '💡'}</Text>
+              <Text style={styles.lkText}>{tip.text}</Text>
+            </View>
+          ))}
+
+          {/* Allergy / sensitivity alerts */}
+          {allergyAlerts.map((alert, i) => (
+            <View key={i} style={styles.allergyBadge}>
+              <Text style={styles.allergyIcon}>🚨</Text>
+              <Text style={styles.allergyText}>{alert.sensitivity}: {alert.text}</Text>
+            </View>
+          ))}
+
           <View style={styles.cardActionsRow}>
             {stop.excitement_score > 0
               ? <View style={styles.exciteBadge}><Text style={styles.exciteText}>⚡{stop.excitement_score}</Text></View>
@@ -406,6 +478,7 @@ function StopCard({ stop, isLast, onSwap, isSwapping, onViewDetails }) {
               }
             </TouchableOpacity>
           </View>
+
           <View style={styles.thumbsRow}>
             <TouchableOpacity style={[styles.thumbBtn, feedback === 'up' && styles.thumbBtnUp]} onPress={() => saveFeedback('up')} activeOpacity={0.7}>
               <Text style={styles.thumbTxt}>👍</Text>
@@ -420,12 +493,14 @@ function StopCard({ stop, isLast, onSwap, isSwapping, onViewDetails }) {
           </View>
         </View>
       </TouchableOpacity>
+
       <FeedbackModal
         visible={showFeedbackModal}
         placeName={stop.name}
         onClose={() => setShowFeedbackModal(false)}
         onSelect={(reason) => { saveFeedback('down', reason); setShowFeedbackModal(false); }}
       />
+      <PriceLegendModal visible={showLegend} onClose={() => setShowLegend(false)} />
     </>
   );
 }
@@ -460,6 +535,7 @@ export default function PlanScreen() {
   const [locationLabel, setLocationLabel] = useState('Locating...');
   const [isManual,      setIsManual]      = useState(false);
   const [displayName,   setDisplayName]   = useState('');
+  const [sensitivities, setSensitivities] = useState([]);
   const gpsLoadedRef  = useRef(false);
   const gpsLabelRef   = useRef(null);
   const gpsCoordsRef  = useRef(null);
@@ -497,10 +573,12 @@ export default function PlanScreen() {
   useFocusEffect(useCallback(() => {
     (async () => {
       try {
-        const [modeRaw, locRaw] = await Promise.all([
+        const [modeRaw, locRaw, sensRaw] = await Promise.all([
           AsyncStorage.getItem('@decide/location_mode'),
           AsyncStorage.getItem('@decide/manual_location'),
+          AsyncStorage.getItem('@decide/sensitivities'),
         ]);
+        if (sensRaw) { try { setSensitivities(JSON.parse(sensRaw) ?? []); } catch {} }
         const mode = modeRaw ?? 'auto';
         if (mode === 'manual' && locRaw) {
           const loc = JSON.parse(locRaw);
@@ -560,12 +638,12 @@ export default function PlanScreen() {
             setLocationLabel(label);
           }
         } catch {
-          const label = `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
+          const label = `Near ${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
           gpsLabelRef.current = label;
           setLocationLabel(label);
         }
       } else {
-        const label = `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
+        const label = `Near ${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
         gpsLabelRef.current = label;
         setLocationLabel(label);
       }
@@ -647,12 +725,16 @@ export default function PlanScreen() {
         feedbackCtx = { dislikedPlaces: dislikedPlaces.slice(0, 20), likedPlaces: likedPlaces.slice(0, 10), dislikedReasons };
       } catch {}
 
+      const maxDistRaw = await AsyncStorage.getItem('@decide/max_distance').catch(() => null);
+      const maxDistanceMiles = maxDistRaw ? parseInt(maxDistRaw, 10) : 25;
+
       const data = await generateItinerary({
         latitude:  coords.latitude,
         longitude: coords.longitude,
-        preferences: { pace, budget, group_type: groupType, cuisines },
+        preferences: { pace, budget, group_type: groupType, cuisines, sensitivities },
         startTime, endTime, date: planDate,
         feedback: feedbackCtx,
+        maxDistanceMiles,
       });
       setItinerary(data.itinerary);
       setWeather(data.weather);
@@ -738,7 +820,6 @@ export default function PlanScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-
         {/* ─────────────────── LANDING VIEW ─────────────────────────────── */}
         {view === 'landing' && (
           <View style={styles.landingContainer}>
@@ -767,12 +848,12 @@ export default function PlanScreen() {
                 activeOpacity={0.7}
                 onPress={() => setShowWeekPicker(true)}
               >
-                <Text style={[styles.decideBtnTitle, { color: '#00D2BE' }]}>📅  THIS WEEK</Text>
-                <Text style={[styles.decideBtnSub, { color: '#555' }]}>Plan a specific day</Text>
+                <Text style={[styles.decideBtnTitle, { color: COLORS.teal }]}>📅  THIS WEEK</Text>
+                <Text style={[styles.decideBtnSub, { color: COLORS.textMuted }]}>Plan a specific day</Text>
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.landingSubtext}>AI-planned itinerary based on your location</Text>
+            <Text style={styles.landingSubtext}>Cheddar-curated itinerary based on your location</Text>
           </View>
         )}
 
@@ -846,7 +927,7 @@ export default function PlanScreen() {
               {isFallback && (
                 <View style={styles.fallbackBanner}>
                   <Text style={styles.fallbackBannerTxt}>
-                    ⚠ Offline mode — Claude unavailable. Showing top-rated nearby places.
+                    ⚠ Offline mode — Cheddar unavailable. Showing top-rated nearby places.
                   </Text>
                 </View>
               )}
@@ -881,6 +962,9 @@ export default function PlanScreen() {
                   onSwap={() => handleSwap(i)}
                   isSwapping={swappingIndex === i}
                   onViewDetails={(s) => { setSelectedStop(s); setShowDetailModal(true); }}
+                  weather={weather}
+                  planDate={planDate}
+                  sensitivities={sensitivities}
                 />
               ))}
 
@@ -899,7 +983,7 @@ export default function PlanScreen() {
         <View style={{ height: view === 'landing' ? 40 : 100 }} />
       </ScrollView>
 
-      {/* Sticky generate button (configuring view) */}
+      {/* Sticky generate button */}
       {view === 'configuring' && (
         <View style={styles.stickyNavContainer}>
           <Animated.View style={{ opacity: loading ? pulseAnim : 1 }}>
@@ -911,22 +995,22 @@ export default function PlanScreen() {
             >
               {loading ? (
                 <View style={styles.loadingRow}>
-                  <ActivityIndicator color="#00191f" size="small" style={{ marginRight: 10 }} />
-                  <Text style={styles.generateBtnText}>Building your day...</Text>
+                  <ActivityIndicator color={COLORS.bg} size="small" style={{ marginRight: 10 }} />
+                  <Text style={styles.generateBtnText}>Cheddar is building your day...</Text>
                 </View>
               ) : (
                 <Text style={styles.generateBtnText}>✨  GENERATE MY DAY</Text>
               )}
             </TouchableOpacity>
           </Animated.View>
-          {!loading && <Text style={styles.generateSubtext}>AI-curated itinerary based on your location</Text>}
+          {!loading && <Text style={styles.generateSubtext}>Cheddar-curated itinerary based on your location</Text>}
           {!loading && remainingDecisions != null && remainingDecisions !== Infinity && (
             <Text style={styles.remainingText}>{remainingDecisions}/{LIMITS.FREE_DECISIONS_PER_DAY} decisions remaining today</Text>
           )}
         </View>
       )}
 
-      {/* Sticky navigate button (itinerary view) */}
+      {/* Sticky navigate button */}
       {view === 'itinerary' && hasItinerary && (
         <View style={styles.stickyNavContainer}>
           <TouchableOpacity style={styles.stickyNavBtn} onPress={handleNavigateFullDay} activeOpacity={0.7}>
@@ -1002,7 +1086,7 @@ export default function PlanScreen() {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  screen:        { flex: 1, backgroundColor: '#00191f' },
+  screen:        { flex: 1, backgroundColor: COLORS.bg },
   scroll:        { flex: 1 },
   scrollContent: { flexGrow: 1 },
 
@@ -1012,28 +1096,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20, paddingTop: 40, paddingBottom: 48,
   },
   landingHeader: { alignItems: 'center', marginBottom: 48 },
-  landingGreeting: { fontSize: 13, color: '#00a896', fontWeight: '500', letterSpacing: 0.3 },
-  landingTitle:  { fontSize: 28, fontWeight: '800', color: '#ffffff', letterSpacing: 6 },
+  landingGreeting: { fontSize: 13, color: COLORS.teal, fontWeight: '500', letterSpacing: 0.3 },
+  landingTitle:  { fontSize: 28, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: 6 },
   locationPill: {
     marginTop: 12, paddingHorizontal: 14, paddingVertical: 6,
-    borderRadius: 20, backgroundColor: '#00262e',
-    borderWidth: 0.5, borderColor: '#003040',
+    borderRadius: 20, backgroundColor: COLORS.surface,
+    borderWidth: 0.5, borderColor: COLORS.border,
   },
-  locationText:  { fontSize: 13, color: '#888', letterSpacing: 0.3 },
+  locationText:  { fontSize: 13, color: COLORS.textSecondary, letterSpacing: 0.3 },
   landingButtons: { width: '100%', gap: 12, marginBottom: 28 },
   decideBtn: {
     width: '100%', height: 56, paddingHorizontal: 24,
     borderRadius: 16, alignItems: 'center', justifyContent: 'center', gap: 4,
   },
   decideBtnPrimary: {
-    backgroundColor: '#00d2be',
-    shadowColor: '#00d2be', shadowOffset: { width: 0, height: 0 },
+    backgroundColor: COLORS.primary,
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.7, shadowRadius: 18, elevation: 18,
   },
-  decideBtnSecondary: { backgroundColor: '#00262e', borderWidth: 1, borderColor: '#003040' },
-  decideBtnTitle: { color: '#00191f', fontSize: 15, fontWeight: '800', letterSpacing: 3 },
+  decideBtnSecondary: { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border },
+  decideBtnTitle: { color: COLORS.primaryText, fontSize: 15, fontWeight: '800', letterSpacing: 3 },
   decideBtnSub:   { color: 'rgba(255,255,255,0.45)', fontSize: 11, letterSpacing: 0.4 },
-  landingSubtext: { fontSize: 12, color: '#7c3aed', letterSpacing: 0.3, textAlign: 'center' },
+  landingSubtext: { fontSize: 12, color: COLORS.gold, letterSpacing: 0.3, textAlign: 'center' },
 
   // ── Plan / Itinerary container ────────────────────────────────────────────
   planContainer: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 8 },
@@ -1041,52 +1125,52 @@ const styles = StyleSheet.create({
   // Header
   header:         { alignItems: 'center', marginBottom: 24 },
   backRow:        { marginBottom: 8 },
-  backText:       { fontSize: 12, color: '#00D2BE', fontWeight: '600', letterSpacing: 1 },
-  appName:        { fontSize: 28, fontWeight: '800', color: '#ffffff', letterSpacing: 5 },
+  backText:       { fontSize: 12, color: COLORS.teal, fontWeight: '600', letterSpacing: 1 },
+  appName:        { fontSize: 28, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: 5 },
   headerPill: {
     marginTop: 8, paddingHorizontal: 12, paddingVertical: 5,
-    borderRadius: 20, backgroundColor: '#00262e',
-    borderWidth: 1, borderColor: '#003040',
+    borderRadius: 20, backgroundColor: COLORS.surface,
+    borderWidth: 1, borderColor: COLORS.border,
   },
-  headerPillText: { fontSize: 13, color: '#888', letterSpacing: 0.3 },
+  headerPillText: { fontSize: 13, color: COLORS.textSecondary, letterSpacing: 0.3 },
 
   // Preferences card
   prefsCard: {
-    backgroundColor: '#00262e', borderRadius: 18,
-    borderWidth: 0.5, borderColor: '#003040',
+    backgroundColor: COLORS.surface, borderRadius: 18,
+    borderWidth: 0.5, borderColor: COLORS.border,
     padding: 18, marginBottom: 16, gap: 10,
     overflow: 'hidden',
   },
   datePill: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: '#00262e', borderRadius: 12,
-    borderWidth: 1, borderColor: '#003040',
+    backgroundColor: COLORS.surface, borderRadius: 12,
+    borderWidth: 1, borderColor: COLORS.border,
     paddingHorizontal: 14, paddingVertical: 11,
   },
-  datePillValue:   { fontSize: 14, fontWeight: '700', color: '#00D2BE' },
-  datePillChevron: { fontSize: 11, color: '#555' },
-  prefLabel:       { fontSize: 11, fontWeight: '700', color: '#a855f7', letterSpacing: 2, marginTop: 4, textTransform: 'uppercase' },
+  datePillValue:   { fontSize: 14, fontWeight: '700', color: COLORS.teal },
+  datePillChevron: { fontSize: 11, color: COLORS.textMuted },
+  prefLabel:       { fontSize: 11, fontWeight: '700', color: COLORS.gold, letterSpacing: 2, marginTop: 4, textTransform: 'uppercase' },
   pillsRow:        { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   prefPill: {
     paddingHorizontal: 14, paddingVertical: 8,
     borderRadius: 16, borderWidth: 1,
-    backgroundColor: '#00262e', borderColor: '#003040',
+    backgroundColor: COLORS.surface, borderColor: COLORS.border,
   },
-  prefPillActive:     { backgroundColor: '#00d2be', borderColor: '#00d2be' },
-  prefPillText:       { fontSize: 13, fontWeight: '600', color: '#00D2BE' },
-  prefPillTextActive: { color: '#00191f' },
+  prefPillActive:     { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  prefPillText:       { fontSize: 13, fontWeight: '600', color: COLORS.teal },
+  prefPillTextActive: { color: COLORS.primaryText },
   timePickerRow:      { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  timeArrow:          { color: '#444', fontSize: 16, fontWeight: '300' },
+  timeArrow:          { color: COLORS.textMuted, fontSize: 16, fontWeight: '300' },
   timePill: {
-    flex: 1, backgroundColor: '#00262e', borderRadius: 12,
-    borderWidth: 1, borderColor: '#003040',
+    flex: 1, backgroundColor: COLORS.surface, borderRadius: 12,
+    borderWidth: 1, borderColor: COLORS.border,
     paddingHorizontal: 12, paddingVertical: 9, gap: 3,
   },
-  timePillLabel:      { fontSize: 9, fontWeight: '700', color: '#00a896', letterSpacing: 1.5 },
+  timePillLabel:      { fontSize: 9, fontWeight: '700', color: COLORS.teal, letterSpacing: 1.5 },
   timePillInner:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  timePillValue:      { fontSize: 14, fontWeight: '700', color: '#00D2BE' },
-  timePillChevron:    { fontSize: 11, color: '#555' },
-  timeValidationHint: { fontSize: 11, color: '#f87171', marginTop: 2, letterSpacing: 0.2 },
+  timePillValue:      { fontSize: 14, fontWeight: '700', color: COLORS.teal },
+  timePillChevron:    { fontSize: 11, color: COLORS.textMuted },
+  timeValidationHint: { fontSize: 11, color: COLORS.error, marginTop: 2, letterSpacing: 0.2 },
 
   // Time picker modal
   modalOverlay: {
@@ -1094,43 +1178,43 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center', padding: 40,
   },
   modalCard: {
-    backgroundColor: '#00262e', borderRadius: 18,
-    borderWidth: 1, borderColor: '#003040',
+    backgroundColor: COLORS.surface, borderRadius: 18,
+    borderWidth: 1, borderColor: COLORS.border,
     width: 240, overflow: 'hidden',
   },
   modalTitle: {
-    fontSize: 10, fontWeight: '700', color: '#00a896', letterSpacing: 2,
+    fontSize: 10, fontWeight: '700', color: COLORS.teal, letterSpacing: 2,
     textAlign: 'center', paddingVertical: 14,
-    borderBottomWidth: 1, borderBottomColor: '#003040',
+    borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
-  modalOption:           { paddingVertical: 13, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: '#00262e' },
-  modalOptionActive:     { backgroundColor: '#001419' },
-  modalOptionText:       { fontSize: 15, fontWeight: '500', color: '#666', textAlign: 'center' },
-  modalOptionTextActive: { color: '#00D2BE', fontWeight: '700' },
+  modalOption:           { paddingVertical: 13, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: COLORS.surface },
+  modalOptionActive:     { backgroundColor: COLORS.surfaceAlt },
+  modalOptionText:       { fontSize: 15, fontWeight: '500', color: COLORS.textMuted, textAlign: 'center' },
+  modalOptionTextActive: { color: COLORS.teal, fontWeight: '700' },
 
   // Error text
   errorText: {
-    color: '#f87171', fontSize: 13, textAlign: 'center',
+    color: COLORS.error, fontSize: 13, textAlign: 'center',
     backgroundColor: '#2d1515', borderRadius: 10,
     paddingVertical: 10, paddingHorizontal: 14,
     borderWidth: 1, borderColor: '#5c1f1f',
     marginBottom: 8,
   },
 
-  // Generate button (in sticky footer)
+  // Generate button
   loadingRow:      { flexDirection: 'row', alignItems: 'center' },
   generateBtn: {
-    backgroundColor: '#00d2be', borderRadius: 16,
+    backgroundColor: COLORS.primary, borderRadius: 16,
     height: 56, alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#00d2be', shadowOffset: { width: 0, height: 0 },
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.6, shadowRadius: 16, elevation: 16,
   },
   generateBtnDisabled: { opacity: 0.45 },
-  generateBtnText:     { color: '#00191f', fontSize: 15, fontWeight: '800', letterSpacing: 2.5 },
-  generateSubtext:     { textAlign: 'center', fontSize: 12, color: '#444', letterSpacing: 0.3, marginTop: 8 },
-  remainingText:       { textAlign: 'center', fontSize: 11, color: '#4a6a6e', marginTop: 4 },
-  retryBtn:            { backgroundColor: '#00262e', borderWidth: 1, borderColor: '#003040', borderRadius: 16, paddingHorizontal: 24, height: 44, alignItems: 'center', justifyContent: 'center' },
-  retryBtnText:        { color: '#00d2be', fontSize: 14, fontWeight: '700' },
+  generateBtnText:     { color: COLORS.primaryText, fontSize: 15, fontWeight: '800', letterSpacing: 2.5 },
+  generateSubtext:     { textAlign: 'center', fontSize: 12, color: COLORS.textMuted, letterSpacing: 0.3, marginTop: 8 },
+  remainingText:       { textAlign: 'center', fontSize: 11, color: COLORS.textMuted, marginTop: 4 },
+  retryBtn:            { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border, borderRadius: 16, paddingHorizontal: 24, height: 44, alignItems: 'center', justifyContent: 'center' },
+  retryBtnText:        { color: COLORS.teal, fontSize: 14, fontWeight: '700' },
 
   // Itinerary
   fallbackBanner: {
@@ -1138,24 +1222,24 @@ const styles = StyleSheet.create({
     backgroundColor: '#2d1b0022', borderWidth: 1, borderColor: '#78350f88',
     paddingHorizontal: 14, paddingVertical: 10,
   },
-  fallbackBannerTxt: { fontSize: 12, color: '#fbbf24', lineHeight: 17 },
+  fallbackBannerTxt: { fontSize: 12, color: COLORS.warning, lineHeight: 17 },
   itineraryContainer: { gap: 0 },
   itineraryMeta: {
     alignItems: 'center', marginBottom: 24,
-    paddingBottom: 20, borderBottomWidth: 1, borderBottomColor: '#003040',
+    paddingBottom: 20, borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
-  itineraryDay:  { fontSize: 26, fontWeight: '800', color: '#ffffff' },
-  itineraryDate: { fontSize: 13, color: '#555', marginTop: 4 },
-  itineraryCity: { fontSize: 12, color: '#a855f7', marginTop: 3 },
+  itineraryDay:  { fontSize: 26, fontWeight: '800', color: COLORS.textPrimary },
+  itineraryDate: { fontSize: 13, color: COLORS.textMuted, marginTop: 4 },
+  itineraryCity: { fontSize: 12, color: COLORS.gold, marginTop: 3 },
   metaChips:     { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, marginTop: 10 },
   metaChip: {
     paddingHorizontal: 10, paddingVertical: 4,
-    borderRadius: 999, backgroundColor: '#00262e',
-    borderWidth: 1, borderColor: '#003040',
+    borderRadius: 999, backgroundColor: COLORS.surface,
+    borderWidth: 1, borderColor: COLORS.border,
   },
-  metaChipTime:     { borderColor: '#003040', backgroundColor: '#001419' },
-  metaChipText:     { color: '#00D2BE', fontSize: 11, fontWeight: '600' },
-  metaChipTimeText: { color: '#00f5e9' },
+  metaChipTime:     { borderColor: COLORS.border, backgroundColor: COLORS.surfaceAlt },
+  metaChipText:     { color: COLORS.teal, fontSize: 11, fontWeight: '600' },
+  metaChipTimeText: { color: COLORS.teal },
 
   // Stop card + timeline
   stopRow:      { flexDirection: 'row', marginBottom: 14 },
@@ -1163,180 +1247,252 @@ const styles = StyleSheet.create({
   timelineDot:  { width: 10, height: 10, borderRadius: 5, marginTop: 16, zIndex: 1 },
   timelineLine: { flex: 1, width: 2, marginTop: 2 },
   stopCard: {
-    flex: 1, backgroundColor: '#00262e', borderRadius: 16,
-    borderWidth: 0.5, borderColor: '#003040', borderLeftWidth: 3,
+    flex: 1, backgroundColor: COLORS.surface, borderRadius: 16,
+    borderWidth: 0.5, borderColor: COLORS.border, borderLeftWidth: 3,
     padding: 14, gap: 6, overflow: 'hidden',
   },
   stopCardSwapping: { opacity: 0.6 },
   stopHeaderRow:    { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   timeChip:         { paddingHorizontal: 9, paddingVertical: 4, borderRadius: 999, borderWidth: 1 },
   timeText:         { fontSize: 12, fontWeight: '700' },
-  durationText:     { fontSize: 11, color: '#555' },
+  durationText:     { fontSize: 11, color: COLORS.textMuted },
   catChip:          { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 },
   catEmoji:         { fontSize: 12 },
   catLabel:         { fontSize: 11, fontWeight: '600' },
-  stopName:         { fontSize: 15, fontWeight: '700', color: '#ffffff' },
-  stopAddress:      { fontSize: 11, color: '#555', lineHeight: 16 },
-  stopReason:       { fontSize: 13, color: '#777', lineHeight: 17, fontStyle: 'italic' },
+  stopName:         { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
+  stopAddress:      { fontSize: 11, color: COLORS.textMuted, lineHeight: 16 },
+  stopReason:       { fontSize: 13, color: COLORS.textSecondary, lineHeight: 17, fontStyle: 'italic' },
+
+  // Clickable distance pill
+  distancePill: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10, paddingVertical: 4,
+    borderRadius: 999, backgroundColor: COLORS.surfaceAlt,
+    borderWidth: 1, borderColor: COLORS.border,
+  },
+  distancePillTxt: { fontSize: 12, color: COLORS.teal, fontWeight: '600' },
+
+  // Admission badge
+  admissionBadge: {
+    fontSize: 12, color: COLORS.gold, fontWeight: '600',
+    backgroundColor: COLORS.goldFaint, borderRadius: 8,
+    paddingHorizontal: 10, paddingVertical: 4, alignSelf: 'flex-start',
+  },
+
+  // Price tier pill (food)
+  pricePill: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10, paddingVertical: 4,
+    borderRadius: 999, backgroundColor: COLORS.goldFaint,
+    borderWidth: 1, borderColor: COLORS.gold + '44',
+  },
+  pricePillTxt: { fontSize: 12, color: COLORS.gold, fontWeight: '700' },
+
+  // Local knowledge callout
+  localKnowledgeBadge: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: 8,
+    borderRadius: 10, padding: 10, marginTop: 4,
+    borderLeftWidth: 3,
+  },
+  lkWarning: { backgroundColor: '#3A1A0A', borderLeftColor: COLORS.warning },
+  lkInfo:    { backgroundColor: '#0A1E3A', borderLeftColor: COLORS.teal },
+  lkTip:     { backgroundColor: '#2A1E08', borderLeftColor: COLORS.gold },
+  lkIcon:    { fontSize: 13, lineHeight: 18 },
+  lkText:    { flex: 1, fontSize: 12, color: COLORS.textSecondary, lineHeight: 17 },
+
+  // Allergy alert
+  allergyBadge: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: 8,
+    backgroundColor: '#2D0A0A', borderRadius: 10, padding: 10,
+    borderLeftWidth: 3, borderLeftColor: COLORS.error, marginTop: 4,
+  },
+  allergyIcon: { fontSize: 13, lineHeight: 18 },
+  allergyText: { flex: 1, fontSize: 12, color: '#f87171', lineHeight: 17 },
+
   cardActionsRow:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 },
-  exciteBadge:      { backgroundColor: '#9333EA', borderRadius: 10, paddingHorizontal: 7, paddingVertical: 2 },
-  exciteText:       { color: '#fff', fontSize: 10, fontWeight: '700' },
+  exciteBadge:      { backgroundColor: COLORS.teal + '33', borderRadius: 10, paddingHorizontal: 7, paddingVertical: 2, borderWidth: 1, borderColor: COLORS.teal + '55' },
+  exciteText:       { color: COLORS.teal, fontSize: 10, fontWeight: '700' },
   swapBtn:          { paddingVertical: 4, paddingHorizontal: 6 },
-  swapBtnText:      { color: '#555', fontSize: 11, fontWeight: '500' },
+  swapBtnText:      { color: COLORS.textMuted, fontSize: 11, fontWeight: '500' },
   swapLoadingRow:   { flexDirection: 'row', alignItems: 'center' },
   thumbsRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end',
     marginTop: 6, paddingTop: 8,
-    borderTopWidth: 0.5, borderTopColor: '#003040',
+    borderTopWidth: 0.5, borderTopColor: COLORS.border,
   },
   thumbBtn:     { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
   thumbBtnUp:   { backgroundColor: '#14532d33' },
   thumbBtnDown: { backgroundColor: '#7f1d1d33' },
   thumbTxt:     { fontSize: 14 },
-  thumbDivider: { width: 1, height: 16, backgroundColor: '#003040', marginHorizontal: 4 },
+  thumbDivider: { width: 1, height: 16, backgroundColor: COLORS.border, marginHorizontal: 4 },
 
   resetBtn: {
     marginTop: 10, borderRadius: 16, height: 56,
     alignItems: 'center', justifyContent: 'center',
-    backgroundColor: '#00262e', borderWidth: 1, borderColor: '#003040',
+    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
   },
-  resetBtnText: { color: '#00D2BE', fontSize: 15, fontWeight: '700' },
+  resetBtnText: { color: COLORS.teal, fontSize: 15, fontWeight: '700' },
 
-  // Shared sticky footer
+  // Sticky footer
   stickyNavContainer: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     paddingHorizontal: 20, paddingBottom: 28, paddingTop: 12,
-    backgroundColor: '#00191f',
-    borderTopWidth: 1, borderTopColor: '#003040',
+    backgroundColor: COLORS.bg,
+    borderTopWidth: 1, borderTopColor: COLORS.border,
   },
   stickyNavBtn: {
-    backgroundColor: '#00d2be', borderRadius: 16,
+    backgroundColor: COLORS.primary, borderRadius: 16,
     height: 56, alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#00d2be', shadowOffset: { width: 0, height: 0 },
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.7, shadowRadius: 20, elevation: 20,
   },
-  stickyNavTxt: { color: '#00191f', fontSize: 15, fontWeight: '800', letterSpacing: 2.5 },
+  stickyNavTxt: { color: COLORS.primaryText, fontSize: 15, fontWeight: '800', letterSpacing: 2.5 },
 
   // Week / Date picker
   weekPickerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'flex-end' },
   weekPickerCard: {
-    backgroundColor: '#00262e',
+    backgroundColor: COLORS.surface,
     borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    borderWidth: 1, borderColor: '#003040',
+    borderWidth: 1, borderColor: COLORS.border,
     paddingBottom: 34, overflow: 'hidden',
   },
   weekPickerHeader: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 24, paddingVertical: 18,
-    borderBottomWidth: 1, borderBottomColor: '#003040',
+    borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
-  weekPickerTitle:   { fontSize: 11, fontWeight: '700', color: '#a855f7', letterSpacing: 2 },
+  weekPickerTitle:   { fontSize: 11, fontWeight: '700', color: COLORS.gold, letterSpacing: 2 },
   weekPickerClose: {
     width: 28, height: 28, borderRadius: 14,
-    backgroundColor: '#00262e', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: COLORS.surface, alignItems: 'center', justifyContent: 'center',
   },
-  weekPickerCloseTxt: { color: '#666', fontSize: 13, fontWeight: '600' },
+  weekPickerCloseTxt: { color: COLORS.textMuted, fontSize: 13, fontWeight: '600' },
   dayRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 24, paddingVertical: 17,
-    borderBottomWidth: 1, borderBottomColor: '#00262e',
+    borderBottomWidth: 1, borderBottomColor: COLORS.surface,
   },
   dayRowLast:    { borderBottomWidth: 0 },
-  dayLabel:      { fontSize: 15, fontWeight: '600', color: '#ffffff' },
-  dayLabelToday: { color: '#00D2BE' },
-  daySub:        { fontSize: 13, color: '#555' },
+  dayLabel:      { fontSize: 15, fontWeight: '600', color: COLORS.textPrimary },
+  dayLabelToday: { color: COLORS.teal },
+  daySub:        { fontSize: 13, color: COLORS.textMuted },
 
   // Feedback modal
   fbOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'flex-end' },
   fbCard: {
-    backgroundColor: '#00262e',
+    backgroundColor: COLORS.surface,
     borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    borderWidth: 1, borderColor: '#003040',
+    borderWidth: 1, borderColor: COLORS.border,
     paddingBottom: 34, overflow: 'hidden',
   },
   fbTitle: {
-    fontSize: 11, fontWeight: '700', color: '#a855f7', letterSpacing: 2,
+    fontSize: 11, fontWeight: '700', color: COLORS.gold, letterSpacing: 2,
     textAlign: 'center', paddingVertical: 18,
-    borderBottomWidth: 1, borderBottomColor: '#003040',
+    borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
-  fbPlace:     { fontSize: 14, fontWeight: '600', color: '#fff', paddingHorizontal: 24, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#00262e' },
-  fbOption:    { paddingHorizontal: 24, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#00262e' },
-  fbOptionTxt: { fontSize: 15, fontWeight: '500', color: '#C0DCD9' },
+  fbPlace:     { fontSize: 14, fontWeight: '600', color: COLORS.textPrimary, paddingHorizontal: 24, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: COLORS.surface },
+  fbOption:    { paddingHorizontal: 24, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: COLORS.surface },
+  fbOptionTxt: { fontSize: 15, fontWeight: '500', color: COLORS.textSecondary },
   fbCancel: {
     marginHorizontal: 20, marginTop: 14,
     borderRadius: 16, height: 56, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: '#00262e', borderWidth: 1, borderColor: '#003040',
+    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
   },
-  fbCancelTxt: { color: '#666', fontSize: 14, fontWeight: '600' },
+  fbCancelTxt: { color: COLORS.textMuted, fontSize: 14, fontWeight: '600' },
 
-  // Tap-for-details hint
+  // Tap hint
   tapHint:    { alignItems: 'center', paddingTop: 6, paddingBottom: 2 },
-  tapHintTxt: { fontSize: 11, color: '#3a5a5e', fontWeight: '500' },
+  tapHintTxt: { fontSize: 11, color: COLORS.textMuted, fontWeight: '500' },
 
   // Place detail modal
   detailOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.72)', justifyContent: 'flex-end' },
   detailSheet: {
-    backgroundColor: '#00262e',
+    backgroundColor: COLORS.surface,
     borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    borderWidth: 1, borderColor: '#003040',
+    borderWidth: 1, borderColor: COLORS.border,
     overflow: 'hidden',
   },
   dragHandle: {
     width: 32, height: 4, borderRadius: 2,
-    backgroundColor: '#3a5a5e',
+    backgroundColor: COLORS.textMuted,
     alignSelf: 'center', marginTop: 10, marginBottom: 2,
   },
   detailHeader: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 20, paddingVertical: 14,
-    borderBottomWidth: 0.5, borderBottomColor: '#003040',
+    borderBottomWidth: 0.5, borderBottomColor: COLORS.border,
   },
   detailCatPill:    { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999 },
   detailCatPillTxt: { fontSize: 11, fontWeight: '700', letterSpacing: 1.5 },
-  detailCloseBtn:   { width: 30, height: 30, borderRadius: 15, backgroundColor: '#001419', alignItems: 'center', justifyContent: 'center' },
-  detailCloseTxt:   { color: '#888', fontSize: 14, fontWeight: '600' },
+  detailCloseBtn:   { width: 30, height: 30, borderRadius: 15, backgroundColor: COLORS.surfaceAlt, alignItems: 'center', justifyContent: 'center' },
+  detailCloseTxt:   { color: COLORS.textSecondary, fontSize: 14, fontWeight: '600' },
   detailScroll:     { paddingHorizontal: 20, paddingTop: 16 },
-  detailName:       { fontSize: 22, fontWeight: '800', color: '#ffffff', marginBottom: 4 },
-  detailAddr:       { fontSize: 13, color: '#555', marginBottom: 14, lineHeight: 18 },
+  detailName:       { fontSize: 22, fontWeight: '800', color: COLORS.textPrimary, marginBottom: 4 },
+  detailAddr:       { fontSize: 13, color: COLORS.textMuted, marginBottom: 14, lineHeight: 18 },
 
   detailInfoRow:  { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 18 },
-  detailInfoTxt:  { fontSize: 13, fontWeight: '600', color: '#00d2be' },
-  detailInfoDot:  { fontSize: 13, color: '#3a5a5e' },
+  detailInfoTxt:  { fontSize: 13, fontWeight: '600', color: COLORS.teal },
+  detailInfoDot:  { fontSize: 13, color: COLORS.textMuted },
+
+  admissionRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    backgroundColor: COLORS.goldFaint, borderRadius: 10,
+    paddingHorizontal: 12, paddingVertical: 8, marginBottom: 14,
+    borderWidth: 1, borderColor: COLORS.gold + '33',
+  },
+  admissionLabel: { fontSize: 11, fontWeight: '700', color: COLORS.gold, letterSpacing: 1 },
+  admissionValue: { fontSize: 13, color: COLORS.textPrimary, fontWeight: '500', flex: 1 },
 
   detailSection:      { marginBottom: 18 },
-  detailSectionLabel: { fontSize: 11, fontWeight: '700', color: '#00a896', letterSpacing: 2, marginBottom: 10, textTransform: 'uppercase' },
-  detailReasonText:   { fontSize: 15, color: '#ffffff', lineHeight: 22, fontStyle: 'italic' },
+  detailSectionLabel: { fontSize: 11, fontWeight: '700', color: COLORS.teal, letterSpacing: 2, marginBottom: 10, textTransform: 'uppercase' },
+  detailReasonText:   { fontSize: 15, color: COLORS.textPrimary, lineHeight: 22, fontStyle: 'italic' },
 
   highlightRow: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 10,
-    backgroundColor: '#001419', borderRadius: 8, padding: 10,
+    backgroundColor: COLORS.surfaceAlt, borderRadius: 8, padding: 10,
     borderLeftWidth: 3, marginBottom: 6,
   },
   highlightIcon: { fontSize: 16, lineHeight: 20 },
-  highlightText: { flex: 1, fontSize: 14, color: '#ffffff', lineHeight: 20 },
+  highlightText: { flex: 1, fontSize: 14, color: COLORS.textPrimary, lineHeight: 20 },
 
-  detailStatsRow:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
-  detailStatTxt:     { fontSize: 13, color: '#4a8a84' },
-  detailExciteBadge: { backgroundColor: '#9333EA22', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: '#9333EA44' },
-  detailExciteTxt:   { color: '#a855f7', fontSize: 12, fontWeight: '700' },
+  detailStatsRow:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
+  distanceLink:    { flexDirection: 'row', alignItems: 'center' },
+  distanceLinkTxt: { fontSize: 13, color: COLORS.teal, fontWeight: '600', textDecorationLine: 'underline' },
+  detailExciteBadge: { backgroundColor: COLORS.teal + '22', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: COLORS.teal + '44' },
+  detailExciteTxt:   { color: COLORS.teal, fontSize: 12, fontWeight: '700' },
 
   detailNavBtn: {
-    backgroundColor: '#00d2be', borderRadius: 16,
+    backgroundColor: COLORS.primary, borderRadius: 16,
     height: 56, alignItems: 'center', justifyContent: 'center',
     marginBottom: 10,
-    shadowColor: '#00d2be', shadowOffset: { width: 0, height: 0 },
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.4, shadowRadius: 12, elevation: 10,
   },
-  detailNavBtnTxt: { color: '#00191f', fontSize: 15, fontWeight: '800', letterSpacing: 2 },
+  detailNavBtnTxt: { color: COLORS.primaryText, fontSize: 15, fontWeight: '800', letterSpacing: 2 },
 
   detailSecondaryBtns: { flexDirection: 'row', gap: 10 },
   detailSecBtn: {
     flex: 1, height: 48, borderRadius: 14,
-    backgroundColor: '#001419', borderWidth: 1, borderColor: '#003040',
+    backgroundColor: COLORS.surfaceAlt, borderWidth: 1, borderColor: COLORS.border,
     alignItems: 'center', justifyContent: 'center',
   },
-  detailSecBtnTxt: { fontSize: 14, fontWeight: '600', color: '#00a896' },
+  detailSecBtnTxt: { fontSize: 14, fontWeight: '600', color: COLORS.teal },
 
-  detailSourceBadge: { backgroundColor: '#001419', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, marginBottom: 14, alignSelf: 'flex-start', borderWidth: 1, borderColor: '#003040' },
-  detailSourceTxt:   { color: '#00f5e9', fontSize: 12, fontWeight: '600' },
+  detailSourceBadge: { backgroundColor: COLORS.surfaceAlt, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, marginBottom: 14, alignSelf: 'flex-start', borderWidth: 1, borderColor: COLORS.border },
+  detailSourceTxt:   { color: COLORS.teal, fontSize: 12, fontWeight: '600' },
+
+  // Price legend modal
+  legendCard: {
+    backgroundColor: COLORS.surface, borderRadius: 18,
+    borderWidth: 1, borderColor: COLORS.border,
+    width: 280, padding: 20,
+  },
+  legendTitle: {
+    fontSize: 12, fontWeight: '700', color: COLORS.gold, letterSpacing: 2,
+    textAlign: 'center', marginBottom: 14,
+  },
+  legendRow:   { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8, borderBottomWidth: 0.5, borderBottomColor: COLORS.border },
+  legendSymbol:{ fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, width: 40 },
+  legendLabel: { fontSize: 14, color: COLORS.textSecondary, flex: 1 },
+  legendSub:   { fontSize: 11, color: COLORS.textMuted, marginTop: 12, lineHeight: 15, textAlign: 'center' },
 });

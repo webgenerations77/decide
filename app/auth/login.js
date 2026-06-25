@@ -9,6 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 import { signInWithGoogleCredential } from '../../services/authService';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
+import { COLORS } from '../../constants/theme';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -69,7 +70,7 @@ export default function LoginScreen() {
           <View style={styles.hero}>
             <Text style={styles.heroEmoji}>🧭</Text>
             <Text style={styles.heroTitle}>Decide</Text>
-            <Text style={styles.heroSub}>Your day, decided.</Text>
+            <Text style={styles.heroSub}>Your day, decided by Cheddar.</Text>
           </View>
 
           {!!error && (
@@ -85,7 +86,7 @@ export default function LoginScreen() {
               value={email}
               onChangeText={setEmail}
               placeholder="you@example.com"
-              placeholderTextColor="#4a6a6e"
+              placeholderTextColor={COLORS.textMuted}
               keyboardType="email-address"
               autoCapitalize="none"
               autoComplete="email"
@@ -97,7 +98,7 @@ export default function LoginScreen() {
               value={password}
               onChangeText={setPassword}
               placeholder="Your password"
-              placeholderTextColor="#4a6a6e"
+              placeholderTextColor={COLORS.textMuted}
               secureTextEntry
               autoComplete="password"
             />
@@ -109,7 +110,7 @@ export default function LoginScreen() {
               activeOpacity={0.7}
             >
               {loading ? (
-                <ActivityIndicator color="#00191f" />
+                <ActivityIndicator color={COLORS.bg} />
               ) : (
                 <Text style={styles.primaryBtnText}>Sign In</Text>
               )}
@@ -140,32 +141,32 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#00191f' },
+  container: { flex: 1, backgroundColor: COLORS.bg },
   flex: { flex: 1 },
   scroll: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingBottom: 40 },
   hero: { alignItems: 'center', marginBottom: 32 },
   heroEmoji: { fontSize: 56, marginBottom: 8 },
-  heroTitle: { fontSize: 36, fontWeight: '800', color: '#ffffff', letterSpacing: 1 },
-  heroSub: { fontSize: 16, color: '#9ca3af', marginTop: 4 },
+  heroTitle: { fontSize: 36, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: 1 },
+  heroSub: { fontSize: 16, color: COLORS.textSecondary, marginTop: 4 },
   errorBox: { backgroundColor: 'rgba(248,113,113,0.15)', borderRadius: 12, padding: 12, marginBottom: 16 },
-  errorText: { color: '#f87171', fontSize: 14, textAlign: 'center' },
+  errorText: { color: COLORS.error, fontSize: 14, textAlign: 'center' },
   form: { gap: 12 },
-  label: { color: '#9ca3af', fontSize: 13, fontWeight: '600', marginBottom: 2 },
+  label: { color: COLORS.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 2 },
   input: {
-    backgroundColor: '#00262e', borderWidth: 1, borderColor: '#003040',
-    borderRadius: 12, padding: 14, fontSize: 16, color: '#ffffff',
+    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
+    borderRadius: 12, padding: 14, fontSize: 16, color: COLORS.textPrimary,
   },
   primaryBtn: {
-    backgroundColor: '#00d2be', borderRadius: 14, height: 52,
+    backgroundColor: COLORS.primary, borderRadius: 14, height: 52,
     alignItems: 'center', justifyContent: 'center', marginTop: 8,
   },
-  primaryBtnText: { color: '#00191f', fontSize: 17, fontWeight: '700' },
+  primaryBtnText: { color: COLORS.primaryText, fontSize: 17, fontWeight: '700' },
   btnDisabled: { opacity: 0.6 },
   googleBtn: {
-    backgroundColor: '#00262e', borderWidth: 1, borderColor: '#003040',
+    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
     borderRadius: 14, height: 52, alignItems: 'center', justifyContent: 'center',
   },
-  googleBtnText: { color: '#ffffff', fontSize: 16, fontWeight: '600' },
+  googleBtnText: { color: COLORS.textPrimary, fontSize: 16, fontWeight: '600' },
   links: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 24, paddingHorizontal: 4 },
-  linkText: { color: '#00d2be', fontSize: 14, fontWeight: '600' },
+  linkText: { color: COLORS.teal, fontSize: 14, fontWeight: '600' },
 });

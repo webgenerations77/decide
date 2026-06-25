@@ -97,7 +97,7 @@ export async function POST(request) {
       const message = await client.messages.create({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 512,
-        system: 'You are a day planner. You return ONLY a valid JSON object for a single itinerary stop. No prose, no markdown, no explanation.',
+        system: 'You are Cheddar, a travel planning assistant. Return ONLY a valid JSON object for a single itinerary stop. No prose, no markdown, no explanation.',
         messages: [{
           role: 'user',
           content: `Replace this itinerary stop with a different option.
@@ -114,7 +114,7 @@ Rules:
 - Keep "category" exactly as: "${stop.category}"
 - Pick a DIFFERENT place from the available list
 - Write a fresh "reason" for the new pick
-- Return a single JSON object with fields: time, duration_mins, category, name, place_id, address, lat, lng, reason, excitement_score`,
+- Return a single JSON object with fields: time, duration_mins, category, name, place_id, address, lat, lng, reason, excitement_score, admission_cost`,
         }],
       });
 

@@ -6,6 +6,7 @@ import * as Location from 'expo-location';
 import * as Notifications from 'expo-notifications';
 import { useState } from 'react';
 import { save, KEYS } from '../../services/settingsService';
+import { COLORS } from '../../constants/theme';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const GROUP_OPTS = [
@@ -170,8 +171,8 @@ export default function OnboardingScreen() {
           <Switch
             value={notifications}
             onValueChange={setNotifications}
-            trackColor={{ false: '#003040', true: '#00d2be' }}
-            thumbColor={notifications ? '#ffffff' : '#555'}
+            trackColor={{ false: COLORS.border, true: COLORS.teal }}
+            thumbColor={notifications ? COLORS.primaryText : COLORS.textMuted}
           />
         </View>
       </ScrollView>
@@ -191,33 +192,33 @@ export default function OnboardingScreen() {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#00191f' },
+  safeArea: { flex: 1, backgroundColor: COLORS.bg },
   screen:   { flex: 1 },
   content:  { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 20 },
 
   // Hero
   hero: { alignItems: 'center', gap: 8, marginBottom: 28 },
   glowWrap: {
-    shadowColor: '#7c3aed', shadowOffset: { width: 0, height: 0 },
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.8, shadowRadius: 24, elevation: 18,
   },
   emoji:   { fontSize: 80 },
-  appName: { fontSize: 32, fontWeight: '900', color: '#ffffff', letterSpacing: 8 },
+  appName: { fontSize: 32, fontWeight: '900', color: COLORS.textPrimary, letterSpacing: 8 },
   tagline: {
-    fontSize: 14, color: '#a855f7', textAlign: 'center',
+    fontSize: 14, color: COLORS.gold, textAlign: 'center',
     fontWeight: '600', lineHeight: 20, maxWidth: 280,
   },
 
   // Section labels
   sectionLabel: {
-    fontSize: 11, fontWeight: '700', color: '#a855f7',
+    fontSize: 11, fontWeight: '700', color: COLORS.gold,
     letterSpacing: 2.5, marginTop: 20, marginBottom: 8,
     textTransform: 'uppercase',
   },
 
   // Question labels
   question: {
-    fontSize: 15, fontWeight: '600', color: '#c0d8d6',
+    fontSize: 15, fontWeight: '600', color: COLORS.textSecondary,
     marginBottom: 8,
   },
 
@@ -225,46 +226,46 @@ const styles = StyleSheet.create({
   pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 },
   pill: {
     paddingHorizontal: 16, paddingVertical: 10, borderRadius: 16,
-    backgroundColor: '#00262e', borderWidth: 1, borderColor: '#003040',
+    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
   },
-  pillActive:     { backgroundColor: '#00d2be', borderColor: '#00d2be' },
-  pillText:       { fontSize: 14, color: '#00a896', fontWeight: '500' },
-  pillTextActive: { color: '#00191f', fontWeight: '700' },
+  pillActive:     { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  pillText:       { fontSize: 14, color: COLORS.teal, fontWeight: '500' },
+  pillTextActive: { color: COLORS.primaryText, fontWeight: '700' },
 
   // Multi-select cuisine chips
   chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
   chip: {
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
-    backgroundColor: '#00262e', borderWidth: 1, borderColor: '#003040',
+    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
   },
-  chipActive:     { backgroundColor: '#00d2be', borderColor: '#00d2be' },
-  chipText:       { fontSize: 13, color: '#00a896', fontWeight: '500' },
-  chipTextActive: { color: '#00191f', fontWeight: '600' },
+  chipActive:     { backgroundColor: COLORS.teal, borderColor: COLORS.teal },
+  chipText:       { fontSize: 13, color: COLORS.teal, fontWeight: '500' },
+  chipTextActive: { color: COLORS.bg, fontWeight: '600' },
 
   // Notifications row
   toggleRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: '#00262e', borderRadius: 16,
-    borderWidth: 1, borderColor: '#003040',
+    backgroundColor: COLORS.surface, borderRadius: 16,
+    borderWidth: 1, borderColor: COLORS.border,
     paddingHorizontal: 16, paddingVertical: 14,
   },
   toggleInfo:  { flex: 1, marginRight: 16 },
-  toggleLabel: { fontSize: 15, color: '#ffffff', fontWeight: '600', marginBottom: 2 },
-  toggleSub:   { fontSize: 13, color: '#00a896' },
+  toggleLabel: { fontSize: 15, color: COLORS.textPrimary, fontWeight: '600', marginBottom: 2 },
+  toggleSub:   { fontSize: 13, color: COLORS.teal },
 
   // Fixed bottom bar
   bottomBar: {
     paddingHorizontal: 20, paddingTop: 12, paddingBottom: 20,
-    gap: 10, backgroundColor: '#00191f',
-    borderTopWidth: 0.5, borderTopColor: '#003040',
+    gap: 10, backgroundColor: COLORS.bg,
+    borderTopWidth: 0.5, borderTopColor: COLORS.border,
   },
   cta: {
-    backgroundColor: '#00d2be', borderRadius: 16,
+    backgroundColor: COLORS.primary, borderRadius: 16,
     height: 56, alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#00d2be', shadowOffset: { width: 0, height: 4 },
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.45, shadowRadius: 14, elevation: 10,
   },
-  ctaText:  { color: '#00191f', fontSize: 16, fontWeight: '800', letterSpacing: 1 },
+  ctaText:  { color: COLORS.primaryText, fontSize: 16, fontWeight: '800', letterSpacing: 1 },
   skipWrap: { alignItems: 'center', paddingVertical: 4 },
-  skipText: { color: '#00a896', fontSize: 14 },
+  skipText: { color: COLORS.teal, fontSize: 14 },
 });

@@ -35,6 +35,19 @@ const PLACE_TYPES = {
   ],
 };
 
+function haversineDistance(lat1, lng1, lat2, lng2) {
+  const R    = 3958.8;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a    = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function estimateDriveTime(distanceMiles) {
+  return Math.max(3, Math.round(distanceMiles / 0.5));
+}
+
 async function fetchPlaces(lat, lng, types, radius = 30000) {
   const res = await fetch(`${NEARBY_URL}?key=${GOOGLE_KEY}`, {
     method: 'POST',
@@ -286,20 +299,22 @@ export async function POST(request) {
       latitude, longitude, date, preferences = {},
       startTime = '11:00 AM', endTime = '8:00 PM',
       feedback = {},
+      maxDistanceMiles = 25,
     } = await request.json();
 
     if (!latitude || !longitude) {
       return Response.json({ error: 'latitude and longitude are required' }, { status: 400 });
     }
 
-    const { pace = 'moderate', budget = '$$', group_type = 'couple', cuisines = [] } = preferences;
+    const { pace = 'moderate', budget = '$$', group_type = 'couple', cuisines = [], sensitivities = [] } = preferences;
+    const searchRadiusMeters = Math.round(Math.min(maxDistanceMiles, 50) * 1609.34);
     const { dislikedPlaces = [], likedPlaces = [], dislikedReasons = [] } = feedback;
 
     const [food, activity, shopping, outdoor, weather, geoInfo] = await Promise.all([
-      fetchPlaces(latitude, longitude, PLACE_TYPES.food),
-      fetchPlaces(latitude, longitude, PLACE_TYPES.activity),
-      fetchPlaces(latitude, longitude, PLACE_TYPES.shopping),
-      fetchPlaces(latitude, longitude, PLACE_TYPES.outdoor),
+      fetchPlaces(latitude, longitude, PLACE_TYPES.food,     searchRadiusMeters),
+      fetchPlaces(latitude, longitude, PLACE_TYPES.activity, searchRadiusMeters),
+      fetchPlaces(latitude, longitude, PLACE_TYPES.shopping, searchRadiusMeters),
+      fetchPlaces(latitude, longitude, PLACE_TYPES.outdoor,  searchRadiusMeters),
       fetchWeather(latitude, longitude),
       reverseGeocode(latitude, longitude),
     ]);
@@ -327,8 +342,13 @@ export async function POST(request) {
     const cityStr = city ? `${city}${state ? `, ${state}` : ''}` : 'the local area';
     const allOutdoor = [...outdoor, ...npsParks, ...ridbFacilities];
 
+    const sensitivityNote = sensitivities.length
+      ? ` User sensitivities: ${sensitivities.join(', ')}. Flag any relevant risk in the admission_cost or reason field if applicable.`
+      : '';
+
     const systemPrompt =
-      'You are a day planner with real-time web search access. ' +
+      'You are Cheddar, a knowledgeable and warm travel companion who builds brilliant day itineraries. ' +
+      'You think like a well-traveled friend: you have opinions, you know the local spots, and you give honest advice. ' +
       'Before building the itinerary, search for local events, festivals, markets, concerts, ' +
       'races, air shows, or community gatherings happening near the provided city on the provided date. ' +
       'Incorporate any found events as priority stops. ' +
@@ -341,7 +361,8 @@ export async function POST(request) {
         : '') +
       (cuisines.length
         ? ` Strongly prefer food stops from these cuisine types: ${cuisines.join(', ')}.`
-        : '');
+        : '') +
+      sensitivityNote;
 
     const feedbackLines = [
       likedPlaces.length  ? `Liked places (these were a hit): ${likedPlaces.join(', ')}` : '',
@@ -384,7 +405,8 @@ Return a JSON array only. Each element must have exactly these fields:
   "lat": 37.7749,
   "lng": -122.4194,
   "reason": "One sentence explaining why this fits the day",
-  "excitement_score": 85
+  "excitement_score": 85,
+  "admission_cost": "Free" or "$15/adult · $8/child" or "Prices vary — check website" or null (for food/shopping)
 }`;
 
     let itinerary;
@@ -412,7 +434,20 @@ Return a JSON array only. Each element must have exactly these fields:
       isFallback = true;
     }
 
-    const enriched = await enrichWithDrivingTimes(itinerary);
+    const withDistance = itinerary.map((stop) => {
+      if (!stop.lat || !stop.lng) return stop;
+      const distMiles = haversineDistance(latitude, longitude, stop.lat, stop.lng);
+      const driveMins = estimateDriveTime(distMiles);
+      const trafficNote = (weather?.wind_speed_mph > 20 || (new Date().getMonth() >= 5 && new Date().getMonth() <= 8))
+        ? ' (traffic may vary)' : '';
+      return {
+        ...stop,
+        distance: `${distMiles.toFixed(1)} mi · ~${driveMins} min drive${trafficNote}`,
+        distance_miles: parseFloat(distMiles.toFixed(1)),
+        drive_mins: driveMins,
+      };
+    });
+    const enriched = await enrichWithDrivingTimes(withDistance);
 
     return Response.json({
       itinerary: enriched,
