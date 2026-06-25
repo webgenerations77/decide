@@ -7,11 +7,19 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
+import Constants from 'expo-constants';
 import { loadAllSettings, save, KEYS } from '../services/settingsService';
 import { useAuth } from '../context/AuthContext';
 import { isPro, getDecisionCount, getSpinCount, LIMITS } from '../services/subscriptionService';
 import { scheduleDailyReminder, cancelDailyReminder, loadReminderTime } from '../services/notificationService';
 import { COLORS } from '../constants/theme';
+
+function getApiBase() {
+  if (Platform.OS === 'web') return '';
+  const hostUri = Constants.expoConfig?.hostUri;
+  if (hostUri) return `http://${hostUri.split(':')[0]}:8081`;
+  return 'http://localhost:8081';
+}
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const AVATARS         = ['🧭', '🎯', '🎲', '🌮', '🎭', '🏄', '🎸', '🌟'];
@@ -53,33 +61,16 @@ function timeToMinutes(str) {
   return hours * 60;
 }
 
-// Uses Google Geocoding API (already configured) instead of Geoapify
+// Proxies through server-side route — avoids CORS issues and keeps key server-side
 async function searchLocation(text) {
-  const key = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
-  if (!key || !text || text.length < 3) return null;
-
-  const base = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(text)}&components=country:US&key=${key}`;
-  const url  = Platform.OS === 'web' ? `https://corsproxy.io/?${encodeURIComponent(base)}` : base;
-
+  if (!text || text.length < 3) return null;
+  const base = getApiBase();
   try {
-    const res  = await fetch(url);
+    const res  = await fetch(`${base}/api/geocode?q=${encodeURIComponent(text)}`);
     const data = await res.json();
-    if (data.status === 'REQUEST_DENIED') return { error: 'api_key' };
+    if (data.error === 'api_key' || data.error === 'api_key_missing') return { error: 'api_key' };
     if (!data.results?.length) return { error: 'not_found' };
-
-    return data.results.slice(0, 5).map((r) => {
-      const parts = r.address_components ?? [];
-      const get   = (t) => parts.find((c) => c.types.includes(t));
-      const city  = get('locality')?.long_name ?? get('sublocality')?.long_name ?? get('postal_town')?.long_name;
-      const state = get('administrative_area_level_1')?.short_name;
-      const short = city && state ? `${city}, ${state}` : r.formatted_address.split(',').slice(0, 2).join(',');
-      return {
-        label:     r.formatted_address,
-        short,
-        latitude:  r.geometry.location.lat,
-        longitude: r.geometry.location.lng,
-      };
-    });
+    return data.results;
   } catch {
     return { error: 'network' };
   }

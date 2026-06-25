@@ -6,6 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
+import Constants from 'expo-constants';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { generateItinerary, swapStop } from '../../services/itineraryService';
 import { loadPlanDefaults, KEYS } from '../../services/settingsService';
@@ -15,6 +16,13 @@ import { COLORS, CATEGORY_COLORS, CATEGORY_EMOJIS, PRICE_LEGEND } from '../../co
 import { getLocalKnowledge, getAllergyAlerts } from '../../constants/localKnowledge';
 
 const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
+
+function getApiBase() {
+  if (Platform.OS === 'web') return '';
+  const hostUri = Constants.expoConfig?.hostUri;
+  if (hostUri) return `http://${hostUri.split(':')[0]}:8081`;
+  return 'http://localhost:8081';
+}
 
 // ─── Date helpers ─────────────────────────────────────────────────────────────
 function getNextSevenDays() {
@@ -612,41 +620,32 @@ export default function PlanScreen() {
       gpsCoordsRef.current = { latitude, longitude };
       AsyncStorage.setItem('lastKnownCoords', JSON.stringify({ latitude, longitude })).catch(() => {});
 
-      const key = GOOGLE_KEY;
-      if (key && key !== 'your_api_key_here') {
-        const base = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${key}`;
-        const url  = Platform.OS === 'web' ? `https://corsproxy.io/?${encodeURIComponent(base)}` : base;
-        try {
-          const geoRes  = await fetch(url);
-          const geoData = await geoRes.json();
-          if (geoData.results?.length > 0) {
-            const parts = geoData.results[0].address_components;
-            const get   = (t) => parts.find((c) => c.types.includes(t));
-            const hood  = get('neighborhood')?.long_name || get('sublocality')?.long_name;
-            const city  = get('locality')?.long_name;
-            const state = get('administrative_area_level_1')?.short_name;
-            const place = hood || city;
-            const label = place && state ? `${place}, ${state}` :
-                          place          ? place :
-                          state          ? state :
-                          `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
-            gpsLabelRef.current = label;
-            setLocationLabel(label);
-          } else {
-            const label = `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
-            gpsLabelRef.current = label;
-            setLocationLabel(label);
-          }
-        } catch {
-          const label = `Near ${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
-          gpsLabelRef.current = label;
-          setLocationLabel(label);
+      // Try expo-location's native reverse geocoding first (no API call on mobile)
+      let label = null;
+      try {
+        const [geo] = await Location.reverseGeocodeAsync({ latitude, longitude });
+        if (geo) {
+          const city  = geo.city || geo.district || geo.subregion;
+          const state = geo.region;
+          label = city && state ? `${city}, ${state}`
+                : city          ? city
+                : state         ? state
+                : null;
         }
-      } else {
-        const label = `Near ${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
-        gpsLabelRef.current = label;
-        setLocationLabel(label);
+      } catch {}
+
+      // Fall back to server-side geocode route (handles web + any native failure)
+      if (!label) {
+        try {
+          const res  = await fetch(`${getApiBase()}/api/geocode?lat=${latitude}&lng=${longitude}`);
+          const data = await res.json();
+          if (data.label) label = data.label;
+        } catch {}
       }
+
+      const finalLabel = label ?? `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
+      gpsLabelRef.current = finalLabel;
+      setLocationLabel(finalLabel);
     })();
     getRemainingDecisions().then(setRemainingDecisions).catch(() => {});
   }, []));
