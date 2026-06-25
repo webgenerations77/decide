@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView,
+  ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -68,8 +68,11 @@ export default function LoginScreen() {
       >
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <View style={styles.hero}>
-            <Text style={styles.heroEmoji}>🧭</Text>
-            <Text style={styles.heroTitle}>Decide</Text>
+            <Image
+              source={require('../../assets/logo-small.png')}
+              style={styles.heroLogo}
+              resizeMode="contain"
+            />
             <Text style={styles.heroSub}>Your day, decided by Cheddar.</Text>
           </View>
 
@@ -145,8 +148,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   scroll: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingBottom: 40 },
   hero: { alignItems: 'center', marginBottom: 32 },
-  heroEmoji: { fontSize: 56, marginBottom: 8 },
-  heroTitle: { fontSize: 36, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: 1 },
+  heroLogo: { width: 140, height: 140, marginBottom: 12 },
   heroSub: { fontSize: 16, color: COLORS.textSecondary, marginTop: 4 },
   errorBox: { backgroundColor: 'rgba(248,113,113,0.15)', borderRadius: 12, padding: 12, marginBottom: 16 },
   errorText: { color: COLORS.error, fontSize: 14, textAlign: 'center' },

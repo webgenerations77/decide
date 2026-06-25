@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
-  Linking, ActivityIndicator, Animated, Modal, Platform, Dimensions,
+  Linking, ActivityIndicator, Animated, Modal, Platform, Dimensions, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -826,7 +826,11 @@ export default function PlanScreen() {
               {displayName ? (
                 <Text style={styles.landingGreeting}>Hey, {displayName} 👋</Text>
               ) : null}
-              <Text style={styles.landingTitle}>DECIDE</Text>
+              <Image
+                source={require('../../assets/logo-small.png')}
+                style={styles.landingLogo}
+                resizeMode="contain"
+              />
               <View style={styles.locationPill}>
                 <Text style={styles.locationText}>{locationPillText}</Text>
               </View>
@@ -1096,7 +1100,7 @@ const styles = StyleSheet.create({
   },
   landingHeader: { alignItems: 'center', marginBottom: 48 },
   landingGreeting: { fontSize: 13, color: COLORS.teal, fontWeight: '500', letterSpacing: 0.3 },
-  landingTitle:  { fontSize: 28, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: 6 },
+  landingLogo: { width: 160, height: 160, marginBottom: 4 },
   locationPill: {
     marginTop: 12, paddingHorizontal: 14, paddingVertical: 6,
     borderRadius: 20, backgroundColor: COLORS.surface,
