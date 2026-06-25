@@ -1,5 +1,3 @@
-import Anthropic from '@anthropic-ai/sdk';
-
 const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 const NEARBY_URL = 'https://places.googleapis.com/v1/places:searchNearby';
 
@@ -25,8 +23,6 @@ async function fetchPlaces(lat, lng, types, radius = 30000) {
   }));
 }
 
-function extractJSON(text) { const m = text.match(/```(?:json)?\s*([\s\S]*?)```/); return m ? m[1].trim() : text.trim(); }
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -46,24 +42,20 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: `No alternative ${stop.category} places found nearby` });
     }
 
-    let newStop;
-    try {
-      const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-      const message = await client.messages.create({
-        model: 'claude-sonnet-4-6', max_tokens: 512,
-        system: 'You are a day planner. Return ONLY a valid JSON object for a single itinerary stop. No prose, no markdown.',
-        messages: [{ role: 'user', content: `Replace this stop:\n${JSON.stringify(stop,null,2)}\n\nAvailable replacements (${stop.category}):\n${JSON.stringify(available,null,2)}\n\nRules:\n- Keep time "${stop.time}", duration ${stop.duration_mins}, category "${stop.category}"\n- Pick a DIFFERENT place\n- Return JSON object with: time, duration_mins, category, name, place_id, address, lat, lng, reason, excitement_score` }],
-      });
-      const raw = message.content[0]?.text ?? '{}';
-      const parsed = JSON.parse(extractJSON(raw));
-      const candidate = Array.isArray(parsed) ? parsed[0] : parsed;
-      if (!candidate?.name) throw new Error('Invalid stop');
-      newStop = candidate;
-    } catch (e) {
-      console.warn('[swap] Claude unavailable, picking locally:', e.message);
-      const pick = available[0];
-      newStop = { time: stop.time, duration_mins: stop.duration_mins, category: stop.category, name: pick.name, place_id: pick.place_id, address: pick.address, lat: pick.lat, lng: pick.lng, reason: pick.summary ?? `A solid alternative ${stop.category} choice nearby.`, excitement_score: Math.min(Math.round((pick.rating||4)*18),95) };
-    }
+    const sorted = [...available].sort((a, b) => b.rating - a.rating);
+    const pick = sorted[0];
+    const newStop = {
+      time: stop.time,
+      duration_mins: stop.duration_mins,
+      category: stop.category,
+      name: pick.name,
+      place_id: pick.place_id,
+      address: pick.address,
+      lat: pick.lat,
+      lng: pick.lng,
+      reason: pick.summary ?? `A well-rated ${stop.category} spot nearby.`,
+      excitement_score: Math.min(Math.round((pick.rating || 4) * 18), 95),
+    };
 
     const updated = [...itinerary];
     updated[stopIndex] = newStop;

@@ -95,7 +95,7 @@ export async function POST(request) {
       const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
       const message = await client.messages.create({
-        model: 'claude-sonnet-4-6',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: 512,
         system: 'You are a day planner. You return ONLY a valid JSON object for a single itinerary stop. No prose, no markdown, no explanation.',
         messages: [{

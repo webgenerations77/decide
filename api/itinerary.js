@@ -5,6 +5,7 @@ const NPS_KEY       = process.env.EXPO_PUBLIC_NPS_API_KEY;
 const RIDB_KEY      = process.env.EXPO_PUBLIC_RIDB_API_KEY;
 const OPENROUTE_KEY = process.env.EXPO_PUBLIC_OPENROUTE_API_KEY;
 const NEARBY_URL    = 'https://places.googleapis.com/v1/places:searchNearby';
+const CACHE_TTL     = 3600000;
 
 const PLACE_TYPES = {
   food: ['restaurant','cafe','bar','bakery','barbecue_restaurant','coffee_shop','diner','donut_shop','fast_food_restaurant','fine_dining_restaurant','french_restaurant','gastropub','hamburger_restaurant','ice_cream_shop','indian_restaurant','italian_restaurant','japanese_restaurant','mexican_restaurant','pizza_restaurant','seafood_restaurant','steak_house','sushi_restaurant','thai_restaurant','american_restaurant','chinese_restaurant','wine_bar'],
@@ -12,12 +13,41 @@ const PLACE_TYPES = {
   shopping: ['shopping_mall','market','department_store','clothing_store','book_store','gift_shop'],
   outdoor: ['park','hiking_area','botanical_garden','national_park','zoo'],
 };
+const NON_FOOD_TYPES = [...PLACE_TYPES.activity, ...PLACE_TYPES.shopping, ...PLACE_TYPES.outdoor];
+const FOOD_SET = new Set(PLACE_TYPES.food);
+const ACTIVITY_SET = new Set(PLACE_TYPES.activity);
+const SHOPPING_SET = new Set(PLACE_TYPES.shopping);
+const OUTDOOR_SET = new Set(PLACE_TYPES.outdoor);
 
-async function fetchPlaces(lat, lng, types, radius = 30000) {
+const placesCache = new Map();
+const weatherCache = new Map();
+const geocodeCache = new Map();
+
+function cacheKey(lat, lng) { return `${Math.round(lat*100)/100},${Math.round(lng*100)/100}`; }
+
+function cacheGet(cache, key) {
+  const entry = cache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.ts > CACHE_TTL) { cache.delete(key); return null; }
+  return entry.data;
+}
+
+function cacheSet(cache, key, data) { cache.set(key, { data, ts: Date.now() }); }
+
+function classifyPlace(p) {
+  const pt = p.primaryType || '';
+  if (FOOD_SET.has(pt)) return 'food';
+  if (OUTDOOR_SET.has(pt)) return 'outdoor';
+  if (SHOPPING_SET.has(pt)) return 'shopping';
+  if (ACTIVITY_SET.has(pt)) return 'activity';
+  return 'activity';
+}
+
+async function fetchPlacesRaw(lat, lng, types, maxResults = 10) {
   const res = await fetch(`${NEARBY_URL}?key=${GOOGLE_KEY}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.currentOpeningHours,places.location,places.priceLevel,places.editorialSummary' },
-    body: JSON.stringify({ locationRestriction: { circle: { center: { latitude: lat, longitude: lng }, radius } }, maxResultCount: 10, includedTypes: types }),
+    headers: { 'Content-Type': 'application/json', 'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.currentOpeningHours,places.location,places.priceLevel,places.editorialSummary,places.primaryType' },
+    body: JSON.stringify({ locationRestriction: { circle: { center: { latitude: lat, longitude: lng }, radius: 30000 } }, maxResultCount: maxResults, includedTypes: types }),
   });
   const data = await res.json();
   return (data.places ?? []).map((p) => ({
@@ -25,7 +55,32 @@ async function fetchPlaces(lat, lng, types, radius = 30000) {
     rating: p.rating ?? 0, user_ratings_total: p.userRatingCount ?? 0, price_level: p.priceLevel ?? null,
     is_open: p.currentOpeningHours?.openNow ?? false, summary: p.editorialSummary?.text ?? null,
     lat: p.location?.latitude ?? 0, lng: p.location?.longitude ?? 0,
+    primaryType: p.primaryType ?? '',
   }));
+}
+
+async function fetchAllPlaces(lat, lng) {
+  const key = cacheKey(lat, lng);
+  const cached = cacheGet(placesCache, key);
+  if (cached) return cached;
+
+  const [foodRaw, nonFoodRaw] = await Promise.all([
+    fetchPlacesRaw(lat, lng, PLACE_TYPES.food, 10),
+    fetchPlacesRaw(lat, lng, NON_FOOD_TYPES, 20),
+  ]);
+
+  const food = foodRaw;
+  const activity = [], shopping = [], outdoor = [];
+  for (const p of nonFoodRaw) {
+    const cat = classifyPlace(p);
+    if (cat === 'outdoor') outdoor.push(p);
+    else if (cat === 'shopping') shopping.push(p);
+    else activity.push(p);
+  }
+
+  const result = { food, activity, shopping, outdoor };
+  cacheSet(placesCache, key, result);
+  return result;
 }
 
 function getWeatherEmoji(c) {
@@ -40,24 +95,34 @@ function getWeatherEmoji(c) {
 }
 
 async function fetchWeather(lat, lng) {
+  const key = cacheKey(lat, lng);
+  const cached = cacheGet(weatherCache, key);
+  if (cached) return cached;
   try {
     const res = await fetch(`https://wttr.in/${lat},${lng}?format=j1`);
     const data = await res.json();
     const c = data.current_condition?.[0]; if (!c) return null;
     const condition = c.weatherDesc?.[0]?.value ?? 'Clear';
-    return { condition, emoji: getWeatherEmoji(condition), temp_f: c.temp_F, feels_like_f: c.FeelsLikeF, wind_speed_mph: c.windspeedMiles ?? null, wind_dir: c.winddir16Point ?? null };
+    const result = { condition, emoji: getWeatherEmoji(condition), temp_f: c.temp_F, feels_like_f: c.FeelsLikeF, wind_speed_mph: c.windspeedMiles ?? null, wind_dir: c.winddir16Point ?? null };
+    cacheSet(weatherCache, key, result);
+    return result;
   } catch { return null; }
 }
 
 async function reverseGeocode(lat, lng) {
   if (!GOOGLE_KEY) return { city: null, state: null };
+  const key = cacheKey(lat, lng);
+  const cached = cacheGet(geocodeCache, key);
+  if (cached) return cached;
   try {
     const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_KEY}`);
     const data = await res.json();
     if (data.results?.length > 0) {
       const parts = data.results[0].address_components;
       const get = (t) => parts.find((c) => c.types.includes(t));
-      return { city: get('locality')?.long_name ?? get('sublocality')?.long_name ?? null, state: get('administrative_area_level_1')?.short_name ?? null };
+      const result = { city: get('locality')?.long_name ?? get('sublocality')?.long_name ?? null, state: get('administrative_area_level_1')?.short_name ?? null };
+      cacheSet(geocodeCache, key, result);
+      return result;
     }
   } catch {}
   return { city: null, state: null };
@@ -112,12 +177,9 @@ function buildFallbackItinerary({food,activity,shopping,outdoor,startTime,endTim
 }
 
 export default async function handler(req, res) {
-  if (req.method === 'GET') {
-    return res.json({ status: 'ok', message: 'Itinerary API is running' });
-  }
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  if (req.method === 'GET') return res.json({ status: 'ok', message: 'Itinerary API is running' });
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
   try {
     const { latitude, longitude, date, preferences = {}, startTime = '11:00 AM', endTime = '8:00 PM', feedback = {} } = req.body;
     if (!latitude || !longitude) return res.status(400).json({ error: 'latitude and longitude are required' });
@@ -125,13 +187,15 @@ export default async function handler(req, res) {
     const { pace='moderate', budget='$$', group_type='couple', cuisines=[] } = preferences;
     const { dislikedPlaces=[], likedPlaces=[], dislikedReasons=[] } = feedback;
 
-    const [food,activity,shopping,outdoor,weather,geoInfo] = await Promise.all([
-      fetchPlaces(latitude,longitude,PLACE_TYPES.food), fetchPlaces(latitude,longitude,PLACE_TYPES.activity),
-      fetchPlaces(latitude,longitude,PLACE_TYPES.shopping), fetchPlaces(latitude,longitude,PLACE_TYPES.outdoor),
-      fetchWeather(latitude,longitude), reverseGeocode(latitude,longitude),
+    const [places, weather, geoInfo] = await Promise.all([
+      fetchAllPlaces(latitude, longitude),
+      fetchWeather(latitude, longitude),
+      reverseGeocode(latitude, longitude),
     ]);
-    const {city,state}=geoInfo;
-    const [npsParks,ridbFacilities] = await Promise.all([fetchNPSParks(city,state), fetchRIDB(latitude,longitude)]);
+    const { food, activity, shopping, outdoor } = places;
+    const { city, state } = geoInfo;
+
+    const [npsParks, ridbFacilities] = await Promise.all([fetchNPSParks(city, state), fetchRIDB(latitude, longitude)]);
 
     const dateObj=date?new Date(date):new Date();
     const dayOfWeek=dateObj.toLocaleDateString('en-US',{weekday:'long'});
@@ -150,7 +214,7 @@ export default async function handler(req, res) {
     let itinerary; let isFallback=false;
     try {
       const client=new Anthropic({apiKey:process.env.ANTHROPIC_API_KEY});
-      const message=await client.messages.create({model:'claude-sonnet-4-6',max_tokens:4096,system:systemPrompt,messages:[{role:'user',content:userPrompt}]});
+      const message=await client.messages.create({model:'claude-haiku-4-5-20251001',max_tokens:4096,system:systemPrompt,messages:[{role:'user',content:userPrompt}]});
       const raw=message.content[0]?.text??'[]';
       const parsed=JSON.parse(extractJSON(raw));
       if(!Array.isArray(parsed)||parsed.length===0) throw new Error('Not a non-empty array');
