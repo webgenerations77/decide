@@ -1,38 +1,38 @@
-// Travel-oriented color palette — warm sandy tones, deep ocean blues, sunset corals
+// Purple palette derived from the Decide logo
 export const COLORS = {
   // Backgrounds
-  bg:         '#0C1A2E',   // deep ocean night
-  surface:    '#142540',   // midnight ocean
-  surfaceAlt: '#0A1423',   // deepest layer
+  bg:         '#0D0720',   // deep purple-black (logo background)
+  surface:    '#1A0A38',   // dark purple surface
+  surfaceAlt: '#0A0416',   // deepest layer
   // Borders
-  border:      '#1E3A5A',
-  borderLight: '#233F60',
-  // Primary CTA — sunset coral/orange
-  primary:     '#FF6B35',
-  primaryDark: '#CC5520',
-  primaryText: '#FFFFFF',  // text on primary buttons
-  // Tropical teal accent (replaces old #00d2be)
-  teal:        '#00BFB3',
-  tealDark:    '#009E98',
-  tealFaint:   '#00BFB322',
-  // Sandy gold — section headers, budget, highlights
-  gold:        '#C9964E',
-  goldFaint:   '#C9964E22',
+  border:      '#2D1660',
+  borderLight: '#3D2278',
+  // Primary CTA — vivid violet
+  primary:     '#8B5CF6',
+  primaryDark: '#7C3AED',
+  primaryText: '#FFFFFF',
+  // Bright lavender accent — links, chips, active states
+  teal:        '#C084FC',
+  tealDark:    '#A855F7',
+  tealFaint:   '#C084FC22',
+  // Soft lavender — section headers, labels, highlights
+  gold:        '#DDD6FE',
+  goldFaint:   '#DDD6FE22',
   // Text
   textPrimary:   '#FFFFFF',
-  textSecondary: '#8AACBF',
-  textMuted:     '#4A7090',
+  textSecondary: '#C4B5FD',  // violet-300
+  textMuted:     '#7C5FAA',
   // Status
   success: '#4ade80',
   error:   '#f87171',
   warning: '#fbbf24',
   // Category colors
-  food:     '#FF6B35',
-  activity: '#00BFB3',
-  shopping: '#C9964E',
-  outdoor:  '#5BBFDC',
+  food:     '#F472B6',   // pink-400
+  activity: '#818CF8',   // indigo-400
+  shopping: '#FBBF24',   // amber-400
+  outdoor:  '#34D399',   // emerald-400
   // Tab bar
-  tabBar: '#0A1423',
+  tabBar: '#0A0416',
 };
 
 export const CATEGORY_COLORS = {

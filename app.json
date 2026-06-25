@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/logo-small.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0C1A2E"
+      "backgroundColor": "#0D0720"
     },
     "ios": {
       "supportsTablet": false,
@@ -19,7 +19,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/logo-small.png",
-        "backgroundColor": "#0C1A2E"
+        "backgroundColor": "#0D0720"
       },
       "package": "com.decide.app",
       "permissions": [
@@ -44,7 +44,7 @@
         "expo-notifications",
         {
           "icon": "./assets/logo-small.png",
-          "color": "#FF6B35"
+          "color": "#8B5CF6"
         }
       ]
     ],
