@@ -40,3 +40,9 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+.vercel
+
+# Claude Code local settings (may contain API keys)
+.claude/settings.local.json
+.mcp.json
