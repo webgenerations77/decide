@@ -3,76 +3,101 @@
 
 ## Stack
 - Expo SDK 56, expo-router (file-based routing)
-- Firebase (auth + Firestore)
-- Google Places API (nearby search + geocoding)
-- Anthropic API (itinerary + decision engine)
-- OpenWeatherMap API (weather-aware scheduling)
-- Ticketmaster API (local events)
-- RevenueCat (subscriptions, Phase 4)
+- Firebase Auth (email + Google Sign-In)
+- Google Places API v1 (Nearby Search) + Places Details + Places Autocomplete
+- Anthropic API — claude-haiku-4-5-20251001 (itinerary + swap, server-side only)
+- wttr.in (weather, no key required)
+- NPS API (national parks)
+- RIDB / Recreation.gov API (campgrounds/facilities)
+- RevenueCat (subscriptions — Phase 4, not yet wired)
 
-## Color Theme
-- Background: #0d0d0d
-- Surface/cards: #1a1a2e
-- Primary purple: #7c3aed
-- Accent purple: #a855f7
-- Text primary: #ffffff
-- Text secondary: #9ca3af
-- Tab bar: #12121f
+## Color Theme (source of truth: constants/theme.js)
+- Background:      #0C1A2E  (COLORS.bg)
+- Surface:         #142540  (COLORS.surface)
+- Surface alt:     #0A1423  (COLORS.surfaceAlt)
+- Border:          #1E3A5A  (COLORS.border)
+- Primary (orange):#FF6B35  (COLORS.primary)
+- Teal accent:     #00BFB3  (COLORS.teal)
+- Gold:            #C9964E  (COLORS.gold)
+- Text primary:    #FFFFFF
+- Text secondary:  #8AACBF
+- Text muted:      #4A7090
+- Tab bar:         #0A1423  (COLORS.tabBar)
+- Category colors: food=#FF6B35, activity=#00BFB3, shopping=#C9964E, outdoor=#5BBFDC
 
 ## App Structure
-- app/_layout.js — root tab navigator
-- app/index.js — Home screen (DECIDE button, category pills, location)
-- app/result.js — Decision result card
-- app/fallback.js — Fallback trio screen
-- app/(tabs)/plan.js — Day itinerary timeline (in progress)
-- app/api/itinerary+api.js — Server-side itinerary API route (in progress)
+- app/_layout.js               — root layout, auth guard, demo banner, offline banner
+- app/(tabs)/_layout.js        — tab navigator
+- app/(tabs)/plan.js           — DECIDE screen: landing → configuring → itinerary
+- app/(tabs)/spin.js           — Quick Spin wheel
+- app/(tabs)/history.js        — decision + itinerary history
+- app/(tabs)/settings.js       — wraps screens/SettingsScreen.js
+- app/auth/login.js            — email + Google sign-in
+- app/auth/signup.js           — registration with ToS checkbox
+- app/terms.js                 — Terms of Service page
+- app/onboarding/index.js      — first-run preference setup
+- app/paywall.js               — subscription upsell
+- app/api/itinerary+api.js     — POST: generate full-day itinerary (Cheddar)
+- app/api/itinerary-swap+api.js— POST: swap a single stop
+- app/api/geocode+api.js       — GET: reverse geocode (?lat=&lng=) and forward search (?q=)
+- screens/SettingsScreen.js    — full settings UI
+- constants/theme.js           — all color values + PRICE_LEGEND + CATEGORY_COLORS/EMOJIS
+- constants/localKnowledge.js  — Cheddar local tips (Delmarva/DE/MD beach region)
+- services/settingsService.js  — AsyncStorage keys + load/save helpers
+- services/itineraryService.js — client-side POST to /api/itinerary
+- services/subscriptionService.js — free tier limits, decision/spin counters
+- services/notificationService.js — daily reminder scheduling
 
-## Key Decisions
-- All screens mobile-first, max 390px centered on web
-- expo-router for all navigation
+## Key Decisions & Conventions
+- All screens mobile-first; `--legacy-peer-deps` required for all npm installs
 - EXPO_PUBLIC_ prefix required for all client-side env vars
-- Use --legacy-peer-deps for all npm installs on this project
-
-## Anthropic Key — Server-Side Only
-ANTHROPIC_API_KEY is server-side only, used by the Expo API routes
-(app/api/itinerary+api.js and app/api/itinerary-swap+api.js).
-The client calls these routes instead of the Anthropic API directly.
-Requires web output mode ("server" in app.json) for production builds.
+- ANTHROPIC_API_KEY is server-side only (never exposed to client)
+- Google Geocoding API is NOT used directly from the client — proxy through /api/geocode
+- Auto location uses expo-location.reverseGeocodeAsync() on native (no API call)
+- Manual location search uses Places Autocomplete + Place Details via /api/geocode?q=
+- AI assistant is named "Cheddar" in all user-facing text — never "AI" or "artificial intelligence"
+- All new colors must come from constants/theme.js — no hardcoded hex values in components
 
 ## Itinerary Spec
-- Runs 11am–8pm
-- Includes: morning activity, lunch ~noon-1pm, afternoon mix, dinner 6:30-8pm
-- Returns JSON array, each stop has: time, duration_mins, category, name, place_id, address, reason, excitement_score
-- Weather-aware: rain swaps outdoor to indoor
-- Day-of-week aware: weekday vs weekend scheduling differs
+- Time window: configurable (default 11am–8pm), minimum 3 hours
+- Stop count: relaxed=4–5, moderate=5–6, packed=7–8
+- Each stop: time, duration_mins, category, name, place_id, address, lat, lng,
+  reason, excitement_score, admission_cost, distance, distance_miles, drive_mins
+- Distance/drive time calculated server-side via haversine + 30mph estimate
+- Weather-aware: wttr.in provides conditions; wind >20mph or Jun–Aug adds traffic note
+- Fallback itinerary runs locally if Cheddar (Claude) is unavailable
 
-## Excitement Index Formula
-excitementScore = (rating * 20)
-  + (Math.min(userRatingsTotal, 500) / 5)
-  + (openNow ? 15 : 0)
-  - (distanceKm * 5)
+## Anthropic Key — Server-Side Only
+ANTHROPIC_API_KEY used by app/api/itinerary+api.js and app/api/itinerary-swap+api.js.
+Model: claude-haiku-4-5-20251001 (cost-efficient, fast).
+Client never calls Anthropic directly.
 
 ## Monetization
 - Free tier: 5 decisions/day, 3 quick spins/day
 - Pro: $3.99/mo — unlimited decisions, full itinerary, history
-- Payments via RevenueCat (Phase 4)
+- Payments via RevenueCat (Phase 4 — not yet wired)
 
-## User Preferences (stored in AsyncStorage)
-- groupType: solo | couple | family | friends
-- pace: relaxed | moderate | packed
-- budget: $ | $$ | $$$
-- cuisines: array of preferences
-- dietaryRestrictions: array
-- maxDistanceMiles: number
+## User Preferences (AsyncStorage keys in services/settingsService.js)
+- @decide/display_name, @decide/avatar
+- @decide/location_mode (auto | manual), @decide/manual_location
+- @decide/default_pace, @decide/default_budget, @decide/default_group
+- @decide/default_start_time, @decide/default_end_time
+- @decide/cuisines, @decide/dietary, @decide/activity_styles
+- @decide/sensitivities (food allergens + environmental triggers)
+- @decide/max_distance (1–50 miles)
+- @decide/notifications, @decide/tos_accepted
+- @decide/demo_mode (uses Berlin, MD sample data)
 
 ## Environment Variables
-EXPO_PUBLIC_GOOGLE_PLACES_API_KEY=
-ANTHROPIC_API_KEY= (server-side only, used by API routes)
-EXPO_PUBLIC_OPENWEATHER_API_KEY=
-EXPO_PUBLIC_TICKETMASTER_API_KEY=
+EXPO_PUBLIC_GOOGLE_PLACES_API_KEY= (Places Nearby, Autocomplete, Details, Geocoding)
+ANTHROPIC_API_KEY=                 (server-side only)
+EXPO_PUBLIC_NPS_API_KEY=           (National Park Service)
+EXPO_PUBLIC_RIDB_API_KEY=          (Recreation.gov)
+EXPO_PUBLIC_OPENROUTE_API_KEY=     (driving times — optional, haversine fallback used if empty)
+
 ## Cost Management
-- Prefer claude-haiku-4-5 for routine edits and file reads
-- Use claude-sonnet-4-6 only for complex logic
+- Prefer claude-haiku-4-5 for all AI calls in this project
+- Use claude-sonnet-4-6 only for complex multi-file changes in Claude Code sessions
 
 ---
 
