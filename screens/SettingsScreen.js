@@ -758,7 +758,10 @@ export default function SettingsScreen() {
                   text: 'Sign Out',
                   style: 'destructive',
                   onPress: async () => {
-                    try { await signOut(); } catch {}
+                    try {
+                      await signOut();
+                      router.replace('/auth/login');
+                    } catch {}
                   },
                 },
               ]);
