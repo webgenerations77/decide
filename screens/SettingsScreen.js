@@ -760,8 +760,9 @@ export default function SettingsScreen() {
                   onPress: async () => {
                     try {
                       await signOut();
-                      router.replace('/auth/login');
-                    } catch {}
+                    } catch {
+                      Alert.alert('Error', 'Sign out failed. Please try again.');
+                    }
                   },
                 },
               ]);
