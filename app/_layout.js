@@ -1,9 +1,20 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, AppState } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, AppState, ActivityIndicator } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Notifications from 'expo-notifications';
+import { AuthProvider, useAuth } from '../context/AuthContext';
+import OfflineBanner from '../components/OfflineBanner';
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 function DemoBanner({ onDismiss }) {
   const insets = useSafeAreaInsets();
@@ -18,12 +29,47 @@ function DemoBanner({ onDismiss }) {
   );
 }
 
+function SplashScreen() {
+  return (
+    <View style={styles.splash}>
+      <Text style={styles.splashEmoji}>🧭</Text>
+      <Text style={styles.splashTitle}>Decide</Text>
+      <ActivityIndicator color="#00d2be" size="large" style={{ marginTop: 24 }} />
+    </View>
+  );
+}
+
 function RootLayoutInner() {
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const [demoMode, setDemoMode] = useState(false);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    router.replace('/onboarding');
+    if (authLoading) return;
+
+    const route = async () => {
+      if (!user) {
+        router.replace('/auth/login');
+      } else {
+        const onboarded = await AsyncStorage.getItem('@decide/onboardingComplete').catch(() => null);
+        if (onboarded === 'true') {
+          router.replace('/(tabs)/plan');
+        } else {
+          router.replace('/onboarding');
+        }
+      }
+      setReady(true);
+    };
+    route();
+  }, [authLoading, user]);
+
+  useEffect(() => {
+    const sub = Notifications.addNotificationResponseReceivedListener(response => {
+      const screen = response.notification.request.content.data?.screen;
+      if (screen) router.push(screen);
+    });
+    return () => sub.remove();
   }, []);
 
   useEffect(() => {
@@ -43,11 +89,16 @@ function RootLayoutInner() {
     setDemoMode(false);
   };
 
+  if (authLoading || !ready) {
+    return <SplashScreen />;
+  }
+
   return (
     <>
       <StatusBar style="light" />
       <Stack screenOptions={{ headerShown: false }} />
       {demoMode && <DemoBanner onDismiss={disableDemo} />}
+      <OfflineBanner />
     </>
   );
 }
@@ -55,7 +106,9 @@ function RootLayoutInner() {
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <RootLayoutInner />
+      <AuthProvider>
+        <RootLayoutInner />
+      </AuthProvider>
     </SafeAreaProvider>
   );
 }
@@ -71,4 +124,10 @@ const styles = StyleSheet.create({
   bannerSide: { width: 32, alignItems: 'flex-end', justifyContent: 'center' },
   bannerText: { flex: 1, fontSize: 12, fontWeight: '700', color: '#00191f', textAlign: 'center' },
   bannerX:    { fontSize: 14, fontWeight: '700', color: '#00191f' },
+  splash: {
+    flex: 1, backgroundColor: '#00191f',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  splashEmoji: { fontSize: 64, marginBottom: 12 },
+  splashTitle: { fontSize: 36, fontWeight: '800', color: '#ffffff', letterSpacing: 1 },
 });

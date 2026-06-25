@@ -33,12 +33,11 @@
 - EXPO_PUBLIC_ prefix required for all client-side env vars
 - Use --legacy-peer-deps for all npm installs on this project
 
-## Anthropic Key — Security Note (Dev Only)
-EXPO_PUBLIC_ANTHROPIC_API_KEY is currently client-side so the itinerary feature
-works in both web and mobile dev without a server. This is intentional and
-acknowledged. Before production launch, move the Claude call behind a Firebase
-Cloud Function and remove EXPO_PUBLIC_ANTHROPIC_API_KEY from the bundle.
-app/api/itinerary+api.js is kept for the future EAS/server deployment path.
+## Anthropic Key — Server-Side Only
+ANTHROPIC_API_KEY is server-side only, used by the Expo API routes
+(app/api/itinerary+api.js and app/api/itinerary-swap+api.js).
+The client calls these routes instead of the Anthropic API directly.
+Requires web output mode ("server" in app.json) for production builds.
 
 ## Itinerary Spec
 - Runs 11am–8pm
@@ -68,8 +67,7 @@ excitementScore = (rating * 20)
 
 ## Environment Variables
 EXPO_PUBLIC_GOOGLE_PLACES_API_KEY=
-EXPO_PUBLIC_ANTHROPIC_API_KEY= (dev only — client-side, see security note above)
-ANTHROPIC_API_KEY= (kept in .env for future server-side use)
+ANTHROPIC_API_KEY= (server-side only, used by API routes)
 EXPO_PUBLIC_OPENWEATHER_API_KEY=
 EXPO_PUBLIC_TICKETMASTER_API_KEY=
 ## Cost Management

@@ -6,7 +6,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
+import { useRouter } from 'expo-router';
 import { getDemoSpinResult } from '../services/demoData';
+import { isAtSpinLimit, incrementSpinCount, getRemainingSpins, LIMITS } from '../services/subscriptionService';
 
 const GOOGLE_KEY  = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 const NEARBY_URL  = 'https://places.googleapis.com/v1/places:searchNearby';
@@ -61,12 +63,14 @@ async function fetchNearbyPlaces(lat, lng, types) {
 }
 
 export default function SpinScreen() {
+  const router = useRouter();
   const [category,    setCategory]    = useState('surprise');
   const [spinning,    setSpinning]    = useState(false);
   const [result,      setResult]      = useState(null);
   const [error,       setError]       = useState(null);
   const [coords,      setCoords]      = useState(null);
   const [locLoading,  setLocLoading]  = useState(true);
+  const [remainingSpins, setRemainingSpins] = useState(null);
 
   const spinAnim   = useRef(new Animated.Value(0)).current;
   const bounceAnim = useRef(new Animated.Value(0)).current;
@@ -101,10 +105,12 @@ export default function SpinScreen() {
         setLocLoading(false);
       }
     })();
+    getRemainingSpins().then(setRemainingSpins).catch(() => {});
   }, []);
 
   const spin = async () => {
     if (spinning || !coords) return;
+    if (await isAtSpinLimit()) { router.push('/paywall'); return; }
     setSpinning(true);
     setResult(null);
     setError(null);
@@ -147,12 +153,13 @@ export default function SpinScreen() {
         if (r <= 0) { pick = pool[i]; break; }
       }
 
-      setTimeout(() => {
+      setTimeout(async () => {
         setResult({ ...pick, categoryId: cat.id, categoryEmoji: cat.emoji, categoryColor: cat.color });
         setSpinning(false);
-        // Bounce the card in
         bounceAnim.setValue(0);
         Animated.spring(bounceAnim, { toValue: 1, friction: 6, useNativeDriver: true }).start();
+        await incrementSpinCount().catch(() => {});
+        getRemainingSpins().then(setRemainingSpins).catch(() => {});
       }, 1000);
     } catch (e) {
       setTimeout(() => {
@@ -189,6 +196,9 @@ export default function SpinScreen() {
         {/* Header */}
         <Text style={styles.title}>QUICK SPIN</Text>
         <Text style={styles.sub}>Instant pick, no overthinking</Text>
+        {remainingSpins != null && remainingSpins !== Infinity && (
+          <Text style={styles.remainingText}>{remainingSpins}/{LIMITS.FREE_SPINS_PER_DAY} spins remaining today</Text>
+        )}
 
         {/* Category pills */}
         <View style={styles.catRow}>
@@ -259,6 +269,9 @@ export default function SpinScreen() {
         {error && !spinning && (
           <View style={styles.errorBox}>
             <Text style={styles.errorTxt}>{error}</Text>
+            <TouchableOpacity style={styles.retryBtn} onPress={spin} activeOpacity={0.7}>
+              <Text style={styles.retryBtnTxt}>Try Again</Text>
+            </TouchableOpacity>
           </View>
         )}
       </ScrollView>
@@ -278,7 +291,8 @@ const styles = StyleSheet.create({
     letterSpacing: 5, textAlign: 'center',
     textShadowColor: '#7c3aed', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 14,
   },
-  sub: { fontSize: 13, color: '#a855f7', marginTop: 6, marginBottom: 24 },
+  sub: { fontSize: 13, color: '#a855f7', marginTop: 6, marginBottom: 8 },
+  remainingText: { fontSize: 11, color: '#4a6a6e', marginBottom: 16 },
 
   // Category pills
   catRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginBottom: 32 },
@@ -335,5 +349,11 @@ const styles = StyleSheet.create({
     marginTop: 16, backgroundColor: '#1a0a0a', borderRadius: 12,
     borderWidth: 1, borderColor: '#991b1b44', padding: 14,
   },
-  errorTxt: { fontSize: 13, color: '#f87171', textAlign: 'center' },
+  errorTxt: { fontSize: 13, color: '#f87171', textAlign: 'center', marginBottom: 8 },
+  retryBtn: {
+    backgroundColor: '#00262e', borderWidth: 1, borderColor: '#003040',
+    borderRadius: 16, paddingHorizontal: 24, height: 40,
+    alignItems: 'center', justifyContent: 'center', alignSelf: 'center',
+  },
+  retryBtnTxt: { color: '#00d2be', fontSize: 13, fontWeight: '700' },
 });

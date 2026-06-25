@@ -6,9 +6,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
-import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { generateItinerary, swapStop } from '../../services/itineraryService';
-import { loadPlanDefaults } from '../../services/settingsService';
+import { loadPlanDefaults, KEYS } from '../../services/settingsService';
+import { isAtDecisionLimit, incrementDecisionCount, getRemainingDecisions, LIMITS } from '../../services/subscriptionService';
+import { scheduleItineraryAlerts, cancelItineraryAlerts } from '../../services/notificationService';
 
 const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 
@@ -451,7 +453,9 @@ function PillRow({ options, selected, onSelect, disabled }) {
 
 // ─── PlanScreen ───────────────────────────────────────────────────────────────
 export default function PlanScreen() {
+  const router = useRouter();
   const [view, setView] = useState('landing');
+  const [remainingDecisions, setRemainingDecisions] = useState(null);
 
   const [locationLabel, setLocationLabel] = useState('Locating...');
   const [isManual,      setIsManual]      = useState(false);
@@ -566,6 +570,7 @@ export default function PlanScreen() {
         setLocationLabel(label);
       }
     })();
+    getRemainingDecisions().then(setRemainingDecisions).catch(() => {});
   }, []));
 
   useEffect(() => {
@@ -615,11 +620,13 @@ export default function PlanScreen() {
   const goToLanding = () => {
     setItinerary(null); setWeather(null); setMeta(null); setError(null); setIsFallback(false);
     setView('landing');
+    cancelItineraryAlerts().catch(() => {});
   };
 
   const generate = async () => {
     if (!coords) { setError('Location not available yet. Please wait a moment.'); return; }
     if (!isValidTimeWindow) return;
+    if (await isAtDecisionLimit()) { router.push('/paywall'); return; }
     setLoading(true); setError(null);
     try {
       let feedbackCtx = {};
@@ -670,6 +677,12 @@ export default function PlanScreen() {
         );
       } catch (e) {
         console.warn('[history] save itinerary error', e);
+      }
+      await incrementDecisionCount().catch(() => {});
+      getRemainingDecisions().then(setRemainingDecisions).catch(() => {});
+      const notifEnabled = await AsyncStorage.getItem(KEYS.NOTIFICATIONS).catch(() => null);
+      if (notifEnabled === 'true' && data.itinerary) {
+        scheduleItineraryAlerts(data.itinerary).catch(console.warn);
       }
     } catch (err) {
       console.error('[plan] generate error:', err);
@@ -808,7 +821,14 @@ export default function PlanScreen() {
               )}
             </View>
 
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+            {error ? (
+              <View style={{ alignItems: 'center', gap: 10 }}>
+                <Text style={styles.errorText}>{error}</Text>
+                <TouchableOpacity style={styles.retryBtn} onPress={generate} activeOpacity={0.7}>
+                  <Text style={styles.retryBtnText}>Try Again</Text>
+                </TouchableOpacity>
+              </View>
+            ) : null}
           </View>
         )}
 
@@ -900,6 +920,9 @@ export default function PlanScreen() {
             </TouchableOpacity>
           </Animated.View>
           {!loading && <Text style={styles.generateSubtext}>AI-curated itinerary based on your location</Text>}
+          {!loading && remainingDecisions != null && remainingDecisions !== Infinity && (
+            <Text style={styles.remainingText}>{remainingDecisions}/{LIMITS.FREE_DECISIONS_PER_DAY} decisions remaining today</Text>
+          )}
         </View>
       )}
 
@@ -1105,6 +1128,9 @@ const styles = StyleSheet.create({
   generateBtnDisabled: { opacity: 0.45 },
   generateBtnText:     { color: '#00191f', fontSize: 15, fontWeight: '800', letterSpacing: 2.5 },
   generateSubtext:     { textAlign: 'center', fontSize: 12, color: '#444', letterSpacing: 0.3, marginTop: 8 },
+  remainingText:       { textAlign: 'center', fontSize: 11, color: '#4a6a6e', marginTop: 4 },
+  retryBtn:            { backgroundColor: '#00262e', borderWidth: 1, borderColor: '#003040', borderRadius: 16, paddingHorizontal: 24, height: 44, alignItems: 'center', justifyContent: 'center' },
+  retryBtnText:        { color: '#00d2be', fontSize: 14, fontWeight: '700' },
 
   // Itinerary
   fallbackBanner: {

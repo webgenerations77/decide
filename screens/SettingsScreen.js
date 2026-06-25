@@ -8,6 +8,9 @@ import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { loadAllSettings, save, KEYS } from '../services/settingsService';
+import { useAuth } from '../context/AuthContext';
+import { isPro, getDecisionCount, getSpinCount, LIMITS } from '../services/subscriptionService';
+import { scheduleDailyReminder, cancelDailyReminder, loadReminderTime } from '../services/notificationService';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const AVATARS         = ['🧭', '🎯', '🎲', '🌮', '🎭', '🏄', '🎸', '🌟'];
@@ -208,6 +211,7 @@ function DistanceSlider({ value, onChange }) {
 // ─── SettingsScreen ───────────────────────────────────────────────────────────
 export default function SettingsScreen() {
   const router = useRouter();
+  const { user, signOut } = useAuth();
   const [loaded,         setLoaded]         = useState(false);
   const [displayName,    setDisplayName]    = useState('');
   const [avatar,         setAvatar]         = useState('🎯');
@@ -229,6 +233,11 @@ export default function SettingsScreen() {
   const [notifications,  setNotifications]  = useState(false);
   const [demoMode,       setDemoMode]       = useState(false);
   const [toastMsg,       setToastMsg]       = useState(null);
+  const [proStatus,      setProStatus]      = useState(false);
+  const [usageDecisions, setUsageDecisions] = useState(0);
+  const [usageSpins,     setUsageSpins]     = useState(0);
+  const [reminderHour,   setReminderHour]   = useState(9);
+  const [reminderMinute, setReminderMinute] = useState(0);
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const pulseLoop = useRef(null);
 
@@ -257,6 +266,12 @@ export default function SettingsScreen() {
       const demoRaw = await AsyncStorage.getItem('@decide/demo_mode').catch(() => null);
       setDemoMode(demoRaw === 'true');
       setLoaded(true);
+      isPro().then(setProStatus).catch(() => {});
+      getDecisionCount().then(setUsageDecisions).catch(() => {});
+      getSpinCount().then(setUsageSpins).catch(() => {});
+      loadReminderTime().then((t) => {
+        if (t) { setReminderHour(t.hour); setReminderMinute(t.minute); }
+      }).catch(() => {});
     })();
   }, []);
 
@@ -366,12 +381,23 @@ export default function SettingsScreen() {
       const granted = status === 'granted';
       setNotifications(granted);
       save(KEYS.NOTIFICATIONS, granted);
-      if (!granted) {
+      if (granted) {
+        scheduleDailyReminder(reminderHour, reminderMinute).catch(() => {});
+      } else {
         Alert.alert('Notifications blocked', 'Enable notifications in your device Settings to allow this.');
       }
     } else {
       setNotifications(false);
       save(KEYS.NOTIFICATIONS, false);
+      cancelDailyReminder().catch(() => {});
+    }
+  };
+
+  const handleReminderTime = (hour, minute) => {
+    setReminderHour(hour);
+    setReminderMinute(minute);
+    if (notifications) {
+      scheduleDailyReminder(hour, minute).catch(() => {});
     }
   };
 
@@ -448,6 +474,37 @@ export default function SettingsScreen() {
               </TouchableOpacity>
             ))}
           </View>
+        </View>
+
+        {/* ── Subscription ─────────────────────────────────────────────── */}
+        <SectionHeader title="SUBSCRIPTION" />
+        <View style={styles.card}>
+          <View style={styles.appRow}>
+            <Text style={styles.appRowLabel}>Plan</Text>
+            <Text style={[styles.appRowValue, proStatus && { color: '#00d2be' }]}>
+              {proStatus ? '👑 Decide Pro' : 'Free'}
+            </Text>
+          </View>
+          {!proStatus && (
+            <>
+              <View style={[styles.appRow, styles.appRowBorder]}>
+                <Text style={styles.appRowLabel}>Decisions today</Text>
+                <Text style={styles.appRowValue}>{usageDecisions}/{LIMITS.FREE_DECISIONS_PER_DAY}</Text>
+              </View>
+              <View style={[styles.appRow, styles.appRowBorder]}>
+                <Text style={styles.appRowLabel}>Spins today</Text>
+                <Text style={styles.appRowValue}>{usageSpins}/{LIMITS.FREE_SPINS_PER_DAY}</Text>
+              </View>
+              <TouchableOpacity
+                style={[styles.appRow, styles.appRowBorder]}
+                activeOpacity={0.7}
+                onPress={() => router.push('/paywall')}
+              >
+                <Text style={[styles.appRowLabel, { color: '#00d2be' }]}>Upgrade to Pro</Text>
+                <Text style={styles.appRowChevron}>›</Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
 
         {/* ── Section 2: Location ────────────────────────────────────────── */}
@@ -580,6 +637,37 @@ export default function SettingsScreen() {
               thumbColor={notifications ? '#00D2BE' : '#555'}
             />
           </View>
+          {notifications && (
+            <View style={[styles.appRow, styles.appRowBorder]}>
+              <Text style={styles.appRowLabel}>Daily reminder</Text>
+              <View style={{ flexDirection: 'row', gap: 6 }}>
+                {[
+                  { h: 7, m: 0, label: '7 AM' },
+                  { h: 8, m: 0, label: '8 AM' },
+                  { h: 9, m: 0, label: '9 AM' },
+                  { h: 10, m: 0, label: '10 AM' },
+                  { h: 12, m: 0, label: '12 PM' },
+                ].map((t) => (
+                  <TouchableOpacity
+                    key={t.label}
+                    style={[
+                      styles.modePill,
+                      { flex: 0, paddingHorizontal: 10, paddingVertical: 6 },
+                      reminderHour === t.h && reminderMinute === t.m && styles.modePillActive,
+                    ]}
+                    onPress={() => handleReminderTime(t.h, t.m)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[
+                      styles.modePillText,
+                      { fontSize: 11 },
+                      reminderHour === t.h && reminderMinute === t.m && styles.modePillTextActive,
+                    ]}>{t.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
 
           <TouchableOpacity
             style={[styles.appRow, styles.appRowBorder]}
@@ -623,6 +711,36 @@ export default function SettingsScreen() {
             <Text style={styles.appRowLabel}>Version</Text>
             <Text style={styles.appRowValue}>Decide v1.0.0</Text>
           </View>
+        </View>
+
+        {/* ── Account ─────────────────────────────────────────── */}
+        <Text style={styles.sectionHeader}>ACCOUNT</Text>
+        <View style={styles.card}>
+          {user?.email && (
+            <View style={styles.appRow}>
+              <Text style={styles.appRowLabel}>Email</Text>
+              <Text style={styles.appRowValue}>{user.email}</Text>
+            </View>
+          )}
+          <TouchableOpacity
+            style={[styles.appRow, user?.email ? styles.appRowBorder : null]}
+            activeOpacity={0.7}
+            onPress={() => {
+              Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Sign Out',
+                  style: 'destructive',
+                  onPress: async () => {
+                    try { await signOut(); } catch {}
+                  },
+                },
+              ]);
+            }}
+          >
+            <Text style={[styles.appRowLabel, { color: '#f87171' }]}>Sign Out</Text>
+            <Text style={styles.appRowChevron}>›</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={{ height: 48 }} />
