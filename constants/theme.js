@@ -1,38 +1,38 @@
-// Purple palette derived from the Decide logo
+// Dark charcoal-purple palette — purple as accent, neutral greys as structure
 export const COLORS = {
-  // Backgrounds
-  bg:         '#0D0720',   // deep purple-black (logo background)
-  surface:    '#1A0A38',   // dark purple surface
-  surfaceAlt: '#0A0416',   // deepest layer
-  // Borders
-  border:      '#2D1660',
-  borderLight: '#3D2278',
-  // Primary CTA — vivid violet
+  // Backgrounds — medium-dark charcoal with subtle purple undertone
+  bg:         '#1A1826',   // matches logo outer background
+  surface:    '#24223A',   // visible card surfaces
+  surfaceAlt: '#141322',   // deepest layer
+  // Borders — grey-purple, not vivid purple
+  border:      '#333050',
+  borderLight: '#3F3C60',
+  // Primary CTA — vivid violet (logo accent color)
   primary:     '#8B5CF6',
   primaryDark: '#7C3AED',
   primaryText: '#FFFFFF',
-  // Bright lavender accent — links, chips, active states
-  teal:        '#C084FC',
-  tealDark:    '#A855F7',
-  tealFaint:   '#C084FC22',
-  // Soft lavender — section headers, labels, highlights
-  gold:        '#DDD6FE',
-  goldFaint:   '#DDD6FE22',
-  // Text
+  // Lavender accent — links, chips, active states
+  teal:        '#A78BFA',
+  tealDark:    '#8B5CF6',
+  tealFaint:   '#A78BFA1A',
+  // Soft lavender — section labels, highlights
+  gold:        '#C9B8FF',
+  goldFaint:   '#C9B8FF18',
+  // Text — mostly neutral, not vivid purple
   textPrimary:   '#FFFFFF',
-  textSecondary: '#C4B5FD',  // violet-300
-  textMuted:     '#7C5FAA',
+  textSecondary: '#A9A3C2',
+  textMuted:     '#6B6680',
   // Status
   success: '#4ade80',
   error:   '#f87171',
   warning: '#fbbf24',
-  // Category colors
+  // Category colors — varied for contrast
   food:     '#F472B6',   // pink-400
   activity: '#818CF8',   // indigo-400
   shopping: '#FBBF24',   // amber-400
   outdoor:  '#34D399',   // emerald-400
   // Tab bar
-  tabBar: '#0A0416',
+  tabBar: '#141322',
 };
 
 export const CATEGORY_COLORS = {

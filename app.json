@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/logo-small.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0D0720"
+      "backgroundColor": "#1A1826"
     },
     "ios": {
       "supportsTablet": false,
@@ -19,7 +19,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/logo-small.png",
-        "backgroundColor": "#0D0720"
+        "backgroundColor": "#1A1826"
       },
       "package": "com.decide.app",
       "permissions": [
