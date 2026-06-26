@@ -602,50 +602,66 @@ export default function PlanScreen() {
         setIsManual(false);
       }
 
-      if (gpsLoadedRef.current) {
-        if (gpsLabelRef.current) {
-          setIsManual(false);
-          setLocationLabel(gpsLabelRef.current);
-          setCoords(gpsCoordsRef.current);
-        }
+      if (gpsLoadedRef.current && gpsLabelRef.current) {
+        setIsManual(false);
+        setLocationLabel(gpsLabelRef.current);
+        setCoords(gpsCoordsRef.current);
         return;
       }
-      gpsLoadedRef.current = true;
 
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') { setLocationLabel('Location unavailable'); return; }
-      const pos = await Location.getCurrentPositionAsync({});
-      const { latitude, longitude } = pos.coords;
-      setCoords({ latitude, longitude });
-      gpsCoordsRef.current = { latitude, longitude };
-      AsyncStorage.setItem('lastKnownCoords', JSON.stringify({ latitude, longitude })).catch(() => {});
-
-      // Try expo-location's native reverse geocoding first (no API call on mobile)
-      let label = null;
       try {
-        const [geo] = await Location.reverseGeocodeAsync({ latitude, longitude });
-        if (geo) {
-          const city  = geo.city || geo.district || geo.subregion;
-          const state = geo.region;
-          label = city && state ? `${city}, ${state}`
-                : city          ? city
-                : state         ? state
-                : null;
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') { setLocationLabel('Location unavailable'); return; }
+
+        // Use last-known position first for instant display, then get a fresh fix
+        let pos = await Location.getLastKnownPositionAsync({ maxAge: 300000 });
+        if (!pos) {
+          pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
         }
-      } catch {}
+        const { latitude, longitude } = pos.coords;
+        setCoords({ latitude, longitude });
+        gpsCoordsRef.current = { latitude, longitude };
+        AsyncStorage.setItem('lastKnownCoords', JSON.stringify({ latitude, longitude })).catch(() => {});
 
-      // Fall back to server-side geocode route (handles web + any native failure)
-      if (!label) {
+        // Try expo-location's native reverse geocoding first (no API call on mobile)
+        let label = null;
         try {
-          const res  = await fetch(`${getApiBase()}/api/geocode?lat=${latitude}&lng=${longitude}`);
-          const data = await res.json();
-          if (data.label) label = data.label;
-        } catch {}
-      }
+          const [geo] = await Location.reverseGeocodeAsync({ latitude, longitude });
+          if (geo) {
+            const city  = geo.city || geo.district || geo.subregion;
+            const state = geo.region;
+            label = city && state ? `${city}, ${state}`
+                  : city          ? city
+                  : state         ? state
+                  : null;
+          }
+        } catch (e) {
+          console.warn('[location] reverseGeocodeAsync failed:', e?.message ?? e);
+        }
 
-      const finalLabel = label ?? `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
-      gpsLabelRef.current = finalLabel;
-      setLocationLabel(finalLabel);
+        // Fall back to server-side geocode route (handles web + any native failure)
+        if (!label) {
+          try {
+            const res  = await fetch(`${getApiBase()}/api/geocode?lat=${latitude}&lng=${longitude}`);
+            const data = await res.json();
+            if (data.label) {
+              label = data.label;
+            } else {
+              console.warn('[location] geocode API returned no label:', JSON.stringify(data));
+            }
+          } catch (e) {
+            console.warn('[location] geocode API fetch failed:', e?.message ?? e);
+          }
+        }
+
+        const finalLabel = label ?? 'Your Location';
+        gpsLoadedRef.current = true;
+        gpsLabelRef.current = finalLabel;
+        setLocationLabel(finalLabel);
+      } catch (e) {
+        console.warn('[location] GPS acquisition failed:', e?.message ?? e);
+        setLocationLabel('Location unavailable');
+      }
     })();
     getRemainingDecisions().then(setRemainingDecisions).catch(() => {});
   }, []));

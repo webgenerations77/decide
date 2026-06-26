@@ -1,4 +1,4 @@
-﻿import { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView, Modal,
 } from 'react-native';
@@ -6,16 +6,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { DEMO_HISTORY } from '../../services/demoData';
+import { COLORS, CATEGORY_COLORS, CATEGORY_EMOJIS } from '../../constants/theme';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const CATEGORY_COLORS = {
-  food: '#00d2be', activity: '#00a896', shopping: '#7c3aed', outdoor: '#00D2BE',
-};
-const CATEGORY_EMOJIS = {
-  food: '🍽️', activity: '🎭', shopping: '🛍️', outdoor: '🌿',
-};
 const FEEDBACK_REASONS = ['Closed', 'Too crowded', 'Not my style', 'Too far', 'Too expensive', 'Other'];
-
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function formatTimestamp(ts) {
@@ -61,7 +55,7 @@ function FeedbackModal({ visible, itemName, onClose, onSelect }) {
 
 // ─── DecisionCard ─────────────────────────────────────────────────────────────
 function DecisionCard({ item, onFeedbackUp, onFeedbackDown }) {
-  const color    = CATEGORY_COLORS[item.category] ?? '#00D2BE';
+  const color    = CATEGORY_COLORS[item.category] ?? COLORS.teal;
   const catEmoji = CATEGORY_EMOJIS[item.category] ?? '⚡';
   const score    = item.excitementScore ?? item.excitement_score ?? 0;
 
@@ -156,7 +150,7 @@ function ItineraryEntry({ item, onFeedbackUp, onFeedbackDown }) {
           contentContainerStyle={styles.chipsScroll}
         >
           {item.stops.map((stop, i) => {
-            const c = CATEGORY_COLORS[stop.category] ?? '#555';
+            const c = CATEGORY_COLORS[stop.category] ?? COLORS.border;
             return (
               <View key={i} style={[styles.stopChip, { borderColor: c + '55' }]}>
                 <Text style={styles.stopChipTxt} numberOfLines={1}>{stop.name}</Text>
@@ -172,7 +166,7 @@ function ItineraryEntry({ item, onFeedbackUp, onFeedbackDown }) {
         </View>
       ) : null}
 
-      <View style={[styles.thumbsRow, { borderTopWidth: 0.5, borderTopColor: '#003040', paddingTop: 10, marginTop: 8 }]}>
+      <View style={[styles.thumbsRow, { borderTopWidth: 0.5, borderTopColor: COLORS.border, paddingTop: 10, marginTop: 8 }]}>
         <TouchableOpacity
           style={[styles.thumbBtn, item.feedback === 'up' && styles.thumbBtnUp]}
           onPress={onFeedbackUp}
@@ -400,12 +394,12 @@ export default function HistoryScreen() {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  screen:        { flex: 1, backgroundColor: '#00191f' },
+  screen:        { flex: 1, backgroundColor: COLORS.bg },
   scroll:        { flex: 1 },
   scrollContent: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 24 },
 
   title: {
-    fontSize: 28, fontWeight: '800', color: '#ffffff',
+    fontSize: 28, fontWeight: '800', color: COLORS.textPrimary,
     letterSpacing: 5, textAlign: 'center', marginBottom: 20,
   },
 
@@ -415,50 +409,49 @@ const styles = StyleSheet.create({
   },
   filterPill: {
     paddingHorizontal: 16, paddingVertical: 8, borderRadius: 16,
-    backgroundColor: '#00262e', borderWidth: 1, borderColor: '#003040',
+    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
   },
-  filterPillActive:    { backgroundColor: '#00d2be', borderColor: '#00d2be' },
-  filterPillTxt:       { fontSize: 13, fontWeight: '600', color: '#00a896' },
-  filterPillTxtActive: { color: '#00191f' },
-  countTxt: { fontSize: 12, color: '#555', marginLeft: 4 },
+  filterPillActive:    { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  filterPillTxt:       { fontSize: 13, fontWeight: '600', color: COLORS.teal },
+  filterPillTxtActive: { color: COLORS.primaryText },
+  countTxt:            { fontSize: 12, color: COLORS.textMuted, marginLeft: 4 },
 
   // Learning banner
   learningBanner: {
     marginBottom: 16, borderRadius: 12,
-    backgroundColor: '#001419', borderWidth: 1, borderColor: '#003040',
+    backgroundColor: COLORS.surfaceAlt, borderWidth: 1, borderColor: COLORS.border,
     paddingHorizontal: 14, paddingVertical: 10,
   },
-  learningTxt: { fontSize: 12, color: '#a855f7', lineHeight: 17 },
+  learningTxt: { fontSize: 12, color: COLORS.primary, lineHeight: 17 },
 
   // Decision card
   decisionCard: {
-    backgroundColor: '#00262e', borderRadius: 16,
-    borderWidth: 0.5, borderColor: '#003040', borderLeftWidth: 3,
+    backgroundColor: COLORS.surface, borderRadius: 16,
+    borderWidth: 0.5, borderColor: COLORS.border, borderLeftWidth: 3,
     marginBottom: 12, overflow: 'hidden',
   },
-  decisionTop:     { padding: 14, gap: 5 },
-  decisionNameRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  decisionTop:      { padding: 14, gap: 5 },
+  decisionNameRow:  { flexDirection: 'row', alignItems: 'center', gap: 8 },
   decisionCatEmoji: { fontSize: 16 },
-  decisionName: { flex: 1, fontSize: 15, fontWeight: '700', color: '#ffffff' },
+  decisionName:     { flex: 1, fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
   exciteBadge: {
-    backgroundColor: '#9333EA', borderRadius: 10,
+    backgroundColor: COLORS.primary + '33', borderRadius: 10,
     paddingHorizontal: 7, paddingVertical: 2,
+    borderWidth: 1, borderColor: COLORS.primary + '55',
   },
-  exciteText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+  exciteText: { color: COLORS.teal, fontSize: 10, fontWeight: '700' },
 
-  decisionReason: {
-    fontSize: 13, color: '#00a896', fontStyle: 'italic', lineHeight: 17,
-  },
+  decisionReason:  { fontSize: 13, color: COLORS.textSecondary, fontStyle: 'italic', lineHeight: 17 },
   decisionMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 2 },
-  decisionTime:    { fontSize: 11, color: '#555' },
-  decisionMeta:    { fontSize: 11, color: '#555' },
+  decisionTime:    { fontSize: 11, color: COLORS.textMuted },
+  decisionMeta:    { fontSize: 11, color: COLORS.textMuted },
 
   feedbackTag: {
     alignSelf: 'flex-start', backgroundColor: '#7f1d1d33',
     borderRadius: 8, borderWidth: 1, borderColor: '#991b1b55',
     paddingHorizontal: 8, paddingVertical: 3, marginTop: 2,
   },
-  feedbackTagTxt: { fontSize: 11, color: '#f87171', fontWeight: '600' },
+  feedbackTagTxt: { fontSize: 11, color: COLORS.error, fontWeight: '600' },
 
   // Thumbs row (shared) — right-aligned
   thumbsRow: {
@@ -469,33 +462,33 @@ const styles = StyleSheet.create({
   thumbBtnUp:   { backgroundColor: '#14532d33' },
   thumbBtnDown: { backgroundColor: '#7f1d1d33' },
   thumbTxt:     { fontSize: 15 },
-  thumbDivider: { width: 1, height: 18, backgroundColor: '#003040', marginHorizontal: 6 },
+  thumbDivider: { width: 1, height: 18, backgroundColor: COLORS.border, marginHorizontal: 6 },
 
   // Itinerary card
   itinCard: {
-    backgroundColor: '#00262e', borderRadius: 16,
-    borderWidth: 0.5, borderColor: '#003040',
+    backgroundColor: COLORS.surface, borderRadius: 16,
+    borderWidth: 0.5, borderColor: COLORS.border,
     marginBottom: 12, padding: 14, gap: 6, overflow: 'hidden',
   },
   itinHeader:  { gap: 2 },
-  itinDate:    { fontSize: 17, fontWeight: '800', color: '#ffffff' },
-  itinCity:    { fontSize: 11, color: '#a855f7' },
+  itinDate:    { fontSize: 17, fontWeight: '800', color: COLORS.textPrimary },
+  itinCity:    { fontSize: 11, color: COLORS.gold },
   itinMetaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   prefPill: {
     paddingHorizontal: 10, paddingVertical: 4,
-    borderRadius: 999, backgroundColor: '#00262e',
-    borderWidth: 1, borderColor: '#003040',
+    borderRadius: 999, backgroundColor: COLORS.surfaceAlt,
+    borderWidth: 1, borderColor: COLORS.border,
   },
-  prefPillTxt: { fontSize: 11, color: '#00D2BE', fontWeight: '600' },
+  prefPillTxt:  { fontSize: 11, color: COLORS.teal, fontWeight: '600' },
   itinStatsRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
-  itinStats:    { fontSize: 11, color: '#00a896' },
+  itinStats:    { fontSize: 11, color: COLORS.textSecondary },
   chipsScroll:  { paddingVertical: 4, gap: 6, flexDirection: 'row' },
   stopChip: {
     paddingHorizontal: 10, paddingVertical: 5,
-    borderRadius: 999, backgroundColor: '#00262e',
+    borderRadius: 999, backgroundColor: COLORS.surfaceAlt,
     borderWidth: 1,
   },
-  stopChipTxt: { fontSize: 12, color: '#C0DCD9', maxWidth: 130 },
+  stopChipTxt: { fontSize: 12, color: COLORS.textSecondary, maxWidth: 130 },
 
   // Empty state
   emptyState: {
@@ -503,41 +496,41 @@ const styles = StyleSheet.create({
     gap: 12, paddingTop: 80, paddingHorizontal: 32,
   },
   emptyEmoji: { fontSize: 52 },
-  emptyTitle: { fontSize: 20, fontWeight: '700', color: '#ffffff', textAlign: 'center' },
-  emptySub:   { fontSize: 15, color: '#555', textAlign: 'center', lineHeight: 20 },
+  emptyTitle: { fontSize: 20, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'center' },
+  emptySub:   { fontSize: 15, color: COLORS.textMuted, textAlign: 'center', lineHeight: 20 },
   emptyBtn: {
-    marginTop: 8, backgroundColor: '#00d2be', borderRadius: 16,
+    marginTop: 8, backgroundColor: COLORS.primary, borderRadius: 16,
     height: 56, paddingHorizontal: 32,
     alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#00d2be', shadowOffset: { width: 0, height: 0 },
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5, shadowRadius: 12, elevation: 12,
   },
-  emptyBtnTxt: { color: '#00191f', fontSize: 15, fontWeight: '700' },
+  emptyBtnTxt: { color: COLORS.primaryText, fontSize: 15, fontWeight: '700' },
 
   // Feedback modal
   fbOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'flex-end' },
   fbCard: {
-    backgroundColor: '#00262e',
+    backgroundColor: COLORS.surface,
     borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    borderWidth: 1, borderColor: '#003040',
+    borderWidth: 1, borderColor: COLORS.border,
     paddingBottom: 34, overflow: 'hidden',
   },
   fbTitle: {
-    fontSize: 11, fontWeight: '700', color: '#a855f7', letterSpacing: 2,
+    fontSize: 11, fontWeight: '700', color: COLORS.gold, letterSpacing: 2,
     textAlign: 'center', paddingVertical: 18,
-    borderBottomWidth: 1, borderBottomColor: '#003040',
+    borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
   fbPlace: {
-    fontSize: 14, fontWeight: '600', color: '#fff',
+    fontSize: 14, fontWeight: '600', color: COLORS.textPrimary,
     paddingHorizontal: 24, paddingVertical: 10,
-    borderBottomWidth: 1, borderBottomColor: '#00262e',
+    borderBottomWidth: 1, borderBottomColor: COLORS.surfaceAlt,
   },
-  fbOption:    { paddingHorizontal: 24, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#00262e' },
-  fbOptionTxt: { fontSize: 15, fontWeight: '500', color: '#C0DCD9' },
+  fbOption:    { paddingHorizontal: 24, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: COLORS.surfaceAlt },
+  fbOptionTxt: { fontSize: 15, fontWeight: '500', color: COLORS.textSecondary },
   fbCancel: {
     marginHorizontal: 20, marginTop: 14, borderRadius: 16,
     height: 56, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: '#00262e', borderWidth: 1, borderColor: '#003040',
+    backgroundColor: COLORS.surfaceAlt, borderWidth: 1, borderColor: COLORS.border,
   },
-  fbCancelTxt: { color: '#666', fontSize: 14, fontWeight: '600' },
+  fbCancelTxt: { color: COLORS.textMuted, fontSize: 14, fontWeight: '600' },
 });

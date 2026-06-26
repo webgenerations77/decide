@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, Animated, Easing,
   Linking, Platform, ActivityIndicator, ScrollView,
@@ -9,20 +9,21 @@ import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { getDemoSpinResult } from '../services/demoData';
 import { isAtSpinLimit, incrementSpinCount, getRemainingSpins, LIMITS } from '../services/subscriptionService';
+import { COLORS } from '../constants/theme';
 
 const GOOGLE_KEY  = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 const NEARBY_URL  = 'https://places.googleapis.com/v1/places:searchNearby';
 
 const CATEGORIES = [
-  { id: 'surprise',  label: 'Surprise Me', emoji: '🎲', color: '#9333EA',
+  { id: 'surprise',  label: 'Surprise Me', emoji: '🎲', color: COLORS.primary,
     types: ['restaurant','cafe','art_gallery','park','museum','movie_theater','bowling_alley'] },
-  { id: 'food',      label: 'Food',        emoji: '🍽️', color: '#00d2be',
+  { id: 'food',      label: 'Food',        emoji: '🍽️', color: COLORS.food,
     types: ['restaurant','cafe','bar','bakery','coffee_shop'] },
-  { id: 'activity',  label: 'Activity',    emoji: '🎭', color: '#00a896',
+  { id: 'activity',  label: 'Activity',    emoji: '🎭', color: COLORS.activity,
     types: ['museum','art_gallery','bowling_alley','movie_theater','karaoke','comedy_club'] },
-  { id: 'outdoor',   label: 'Outdoor',     emoji: '🌿', color: '#00D2BE',
+  { id: 'outdoor',   label: 'Outdoor',     emoji: '🌿', color: COLORS.outdoor,
     types: ['park','hiking_area','botanical_garden','zoo'] },
-  { id: 'shopping',  label: 'Shopping',    emoji: '🛍️', color: '#7c3aed',
+  { id: 'shopping',  label: 'Shopping',    emoji: '🛍️', color: COLORS.shopping,
     types: ['shopping_mall','market','book_store','gift_shop'] },
 ];
 
@@ -219,7 +220,7 @@ export default function SpinScreen() {
         {/* Spin button */}
         <View style={styles.spinWrap}>
           {locLoading ? (
-            <ActivityIndicator color="#00D2BE" size="large" />
+            <ActivityIndicator color={COLORS.teal} size="large" />
           ) : (
             <TouchableOpacity
               style={[styles.spinBtn, { borderColor: activeCat.color + '88', shadowColor: activeCat.color }]}
@@ -280,80 +281,80 @@ export default function SpinScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#00191f' },
+  screen: { flex: 1, backgroundColor: COLORS.bg },
   scrollContent: {
     paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40,
     alignItems: 'center',
   },
 
   title: {
-    fontSize: 28, fontWeight: '800', color: '#ffffff',
+    fontSize: 28, fontWeight: '800', color: COLORS.textPrimary,
     letterSpacing: 5, textAlign: 'center',
-    textShadowColor: '#7c3aed', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 14,
+    textShadowColor: COLORS.primaryDark, textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 14,
   },
-  sub: { fontSize: 13, color: '#a855f7', marginTop: 6, marginBottom: 8 },
-  remainingText: { fontSize: 11, color: '#4a6a6e', marginBottom: 16 },
+  sub:           { fontSize: 13, color: COLORS.teal, marginTop: 6, marginBottom: 8 },
+  remainingText: { fontSize: 11, color: COLORS.textMuted, marginBottom: 16 },
 
   // Category pills
   catRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginBottom: 32 },
   catPill: {
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: 16,
-    backgroundColor: '#00262e', borderWidth: 1, borderColor: '#003040',
+    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
   },
-  catPillTxt:       { fontSize: 13, fontWeight: '600', color: '#00a896' },
-  catPillTxtActive: { color: '#00191f' },
+  catPillTxt:       { fontSize: 13, fontWeight: '600', color: COLORS.teal },
+  catPillTxtActive: { color: COLORS.bg },
 
   // Spin button
   spinWrap: { marginBottom: 32, alignItems: 'center' },
   spinBtn: {
     width: 140, height: 140, borderRadius: 70,
-    backgroundColor: '#00262e', borderWidth: 2,
+    backgroundColor: COLORS.surface, borderWidth: 2,
     alignItems: 'center', justifyContent: 'center', gap: 4,
     shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.5, shadowRadius: 20, elevation: 12,
   },
   spinEmoji:       { fontSize: 52 },
-  spinLabel:       { fontSize: 12, fontWeight: '800', color: '#00a896', letterSpacing: 3 },
-  spinLabelActive: { color: '#a855f7' },
+  spinLabel:       { fontSize: 12, fontWeight: '800', color: COLORS.teal, letterSpacing: 3 },
+  spinLabelActive: { color: COLORS.primary },
 
   // Result card
   resultCard: {
-    width: '100%', backgroundColor: '#00262e',
-    borderRadius: 16, borderWidth: 0.5, borderColor: '#003040', borderLeftWidth: 3,
+    width: '100%', backgroundColor: COLORS.surface,
+    borderRadius: 16, borderWidth: 0.5, borderColor: COLORS.border, borderLeftWidth: 3,
     padding: 16, gap: 8, overflow: 'hidden',
   },
-  resultHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  resultEmoji:  { fontSize: 24 },
-  resultName:   { flex: 1, fontSize: 15, fontWeight: '800', color: '#ffffff' },
-  resultReason: { fontSize: 13, color: '#00a896', lineHeight: 18, fontStyle: 'italic' },
-  resultAddress: { fontSize: 13, color: '#00a896' },
-  resultRating:  { fontSize: 13, color: '#00a896' },
+  resultHeader:  { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  resultEmoji:   { fontSize: 24 },
+  resultName:    { flex: 1, fontSize: 15, fontWeight: '800', color: COLORS.textPrimary },
+  resultReason:  { fontSize: 13, color: COLORS.textSecondary, lineHeight: 18, fontStyle: 'italic' },
+  resultAddress: { fontSize: 13, color: COLORS.textSecondary },
+  resultRating:  { fontSize: 13, color: COLORS.teal },
 
   resultActions: { flexDirection: 'row', gap: 10, marginTop: 4 },
   goBtn: {
-    flex: 1, backgroundColor: '#00d2be', borderRadius: 16,
+    flex: 1, backgroundColor: COLORS.primary, borderRadius: 16,
     height: 56, alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#00d2be', shadowOffset: { width: 0, height: 0 },
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.4, shadowRadius: 10, elevation: 8,
   },
-  goBtnTxt: { color: '#00191f', fontSize: 14, fontWeight: '800', letterSpacing: 1 },
+  goBtnTxt: { color: COLORS.primaryText, fontSize: 14, fontWeight: '800', letterSpacing: 1 },
   againBtn: {
     paddingHorizontal: 16, borderRadius: 16,
     height: 56, justifyContent: 'center',
-    backgroundColor: '#00262e', borderWidth: 1, borderColor: '#003040',
+    backgroundColor: COLORS.surfaceAlt, borderWidth: 1, borderColor: COLORS.border,
     alignItems: 'center',
   },
-  againBtnTxt: { fontSize: 13, color: '#00a896', fontWeight: '600' },
+  againBtnTxt: { fontSize: 13, color: COLORS.teal, fontWeight: '600' },
 
   // Error
   errorBox: {
-    marginTop: 16, backgroundColor: '#1a0a0a', borderRadius: 12,
+    marginTop: 16, backgroundColor: COLORS.surfaceAlt, borderRadius: 12,
     borderWidth: 1, borderColor: '#991b1b44', padding: 14,
   },
-  errorTxt: { fontSize: 13, color: '#f87171', textAlign: 'center', marginBottom: 8 },
+  errorTxt: { fontSize: 13, color: COLORS.error, textAlign: 'center', marginBottom: 8 },
   retryBtn: {
-    backgroundColor: '#00262e', borderWidth: 1, borderColor: '#003040',
+    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
     borderRadius: 16, paddingHorizontal: 24, height: 40,
     alignItems: 'center', justifyContent: 'center', alignSelf: 'center',
   },
-  retryBtnTxt: { color: '#00d2be', fontSize: 13, fontWeight: '700' },
+  retryBtnTxt: { color: COLORS.teal, fontSize: 13, fontWeight: '700' },
 });

@@ -1,38 +1,37 @@
-// Dark charcoal-purple palette — purple as accent, neutral greys as structure
 export const COLORS = {
-  // Backgrounds — medium-dark charcoal with subtle purple undertone
-  bg:         '#1A1826',   // matches logo outer background
-  surface:    '#24223A',   // visible card surfaces
-  surfaceAlt: '#141322',   // deepest layer
-  // Borders — grey-purple, not vivid purple
-  border:      '#333050',
-  borderLight: '#3F3C60',
-  // Primary CTA — vivid violet (logo accent color)
-  primary:     '#8B5CF6',
-  primaryDark: '#7C3AED',
+  // Backgrounds — deep navy
+  bg:         '#0C1A2E',
+  surface:    '#142540',
+  surfaceAlt: '#0A1423',
+  // Borders
+  border:      '#1E3A5A',
+  borderLight: '#2A4F78',
+  // Primary CTA — orange
+  primary:     '#FF6B35',
+  primaryDark: '#E85A24',
   primaryText: '#FFFFFF',
-  // Lavender accent — links, chips, active states
-  teal:        '#A78BFA',
-  tealDark:    '#8B5CF6',
-  tealFaint:   '#A78BFA1A',
-  // Soft lavender — section labels, highlights
-  gold:        '#C9B8FF',
-  goldFaint:   '#C9B8FF18',
-  // Text — mostly neutral, not vivid purple
+  // Teal accent
+  teal:        '#00BFB3',
+  tealDark:    '#009E93',
+  tealFaint:   '#00BFB31A',
+  // Gold
+  gold:        '#C9964E',
+  goldFaint:   '#C9964E18',
+  // Text
   textPrimary:   '#FFFFFF',
-  textSecondary: '#A9A3C2',
-  textMuted:     '#6B6680',
+  textSecondary: '#8AACBF',
+  textMuted:     '#4A7090',
   // Status
   success: '#4ade80',
   error:   '#f87171',
   warning: '#fbbf24',
-  // Category colors — varied for contrast
-  food:     '#F472B6',   // pink-400
-  activity: '#818CF8',   // indigo-400
-  shopping: '#FBBF24',   // amber-400
-  outdoor:  '#34D399',   // emerald-400
+  // Category colors
+  food:     '#FF6B35',
+  activity: '#00BFB3',
+  shopping: '#C9964E',
+  outdoor:  '#5BBFDC',
   // Tab bar
-  tabBar: '#141322',
+  tabBar: '#0A1423',
 };
 
 export const CATEGORY_COLORS = {

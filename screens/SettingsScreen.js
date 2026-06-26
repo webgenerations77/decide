@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView,
-  Switch, ActivityIndicator, Modal, PanResponder, Platform, Alert, Animated,
+  Switch, ActivityIndicator, Modal, PanResponder, Platform, Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -228,11 +228,13 @@ export default function SettingsScreen() {
   const [notifications,  setNotifications]  = useState(false);
   const [demoMode,       setDemoMode]       = useState(false);
   const [toastMsg,       setToastMsg]       = useState(null);
-  const [proStatus,      setProStatus]      = useState(false);
-  const [usageDecisions, setUsageDecisions] = useState(0);
-  const [usageSpins,     setUsageSpins]     = useState(0);
-  const [reminderHour,   setReminderHour]   = useState(9);
-  const [reminderMinute, setReminderMinute] = useState(0);
+  const [proStatus,        setProStatus]        = useState(false);
+  const [usageDecisions,   setUsageDecisions]   = useState(0);
+  const [usageSpins,       setUsageSpins]       = useState(0);
+  const [reminderHour,     setReminderHour]     = useState(9);
+  const [reminderMinute,   setReminderMinute]   = useState(0);
+  const [showSignOutModal,    setShowSignOutModal]    = useState(false);
+  const [showClearHistModal,  setShowClearHistModal]  = useState(false);
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const pulseLoop = useRef(null);
 
@@ -689,24 +691,7 @@ export default function SettingsScreen() {
           <TouchableOpacity
             style={[styles.appRow, styles.appRowBorder]}
             activeOpacity={0.7}
-            onPress={() => {
-              Alert.alert(
-                'Clear History',
-                'This will permanently delete all your decisions and itineraries. This cannot be undone.',
-                [
-                  { text: 'Cancel', style: 'cancel' },
-                  {
-                    text: 'Clear', style: 'destructive',
-                    onPress: async () => {
-                      await Promise.all([
-                        AsyncStorage.removeItem('@decide/decisions'),
-                        AsyncStorage.removeItem('@decide/itineraries'),
-                      ]);
-                    },
-                  },
-                ]
-              );
-            }}
+            onPress={() => setShowClearHistModal(true)}
           >
             <Text style={[styles.appRowLabel, { color: COLORS.error }]}>Clear History</Text>
             <Text style={styles.appRowChevron}>›</Text>
@@ -751,22 +736,7 @@ export default function SettingsScreen() {
           <TouchableOpacity
             style={[styles.appRow, user?.email ? styles.appRowBorder : null]}
             activeOpacity={0.7}
-            onPress={() => {
-              Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                  text: 'Sign Out',
-                  style: 'destructive',
-                  onPress: async () => {
-                    try {
-                      await signOut();
-                    } catch {
-                      Alert.alert('Error', 'Sign out failed. Please try again.');
-                    }
-                  },
-                },
-              ]);
-            }}
+            onPress={() => setShowSignOutModal(true)}
           >
             <Text style={[styles.appRowLabel, { color: COLORS.error }]}>Sign Out</Text>
             <Text style={styles.appRowChevron}>›</Text>
@@ -781,6 +751,68 @@ export default function SettingsScreen() {
           <Text style={styles.toastText}>{toastMsg}</Text>
         </View>
       )}
+
+      {/* Sign Out confirmation modal */}
+      <Modal visible={showSignOutModal} transparent animationType="fade" onRequestClose={() => setShowSignOutModal(false)}>
+        <TouchableOpacity style={styles.confirmOverlay} activeOpacity={1} onPress={() => setShowSignOutModal(false)}>
+          <TouchableOpacity activeOpacity={1} onPress={() => {}}>
+            <View style={styles.confirmCard}>
+              <Text style={styles.confirmTitle}>Sign Out?</Text>
+              <Text style={styles.confirmBody}>You'll need to sign in again to use the app.</Text>
+              <TouchableOpacity
+                style={styles.confirmDestructive}
+                activeOpacity={0.7}
+                onPress={async () => {
+                  setShowSignOutModal(false);
+                  try { await signOut(); } catch { showToast('Sign out failed — try again'); }
+                }}
+              >
+                <Text style={styles.confirmDestructiveTxt}>Sign Out</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.confirmCancel}
+                activeOpacity={0.7}
+                onPress={() => setShowSignOutModal(false)}
+              >
+                <Text style={styles.confirmCancelTxt}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Clear History confirmation modal */}
+      <Modal visible={showClearHistModal} transparent animationType="fade" onRequestClose={() => setShowClearHistModal(false)}>
+        <TouchableOpacity style={styles.confirmOverlay} activeOpacity={1} onPress={() => setShowClearHistModal(false)}>
+          <TouchableOpacity activeOpacity={1} onPress={() => {}}>
+            <View style={styles.confirmCard}>
+              <Text style={styles.confirmTitle}>Clear History?</Text>
+              <Text style={styles.confirmBody}>This permanently deletes all your decisions and itineraries. Cannot be undone.</Text>
+              <TouchableOpacity
+                style={styles.confirmDestructive}
+                activeOpacity={0.7}
+                onPress={async () => {
+                  setShowClearHistModal(false);
+                  await Promise.all([
+                    AsyncStorage.removeItem('@decide/decisions'),
+                    AsyncStorage.removeItem('@decide/itineraries'),
+                  ]);
+                  showToast('History cleared');
+                }}
+              >
+                <Text style={styles.confirmDestructiveTxt}>Clear History</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.confirmCancel}
+                activeOpacity={0.7}
+                onPress={() => setShowClearHistModal(false)}
+              >
+                <Text style={styles.confirmCancelTxt}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -969,7 +1001,32 @@ const styles = StyleSheet.create({
   // App section
   appRow:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 13 },
   appRowBorder:  { borderTopWidth: 0.5, borderTopColor: COLORS.border },
-  appRowLabel:   { fontSize: 15, color: '#cccccc', fontWeight: '500' },
+  appRowLabel:   { fontSize: 15, color: COLORS.textSecondary, fontWeight: '500' },
   appRowChevron: { fontSize: 20, color: COLORS.textMuted },
   appRowValue:   { fontSize: 13, color: COLORS.textMuted },
+
+  // Confirmation modals
+  confirmOverlay: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.72)',
+    justifyContent: 'center', alignItems: 'center', padding: 32,
+  },
+  confirmCard: {
+    width: '100%', backgroundColor: COLORS.surface, borderRadius: 20,
+    borderWidth: 1, borderColor: COLORS.border,
+    padding: 24, gap: 12,
+  },
+  confirmTitle:         { fontSize: 18, fontWeight: '800', color: COLORS.textPrimary, textAlign: 'center' },
+  confirmBody:          { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 20 },
+  confirmDestructive: {
+    backgroundColor: COLORS.error + '22', borderRadius: 14, height: 52,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: COLORS.error + '55', marginTop: 4,
+  },
+  confirmDestructiveTxt: { fontSize: 15, fontWeight: '700', color: COLORS.error },
+  confirmCancel: {
+    backgroundColor: COLORS.surfaceAlt, borderRadius: 14, height: 52,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: COLORS.border,
+  },
+  confirmCancelTxt: { fontSize: 15, fontWeight: '600', color: COLORS.textMuted },
 });
