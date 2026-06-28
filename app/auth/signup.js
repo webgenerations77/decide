@@ -48,7 +48,7 @@ export default function SignupScreen() {
       await AsyncStorage.setItem('@decide/tos_accepted', timestamp);
     } catch (e) {
       const msg = e.code === 'auth/email-already-in-use' ? 'An account with that email already exists.'
-        : e.code === 'auth/invalid-email' ? 'That doesn't look like a valid email.'
+        : e.code === 'auth/invalid-email' ? "That doesn't look like a valid email."
         : e.code === 'auth/weak-password' ? 'Try a stronger password — at least 6 characters.'
         : e.message || 'Sign up failed.';
       setError(msg);
