@@ -18,7 +18,7 @@ function getApiBase() {
   if (Platform.OS === 'web') return '';
   const hostUri = Constants.expoConfig?.hostUri;
   if (hostUri) return `http://${hostUri.split(':')[0]}:8081`;
-  return 'http://localhost:8081';
+  return process.env.EXPO_PUBLIC_API_BASE_URL ?? '';
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
