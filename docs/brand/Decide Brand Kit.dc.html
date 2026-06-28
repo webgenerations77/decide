@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<meta name="design_doc_mode" content="canvas">
+<style>
+  :root{
+    --paper:#FCF9F4; --cream:#F6F0E6;
+    --cobalt:#2563C9; --cobalt-deep:#1B3F86; --navy:#102A4C;
+    --cobalt-100:#E6EDFB; --cobalt-200:#C9D8F4; --cobalt-300:#9DB8E8;
+    --orange:#FF8A3D; --orange-200:#FFD9B8;
+    --gold:#F4B63A;
+    --ink:#16243B; --slate:#2C3E5C; --muted:#7E8BA3; --alert:#D6453C;
+  }
+  *{ box-sizing:border-box; }
+  .lbl{ font-family:'Space Mono',monospace; font-size:11px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin:0 0 12px 2px; }
+  .card{ background:#fff; border-radius:6px; box-shadow:0 1px 2px rgba(16,42,76,.08), 0 16px 40px rgba(16,42,76,.08); overflow:hidden; }
+  .ctr{ display:flex; align-items:center; justify-content:center; }
+  .sec{ font-family:'Space Mono',monospace; font-size:12px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--cobalt); }
+</style>
+</helmet>
+
+<!-- ===== TITLE ===== -->
+<div style="position:absolute; left:140px; top:64px; width:1140px;" data-drags-parent="1">
+  <div style="font-family:'Space Mono',monospace; font-size:12px; font-weight:700; letter-spacing:.24em; text-transform:uppercase; color:var(--muted); margin-bottom:18px;">Brand &amp; Graphics System</div>
+  <div style="display:flex; align-items:center; gap:26px;">
+    <svg width="80" height="80" viewBox="0 0 120 120" fill="none">
+      <circle cx="60" cy="60" r="46" stroke="var(--navy)" stroke-width="3.5"/>
+      <g stroke="var(--navy)" stroke-width="3" stroke-linecap="round">
+        <line x1="60" y1="9" x2="60" y2="19"/><line x1="60" y1="101" x2="60" y2="111"/><line x1="9" y1="60" x2="19" y2="60"/><line x1="101" y1="60" x2="111" y2="60"/>
+      </g>
+      <g transform="rotate(20 60 60)">
+        <path d="M60 18 L50 62 L70 62 Z" fill="var(--orange)"/>
+        <path d="M60 102 L50 62 L70 62 Z" fill="var(--cobalt)"/>
+        <circle cx="60" cy="62" r="5" fill="var(--navy)"/>
+      </g>
+    </svg>
+    <div style="font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:74px; line-height:.9; letter-spacing:-.02em; color:var(--navy);">Decide<span style="color:var(--orange);">.</span></div>
+  </div>
+  <div style="font-family:'Bricolage Grotesque',sans-serif; font-weight:600; font-size:24px; color:var(--slate); margin-top:20px;">We'll decide. You just go.</div>
+</div>
+
+<!-- ===== 01 LOGO ===== -->
+<div style="position:absolute; left:140px; top:340px;" data-drags-parent="1"><div class="sec">01 — Logo</div></div>
+
+<div style="position:absolute; left:140px; top:386px; width:560px;">
+  <p class="lbl" data-drags-parent="1">Primary lockup</p>
+  <div class="card ctr" style="height:340px; gap:26px; background:var(--paper);">
+    <svg width="100" height="100" viewBox="0 0 120 120" fill="none">
+      <circle cx="60" cy="60" r="46" stroke="var(--navy)" stroke-width="3.5"/>
+      <g stroke="var(--navy)" stroke-width="3" stroke-linecap="round"><line x1="60" y1="9" x2="60" y2="19"/><line x1="60" y1="101" x2="60" y2="111"/><line x1="9" y1="60" x2="19" y2="60"/><line x1="101" y1="60" x2="111" y2="60"/></g>
+      <g transform="rotate(20 60 60)"><path d="M60 18 L50 62 L70 62 Z" fill="var(--orange)"/><path d="M60 102 L50 62 L70 62 Z" fill="var(--cobalt)"/><circle cx="60" cy="62" r="5" fill="var(--navy)"/></g>
+    </svg>
+    <div style="font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:66px; letter-spacing:-.02em; color:var(--navy);">Decide<span style="color:var(--orange);">.</span></div>
+  </div>
+</div>
+
+<div style="position:absolute; left:740px; top:386px; width:560px;">
+  <p class="lbl" data-drags-parent="1">Reversed / on navy</p>
+  <div class="card ctr" style="height:340px; gap:26px; background:var(--navy);">
+    <svg width="100" height="100" viewBox="0 0 120 120" fill="none">
+      <circle cx="60" cy="60" r="46" stroke="#ffffff" stroke-opacity=".75" stroke-width="3.5"/>
+      <g stroke="#ffffff" stroke-opacity=".7" stroke-width="3" stroke-linecap="round"><line x1="60" y1="9" x2="60" y2="19"/><line x1="60" y1="101" x2="60" y2="111"/><line x1="9" y1="60" x2="19" y2="60"/><line x1="101" y1="60" x2="111" y2="60"/></g>
+      <g transform="rotate(20 60 60)"><path d="M60 18 L50 62 L70 62 Z" fill="var(--orange)"/><path d="M60 102 L50 62 L70 62 Z" fill="#ffffff"/><circle cx="60" cy="62" r="5" fill="#ffffff"/></g>
+    </svg>
+    <div style="font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:66px; letter-spacing:-.02em; color:#fff;">Decide<span style="color:var(--orange);">.</span></div>
+  </div>
+</div>
+
+<div style="position:absolute; left:1340px; top:386px; width:420px;">
+  <p class="lbl" data-drags-parent="1">Stacked</p>
+  <div class="card" style="height:340px; background:var(--paper); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px;">
+    <svg width="92" height="92" viewBox="0 0 120 120" fill="none">
+      <circle cx="60" cy="60" r="46" stroke="var(--navy)" stroke-width="3.5"/>
+      <g stroke="var(--navy)" stroke-width="3" stroke-linecap="round"><line x1="60" y1="9" x2="60" y2="19"/><line x1="60" y1="101" x2="60" y2="111"/><line x1="9" y1="60" x2="19" y2="60"/><line x1="101" y1="60" x2="111" y2="60"/></g>
+      <g transform="rotate(20 60 60)"><path d="M60 18 L50 62 L70 62 Z" fill="var(--orange)"/><path d="M60 102 L50 62 L70 62 Z" fill="var(--cobalt)"/><circle cx="60" cy="62" r="5" fill="var(--navy)"/></g>
+    </svg>
+    <div style="font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:44px; letter-spacing:-.02em; color:var(--navy);">Decide<span style="color:var(--orange);">.</span></div>
+    <div style="font-family:'Space Mono',monospace; font-size:10px; font-weight:700; letter-spacing:.28em; text-transform:uppercase; color:var(--muted);">Tap · Pack · Go</div>
+  </div>
+</div>
+
+<div style="position:absolute; left:1800px; top:386px; width:480px;">
+  <p class="lbl" data-drags-parent="1">Symbol &amp; clearspace</p>
+  <div class="card" style="height:340px; background:var(--paper); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:28px; padding:24px;">
+    <div style="padding:24px; border:2px dashed var(--cobalt-300); border-radius:10px;">
+      <svg width="108" height="108" viewBox="0 0 120 120" fill="none">
+        <circle cx="60" cy="60" r="46" stroke="var(--navy)" stroke-width="3.5"/>
+        <g stroke="var(--navy)" stroke-width="3" stroke-linecap="round"><line x1="60" y1="9" x2="60" y2="19"/><line x1="60" y1="101" x2="60" y2="111"/><line x1="9" y1="60" x2="19" y2="60"/><line x1="101" y1="60" x2="111" y2="60"/></g>
+        <g transform="rotate(20 60 60)"><path d="M60 18 L50 62 L70 62 Z" fill="var(--orange)"/><path d="M60 102 L50 62 L70 62 Z" fill="var(--cobalt)"/><circle cx="60" cy="62" r="5" fill="var(--navy)"/></g>
+      </svg>
+    </div>
+    <div style="display:flex; align-items:center; gap:24px;">
+      <svg width="48" height="48" viewBox="0 0 120 120" fill="none"><circle cx="60" cy="60" r="46" stroke="var(--navy)" stroke-width="5"/><g transform="rotate(20 60 60)"><path d="M60 18 L50 62 L70 62 Z" fill="var(--orange)"/><path d="M60 102 L50 62 L70 62 Z" fill="var(--cobalt)"/><circle cx="60" cy="62" r="6" fill="var(--navy)"/></g></svg>
+      <svg width="30" height="30" viewBox="0 0 120 120" fill="none"><circle cx="60" cy="60" r="46" stroke="var(--navy)" stroke-width="7"/><g transform="rotate(20 60 60)"><path d="M60 20 L48 62 L72 62 Z" fill="var(--orange)"/><path d="M60 100 L48 62 L72 62 Z" fill="var(--cobalt)"/></g></svg>
+      <svg width="18" height="18" viewBox="0 0 120 120" fill="none"><circle cx="60" cy="60" r="44" stroke="var(--navy)" stroke-width="10"/><g transform="rotate(20 60 60)"><path d="M60 22 L46 62 L74 62 Z" fill="var(--orange)"/><path d="M60 98 L46 62 L74 62 Z" fill="var(--cobalt)"/></g></svg>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 02 APP ICON ===== -->
+<div style="position:absolute; left:140px; top:810px;" data-drags-parent="1"><div class="sec">02 — App icon</div></div>
+
+<div style="position:absolute; left:140px; top:856px; width:260px;">
+  <p class="lbl" data-drags-parent="1">Full color</p>
+  <div class="card ctr" style="height:300px; background:var(--cream);">
+    <div style="width:184px; height:184px; border-radius:42px; background:linear-gradient(150deg, var(--cobalt), var(--cobalt-deep)); box-shadow:0 14px 28px rgba(27,63,134,.34); display:flex; align-items:center; justify-content:center;">
+      <svg width="116" height="116" viewBox="0 0 120 120" fill="none">
+        <circle cx="60" cy="60" r="46" stroke="#ffffff" stroke-opacity=".9" stroke-width="3.5"/>
+        <g stroke="#ffffff" stroke-opacity=".85" stroke-width="3" stroke-linecap="round"><line x1="60" y1="9" x2="60" y2="19"/><line x1="60" y1="101" x2="60" y2="111"/><line x1="9" y1="60" x2="19" y2="60"/><line x1="101" y1="60" x2="111" y2="60"/></g>
+        <g transform="rotate(20 60 60)"><path d="M60 18 L50 62 L70 62 Z" fill="var(--orange)"/><path d="M60 102 L50 62 L70 62 Z" fill="#ffffff"/><circle cx="60" cy="62" r="5" fill="var(--navy)"/></g>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<div style="position:absolute; left:420px; top:856px; width:260px;">
+  <p class="lbl" data-drags-parent="1">Sunset</p>
+  <div class="card ctr" style="height:300px; background:var(--cream);">
+    <div style="width:184px; height:184px; border-radius:42px; background:linear-gradient(150deg, var(--gold), var(--orange)); box-shadow:0 14px 28px rgba(255,138,61,.34); display:flex; align-items:center; justify-content:center;">
+      <svg width="116" height="116" viewBox="0 0 120 120" fill="none">
+        <circle cx="60" cy="60" r="46" stroke="var(--navy)" stroke-width="3.5"/>
+        <g stroke="var(--navy)" stroke-width="3" stroke-linecap="round"><line x1="60" y1="9" x2="60" y2="19"/><line x1="60" y1="101" x2="60" y2="111"/><line x1="9" y1="60" x2="19" y2="60"/><line x1="101" y1="60" x2="111" y2="60"/></g>
+        <g transform="rotate(20 60 60)"><path d="M60 18 L50 62 L70 62 Z" fill="#ffffff"/><path d="M60 102 L50 62 L70 62 Z" fill="var(--cobalt)"/><circle cx="60" cy="62" r="5" fill="var(--navy)"/></g>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<div style="position:absolute; left:700px; top:856px; width:260px;">
+  <p class="lbl" data-drags-parent="1">Monochrome</p>
+  <div class="card ctr" style="height:300px; background:var(--cream);">
+    <div style="width:184px; height:184px; border-radius:42px; background:var(--navy); display:flex; align-items:center; justify-content:center;">
+      <svg width="116" height="116" viewBox="0 0 120 120" fill="none">
+        <circle cx="60" cy="60" r="46" stroke="#ffffff" stroke-opacity=".92" stroke-width="3.5"/>
+        <g stroke="#ffffff" stroke-opacity=".85" stroke-width="3" stroke-linecap="round"><line x1="60" y1="9" x2="60" y2="19"/><line x1="60" y1="101" x2="60" y2="111"/><line x1="9" y1="60" x2="19" y2="60"/><line x1="101" y1="60" x2="111" y2="60"/></g>
+        <g transform="rotate(20 60 60)"><path d="M60 18 L50 62 L70 62 Z" fill="#ffffff"/><path d="M60 102 L50 62 L70 62 Z" fill="#ffffff" fill-opacity=".55"/><circle cx="60" cy="62" r="5" fill="#fff"/></g>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<div style="position:absolute; left:980px; top:856px; width:260px;">
+  <p class="lbl" data-drags-parent="1">Light tint</p>
+  <div class="card ctr" style="height:300px; background:var(--cream);">
+    <div style="width:184px; height:184px; border-radius:42px; background:linear-gradient(150deg,#fff,var(--cobalt-100)); border:1px solid var(--cobalt-200); box-shadow:0 14px 28px rgba(16,42,76,.12); display:flex; align-items:center; justify-content:center;">
+      <svg width="116" height="116" viewBox="0 0 120 120" fill="none">
+        <circle cx="60" cy="60" r="46" stroke="var(--navy)" stroke-width="3.5"/>
+        <g stroke="var(--navy)" stroke-width="3" stroke-linecap="round"><line x1="60" y1="9" x2="60" y2="19"/><line x1="60" y1="101" x2="60" y2="111"/><line x1="9" y1="60" x2="19" y2="60"/><line x1="101" y1="60" x2="111" y2="60"/></g>
+        <g transform="rotate(20 60 60)"><path d="M60 18 L50 62 L70 62 Z" fill="var(--orange)"/><path d="M60 102 L50 62 L70 62 Z" fill="var(--cobalt)"/><circle cx="60" cy="62" r="5" fill="var(--navy)"/></g>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<div style="position:absolute; left:1260px; top:856px; width:320px;">
+  <p class="lbl" data-drags-parent="1">Construction</p>
+  <div class="card" style="height:300px; background:var(--paper); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px;">
+    <div style="position:relative; width:160px; height:160px;">
+      <div style="position:absolute; inset:0; border-radius:36px; background:linear-gradient(150deg, var(--cobalt), var(--cobalt-deep));"></div>
+      <div style="position:absolute; left:50%; top:0; bottom:0; width:1px; background:rgba(255,255,255,.28);"></div>
+      <div style="position:absolute; top:50%; left:0; right:0; height:1px; background:rgba(255,255,255,.28);"></div>
+      <div style="position:absolute; inset:18px; border:1px dashed rgba(255,255,255,.5); border-radius:24px;"></div>
+    </div>
+    <div style="font-family:'Space Mono',monospace; font-size:11px; color:var(--slate); text-align:center; line-height:1.8;">RADIUS 22.4%<br/>NEEDLE TILT 20°</div>
+  </div>
+</div>
+
+<!-- ===== 03 COLOR ===== -->
+<div style="position:absolute; left:140px; top:1252px;" data-drags-parent="1"><div class="sec">03 — Color</div></div>
+
+<div style="position:absolute; left:140px; top:1298px; width:1100px;">
+  <p class="lbl" data-drags-parent="1">Palette</p>
+  <div class="card" style="background:#fff; padding:34px;">
+    <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:18px;">
+      <div><div style="height:78px; border-radius:8px; background:var(--paper); border:1px solid #efe7d8;"></div><div style="font-family:'Hanken Grotesk',sans-serif; font-weight:700; font-size:13px; color:var(--ink); margin-top:10px;">Paper</div><div style="font-family:'Space Mono',monospace; font-size:11px; color:var(--muted);">#FCF9F4</div></div>
+      <div><div style="height:78px; border-radius:8px; background:var(--cream); border:1px solid #ece2cf;"></div><div style="font-family:'Hanken Grotesk',sans-serif; font-weight:700; font-size:13px; color:var(--ink); margin-top:10px;">Cream</div><div style="font-family:'Space Mono',monospace; font-size:11px; color:var(--muted);">#F6F0E6</div></div>
+      <div><div style="height:78px; border-radius:8px; background:var(--cobalt-100);"></div><div style="font-family:'Hanken Grotesk',sans-serif; font-weight:700; font-size:13px; color:var(--ink); margin-top:10px;">Sky 100</div><div style="font-family:'Space Mono',monospace; font-size:11px; color:var(--muted);">#E6EDFB</div></div>
+      <div><div style="height:78px; border-radius:8px; background:var(--cobalt-300);"></div><div style="font-family:'Hanken Grotesk',sans-serif; font-weight:700; font-size:13px; color:var(--ink); margin-top:10px;">Sky 300</div><div style="font-family:'Space Mono',monospace; font-size:11px; color:var(--muted);">#9DB8E8</div></div>
+      <div><div style="height:78px; border-radius:8px; background:var(--cobalt);"></div><div style="font-family:'Hanken Grotesk',sans-serif; font-weight:700; font-size:13px; color:var(--ink); margin-top:10px;">Cobalt</div><div style="font-family:'Space Mono',monospace; font-size:11px; color:var(--muted);">#2563C9</div></div>
+      <div><div style="height:78px; border-radius:8px; background:var(--cobalt-deep);"></div><div style="font-family:'Hanken Grotesk',sans-serif; font-weight:700; font-size:13px; color:var(--ink); margin-top:10px;">Cobalt deep</div><div style="font-family:'Space Mono',monospace; font-size:11px; color:var(--muted);">#1B3F86</div></div>
+      <div><div style="height:78px; border-radius:8px; background:var(--orange);"></div><div style="font-family:'Hanken Grotesk',sans-serif; font-weight:700; font-size:13px; color:var(--ink); margin-top:10px;">Orange</div><div style="font-family:'Space Mono',monospace; font-size:11px; color:var(--muted);">#FF8A3D</div></div>
+      <div><div style="height:78px; border-radius:8px; background:var(--gold);"></div><div style="font-family:'Hanken Grotesk',sans-serif; font-weight:700; font-size:13px; color:var(--ink); margin-top:10px;">Gold</div><div style="font-family:'Space Mono',monospace; font-size:11px; color:var(--muted);">#F4B63A</div></div>
+      <div><div style="height:78px; border-radius:8px; background:var(--navy);"></div><div style="font-family:'Hanken Grotesk',sans-serif; font-weight:700; font-size:13px; color:var(--ink); margin-top:10px;">Navy / Ink</div><div style="font-family:'Space Mono',monospace; font-size:11px; color:var(--muted);">#102A4C</div></div>
+      <div><div style="height:78px; border-radius:8px; background:var(--alert);"></div><div style="font-family:'Hanken Grotesk',sans-serif; font-weight:700; font-size:13px; color:var(--ink); margin-top:10px;">Alert</div><div style="font-family:'Space Mono',monospace; font-size:11px; color:var(--muted);">#D6453C</div></div>
+    </div>
+    <div style="font-family:'Hanken Grotesk',sans-serif; font-size:13px; color:var(--slate); opacity:.8; margin-top:24px; line-height:1.6;">Cobalt is the confident lead — it makes the call. Orange is the moment of go, used for the decisive action and one accent per screen. Gold warms the retro-travel moments. Warm cream grounds it all so the brights never shout.</div>
+  </div>
+</div>
+
+<div style="position:absolute; left:1280px; top:1252px;" data-drags-parent="1"><div class="sec">04 — Type</div></div>
+
+<div style="position:absolute; left:1280px; top:1298px; width:700px;">
+  <p class="lbl" data-drags-parent="1">Typography</p>
+  <div class="card" style="background:#fff; padding:36px; display:flex; flex-direction:column; gap:26px;">
+    <div style="display:flex; align-items:baseline; justify-content:space-between; gap:20px; border-bottom:1px solid #efe9dd; padding-bottom:22px;">
+      <div style="font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:72px; line-height:.85; color:var(--navy);">Aa</div>
+      <div style="text-align:right;">
+        <div style="font-family:'Space Mono',monospace; font-size:11px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted);">Display · Bricolage Grotesque</div>
+        <div style="font-family:'Bricolage Grotesque',sans-serif; font-weight:700; font-size:22px; color:var(--slate); margin-top:6px;">Bold, confident, a little playful</div>
+      </div>
+    </div>
+    <div>
+      <div style="font-family:'Space Mono',monospace; font-size:11px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-bottom:12px;">Text · Hanken Grotesk</div>
+      <div style="font-family:'Hanken Grotesk',sans-serif; font-size:17px; line-height:1.65; color:var(--slate);">A warm, friendly sans for everything you read. It keeps the app feeling human while the big Bricolage headlines do the talking.</div>
+    </div>
+    <div style="display:flex; gap:40px;">
+      <div><div style="font-family:'Space Mono',monospace; font-size:11px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-bottom:8px;">Mono · Space Mono</div><div style="font-family:'Space Mono',monospace; font-size:15px; color:var(--navy);">DAY 01 · 24H · ✈ →</div></div>
+      <div style="flex:1;"><div style="font-family:'Space Mono',monospace; font-size:11px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-bottom:8px;">Weights</div><div style="font-family:'Bricolage Grotesque',sans-serif; font-size:16px; color:var(--navy);"><span style="font-weight:400;">Reg</span> · <span style="font-weight:600;">Semi</span> · <span style="font-weight:700;">Bold</span> · <span style="font-weight:800;">Black</span></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 05 BACKGROUNDS ===== -->
+<div style="position:absolute; left:140px; top:1700px;" data-drags-parent="1"><div class="sec">05 — Backgrounds &amp; textures</div></div>
+
+<div style="position:absolute; left:140px; top:1746px; width:250px;">
+  <p class="lbl" data-drags-parent="1">Sunburst</p>
+  <div class="card" style="height:240px; position:relative; background:repeating-conic-gradient(from 0deg at 50% 118%, rgba(244,182,58,.20) 0deg 6deg, transparent 6deg 12deg), linear-gradient(180deg,var(--paper),#FDEBCF);">
+    <div style="position:absolute; left:14px; bottom:12px; font-family:'Space Mono',monospace; font-size:10px; color:var(--slate);">reveal · hero</div>
+  </div>
+</div>
+<div style="position:absolute; left:410px; top:1746px; width:250px;">
+  <p class="lbl" data-drags-parent="1">Boarding stripes</p>
+  <div class="card" style="height:240px; position:relative; background:repeating-linear-gradient(135deg, transparent 0 16px, rgba(37,99,201,.10) 16px 18px), var(--cream);">
+    <div style="position:absolute; left:14px; bottom:12px; font-family:'Space Mono',monospace; font-size:10px; color:var(--slate);">itinerary</div>
+  </div>
+</div>
+<div style="position:absolute; left:680px; top:1746px; width:250px;">
+  <p class="lbl" data-drags-parent="1">Sky wash</p>
+  <div class="card" style="height:240px; position:relative; background:linear-gradient(165deg, var(--paper), var(--cobalt-100));">
+    <div style="position:absolute; left:14px; bottom:12px; font-family:'Space Mono',monospace; font-size:10px; color:var(--muted);">screens · default</div>
+  </div>
+</div>
+<div style="position:absolute; left:950px; top:1746px; width:250px;">
+  <p class="lbl" data-drags-parent="1">Confetti dots</p>
+  <div class="card" style="height:240px; position:relative; background:radial-gradient(rgba(16,42,76,.12) 1.6px, transparent 1.7px) 0 0 / 18px 18px, var(--cream);">
+    <div style="position:absolute; left:14px; bottom:12px; font-family:'Space Mono',monospace; font-size:10px; color:var(--slate);">feed · playful</div>
+  </div>
+</div>
+<div style="position:absolute; left:1220px; top:1746px; width:250px;">
+  <p class="lbl" data-drags-parent="1">Brand wash</p>
+  <div class="card" style="height:240px; position:relative; background:linear-gradient(150deg, var(--cobalt), var(--cobalt-deep));">
+    <div style="position:absolute; left:14px; bottom:12px; font-family:'Space Mono',monospace; font-size:10px; color:rgba(255,255,255,.82);">headers · cta</div>
+  </div>
+</div>
+<div style="position:absolute; left:1490px; top:1746px; width:250px;">
+  <p class="lbl" data-drags-parent="1">Sunset</p>
+  <div class="card" style="height:240px; position:relative; background:linear-gradient(160deg, var(--gold), var(--orange) 60%, var(--orange-200));">
+    <div style="position:absolute; left:14px; bottom:12px; font-family:'Space Mono',monospace; font-size:10px; color:rgba(255,255,255,.9);">go · moments</div>
+  </div>
+</div>
+
+<!-- ===== 06 ICONOGRAPHY ===== -->
+<div style="position:absolute; left:140px; top:2090px;" data-drags-parent="1"><div class="sec">06 — Iconography</div></div>
+
+<div style="position:absolute; left:140px; top:2136px; width:1330px;">
+  <p class="lbl" data-drags-parent="1">Core screen icons · 2pt stroke, round caps</p>
+  <div class="card" style="background:#fff; padding:38px 30px; display:grid; grid-template-columns:repeat(5,1fr); gap:20px;">
+    <div style="display:flex; flex-direction:column; align-items:center; gap:18px;">
+      <svg width="52" height="52" viewBox="0 0 48 48" fill="none">
+        <rect x="11" y="11" width="26" height="26" rx="7" stroke="var(--navy)" stroke-width="2"/>
+        <circle cx="18" cy="18" r="2.2" fill="var(--orange)"/><circle cx="30" cy="18" r="2.2" fill="var(--navy)"/><circle cx="24" cy="24" r="2.2" fill="var(--navy)"/><circle cx="18" cy="30" r="2.2" fill="var(--navy)"/><circle cx="30" cy="30" r="2.2" fill="var(--orange)"/>
+      </svg>
+      <div style="font-family:'Hanken Grotesk',sans-serif; font-weight:700; font-size:14px; color:var(--ink);">Pick For Me</div>
+    </div>
+    <div style="display:flex; flex-direction:column; align-items:center; gap:18px;">
+      <svg width="52" height="52" viewBox="0 0 48 48" fill="none" stroke="var(--navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="13" y="17" width="22" height="20" rx="4"/><path d="M17 13h14M20 9h8"/>
+      </svg>
+      <div style="font-family:'Hanken Grotesk',sans-serif; font-weight:700; font-size:14px; color:var(--ink);">Discover</div>
+    </div>
+    <div style="display:flex; flex-direction:column; align-items:center; gap:18px;">
+      <svg width="52" height="52" viewBox="0 0 48 48" fill="none" stroke="var(--navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="10" y="14" width="28" height="20" rx="4"/><path d="M11 17l13 9 13-9"/>
+        <path d="M35 9l1 2.6 2.6 1-2.6 1-1 2.6-1-2.6-2.6-1 2.6-1z" fill="var(--orange)" stroke="none"/>
+      </svg>
+      <div style="font-family:'Hanken Grotesk',sans-serif; font-weight:700; font-size:14px; color:var(--ink);">Reveal</div>
+    </div>
+    <div style="display:flex; flex-direction:column; align-items:center; gap:18px;">
+      <svg width="52" height="52" viewBox="0 0 48 48" fill="none" stroke="var(--navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="9" y="14" width="30" height="20" rx="4"/><path d="M28 14v20" stroke-dasharray="2 3"/><path d="M13 21h9M13 27h6"/>
+      </svg>
+      <div style="font-family:'Hanken Grotesk',sans-serif; font-weight:700; font-size:14px; color:var(--ink);">Itinerary</div>
+    </div>
+    <div style="display:flex; flex-direction:column; align-items:center; gap:18px;">
+      <svg width="52" height="52" viewBox="0 0 48 48" fill="none" stroke="var(--navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15 10h18v28l-9-7-9 7z" fill="rgba(255,138,61,.18)"/>
+      </svg>
+      <div style="font-family:'Hanken Grotesk',sans-serif; font-weight:700; font-size:14px; color:var(--ink);">Saved Trips</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 07 ILLUSTRATIONS ===== -->
+<div style="position:absolute; left:140px; top:2470px;" data-drags-parent="1"><div class="sec">07 — Empty-state illustrations</div></div>
+
+<div style="position:absolute; left:140px; top:2516px; width:330px;">
+  <p class="lbl" data-drags-parent="1">Deciding</p>
+  <div class="card ctr" style="height:300px; background:repeating-conic-gradient(from 0deg at 50% 50%, rgba(244,182,58,.14) 0deg 6deg, transparent 6deg 12deg), var(--paper); flex-direction:column; gap:22px; padding:24px;">
+    <svg width="140" height="140" viewBox="0 0 120 120" fill="none">
+      <circle cx="60" cy="60" r="46" stroke="var(--navy)" stroke-width="3"/>
+      <path d="M60 6 a54 54 0 0 1 40 18" stroke="var(--orange)" stroke-width="3" stroke-linecap="round" stroke-dasharray="2 7"/>
+      <g stroke="var(--navy)" stroke-width="2.5" stroke-linecap="round"><line x1="60" y1="9" x2="60" y2="19"/><line x1="60" y1="101" x2="60" y2="111"/><line x1="9" y1="60" x2="19" y2="60"/><line x1="101" y1="60" x2="111" y2="60"/></g>
+      <g transform="rotate(35 60 60)"><path d="M60 18 L50 62 L70 62 Z" fill="var(--orange)"/><path d="M60 102 L50 62 L70 62 Z" fill="var(--cobalt)"/><circle cx="60" cy="62" r="5" fill="var(--navy)"/></g>
+      <path d="M104 36l1.5 4 4 1.5-4 1.5-1.5 4-1.5-4-4-1.5 4-1.5z" fill="var(--gold)"/>
+    </svg>
+    <div style="font-family:'Bricolage Grotesque',sans-serif; font-weight:700; font-size:18px; color:var(--navy);">Let us make the call</div>
+  </div>
+</div>
+<div style="position:absolute; left:510px; top:2516px; width:330px;">
+  <p class="lbl" data-drags-parent="1">Reveal</p>
+  <div class="card ctr" style="height:300px; background:linear-gradient(160deg, var(--cobalt-100), var(--paper)); flex-direction:column; gap:22px; padding:24px;">
+    <svg width="150" height="140" viewBox="0 0 150 140" fill="none" stroke="var(--navy)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="33" y="52" width="84" height="58" rx="8" fill="#fff"/>
+      <path d="M34 58l41 28 41-28"/>
+      <path d="M75 12 C66 12 59 19 59 28 C59 40 75 54 75 54 C75 54 91 40 91 28 C91 19 84 12 75 12 Z" fill="var(--orange)" stroke="none"/>
+      <circle cx="75" cy="28" r="6" fill="#fff" stroke="none"/>
+    </svg>
+    <div style="font-family:'Bricolage Grotesque',sans-serif; font-weight:700; font-size:18px; color:var(--navy);">Somewhere new, sorted</div>
+  </div>
+</div>
+<div style="position:absolute; left:880px; top:2516px; width:330px;">
+  <p class="lbl" data-drags-parent="1">The route</p>
+  <div class="card ctr" style="height:300px; background:linear-gradient(160deg, var(--paper), #FDEBCF); flex-direction:column; gap:22px; padding:24px;">
+    <svg width="160" height="130" viewBox="0 0 160 130" fill="none">
+      <path d="M28 96 C60 96 70 30 132 30" stroke="var(--cobalt)" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="3 8"/>
+      <path d="M28 84 C22 84 18 88 18 94 C18 102 28 112 28 112 C28 112 38 102 38 94 C38 88 34 84 28 84 Z" fill="var(--navy)"/>
+      <circle cx="28" cy="94" r="4" fill="#fff"/>
+      <g transform="rotate(40 132 30)"><path d="M132 18 L126 40 L138 40 Z" fill="var(--orange)"/><path d="M132 42 L126 40 L138 40 Z" fill="var(--gold)"/></g>
+    </svg>
+    <div style="font-family:'Bricolage Grotesque',sans-serif; font-weight:700; font-size:18px; color:var(--navy);">We map the way</div>
+  </div>
+</div>
+
+<!-- ===== 08 FEATURE CARDS ===== -->
+<div style="position:absolute; left:140px; top:2900px;" data-drags-parent="1"><div class="sec">08 — Feature spot graphics</div></div>
+
+<div style="position:absolute; left:140px; top:2946px; width:236px;">
+  <div class="card" style="height:300px; background:linear-gradient(155deg, var(--cobalt), var(--cobalt-deep)); padding:26px; display:flex; flex-direction:column; justify-content:space-between;">
+    <svg width="40" height="40" viewBox="0 0 48 48" fill="none"><rect x="11" y="11" width="26" height="26" rx="7" stroke="#fff" stroke-width="2"/><circle cx="18" cy="18" r="2.4" fill="var(--orange)"/><circle cx="30" cy="18" r="2.4" fill="#fff"/><circle cx="24" cy="24" r="2.4" fill="#fff"/><circle cx="18" cy="30" r="2.4" fill="#fff"/><circle cx="30" cy="30" r="2.4" fill="var(--orange)"/></svg>
+    <div>
+      <div style="font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:26px; color:#fff; line-height:1;">Pick For Me</div>
+      <div style="font-family:'Hanken Grotesk',sans-serif; font-size:13.5px; color:rgba(255,255,255,.82); margin-top:8px; line-height:1.5;">One tap. We choose. You go.</div>
+    </div>
+  </div>
+</div>
+<div style="position:absolute; left:396px; top:2946px; width:236px;">
+  <div class="card" style="height:300px; background:linear-gradient(155deg, var(--gold), var(--orange)); padding:26px; display:flex; flex-direction:column; justify-content:space-between;">
+    <svg width="40" height="40" viewBox="0 0 48 48" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="13" y="17" width="22" height="20" rx="4"/><path d="M17 13h14M20 9h8"/></svg>
+    <div>
+      <div style="font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:26px; color:#fff; line-height:1;">Discover</div>
+      <div style="font-family:'Hanken Grotesk',sans-serif; font-size:13.5px; color:rgba(255,255,255,.9); margin-top:8px; line-height:1.5;">A feed of places worth the trip.</div>
+    </div>
+  </div>
+</div>
+<div style="position:absolute; left:652px; top:2946px; width:236px;">
+  <div class="card" style="height:300px; background:linear-gradient(155deg,#3a78d8,#1B3F86); padding:26px; display:flex; flex-direction:column; justify-content:space-between;">
+    <svg width="40" height="40" viewBox="0 0 48 48" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="10" y="14" width="28" height="20" rx="4"/><path d="M11 17l13 9 13-9"/><path d="M35 9l1 2.6 2.6 1-2.6 1-1 2.6-1-2.6-2.6-1 2.6-1z" fill="var(--orange)" stroke="none"/></svg>
+    <div>
+      <div style="font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:26px; color:#fff; line-height:1;">The Reveal</div>
+      <div style="font-family:'Hanken Grotesk',sans-serif; font-size:13.5px; color:rgba(255,255,255,.82); margin-top:8px; line-height:1.5;">The big moment — where you're headed.</div>
+    </div>
+  </div>
+</div>
+<div style="position:absolute; left:908px; top:2946px; width:236px;">
+  <div class="card" style="height:300px; background:linear-gradient(155deg,#2f4e7a,#102A4C); padding:26px; display:flex; flex-direction:column; justify-content:space-between;">
+    <svg width="40" height="40" viewBox="0 0 48 48" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="14" width="30" height="20" rx="4"/><path d="M28 14v20" stroke-dasharray="2 3"/><path d="M13 21h9M13 27h6"/></svg>
+    <div>
+      <div style="font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:26px; color:#fff; line-height:1;">Itinerary</div>
+      <div style="font-family:'Hanken Grotesk',sans-serif; font-size:13.5px; color:rgba(255,255,255,.82); margin-top:8px; line-height:1.5;">Day by day, sorted for you.</div>
+    </div>
+  </div>
+</div>
+<div style="position:absolute; left:1164px; top:2946px; width:236px;">
+  <div class="card" style="height:300px; background:linear-gradient(155deg, var(--orange), #E0662A); padding:26px; display:flex; flex-direction:column; justify-content:space-between;">
+    <svg width="40" height="40" viewBox="0 0 48 48" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 10h18v28l-9-7-9 7z"/></svg>
+    <div>
+      <div style="font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:26px; color:#fff; line-height:1;">Saved Trips</div>
+      <div style="font-family:'Hanken Grotesk',sans-serif; font-size:13.5px; color:rgba(255,255,255,.9); margin-top:8px; line-height:1.5;">Keep the ones that got away.</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;cobalt&quot;: {&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#2563C9&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#2563C9&quot;,&quot;#1E66D6&quot;,&quot;#2F6FD0&quot;,&quot;#1F5FBF&quot;],&quot;section&quot;:&quot;Brand&quot;},
+  &quot;orange&quot;: {&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#FF8A3D&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#FF8A3D&quot;,&quot;#FB7A2A&quot;,&quot;#FF9C4D&quot;,&quot;#F2731E&quot;],&quot;section&quot;:&quot;Brand&quot;},
+  &quot;navy&quot;: {&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#102A4C&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#102A4C&quot;,&quot;#14233E&quot;,&quot;#0E2240&quot;,&quot;#172B4A&quot;],&quot;section&quot;:&quot;Brand&quot;}
+}">
+class Component extends DCLogic {
+  componentDidMount(){ this.applyTheme(); }
+  componentDidUpdate(){ this.applyTheme(); }
+  applyTheme(){
+    const r = document.documentElement.style;
+    const p = this.props || {};
+    if(p.cobalt){ r.setProperty('--cobalt', p.cobalt); }
+    if(p.orange){ r.setProperty('--orange', p.orange); }
+    if(p.navy){ r.setProperty('--navy', p.navy); }
+  }
+  renderVals(){ return {}; }
+}
+</script>
+</body>
+</html>

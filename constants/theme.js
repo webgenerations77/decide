@@ -1,53 +1,83 @@
-// Cheddar design system — American travel palette
-// Midnight navy + brass gold + star-spangled blue. Prestigious, trustworthy, distinctly American.
+// Decide design system — "We'll decide. You just go."
+// Light, warm, editorial travel. Cobalt is the confident lead; orange is the
+// moment of "go" (one accent per screen); gold warms the retro-travel moments;
+// warm cream grounds it all so the brights never shout.
+// Source of truth — no hardcoded hex in components. Derived from docs/brand/.
 
 export const COLORS = {
-  // ── Backgrounds — midnight navy ───────────────────────────────────────────
-  bg:         '#0B1929',   // deep midnight navy
-  surface:    '#132234',   // navy card surface
-  surfaceAlt: '#0D1C2B',   // deeper navy
+  // ── Backgrounds — warm paper/cream ────────────────────────────────────────
+  bg:         '#FCF9F4',   // paper — default screen background
+  surface:    '#FFFFFF',   // white card surface
+  surfaceAlt: '#F6F0E6',   // cream — secondary surface / grouped sections
 
-  // ── Borders — cool navy ───────────────────────────────────────────────────
-  border:      '#1E3558',
-  borderLight: '#2A4A72',
+  // ── Borders ───────────────────────────────────────────────────────────────
+  border:      '#ECE2CF',  // warm hairline
+  borderLight: '#E6EDFB',  // cool/sky hairline
 
-  // ── Primary — star-spangled blue ─────────────────────────────────────────
-  primary:     '#1E5FA8',  // confident American blue
-  primaryDark: '#164A88',
-  primaryText: '#EFF5FD',  // cool white
+  // ── Primary — cobalt (the confident lead) ─────────────────────────────────
+  primary:     '#2563C9',  // cobalt
+  primaryDark: '#1B3F86',  // cobalt deep
+  primaryText: '#FFFFFF',
 
-  // ── Brass gold accent — eagle & seal ─────────────────────────────────────
-  amber:       '#C8963A',  // American brass gold
-  amberDark:   '#A67928',
-  amberFaint:  '#C8963A1A',
+  // ── Accent — orange "go" + gold warmth ────────────────────────────────────
+  accent:     '#FF8A3D',   // the decisive action — one per screen
+  accentSoft: '#FFD9B8',   // orange 200
+  gold:       '#F4B63A',   // retro-travel warmth
 
-  // ── Text — cool American ──────────────────────────────────────────────────
-  textPrimary:   '#EFF5FD',  // bright clean white
-  textSecondary: '#7FA8CC',  // sky blue-gray
-  textMuted:     '#4A7090',  // muted navy
+  // ── Sky tints ─────────────────────────────────────────────────────────────
+  sky100: '#E6EDFB',
+  sky200: '#C9D8F4',
+  sky300: '#9DB8E8',
+
+  // ── Ink / navy — text + dark surfaces (headers, reversed lockups) ──────────
+  navy: '#102A4C',
+  ink:  '#16243B',
+
+  // ── Text ──────────────────────────────────────────────────────────────────
+  textPrimary:   '#16243B',  // ink
+  textSecondary: '#2C3E5C',  // slate
+  textMuted:     '#7E8BA3',  // muted
 
   // ── Status ────────────────────────────────────────────────────────────────
-  success: '#4A9A68',
-  error:   '#C04040',
-  warning: '#C8963A',  // brass gold doubles as warning
+  success: '#2E9E7B',  // brand-adjacent green
+  error:   '#D6453C',  // alert
+  warning: '#F4B63A',  // gold
 
   // ── Category colors ───────────────────────────────────────────────────────
-  food:     '#C8963A',  // brass gold — warm, inviting
-  activity: '#4A90D9',  // sky blue — open sky, freedom
-  shopping: '#7A7090',  // muted slate
-  outdoor:  '#4A8A60',  // national parks green
+  food:     '#FF8A3D',  // orange
+  activity: '#2563C9',  // cobalt
+  shopping: '#F4B63A',  // gold
+  outdoor:  '#2E9E7B',  // brand-adjacent green
 
   // ── Tab bar ───────────────────────────────────────────────────────────────
-  tabBar: '#080F1A',   // deepest navy
+  tabBar: '#FFFFFF',
 
-  // ── Backward-compat aliases ───────────────────────────────────────────────
-  teal: '#C8963A',   // mapped to brass gold
-  gold: '#C8963A',   // mapped to brass gold
+  // ── Backward-compat aliases (so existing components don't break pre-reskin) ─
+  amber: '#F4B63A',   // was brass gold → now brand gold
+  teal:  '#2563C9',   // was brass gold → now cobalt
 };
 
 export const FONTS = {
-  display:     'PlayfairDisplay_700Bold',
-  displayHeavy:'PlayfairDisplay_800ExtraBold',
+  display:      'BricolageGrotesque_700Bold',
+  displayHeavy: 'BricolageGrotesque_800ExtraBold',
+  body:         'HankenGrotesk_400Regular',
+  bodyMedium:   'HankenGrotesk_500Medium',
+  bodySemiBold: 'HankenGrotesk_600SemiBold',
+  bodyBold:     'HankenGrotesk_700Bold',
+  mono:         'SpaceMono_400Regular',
+  monoBold:     'SpaceMono_700Bold',
+};
+
+export const RADII = { sm: 6, md: 10, lg: 24, pill: 999, icon: 42 };
+
+export const SHADOWS = {
+  card: {
+    shadowColor: '#102A4C',
+    shadowOpacity: 0.10,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 4,
+  },
 };
 
 export const CATEGORY_COLORS = {
