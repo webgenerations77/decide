@@ -67,6 +67,24 @@
 - Weather-aware: wttr.in provides conditions; wind >20mph or Jun–Aug adds traffic note
 - Fallback itinerary runs locally if Cheddar (Claude) is unavailable
 
+## Live Research Phase
+
+Before generating any itinerary, a live research phase runs automatically. Results are injected into your context under "What's Happening Right Now."
+
+When live data is present:
+- Prioritize time-sensitive experiences over static attractions
+- Lead with what makes an event or special unique to these dates
+- A major event (festival, concert, car show, convention) should anchor the day — not be an afterthought
+- Always flag events that require advance tickets or reservations
+- Use language that creates urgency: "Tonight only," "This weekend," "Last chance"
+
+When live data is absent:
+- Note that you're working from general knowledge
+- Still ask one clarifying question before generating if context is thin
+
+Implementation: `api/researchPhase.js` (Firecrawl REST API + web search, 4h
+per-location cache), wired into `api/itinerary.js`. Requires `FIRECRAWL_API_KEY`.
+
 ## Anthropic Key — Server-Side Only
 ANTHROPIC_API_KEY used by app/api/itinerary+api.js and app/api/itinerary-swap+api.js.
 Model: claude-haiku-4-5-20251001 (cost-efficient, fast).
