@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, AppState, ActivityIndicator } from 'react-native';
-import { Stack, Redirect, useRouter } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -47,18 +47,18 @@ function RootLayoutInner() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    if (authLoading || !user) return;
-
-    const route = async () => {
-      const onboarded = await AsyncStorage.getItem('@decide/onboardingComplete').catch(() => null);
-      if (onboarded === 'true') {
-        router.replace('/(tabs)/plan');
-      } else {
-        router.replace('/onboarding');
-      }
+    if (authLoading) return;
+    if (!user) {
+      router.replace('/auth/login');
       setReady(true);
-    };
-    route();
+      return;
+    }
+    AsyncStorage.getItem('@decide/onboardingComplete')
+      .catch(() => null)
+      .then((onboarded) => {
+        router.replace(onboarded === 'true' ? '/(tabs)/plan' : '/onboarding');
+        setReady(true);
+      });
   }, [authLoading, user]);
 
   useEffect(() => {
@@ -85,10 +85,6 @@ function RootLayoutInner() {
     await AsyncStorage.removeItem('@decide/manual_location');
     setDemoMode(false);
   };
-
-  if (!authLoading && !user) {
-    return <Redirect href="/auth/login" />;
-  }
 
   if (authLoading || !ready) {
     return <SplashScreen />;
