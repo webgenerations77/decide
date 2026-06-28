@@ -82,9 +82,9 @@ When live data is absent:
 - Note that you're working from general knowledge
 - Still ask one clarifying question before generating if context is thin
 
-Implementation: `api/researchPhase.js` (Firecrawl REST API + web search, 4h
-per-location cache), wired into both `app/api/itinerary+api.js` (Expo dev) and
-`api/itinerary.js` (Vercel prod). Requires `FIRECRAWL_API_KEY`.
+Implementation: `api/smart/` (scout → registry/search discovery → anchors → Sonnet
+synthesis), wired into both `app/api/itinerary+api.js` and `api/itinerary.js`.
+Requires `FIRECRAWL_API_KEY`. Supersedes the old researchPhase module.
 
 ## Anthropic Key — Server-Side Only
 ANTHROPIC_API_KEY used by app/api/itinerary+api.js and app/api/itinerary-swap+api.js.
