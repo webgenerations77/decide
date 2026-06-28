@@ -10,6 +10,22 @@ import {
   PlayfairDisplay_700Bold,
   PlayfairDisplay_800ExtraBold,
 } from '@expo-google-fonts/playfair-display';
+import {
+  BricolageGrotesque_400Regular,
+  BricolageGrotesque_600SemiBold,
+  BricolageGrotesque_700Bold,
+  BricolageGrotesque_800ExtraBold,
+} from '@expo-google-fonts/bricolage-grotesque';
+import {
+  HankenGrotesk_400Regular,
+  HankenGrotesk_500Medium,
+  HankenGrotesk_600SemiBold,
+  HankenGrotesk_700Bold,
+} from '@expo-google-fonts/hanken-grotesk';
+import {
+  SpaceMono_400Regular,
+  SpaceMono_700Bold,
+} from '@expo-google-fonts/space-mono';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import OfflineBanner from '../components/OfflineBanner';
 import { COLORS } from '../constants/theme';
@@ -116,6 +132,16 @@ export default function RootLayout() {
   const [fontsLoaded] = useFonts({
     PlayfairDisplay_700Bold,
     PlayfairDisplay_800ExtraBold,
+    BricolageGrotesque_400Regular,
+    BricolageGrotesque_600SemiBold,
+    BricolageGrotesque_700Bold,
+    BricolageGrotesque_800ExtraBold,
+    HankenGrotesk_400Regular,
+    HankenGrotesk_500Medium,
+    HankenGrotesk_600SemiBold,
+    HankenGrotesk_700Bold,
+    SpaceMono_400Regular,
+    SpaceMono_700Bold,
   });
 
   if (!fontsLoaded) {
