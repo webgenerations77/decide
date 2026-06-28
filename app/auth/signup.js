@@ -3,6 +3,7 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Image,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
@@ -160,16 +161,23 @@ export default function SignupScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.primaryBtn, !canSubmit && styles.btnDisabled]}
               onPress={handleSignUp}
               disabled={!canSubmit}
-              activeOpacity={0.7}
+              activeOpacity={0.88}
+              style={!canSubmit && styles.btnDisabled}
             >
-              {loading ? (
-                <ActivityIndicator color={COLORS.primaryText} />
-              ) : (
-                <Text style={styles.primaryBtnText}>Create account</Text>
-              )}
+              <LinearGradient
+                colors={[COLORS.primary, COLORS.primaryDark]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.primaryBtn}
+              >
+                {loading ? (
+                  <ActivityIndicator color={COLORS.primaryText} />
+                ) : (
+                  <Text style={styles.primaryBtnText}>Create account →</Text>
+                )}
+              </LinearGradient>
             </TouchableOpacity>
           </View>
 
@@ -233,10 +241,10 @@ const styles = StyleSheet.create({
   tosLink: { color: COLORS.amber, fontWeight: '600', textDecorationLine: 'underline' },
 
   primaryBtn: {
-    backgroundColor: COLORS.primary, borderRadius: 16, height: 56,
+    borderRadius: 18, height: 58,
     alignItems: 'center', justifyContent: 'center', marginTop: 4,
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35, shadowRadius: 12, elevation: 8,
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4, shadowRadius: 16, elevation: 10,
   },
   primaryBtnText: { color: COLORS.primaryText, fontSize: 17, fontWeight: '700' },
   btnDisabled: { opacity: 0.5 },

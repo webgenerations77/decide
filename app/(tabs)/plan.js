@@ -3,6 +3,8 @@ import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
   Linking, ActivityIndicator, Animated, Modal, Platform, Dimensions, Image,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import SkeletonStopCard from '../../components/SkeletonCard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
@@ -395,12 +397,27 @@ function PlaceDetailModal({ visible, stop, onClose }) {
 }
 
 // ─── StopCard ─────────────────────────────────────────────────────────────────
-function StopCard({ stop, isLast, onSwap, isSwapping, onViewDetails, weather, planDate, sensitivities }) {
+function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, weather, planDate, sensitivities }) {
   const [feedback,          setFeedback]          = useState(null);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [showLegend,        setShowLegend]        = useState(false);
   const color = CATEGORY_COLORS[stop.category] ?? COLORS.amber;
   const emoji = CATEGORY_EMOJIS[stop.category] ?? '⚡';
+
+  // Staggered entrance animation
+  const enterAnim  = useRef(new Animated.Value(0)).current;
+  const slideAnim  = useRef(new Animated.Value(28)).current;
+  const pressScale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(enterAnim, { toValue: 1, duration: 380, delay: index * 75, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 360, delay: index * 75, useNativeDriver: true }),
+    ]).start();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleCardPressIn  = () => Animated.spring(pressScale, { toValue: 0.98, useNativeDriver: true, damping: 22, stiffness: 320 }).start();
+  const handleCardPressOut = () => Animated.spring(pressScale, { toValue: 1,    useNativeDriver: true, damping: 16, stiffness: 260 }).start();
 
   useEffect(() => {
     if (!stop.place_id) return;
@@ -423,12 +440,20 @@ function StopCard({ stop, isLast, onSwap, isSwapping, onViewDetails, weather, pl
 
   return (
     <>
-      <TouchableOpacity activeOpacity={0.7} onPress={() => onViewDetails(stop)} disabled={isSwapping} style={styles.stopRow}>
+      <Animated.View style={[styles.stopRow, { opacity: enterAnim, transform: [{ translateY: slideAnim }] }]}>
         <View style={styles.timelineCol}>
           <View style={[styles.timelineDot, { backgroundColor: color }]} />
           {!isLast && <View style={[styles.timelineLine, { backgroundColor: color + '33' }]} />}
         </View>
-        <View style={[styles.stopCard, { borderLeftColor: color }, isSwapping && styles.stopCardSwapping]}>
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={() => onViewDetails(stop)}
+          onPressIn={handleCardPressIn}
+          onPressOut={handleCardPressOut}
+          disabled={isSwapping}
+          style={{ flex: 1 }}
+        >
+        <Animated.View style={[styles.stopCard, { borderLeftColor: color }, isSwapping && styles.stopCardSwapping, { transform: [{ scale: pressScale }] }]}>
           <View style={styles.stopHeaderRow}>
             <View style={[styles.timeChip, { backgroundColor: color + '22', borderColor: color + '55' }]}>
               <Text style={[styles.timeText, { color }]}>{stop.time}</Text>
@@ -518,8 +543,9 @@ function StopCard({ stop, isLast, onSwap, isSwapping, onViewDetails, weather, pl
           <View style={styles.tapHint}>
             <Text style={styles.tapHintTxt}>Tap for details</Text>
           </View>
-        </View>
-      </TouchableOpacity>
+        </Animated.View>
+        </TouchableOpacity>
+      </Animated.View>
 
       <FeedbackModal
         visible={showFeedbackModal}
@@ -593,6 +619,17 @@ export default function PlanScreen() {
   const pulseAnim   = useRef(new Animated.Value(1)).current;
   const pulseLoop   = useRef(null);
   const seenDateRef = useRef(null);
+
+  // Landing entrance animations
+  const logoAnim  = useRef(new Animated.Value(0)).current;
+  const logoScale = useRef(new Animated.Value(0.85)).current;
+  const tagAnim   = useRef(new Animated.Value(0)).current;
+  const tagSlide  = useRef(new Animated.Value(24)).current;
+  const locAnim   = useRef(new Animated.Value(0)).current;
+  const btn1Anim  = useRef(new Animated.Value(0)).current;
+  const btn1Slide = useRef(new Animated.Value(28)).current;
+  const btn2Anim  = useRef(new Animated.Value(0)).current;
+  const btn2Slide = useRef(new Animated.Value(28)).current;
   const params      = useLocalSearchParams();
 
   const isValidTimeWindow = timeToMinutes(endTime) - timeToMinutes(startTime) >= 180;
@@ -710,6 +747,38 @@ export default function PlanScreen() {
       pulseAnim.setValue(1);
     }
   }, [loading]);
+
+  // Run landing entrance animation whenever the landing view becomes active
+  useEffect(() => {
+    if (view !== 'landing') return;
+    logoAnim.setValue(0); logoScale.setValue(0.85);
+    tagAnim.setValue(0);  tagSlide.setValue(24);
+    locAnim.setValue(0);
+    btn1Anim.setValue(0); btn1Slide.setValue(28);
+    btn2Anim.setValue(0); btn2Slide.setValue(28);
+
+    const seq = Animated.sequence([
+      Animated.parallel([
+        Animated.timing(logoAnim,  { toValue: 1, duration: 380, useNativeDriver: true }),
+        Animated.spring(logoScale, { toValue: 1, tension: 75, friction: 9, useNativeDriver: true }),
+      ]),
+      Animated.parallel([
+        Animated.timing(tagAnim,  { toValue: 1, duration: 300, delay: 40, useNativeDriver: true }),
+        Animated.timing(tagSlide, { toValue: 0, duration: 300, delay: 40, useNativeDriver: true }),
+      ]),
+      Animated.timing(locAnim, { toValue: 1, duration: 220, useNativeDriver: true }),
+      Animated.parallel([
+        Animated.timing(btn1Anim,  { toValue: 1, duration: 250, useNativeDriver: true }),
+        Animated.timing(btn1Slide, { toValue: 0, duration: 250, useNativeDriver: true }),
+      ]),
+      Animated.parallel([
+        Animated.timing(btn2Anim,  { toValue: 1, duration: 210, delay: 60, useNativeDriver: true }),
+        Animated.timing(btn2Slide, { toValue: 0, duration: 210, delay: 60, useNativeDriver: true }),
+      ]),
+    ]);
+    seq.start();
+    return () => seq.stop();
+  }, [view]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleToday = () => {
     setPlanDate(null);
@@ -849,8 +918,13 @@ export default function PlanScreen() {
       >
         {/* ─── LANDING ──────────────────────────────────────────────────────── */}
         {view === 'landing' && (
-          <View style={styles.landingContainer}>
-            <View style={styles.landingHeader}>
+          <LinearGradient
+            colors={[COLORS.bg, '#271913', '#1C1108', COLORS.bg]}
+            locations={[0, 0.28, 0.68, 1]}
+            style={styles.landingContainer}
+          >
+            {/* Logo — springs in */}
+            <Animated.View style={[styles.landingHeader, { opacity: logoAnim, transform: [{ scale: logoScale }] }]}>
               {displayName ? (
                 <Text style={styles.landingGreeting}>Hey, {displayName}</Text>
               ) : null}
@@ -859,33 +933,49 @@ export default function PlanScreen() {
                 style={styles.landingLogo}
                 resizeMode="contain"
               />
+            </Animated.View>
+
+            {/* Tagline — slides up */}
+            <Animated.View style={[styles.landingTaglineWrap, { opacity: tagAnim, transform: [{ translateY: tagSlide }] }]}>
+              <Text style={styles.landingTagline}>Your day, decided.</Text>
+            </Animated.View>
+
+            {/* Location pill */}
+            <Animated.View style={[styles.locationPillWrap, { opacity: locAnim }]}>
               <View style={styles.locationPill}>
-                <Text style={styles.locationText}>{locationPillText}</Text>
+                <Ionicons name={isManual ? 'pin' : 'location'} size={13} color={COLORS.amber} />
+                <Text style={styles.locationText}>{locationLabel}</Text>
               </View>
-            </View>
+            </Animated.View>
 
+            {/* CTA buttons */}
             <View style={styles.landingButtons}>
-              <TouchableOpacity
-                style={[styles.decideBtn, styles.decideBtnPrimary]}
-                activeOpacity={0.75}
-                onPress={handleToday}
-              >
-                <Text style={styles.decideBtnTitle}>Plan today</Text>
-                <Text style={styles.decideBtnSub}>Build my full-day itinerary</Text>
-              </TouchableOpacity>
+              <Animated.View style={{ opacity: btn1Anim, transform: [{ translateY: btn1Slide }], width: '100%' }}>
+                <TouchableOpacity style={styles.landingBtnTouch} onPress={handleToday} activeOpacity={0.88}>
+                  <LinearGradient
+                    colors={[COLORS.primary, COLORS.primaryDark]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={[styles.decideBtn, styles.decideBtnPrimary]}
+                  >
+                    <Text style={styles.decideBtnTitle}>Plan today</Text>
+                    <Text style={styles.decideBtnSub}>Build my full-day itinerary</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </Animated.View>
 
-              <TouchableOpacity
-                style={[styles.decideBtn, styles.decideBtnSecondary]}
-                activeOpacity={0.75}
-                onPress={() => setShowWeekPicker(true)}
-              >
-                <Text style={[styles.decideBtnTitle, { color: COLORS.amber }]}>Plan another day</Text>
-                <Text style={[styles.decideBtnSub, { color: COLORS.textMuted }]}>Choose a day this week</Text>
-              </TouchableOpacity>
+              <Animated.View style={{ opacity: btn2Anim, transform: [{ translateY: btn2Slide }], width: '100%' }}>
+                <TouchableOpacity style={styles.landingBtnTouch} onPress={() => setShowWeekPicker(true)} activeOpacity={0.75}>
+                  <View style={[styles.decideBtn, styles.decideBtnSecondary]}>
+                    <Text style={[styles.decideBtnTitle, { color: COLORS.amber }]}>Plan another day</Text>
+                    <Text style={[styles.decideBtnSub, { color: COLORS.textMuted }]}>Choose a day this week</Text>
+                  </View>
+                </TouchableOpacity>
+              </Animated.View>
             </View>
 
             <Text style={styles.landingSubtext}>Cheddar-curated, based on where you are</Text>
-          </View>
+          </LinearGradient>
         )}
 
         {/* ─── CONFIGURING ──────────────────────────────────────────────────── */}
@@ -941,6 +1031,15 @@ export default function PlanScreen() {
                 </TouchableOpacity>
               </View>
             ) : null}
+
+            {loading && (
+              <View style={styles.skeletonSection}>
+                <Text style={styles.skeletonLabel}>Building your day…</Text>
+                <SkeletonStopCard delay={0} />
+                <SkeletonStopCard delay={180} />
+                <SkeletonStopCard delay={360} />
+              </View>
+            )}
           </View>
         )}
 
@@ -1020,19 +1119,25 @@ export default function PlanScreen() {
         <View style={styles.stickyNavContainer}>
           <Animated.View style={{ opacity: loading ? pulseAnim : 1 }}>
             <TouchableOpacity
-              style={[styles.generateBtn, (loading || !isValidTimeWindow) && styles.generateBtnDisabled]}
               onPress={generate}
               disabled={loading || !isValidTimeWindow}
-              activeOpacity={0.7}
+              activeOpacity={0.88}
             >
-              {loading ? (
-                <View style={styles.loadingRow}>
-                  <ActivityIndicator color={COLORS.primaryText} size="small" style={{ marginRight: 10 }} />
-                  <Text style={styles.generateBtnText}>Finding the good stuff…</Text>
-                </View>
-              ) : (
-                <Text style={styles.generateBtnText}>Build my day</Text>
-              )}
+              <LinearGradient
+                colors={[COLORS.primary, COLORS.primaryDark]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[styles.generateBtn, (loading || !isValidTimeWindow) && styles.generateBtnDisabled]}
+              >
+                {loading ? (
+                  <View style={styles.loadingRow}>
+                    <ActivityIndicator color={COLORS.primaryText} size="small" style={{ marginRight: 10 }} />
+                    <Text style={styles.generateBtnText}>Finding the good stuff…</Text>
+                  </View>
+                ) : (
+                  <Text style={styles.generateBtnText}>Build my day →</Text>
+                )}
+              </LinearGradient>
             </TouchableOpacity>
           </Animated.View>
           {!loading && <Text style={styles.generateSubtext}>Cheddar-curated, based on where you are</Text>}
@@ -1045,9 +1150,16 @@ export default function PlanScreen() {
       {/* Sticky navigate button */}
       {view === 'itinerary' && hasItinerary && (
         <View style={styles.stickyNavContainer}>
-          <TouchableOpacity style={styles.stickyNavBtn} onPress={handleNavigateFullDay} activeOpacity={0.7}>
-            <Ionicons name="navigate" size={18} color={COLORS.primaryText} style={{ marginRight: 8 }} />
-            <Text style={styles.stickyNavTxt}>Navigate full day</Text>
+          <TouchableOpacity onPress={handleNavigateFullDay} activeOpacity={0.88}>
+            <LinearGradient
+              colors={[COLORS.amber, COLORS.amberDark]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.stickyNavBtn}
+            >
+              <Ionicons name="navigate" size={18} color={COLORS.bg} style={{ marginRight: 8 }} />
+              <Text style={[styles.stickyNavTxt, { color: COLORS.bg }]}>Navigate full day</Text>
+            </LinearGradient>
           </TouchableOpacity>
         </View>
       )}
@@ -1125,35 +1237,51 @@ const styles = StyleSheet.create({
 
   // ── Landing ──────────────────────────────────────────────────────────────
   landingContainer: {
-    flex: 1, justifyContent: 'center', alignItems: 'center',
-    paddingHorizontal: 24, paddingTop: 40, paddingBottom: 48,
+    flex: 1, alignItems: 'center',
+    paddingHorizontal: 24, paddingTop: 56, paddingBottom: 48,
+    justifyContent: 'center',
   },
-  landingHeader: { alignItems: 'center', marginBottom: 48 },
+  landingHeader: { alignItems: 'center', marginBottom: 8 },
   landingGreeting: {
     fontSize: 15, color: COLORS.amber, fontWeight: '600',
     letterSpacing: 0.2, marginBottom: 8,
   },
-  landingLogo: { width: 150, height: 150, marginBottom: 16 },
+  landingLogo: { width: 148, height: 148 },
+  landingTaglineWrap: { alignItems: 'center', marginBottom: 20, marginTop: 4 },
+  landingTagline: {
+    fontSize: 22, color: COLORS.textPrimary, textAlign: 'center',
+    fontFamily: 'PlayfairDisplay_700Bold', letterSpacing: 0.3, lineHeight: 30,
+  },
+  locationPillWrap: { marginBottom: 44 },
   locationPill: {
-    marginTop: 4, paddingHorizontal: 14, paddingVertical: 7,
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 16, paddingVertical: 9,
     borderRadius: 20, backgroundColor: COLORS.surface,
     borderWidth: 1, borderColor: COLORS.border,
   },
-  locationText:  { fontSize: 13, color: COLORS.textSecondary, letterSpacing: 0.2 },
-  landingButtons: { width: '100%', gap: 12, marginBottom: 28 },
+  locationText: { fontSize: 13, color: COLORS.textSecondary, letterSpacing: 0.2 },
+  landingButtons: { width: '100%', gap: 14, marginBottom: 28 },
+  landingBtnTouch: { width: '100%' },
   decideBtn: {
-    width: '100%', paddingVertical: 18, paddingHorizontal: 24,
-    borderRadius: 18, alignItems: 'center', gap: 4,
+    width: '100%', paddingVertical: 20, paddingHorizontal: 24,
+    borderRadius: 20, alignItems: 'center', gap: 5,
   },
   decideBtnPrimary: {
-    backgroundColor: COLORS.primary,
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4, shadowRadius: 16, elevation: 16,
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.45, shadowRadius: 20, elevation: 18,
   },
   decideBtnSecondary: { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border },
   decideBtnTitle: { color: COLORS.primaryText, fontSize: 18, fontWeight: '700' },
   decideBtnSub:   { color: 'rgba(255,248,240,0.5)', fontSize: 12, letterSpacing: 0.2 },
   landingSubtext: { fontSize: 12, color: COLORS.textMuted, letterSpacing: 0.2, textAlign: 'center' },
+
+  // Skeleton loading
+  skeletonSection: { marginTop: 24, gap: 0 },
+  skeletonLabel: {
+    fontSize: 12, color: COLORS.amber, fontWeight: '700',
+    letterSpacing: 0.8, textTransform: 'uppercase',
+    marginBottom: 20, textAlign: 'center',
+  },
 
   // ── Plan / Itinerary container ────────────────────────────────────────────
   planContainer: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 8 },
@@ -1245,10 +1373,10 @@ const styles = StyleSheet.create({
   // Generate button
   loadingRow:      { flexDirection: 'row', alignItems: 'center' },
   generateBtn: {
-    backgroundColor: COLORS.primary, borderRadius: 18,
-    height: 58, alignItems: 'center', justifyContent: 'center',
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4, shadowRadius: 16, elevation: 12,
+    borderRadius: 18, height: 58,
+    alignItems: 'center', justifyContent: 'center',
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.45, shadowRadius: 18, elevation: 14,
   },
   generateBtnDisabled: { opacity: 0.45 },
   generateBtnText: {
@@ -1310,7 +1438,7 @@ const styles = StyleSheet.create({
   catChip:          { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 },
   catEmoji:         { fontSize: 12 },
   catLabel:         { fontSize: 11, fontWeight: '600' },
-  stopName:         { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary },
+  stopName:         { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary, fontFamily: 'PlayfairDisplay_700Bold' },
   stopAddress:      { fontSize: 12, color: COLORS.textMuted, lineHeight: 17 },
 
   // Distance pill
@@ -1402,13 +1530,13 @@ const styles = StyleSheet.create({
     borderTopWidth: 1, borderTopColor: COLORS.border,
   },
   stickyNavBtn: {
-    backgroundColor: COLORS.primary, borderRadius: 18,
-    height: 58, alignItems: 'center', justifyContent: 'center',
+    borderRadius: 18, height: 58,
+    alignItems: 'center', justifyContent: 'center',
     flexDirection: 'row',
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4, shadowRadius: 16, elevation: 12,
+    shadowColor: COLORS.amber, shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35, shadowRadius: 16, elevation: 12,
   },
-  stickyNavTxt: { color: COLORS.primaryText, fontSize: 17, fontWeight: '700' },
+  stickyNavTxt: { color: COLORS.bg, fontSize: 17, fontWeight: '700' },
 
   // Week / Date picker
   weekPickerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'flex-end' },

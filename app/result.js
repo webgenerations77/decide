@@ -1,4 +1,6 @@
-﻿import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Linking } from 'react-native';
+﻿import { useRef, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Linking, Animated } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -26,6 +28,19 @@ function deriveProsAndCons(rating, userRatingsTotal, isOpenNow) {
 
 function PlaceCard({ place, rank }) {
   const { pros, cons } = deriveProsAndCons(place.rating, place.userRatingsTotal, place.isOpenNow);
+  const enterAnim  = useRef(new Animated.Value(0)).current;
+  const slideAnim  = useRef(new Animated.Value(24)).current;
+  const pressScale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(enterAnim, { toValue: 1, duration: 380, delay: (rank - 1) * 90, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 360, delay: (rank - 1) * 90, useNativeDriver: true }),
+    ]).start();
+  }, []);
+
+  const handlePressIn  = () => Animated.spring(pressScale, { toValue: 0.98, useNativeDriver: true, damping: 22 }).start();
+  const handlePressOut = () => Animated.spring(pressScale, { toValue: 1,    useNativeDriver: true, damping: 16 }).start();
 
   const handleGo = async () => {
     const url = `https://www.google.com/maps/search/?api=1`
@@ -62,7 +77,7 @@ function PlaceCard({ place, rank }) {
   };
 
   return (
-    <View style={styles.card}>
+    <Animated.View style={[styles.card, { opacity: enterAnim, transform: [{ translateY: slideAnim }, { scale: pressScale }] }]}>
       <View style={styles.cardLeft}>
         <View style={styles.rankCircle}>
           <Text style={styles.rankText}>{rank}</Text>
@@ -99,8 +114,15 @@ function PlaceCard({ place, rank }) {
           </View>
         )}
 
-        <TouchableOpacity style={styles.goBtn} onPress={handleGo} activeOpacity={0.7}>
-          <Text style={styles.goBtnText}>LET'S GO →</Text>
+        <TouchableOpacity onPress={handleGo} onPressIn={handlePressIn} onPressOut={handlePressOut} activeOpacity={0.88}>
+          <LinearGradient
+            colors={[COLORS.primary, COLORS.primaryDark]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.goBtn}
+          >
+            <Text style={styles.goBtnText}>Let's go →</Text>
+          </LinearGradient>
         </TouchableOpacity>
       </View>
 
@@ -109,7 +131,7 @@ function PlaceCard({ place, rank }) {
           <Text style={styles.exciteText}>⚡{place.excitementScore}</Text>
         </View>
       )}
-    </View>
+    </Animated.View>
   );
 }
 
@@ -256,11 +278,10 @@ const styles = StyleSheet.create({
   conLine: { fontSize: 13, color: COLORS.warning, letterSpacing: 0.2 },
 
   goBtn: {
-    marginTop: 4,
-    backgroundColor: COLORS.primary, borderRadius: 16,
-    height: 56, alignItems: 'center', justifyContent: 'center',
+    marginTop: 4, borderRadius: 16, height: 52,
+    alignItems: 'center', justifyContent: 'center',
     shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4, shadowRadius: 12, elevation: 8,
+    shadowOpacity: 0.38, shadowRadius: 12, elevation: 8,
   },
   goBtnText: { color: COLORS.primaryText, fontSize: 15, fontWeight: '700' },
 

@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Image,
+  ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Image, Animated,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { signInWithGoogleCredential } from '../../services/authService';
 import * as Google from 'expo-auth-session/providers/google';
@@ -26,6 +28,16 @@ export default function LoginScreen() {
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
     clientId: GOOGLE_WEB_CLIENT_ID,
   });
+
+  const heroAnim  = useRef(new Animated.Value(0)).current;
+  const heroSlide = useRef(new Animated.Value(20)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(heroAnim,  { toValue: 1, duration: 500, useNativeDriver: true }),
+      Animated.timing(heroSlide, { toValue: 0, duration: 400, useNativeDriver: true }),
+    ]).start();
+  }, []);
 
   const handleEmailSignIn = async () => {
     if (!email.trim() || !password) { setError('Please fill in all fields.'); return; }
@@ -67,14 +79,14 @@ export default function LoginScreen() {
         style={styles.flex}
       >
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          <View style={styles.hero}>
+          <Animated.View style={[styles.hero, { opacity: heroAnim, transform: [{ translateY: heroSlide }] }]}>
             <Image
               source={require('../../assets/logo-small.png')}
               style={styles.heroLogo}
               resizeMode="contain"
             />
             <Text style={styles.heroTag}>Your day, decided by Cheddar.</Text>
-          </View>
+          </Animated.View>
 
           {!!error && (
             <View style={styles.errorBox}>
@@ -114,16 +126,23 @@ export default function LoginScreen() {
             </View>
 
             <TouchableOpacity
-              style={[styles.primaryBtn, loading && styles.btnDisabled]}
               onPress={handleEmailSignIn}
               disabled={loading}
-              activeOpacity={0.7}
+              activeOpacity={0.88}
+              style={loading && styles.btnDisabled}
             >
-              {loading ? (
-                <ActivityIndicator color={COLORS.primaryText} />
-              ) : (
-                <Text style={styles.primaryBtnText}>Sign in</Text>
-              )}
+              <LinearGradient
+                colors={[COLORS.primary, COLORS.primaryDark]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.primaryBtn}
+              >
+                {loading ? (
+                  <ActivityIndicator color={COLORS.primaryText} />
+                ) : (
+                  <Text style={styles.primaryBtnText}>Sign in →</Text>
+                )}
+              </LinearGradient>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -132,6 +151,7 @@ export default function LoginScreen() {
               disabled={loading || !request}
               activeOpacity={0.7}
             >
+              <Ionicons name="logo-google" size={18} color={COLORS.amber} style={{ marginRight: 10 }} />
               <Text style={styles.googleBtnText}>Continue with Google</Text>
             </TouchableOpacity>
           </View>
@@ -182,10 +202,10 @@ const styles = StyleSheet.create({
     fontSize: 16, color: COLORS.textPrimary,
   },
   primaryBtn: {
-    backgroundColor: COLORS.primary, borderRadius: 16, height: 56,
+    borderRadius: 18, height: 58,
     alignItems: 'center', justifyContent: 'center', marginTop: 4,
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35, shadowRadius: 12, elevation: 8,
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4, shadowRadius: 16, elevation: 10,
   },
   primaryBtnText: {
     color: COLORS.primaryText, fontSize: 17, fontWeight: '700',
@@ -193,9 +213,10 @@ const styles = StyleSheet.create({
   btnDisabled: { opacity: 0.6 },
   googleBtn: {
     backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
-    borderRadius: 16, height: 56, alignItems: 'center', justifyContent: 'center',
+    borderRadius: 18, height: 58, alignItems: 'center', justifyContent: 'center',
+    flexDirection: 'row',
   },
-  googleBtnText: { color: COLORS.textPrimary, fontSize: 16, fontWeight: '600' },
+  googleBtnText: { color: COLORS.textSecondary, fontSize: 16, fontWeight: '600' },
   links: {
     flexDirection: 'row', justifyContent: 'space-between',
     marginTop: 28, paddingHorizontal: 4,

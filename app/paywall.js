@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -100,16 +101,23 @@ export default function PaywallScreen() {
       </View>
 
       <TouchableOpacity
-        style={[styles.upgradeBtn, loading && styles.btnDisabled]}
         onPress={handleUpgrade}
         disabled={loading}
-        activeOpacity={0.7}
+        activeOpacity={0.88}
+        style={loading && styles.btnDisabled}
       >
-        {loading ? (
-          <ActivityIndicator color={COLORS.primaryText} />
-        ) : (
-          <Text style={styles.upgradeBtnText}>Upgrade to Pro — $3.99/mo</Text>
-        )}
+        <LinearGradient
+          colors={[COLORS.primary, COLORS.primaryDark]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.upgradeBtn}
+        >
+          {loading ? (
+            <ActivityIndicator color={COLORS.primaryText} />
+          ) : (
+            <Text style={styles.upgradeBtnText}>Upgrade to Pro — $3.99/mo</Text>
+          )}
+        </LinearGradient>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={handleRestore} disabled={loading} activeOpacity={0.7}>
@@ -169,10 +177,10 @@ const styles = StyleSheet.create({
   featureTextPro:  { color: COLORS.textPrimary, fontSize: 13, flex: 1 },
 
   upgradeBtn: {
-    backgroundColor: COLORS.primary, borderRadius: 16, height: 56,
+    borderRadius: 18, height: 58,
     alignItems: 'center', justifyContent: 'center', marginBottom: 16,
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35, shadowRadius: 12, elevation: 8,
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.42, shadowRadius: 16, elevation: 10,
   },
   upgradeBtnText: { color: COLORS.primaryText, fontSize: 17, fontWeight: '700' },
   btnDisabled: { opacity: 0.6 },
