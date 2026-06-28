@@ -54,6 +54,54 @@ async function runPinball(ctx, interest) {
   }));
 }
 
+async function runBrewery(ctx, interest) {
+  const { latitude, longitude } = ctx.coords;
+  const res = await fetch(`https://api.openbrewerydb.org/v1/breweries?by_dist=${latitude},${longitude}&per_page=8`);
+  if (!res.ok) throw new Error(`brewery ${res.status}`);
+  const data = await res.json();
+  return (data || []).filter((b) => b.latitude && b.longitude).map((b) => ({
+    title: b.name, category: 'food', interest, lat: parseFloat(b.latitude), lng: parseFloat(b.longitude),
+    address: [b.street, b.city].filter(Boolean).join(', '), url: b.website_url || '',
+    snippet: b.brewery_type ? `${b.brewery_type} brewery` : '', sourceLabel: 'Open Brewery DB',
+  }));
+}
+
+async function runSurf(ctx, interest) {
+  const { latitude, longitude } = ctx.coords;
+  const res = await fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${latitude}&longitude=${longitude}&daily=wave_height_max&forecast_days=3&timezone=auto`);
+  if (!res.ok) throw new Error(`surf ${res.status}`);
+  const d = (await res.json()).daily || {};
+  return (d.time || []).map((day, i) => ({
+    title: `Surf forecast — ${day}`, category: 'outdoor', interest, lat: latitude, lng: longitude,
+    address: '', when: day, url: '', snippet: `Max wave height ~${d.wave_height_max?.[i]}m`, sourceLabel: 'Open-Meteo',
+  }));
+}
+
+async function runTides(ctx, interest) {
+  const { latitude, longitude } = ctx.coords;
+  const begin = (ctx.travelDates?.start || '').replace(/-/g, '');
+  const res = await fetch(`https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=predictions&datum=MLLW&interval=hilo&units=english&time_zone=lst_ldt&format=json&application=decide&begin_date=${begin}&range=24&lat=${latitude}&lon=${longitude}`);
+  if (!res.ok) throw new Error(`tides ${res.status}`);
+  const preds = (await res.json()).predictions || [];
+  return preds.map((p) => ({
+    title: `${p.type === 'H' ? 'High' : 'Low'} tide`, category: 'outdoor', interest, lat: latitude, lng: longitude,
+    address: '', when: p.t, url: '', snippet: `${p.v} ft`, sourceLabel: 'NOAA Tides',
+  }));
+}
+
+async function runGoldenHour(ctx, interest) {
+  const { latitude, longitude } = ctx.coords;
+  const date = ctx.travelDates?.start || '';
+  const res = await fetch(`https://api.sunrise-sunset.org/json?lat=${latitude}&lng=${longitude}&date=${date}&formatted=0`);
+  if (!res.ok) throw new Error(`goldenhour ${res.status}`);
+  const r = (await res.json()).results || {};
+  return [{
+    title: 'Golden hour', category: 'outdoor', interest, lat: latitude, lng: longitude, address: '',
+    when: r.sunset, url: '', snippet: `Sunset ${r.sunset ? new Date(r.sunset).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '—'}`,
+    sourceLabel: 'sunrise-sunset.org',
+  }];
+}
+
 async function runSearch(ctx, interest) {
   const results = await firecrawlSearch(ctx.query || `${interest} near ${ctx.location}`, 5);
   return results.map((r) => ({
@@ -67,6 +115,10 @@ const SEARCH_FALLBACK = { key: 'search', match: [], run: runSearch };
 export const SOURCES = [
   { key: 'pinball',  match: ['pinball'], run: runPinball },
   { key: 'overpass', match: Object.keys(INTEREST_OSM_TAGS), run: runOverpass },
+  { key: 'brewery',    match: ['brewery', 'breweries', 'craft beer', 'beer'], run: runBrewery },
+  { key: 'surf',       match: ['surf', 'surfing', 'waves'], run: runSurf },
+  { key: 'tides',      match: ['tides', 'tide', 'beach walk', 'tide pools'], run: runTides },
+  { key: 'goldenhour', match: ['sunset', 'sunrise', 'golden hour', 'stargazing'], run: runGoldenHour },
   SEARCH_FALLBACK,
 ];
 
