@@ -2,19 +2,21 @@ import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { purchasePro, restorePurchases } from '../services/subscriptionService';
+import { COLORS, FONTS } from '../constants/theme';
 
 const FREE_FEATURES = [
-  { text: '5 decisions per day', included: true },
-  { text: '3 quick spins per day', included: true },
-  { text: 'Basic history', included: true },
+  { text: '5 decisions per day' },
+  { text: '3 quick spins per day' },
+  { text: 'Basic history' },
 ];
 
 const PRO_FEATURES = [
-  { text: 'Unlimited decisions', included: true },
-  { text: 'Unlimited spins', included: true },
-  { text: 'Full itinerary history', included: true },
-  { text: 'Priority support', included: true },
+  { text: 'Unlimited decisions' },
+  { text: 'Unlimited spins' },
+  { text: 'Full itinerary history' },
+  { text: 'Priority support' },
 ];
 
 export default function PaywallScreen() {
@@ -27,13 +29,13 @@ export default function PaywallScreen() {
       const result = await purchasePro();
       if (result.success) {
         Alert.alert('Welcome to Pro!', 'You now have unlimited access.', [
-          { text: 'OK', onPress: () => router.back() },
+          { text: 'Let\'s go', onPress: () => router.back() },
         ]);
       } else {
         Alert.alert('Coming Soon', result.message);
       }
     } catch (e) {
-      Alert.alert('Error', e.message || 'Purchase failed.');
+      Alert.alert('Something went wrong', e.message || 'Purchase failed. Try again.');
     } finally {
       setLoading(false);
     }
@@ -44,14 +46,14 @@ export default function PaywallScreen() {
     try {
       const restored = await restorePurchases();
       if (restored) {
-        Alert.alert('Restored!', 'Your Pro subscription has been restored.', [
+        Alert.alert('All set!', 'Your Pro subscription has been restored.', [
           { text: 'OK', onPress: () => router.back() },
         ]);
       } else {
-        Alert.alert('No Purchases', 'No previous purchases found to restore.');
+        Alert.alert('Nothing found', 'No previous purchases found.');
       }
     } catch (e) {
-      Alert.alert('Error', e.message || 'Restore failed.');
+      Alert.alert('Something went wrong', e.message || 'Restore failed.');
     } finally {
       setLoading(false);
     }
@@ -59,14 +61,21 @@ export default function PaywallScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <TouchableOpacity style={styles.closeBtn} onPress={() => router.back()} activeOpacity={0.7}>
-        <Text style={styles.closeBtnText}>✕</Text>
+      <TouchableOpacity
+        style={styles.closeBtn}
+        onPress={() => router.back()}
+        activeOpacity={0.7}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      >
+        <Ionicons name="close" size={20} color={COLORS.textMuted} />
       </TouchableOpacity>
 
       <View style={styles.hero}>
-        <Text style={styles.heroEmoji}>👑</Text>
-        <Text style={styles.heroTitle}>Unlock Decide Pro</Text>
-        <Text style={styles.heroSub}>Unlimited decisions, every day.</Text>
+        <View style={styles.crownBadge}>
+          <Ionicons name="star" size={28} color={COLORS.amber} />
+        </View>
+        <Text style={styles.heroTitle}>Unlock Cheddar Pro</Text>
+        <Text style={styles.heroSub}>Unlimited decisions. Every day.</Text>
       </View>
 
       <View style={styles.comparison}>
@@ -74,7 +83,7 @@ export default function PaywallScreen() {
           <Text style={styles.planLabel}>Free</Text>
           {FREE_FEATURES.map((f, i) => (
             <View key={i} style={styles.featureRow}>
-              <Text style={styles.featureCheck}>✓</Text>
+              <Ionicons name="checkmark" size={16} color={COLORS.textMuted} />
               <Text style={styles.featureTextFree}>{f.text}</Text>
             </View>
           ))}
@@ -83,7 +92,7 @@ export default function PaywallScreen() {
           <Text style={styles.planLabelPro}>Pro</Text>
           {PRO_FEATURES.map((f, i) => (
             <View key={i} style={styles.featureRow}>
-              <Text style={styles.featureCheckPro}>✓</Text>
+              <Ionicons name="checkmark-circle" size={16} color={COLORS.amber} />
               <Text style={styles.featureTextPro}>{f.text}</Text>
             </View>
           ))}
@@ -97,49 +106,77 @@ export default function PaywallScreen() {
         activeOpacity={0.7}
       >
         {loading ? (
-          <ActivityIndicator color="#00191f" />
+          <ActivityIndicator color={COLORS.primaryText} />
         ) : (
           <Text style={styles.upgradeBtnText}>Upgrade to Pro — $3.99/mo</Text>
         )}
       </TouchableOpacity>
 
       <TouchableOpacity onPress={handleRestore} disabled={loading} activeOpacity={0.7}>
-        <Text style={styles.restoreText}>Restore Purchases</Text>
+        <Text style={styles.restoreText}>Restore purchases</Text>
       </TouchableOpacity>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#00191f', paddingHorizontal: 24, justifyContent: 'center' },
+  container: {
+    flex: 1, backgroundColor: COLORS.bg,
+    paddingHorizontal: 24, justifyContent: 'center',
+  },
   closeBtn: {
     position: 'absolute', top: 56, right: 20, zIndex: 10,
     width: 36, height: 36, borderRadius: 18,
-    backgroundColor: '#00262e', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: COLORS.surface,
+    borderWidth: 1, borderColor: COLORS.border,
+    alignItems: 'center', justifyContent: 'center',
   },
-  closeBtnText: { color: '#9ca3af', fontSize: 16, fontWeight: '700' },
+
   hero: { alignItems: 'center', marginBottom: 32 },
-  heroEmoji: { fontSize: 56, marginBottom: 8 },
-  heroTitle: { fontSize: 28, fontWeight: '800', color: '#ffffff' },
-  heroSub: { fontSize: 15, color: '#9ca3af', marginTop: 4 },
+  crownBadge: {
+    width: 64, height: 64, borderRadius: 32,
+    backgroundColor: COLORS.amberFaint,
+    borderWidth: 2, borderColor: COLORS.amber + '44',
+    alignItems: 'center', justifyContent: 'center',
+    marginBottom: 16,
+  },
+  heroTitle: {
+    fontSize: 26, color: COLORS.textPrimary,
+    fontFamily: 'PlayfairDisplay_800ExtraBold',
+    textAlign: 'center', marginBottom: 6,
+  },
+  heroSub: { fontSize: 15, color: COLORS.textSecondary, textAlign: 'center' },
+
   comparison: { flexDirection: 'row', gap: 12, marginBottom: 32 },
   planCol: {
-    flex: 1, backgroundColor: '#00262e', borderRadius: 16,
-    borderWidth: 1, borderColor: '#003040', padding: 16,
+    flex: 1, backgroundColor: COLORS.surface, borderRadius: 16,
+    borderWidth: 1, borderColor: COLORS.border, padding: 16, gap: 10,
   },
-  planColPro: { borderColor: '#00d2be', backgroundColor: 'rgba(0,210,190,0.08)' },
-  planLabel: { fontSize: 16, fontWeight: '700', color: '#9ca3af', marginBottom: 12, textAlign: 'center' },
-  planLabelPro: { fontSize: 16, fontWeight: '700', color: '#00d2be', marginBottom: 12, textAlign: 'center' },
-  featureRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  featureCheck: { color: '#4a6a6e', fontSize: 14, marginRight: 8, fontWeight: '700' },
-  featureCheckPro: { color: '#00d2be', fontSize: 14, marginRight: 8, fontWeight: '700' },
-  featureTextFree: { color: '#9ca3af', fontSize: 13, flex: 1 },
-  featureTextPro: { color: '#ffffff', fontSize: 13, flex: 1 },
+  planColPro: {
+    borderColor: COLORS.amber + '55',
+    backgroundColor: COLORS.amberFaint,
+  },
+  planLabel: {
+    fontSize: 15, fontWeight: '700', color: COLORS.textMuted,
+    textAlign: 'center', marginBottom: 2,
+  },
+  planLabelPro: {
+    fontSize: 15, fontWeight: '700', color: COLORS.amber,
+    textAlign: 'center', marginBottom: 2,
+  },
+  featureRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  featureTextFree: { color: COLORS.textMuted, fontSize: 13, flex: 1 },
+  featureTextPro:  { color: COLORS.textPrimary, fontSize: 13, flex: 1 },
+
   upgradeBtn: {
-    backgroundColor: '#00d2be', borderRadius: 16, height: 56,
+    backgroundColor: COLORS.primary, borderRadius: 16, height: 56,
     alignItems: 'center', justifyContent: 'center', marginBottom: 16,
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35, shadowRadius: 12, elevation: 8,
   },
-  upgradeBtnText: { color: '#00191f', fontSize: 17, fontWeight: '800' },
+  upgradeBtnText: { color: COLORS.primaryText, fontSize: 17, fontWeight: '700' },
   btnDisabled: { opacity: 0.6 },
-  restoreText: { color: '#4a6a6e', fontSize: 14, textAlign: 'center', fontWeight: '600' },
+  restoreText: {
+    color: COLORS.textMuted, fontSize: 14, textAlign: 'center', fontWeight: '600',
+  },
 });

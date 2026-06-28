@@ -1,4 +1,4 @@
-﻿import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Switch } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Switch, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -6,7 +6,7 @@ import * as Location from 'expo-location';
 import * as Notifications from 'expo-notifications';
 import { useState } from 'react';
 import { save, KEYS } from '../../services/settingsService';
-import { COLORS } from '../../constants/theme';
+import { COLORS, FONTS } from '../../constants/theme';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const GROUP_OPTS = [
@@ -36,6 +36,10 @@ const CUISINES    = [
 // ─── Sub-components ───────────────────────────────────────────────────────────
 function SectionLabel({ title }) {
   return <Text style={styles.sectionLabel}>{title}</Text>;
+}
+
+function Question({ children }) {
+  return <Text style={styles.question}>{children}</Text>;
 }
 
 function PillRow({ options, selected, onSelect }) {
@@ -130,48 +134,53 @@ export default function OnboardingScreen() {
       >
         {/* ── Hero ──────────────────────────────────────────────────────────── */}
         <View style={styles.hero}>
-          <View style={styles.glowWrap}>
-            <Text style={styles.emoji}>🎯</Text>
-          </View>
-          <Text style={styles.appName}>DECIDE</Text>
-          <Text style={styles.tagline}>Ditch Stress. Ignite Daily Exploration.</Text>
+          <Image
+            source={require('../../assets/logo-small.png')}
+            style={styles.heroLogo}
+            resizeMode="contain"
+          />
+          <Text style={styles.heroTitle}>Meet Cheddar.</Text>
+          <Text style={styles.heroSub}>
+            Your well-traveled friend who always knows the good spots.
+            Tell me a bit about yourself and I'll take care of the rest.
+          </Text>
         </View>
 
         {/* ── Travel Style ──────────────────────────────────────────────────── */}
-        <SectionLabel title="TRAVEL STYLE" />
-        <Text style={styles.question}>Who are you usually with?</Text>
+        <SectionLabel title="Your travel style" />
+        <Question>Who are you usually with?</Question>
         <PillRow options={GROUP_OPTS} selected={group} onSelect={setGroup} />
 
-        <Text style={styles.question}>What's your typical budget?</Text>
+        <Question>What's your usual budget range?</Question>
         <PillRow options={BUDGET_OPTS} selected={budget} onSelect={setBudget} />
 
-        <Text style={styles.question}>How do you like to move?</Text>
+        <Question>How do you like to move through a day?</Question>
         <PillRow options={PACE_OPTS} selected={pace} onSelect={setPace} />
 
         {/* ── Your Day ──────────────────────────────────────────────────────── */}
-        <SectionLabel title="YOUR DAY" />
-        <Text style={styles.question}>When do you usually start?</Text>
+        <SectionLabel title="Your ideal day" />
+        <Question>When do you usually get going?</Question>
         <PillRow options={START_TIMES} selected={startTime} onSelect={setStartTime} />
 
-        <Text style={styles.question}>When do you usually wrap up?</Text>
+        <Question>When do you usually wrap up?</Question>
         <PillRow options={END_TIMES} selected={endTime} onSelect={setEndTime} />
 
         {/* ── Food Favorites ────────────────────────────────────────────────── */}
-        <SectionLabel title="FOOD FAVORITES" />
-        <Text style={styles.question}>Pick any cuisines you love</Text>
+        <SectionLabel title="Food favorites" />
+        <Question>Pick any cuisines you love (I'll lean into them)</Question>
         <ChipGrid options={CUISINES} selected={cuisines} onToggle={toggleCuisine} />
 
-        {/* ── App Defaults ──────────────────────────────────────────────────── */}
-        <SectionLabel title="APP DEFAULTS" />
+        {/* ── Notifications ─────────────────────────────────────────────────── */}
+        <SectionLabel title="Stay in the know" />
         <View style={styles.toggleRow}>
           <View style={styles.toggleInfo}>
-            <Text style={styles.toggleLabel}>Push Notifications</Text>
-            <Text style={styles.toggleSub}>Daily inspiration and reminders</Text>
+            <Text style={styles.toggleLabel}>Morning inspiration</Text>
+            <Text style={styles.toggleSub}>Cheddar can send you a daily nudge to plan your day</Text>
           </View>
           <Switch
             value={notifications}
             onValueChange={setNotifications}
-            trackColor={{ false: COLORS.border, true: COLORS.teal }}
+            trackColor={{ false: COLORS.border, true: COLORS.amber }}
             thumbColor={notifications ? COLORS.primaryText : COLORS.textMuted}
           />
         </View>
@@ -180,10 +189,10 @@ export default function OnboardingScreen() {
       {/* ── Fixed bottom CTA ──────────────────────────────────────────────── */}
       <View style={styles.bottomBar}>
         <TouchableOpacity style={styles.cta} onPress={complete} activeOpacity={0.7}>
-          <Text style={styles.ctaText}>Let's Go →</Text>
+          <Text style={styles.ctaText}>Let's go →</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={skip} style={styles.skipWrap} activeOpacity={0.7}>
-          <Text style={styles.skipText}>Skip →</Text>
+          <Text style={styles.skipText}>Skip for now</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -197,39 +206,39 @@ const styles = StyleSheet.create({
   content:  { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 20 },
 
   // Hero
-  hero: { alignItems: 'center', gap: 8, marginBottom: 28 },
-  glowWrap: {
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8, shadowRadius: 24, elevation: 18,
+  hero: { alignItems: 'center', gap: 12, marginBottom: 32 },
+  heroLogo: { width: 110, height: 110 },
+  heroTitle: {
+    fontSize: 28, color: COLORS.textPrimary,
+    fontFamily: 'PlayfairDisplay_800ExtraBold',
+    textAlign: 'center',
   },
-  emoji:   { fontSize: 80 },
-  appName: { fontSize: 32, fontWeight: '900', color: COLORS.textPrimary, letterSpacing: 8 },
-  tagline: {
-    fontSize: 14, color: COLORS.gold, textAlign: 'center',
-    fontWeight: '600', lineHeight: 20, maxWidth: 280,
+  heroSub: {
+    fontSize: 15, color: COLORS.textSecondary,
+    textAlign: 'center', lineHeight: 22, maxWidth: 300,
   },
 
   // Section labels
   sectionLabel: {
-    fontSize: 11, fontWeight: '700', color: COLORS.gold,
-    letterSpacing: 2.5, marginTop: 20, marginBottom: 8,
+    fontSize: 11, fontWeight: '700', color: COLORS.amber,
+    letterSpacing: 1.5, marginTop: 24, marginBottom: 8,
     textTransform: 'uppercase',
   },
 
   // Question labels
   question: {
     fontSize: 15, fontWeight: '600', color: COLORS.textSecondary,
-    marginBottom: 8,
+    marginBottom: 10, lineHeight: 21,
   },
 
   // Single-select pills
   pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 },
   pill: {
-    paddingHorizontal: 16, paddingVertical: 10, borderRadius: 16,
+    paddingHorizontal: 16, paddingVertical: 11, borderRadius: 16,
     backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
   },
   pillActive:     { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  pillText:       { fontSize: 14, color: COLORS.teal, fontWeight: '500' },
+  pillText:       { fontSize: 14, color: COLORS.amber, fontWeight: '500' },
   pillTextActive: { color: COLORS.primaryText, fontWeight: '700' },
 
   // Multi-select cuisine chips
@@ -238,8 +247,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
     backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
   },
-  chipActive:     { backgroundColor: COLORS.teal, borderColor: COLORS.teal },
-  chipText:       { fontSize: 13, color: COLORS.teal, fontWeight: '500' },
+  chipActive:     { backgroundColor: COLORS.amber, borderColor: COLORS.amber },
+  chipText:       { fontSize: 13, color: COLORS.amber, fontWeight: '500' },
   chipTextActive: { color: COLORS.bg, fontWeight: '600' },
 
   // Notifications row
@@ -247,25 +256,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     backgroundColor: COLORS.surface, borderRadius: 16,
     borderWidth: 1, borderColor: COLORS.border,
-    paddingHorizontal: 16, paddingVertical: 14,
+    paddingHorizontal: 16, paddingVertical: 16,
+    marginBottom: 8,
   },
   toggleInfo:  { flex: 1, marginRight: 16 },
-  toggleLabel: { fontSize: 15, color: COLORS.textPrimary, fontWeight: '600', marginBottom: 2 },
-  toggleSub:   { fontSize: 13, color: COLORS.teal },
+  toggleLabel: { fontSize: 15, color: COLORS.textPrimary, fontWeight: '600', marginBottom: 3 },
+  toggleSub:   { fontSize: 13, color: COLORS.textMuted, lineHeight: 18 },
 
   // Fixed bottom bar
   bottomBar: {
-    paddingHorizontal: 20, paddingTop: 12, paddingBottom: 20,
+    paddingHorizontal: 20, paddingTop: 14, paddingBottom: 24,
     gap: 10, backgroundColor: COLORS.bg,
-    borderTopWidth: 0.5, borderTopColor: COLORS.border,
+    borderTopWidth: 1, borderTopColor: COLORS.border,
   },
   cta: {
     backgroundColor: COLORS.primary, borderRadius: 16,
     height: 56, alignItems: 'center', justifyContent: 'center',
     shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.45, shadowRadius: 14, elevation: 10,
+    shadowOpacity: 0.4, shadowRadius: 14, elevation: 10,
   },
-  ctaText:  { color: COLORS.primaryText, fontSize: 16, fontWeight: '800', letterSpacing: 1 },
+  ctaText:  { color: COLORS.primaryText, fontSize: 17, fontWeight: '700' },
   skipWrap: { alignItems: 'center', paddingVertical: 4 },
-  skipText: { color: COLORS.teal, fontSize: 14 },
+  skipText: { color: COLORS.textMuted, fontSize: 14 },
 });

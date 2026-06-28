@@ -18,7 +18,7 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: styles.tabBar,
-        tabBarActiveTintColor: COLORS.teal,
+        tabBarActiveTintColor: COLORS.amber,
         tabBarInactiveTintColor: COLORS.textMuted,
         tabBarLabelStyle: styles.tabLabel,
         tabBarItemStyle: styles.tabItem,
@@ -60,7 +60,7 @@ export default function TabLayout() {
         options={{
           title: 'Settings',
           tabBarIcon: ({ focused, color }) => (
-            <TabIcon active="settings" inactive="settings-outline" focused={focused} color={color} />
+            <TabIcon active="person-circle" inactive="person-circle-outline" focused={focused} color={color} />
           ),
         }}
       />
@@ -73,37 +73,35 @@ const styles = StyleSheet.create({
     height: 65,
     backgroundColor: COLORS.tabBar,
     borderTopWidth: 1,
-    borderTopColor: COLORS.teal + '30',
+    borderTopColor: COLORS.border,
     paddingBottom: 8,
     paddingTop: 0,
     elevation: 0,
     shadowOpacity: 0,
-    shadowRadius: 0,
-    shadowOffset: { width: 0, height: 0 },
   },
   tabItem: {
     flex: 1,
     margin: 0,
     padding: 0,
-    borderWidth: 0,
     backgroundColor: 'transparent',
   },
   tabLabel: {
     fontSize: 11,
     marginTop: 0,
+    fontWeight: '600',
   },
   iconWrap: {
     alignItems: 'center',
     backgroundColor: 'transparent',
   },
   indicator: {
-    width: 24,
-    height: 3,
-    borderRadius: 2,
+    width: 20,
+    height: 2,
+    borderRadius: 1,
     backgroundColor: 'transparent',
-    marginBottom: 4,
+    marginBottom: 5,
   },
   indicatorActive: {
-    backgroundColor: COLORS.teal,
+    backgroundColor: COLORS.amber,
   },
 });
