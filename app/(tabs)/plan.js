@@ -601,6 +601,7 @@ export default function PlanScreen() {
   const [swappingIndex,  setSwappingIndex]  = useState(null);
   const [error,          setError]          = useState(null);
   const [isFallback,     setIsFallback]     = useState(false);
+  const [research,       setResearch]       = useState(null);
   const [coords,         setCoords]         = useState(null);
   const [planDate,       setPlanDate]       = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -792,7 +793,7 @@ export default function PlanScreen() {
   };
 
   const goToLanding = () => {
-    setItinerary(null); setWeather(null); setMeta(null); setError(null); setIsFallback(false);
+    setItinerary(null); setWeather(null); setMeta(null); setError(null); setIsFallback(false); setResearch(null);
     setView('landing');
     cancelItineraryAlerts().catch(() => {});
   };
@@ -836,6 +837,7 @@ export default function PlanScreen() {
       setWeather(data.weather);
       setMeta(data.meta);
       setIsFallback(data.isFallback ?? false);
+      setResearch(data.research ?? null);
       setView('itinerary');
 
       try {
@@ -899,7 +901,7 @@ export default function PlanScreen() {
   };
 
   const resetToConfiguring = () => {
-    setItinerary(null); setWeather(null); setMeta(null); setError(null); setIsFallback(false);
+    setItinerary(null); setWeather(null); setMeta(null); setError(null); setIsFallback(false); setResearch(null);
     setView('configuring');
   };
 
@@ -1081,6 +1083,11 @@ export default function PlanScreen() {
                         </View>
                       ))}
                   </View>
+                  {research?.hadLiveData && (
+                    <Text style={styles.liveDataNote}>
+                      ✨ Cheddar checked what's happening this week
+                    </Text>
+                  )}
                 </View>
               )}
 
@@ -1419,6 +1426,7 @@ const styles = StyleSheet.create({
   metaChipTime:     { borderColor: COLORS.border, backgroundColor: COLORS.surfaceAlt },
   metaChipText:     { color: COLORS.amber, fontSize: 11, fontWeight: '600' },
   metaChipTimeText: { color: COLORS.textSecondary },
+  liveDataNote:     { color: COLORS.teal, fontSize: 11, fontStyle: 'italic', marginTop: 10, textAlign: 'center' },
 
   // Stop card + timeline
   stopRow:     { flexDirection: 'row', marginBottom: 14 },
