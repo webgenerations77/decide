@@ -1,10 +1,15 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, AppState, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, AppState, Image } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
+import { useFonts } from 'expo-font';
+import {
+  PlayfairDisplay_700Bold,
+  PlayfairDisplay_800ExtraBold,
+} from '@expo-google-fonts/playfair-display';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import OfflineBanner from '../components/OfflineBanner';
 import { COLORS } from '../constants/theme';
@@ -22,7 +27,7 @@ function DemoBanner({ onDismiss }) {
   return (
     <View style={[styles.banner, { top: insets.top }]} pointerEvents="box-none">
       <View style={styles.bannerSide} />
-      <Text style={styles.bannerText}>🎭 Demo Mode — Sample Data Only</Text>
+      <Text style={styles.bannerText}>Demo Mode — Sample Data Only</Text>
       <TouchableOpacity style={styles.bannerSide} onPress={onDismiss} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} activeOpacity={0.7}>
         <Text style={styles.bannerX}>✕</Text>
       </TouchableOpacity>
@@ -33,9 +38,16 @@ function DemoBanner({ onDismiss }) {
 function SplashScreen() {
   return (
     <View style={styles.splash}>
-      <Text style={styles.splashEmoji}>🧭</Text>
-      <Text style={styles.splashTitle}>Decide</Text>
-      <ActivityIndicator color={COLORS.teal} size="large" style={{ marginTop: 24 }} />
+      <Image
+        source={require('../assets/logo-small.png')}
+        style={styles.splashLogo}
+        resizeMode="contain"
+      />
+      <View style={styles.splashDotRow}>
+        <View style={[styles.splashDot, styles.splashDotActive]} />
+        <View style={styles.splashDot} />
+        <View style={styles.splashDot} />
+      </View>
     </View>
   );
 }
@@ -101,6 +113,23 @@ function RootLayoutInner() {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    PlayfairDisplay_700Bold,
+    PlayfairDisplay_800ExtraBold,
+  });
+
+  if (!fontsLoaded) {
+    return (
+      <View style={styles.splash}>
+        <Image
+          source={require('../assets/logo-small.png')}
+          style={styles.splashLogo}
+          resizeMode="contain"
+        />
+      </View>
+    );
+  }
+
   return (
     <SafeAreaProvider>
       <AuthProvider>
@@ -114,7 +143,7 @@ const styles = StyleSheet.create({
   banner: {
     position: 'absolute', left: 0, right: 0,
     height: 32, zIndex: 9999, elevation: 20,
-    backgroundColor: COLORS.teal,
+    backgroundColor: COLORS.amber,
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 12,
   },
@@ -124,7 +153,13 @@ const styles = StyleSheet.create({
   splash: {
     flex: 1, backgroundColor: COLORS.bg,
     alignItems: 'center', justifyContent: 'center',
+    gap: 32,
   },
-  splashEmoji: { fontSize: 64, marginBottom: 12 },
-  splashTitle: { fontSize: 36, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: 1 },
+  splashLogo: { width: 180, height: 180 },
+  splashDotRow: { flexDirection: 'row', gap: 8 },
+  splashDot: {
+    width: 6, height: 6, borderRadius: 3,
+    backgroundColor: COLORS.border,
+  },
+  splashDotActive: { backgroundColor: COLORS.amber },
 });

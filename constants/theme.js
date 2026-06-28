@@ -1,37 +1,53 @@
+// Cheddar design system — warm travel palette
+// Signature: espresso dark backgrounds (not cold navy) + terracotta + golden amber
+
 export const COLORS = {
-  // Backgrounds — deep navy
-  bg:         '#0C1A2E',
-  surface:    '#142540',
-  surfaceAlt: '#0A1423',
-  // Borders
-  border:      '#1E3A5A',
-  borderLight: '#2A4F78',
-  // Primary CTA — orange
-  primary:     '#FF6B35',
-  primaryDark: '#E85A24',
-  primaryText: '#FFFFFF',
-  // Teal accent
-  teal:        '#00BFB3',
-  tealDark:    '#009E93',
-  tealFaint:   '#00BFB31A',
-  // Gold
-  gold:        '#C9964E',
-  goldFaint:   '#C9964E18',
-  // Text
-  textPrimary:   '#FFFFFF',
-  textSecondary: '#8AACBF',
-  textMuted:     '#4A7090',
-  // Status
-  success: '#4ade80',
-  error:   '#f87171',
-  warning: '#fbbf24',
-  // Category colors
-  food:     '#FF6B35',
-  activity: '#00BFB3',
-  shopping: '#C9964E',
-  outdoor:  '#5BBFDC',
-  // Tab bar
-  tabBar: '#0A1423',
+  // ── Backgrounds — warm espresso dark ──────────────────────────────────────
+  bg:         '#1A120B',   // deep espresso (signature: warm not cold)
+  surface:    '#261A12',   // warm card surface
+  surfaceAlt: '#1F1511',   // deeper warm surface
+
+  // ── Borders — earthy ──────────────────────────────────────────────────────
+  border:      '#3B2A1E',
+  borderLight: '#4E3828',
+
+  // ── Primary — terracotta ──────────────────────────────────────────────────
+  primary:     '#C85C30',  // warm terracotta
+  primaryDark: '#A8481F',
+  primaryText: '#FFF8F0',  // warm cream white
+
+  // ── Amber accent — golden hour ────────────────────────────────────────────
+  amber:       '#D4913A',  // golden amber
+  amberDark:   '#B07829',
+  amberFaint:  '#D4913A18',
+
+  // ── Text — warm tones ─────────────────────────────────────────────────────
+  textPrimary:   '#F5E8D8',  // warm cream (not cold white)
+  textSecondary: '#B8967A',  // warm taupe
+  textMuted:     '#9A7860',  // warm muted
+
+  // ── Status ────────────────────────────────────────────────────────────────
+  success: '#5BA85A',
+  error:   '#E86060',
+  warning: '#D4913A',  // amber — doubles as warning
+
+  // ── Category colors ───────────────────────────────────────────────────────
+  food:     '#C85C30',  // terracotta
+  activity: '#D4913A',  // amber
+  shopping: '#8A7060',  // warm tan
+  outdoor:  '#5F8A56',  // sage green
+
+  // ── Tab bar ───────────────────────────────────────────────────────────────
+  tabBar: '#150E08',   // deepest espresso
+
+  // ── Backward-compat alias (used in a few places as COLORS.teal) ───────────
+  teal: '#D4913A',   // mapped to amber — remove after full token sweep
+  gold: '#D4913A',   // mapped to amber
+};
+
+export const FONTS = {
+  display:     'PlayfairDisplay_700Bold',
+  displayHeavy:'PlayfairDisplay_800ExtraBold',
 };
 
 export const CATEGORY_COLORS = {
