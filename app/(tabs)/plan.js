@@ -919,7 +919,7 @@ export default function PlanScreen() {
         {/* ─── LANDING ──────────────────────────────────────────────────────── */}
         {view === 'landing' && (
           <LinearGradient
-            colors={[COLORS.bg, '#271913', '#1C1108', COLORS.bg]}
+            colors={[COLORS.bg, '#0D2040', '#0A1C38', COLORS.bg]}
             locations={[0, 0.28, 0.68, 1]}
             style={styles.landingContainer}
           >

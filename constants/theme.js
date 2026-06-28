@@ -1,48 +1,48 @@
-// Cheddar design system — warm travel palette
-// Signature: espresso dark backgrounds (not cold navy) + terracotta + golden amber
+// Cheddar design system — American travel palette
+// Midnight navy + brass gold + star-spangled blue. Prestigious, trustworthy, distinctly American.
 
 export const COLORS = {
-  // ── Backgrounds — warm espresso dark ──────────────────────────────────────
-  bg:         '#1A120B',   // deep espresso (signature: warm not cold)
-  surface:    '#261A12',   // warm card surface
-  surfaceAlt: '#1F1511',   // deeper warm surface
+  // ── Backgrounds — midnight navy ───────────────────────────────────────────
+  bg:         '#0B1929',   // deep midnight navy
+  surface:    '#132234',   // navy card surface
+  surfaceAlt: '#0D1C2B',   // deeper navy
 
-  // ── Borders — earthy ──────────────────────────────────────────────────────
-  border:      '#3B2A1E',
-  borderLight: '#4E3828',
+  // ── Borders — cool navy ───────────────────────────────────────────────────
+  border:      '#1E3558',
+  borderLight: '#2A4A72',
 
-  // ── Primary — terracotta ──────────────────────────────────────────────────
-  primary:     '#C85C30',  // warm terracotta
-  primaryDark: '#A8481F',
-  primaryText: '#FFF8F0',  // warm cream white
+  // ── Primary — star-spangled blue ─────────────────────────────────────────
+  primary:     '#1E5FA8',  // confident American blue
+  primaryDark: '#164A88',
+  primaryText: '#EFF5FD',  // cool white
 
-  // ── Amber accent — golden hour ────────────────────────────────────────────
-  amber:       '#D4913A',  // golden amber
-  amberDark:   '#B07829',
-  amberFaint:  '#D4913A18',
+  // ── Brass gold accent — eagle & seal ─────────────────────────────────────
+  amber:       '#C8963A',  // American brass gold
+  amberDark:   '#A67928',
+  amberFaint:  '#C8963A1A',
 
-  // ── Text — warm tones ─────────────────────────────────────────────────────
-  textPrimary:   '#F5E8D8',  // warm cream (not cold white)
-  textSecondary: '#B8967A',  // warm taupe
-  textMuted:     '#9A7860',  // warm muted
+  // ── Text — cool American ──────────────────────────────────────────────────
+  textPrimary:   '#EFF5FD',  // bright clean white
+  textSecondary: '#7FA8CC',  // sky blue-gray
+  textMuted:     '#4A7090',  // muted navy
 
   // ── Status ────────────────────────────────────────────────────────────────
-  success: '#5BA85A',
-  error:   '#E86060',
-  warning: '#D4913A',  // amber — doubles as warning
+  success: '#4A9A68',
+  error:   '#C04040',
+  warning: '#C8963A',  // brass gold doubles as warning
 
   // ── Category colors ───────────────────────────────────────────────────────
-  food:     '#C85C30',  // terracotta
-  activity: '#D4913A',  // amber
-  shopping: '#8A7060',  // warm tan
-  outdoor:  '#5F8A56',  // sage green
+  food:     '#C8963A',  // brass gold — warm, inviting
+  activity: '#4A90D9',  // sky blue — open sky, freedom
+  shopping: '#7A7090',  // muted slate
+  outdoor:  '#4A8A60',  // national parks green
 
   // ── Tab bar ───────────────────────────────────────────────────────────────
-  tabBar: '#150E08',   // deepest espresso
+  tabBar: '#080F1A',   // deepest navy
 
-  // ── Backward-compat alias (used in a few places as COLORS.teal) ───────────
-  teal: '#D4913A',   // mapped to amber — remove after full token sweep
-  gold: '#D4913A',   // mapped to amber
+  // ── Backward-compat aliases ───────────────────────────────────────────────
+  teal: '#C8963A',   // mapped to brass gold
+  gold: '#C8963A',   // mapped to brass gold
 };
 
 export const FONTS = {
