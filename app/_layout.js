@@ -7,10 +7,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { useFonts } from 'expo-font';
 import {
-  PlayfairDisplay_700Bold,
-  PlayfairDisplay_800ExtraBold,
-} from '@expo-google-fonts/playfair-display';
-import {
   BricolageGrotesque_400Regular,
   BricolageGrotesque_600SemiBold,
   BricolageGrotesque_700Bold,
@@ -130,8 +126,6 @@ function RootLayoutInner() {
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
-    PlayfairDisplay_700Bold,
-    PlayfairDisplay_800ExtraBold,
     BricolageGrotesque_400Regular,
     BricolageGrotesque_600SemiBold,
     BricolageGrotesque_700Bold,

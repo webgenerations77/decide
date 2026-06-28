@@ -1277,7 +1277,7 @@ const styles = StyleSheet.create({
   landingTaglineWrap: { alignItems: 'center', marginBottom: 20, marginTop: 4 },
   landingTagline: {
     fontSize: 22, color: COLORS.textPrimary, textAlign: 'center',
-    fontFamily: 'PlayfairDisplay_700Bold', letterSpacing: 0.3, lineHeight: 30,
+    fontFamily: FONTS.display, letterSpacing: 0.3, lineHeight: 30,
   },
   locationPillWrap: { marginBottom: 44 },
   locationPill: {
@@ -1319,7 +1319,7 @@ const styles = StyleSheet.create({
   backText:       { fontSize: 13, color: COLORS.amber, fontWeight: '600' },
   appName: {
     fontSize: 26, color: COLORS.textPrimary,
-    fontFamily: 'PlayfairDisplay_800ExtraBold',
+    fontFamily: FONTS.displayHeavy,
   },
   headerPill: {
     marginTop: 10, paddingHorizontal: 12, paddingVertical: 6,
@@ -1434,7 +1434,7 @@ const styles = StyleSheet.create({
   },
   itineraryDay: {
     fontSize: 28, color: COLORS.textPrimary,
-    fontFamily: 'PlayfairDisplay_800ExtraBold',
+    fontFamily: FONTS.displayHeavy,
   },
   itineraryDate: { fontSize: 13, color: COLORS.textMuted, marginTop: 4 },
   itineraryCity: { fontSize: 13, color: COLORS.amber, marginTop: 3 },
@@ -1467,7 +1467,7 @@ const styles = StyleSheet.create({
   catChip:          { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 },
   catEmoji:         { fontSize: 12 },
   catLabel:         { fontSize: 11, fontWeight: '600' },
-  stopName:         { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary, fontFamily: 'PlayfairDisplay_700Bold' },
+  stopName:         { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary, fontFamily: FONTS.display },
   stopAddress:      { fontSize: 12, color: COLORS.textMuted, lineHeight: 17 },
 
   // Distance pill
@@ -1582,7 +1582,7 @@ const styles = StyleSheet.create({
   },
   weekPickerTitle: {
     fontSize: 16, fontWeight: '700', color: COLORS.textPrimary,
-    fontFamily: 'PlayfairDisplay_700Bold',
+    fontFamily: FONTS.display,
   },
   weekPickerClose: {
     width: 32, height: 32, borderRadius: 16,
@@ -1615,7 +1615,7 @@ const styles = StyleSheet.create({
   },
   fbTitle: {
     fontSize: 16, fontWeight: '700', color: COLORS.textPrimary,
-    fontFamily: 'PlayfairDisplay_700Bold',
+    fontFamily: FONTS.display,
     textAlign: 'center', paddingVertical: 16,
     borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
@@ -1657,7 +1657,7 @@ const styles = StyleSheet.create({
   detailScroll:     { paddingHorizontal: 20, paddingTop: 18 },
   detailName:       {
     fontSize: 22, color: COLORS.textPrimary,
-    fontFamily: 'PlayfairDisplay_700Bold',
+    fontFamily: FONTS.display,
     marginBottom: 4,
   },
   detailAddr:       { fontSize: 13, color: COLORS.textMuted, marginBottom: 14, lineHeight: 18 },
@@ -1725,7 +1725,7 @@ const styles = StyleSheet.create({
   },
   legendTitle: {
     fontSize: 15, fontWeight: '700', color: COLORS.textPrimary,
-    fontFamily: 'PlayfairDisplay_700Bold',
+    fontFamily: FONTS.display,
     textAlign: 'center', marginBottom: 16,
   },
   legendRow:   { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: COLORS.border },

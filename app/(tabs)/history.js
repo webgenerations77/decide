@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { DEMO_HISTORY } from '../../services/demoData';
-import { COLORS, CATEGORY_COLORS, CATEGORY_EMOJIS } from '../../constants/theme';
+import { COLORS, CATEGORY_COLORS, CATEGORY_EMOJIS, FONTS } from '../../constants/theme';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const FEEDBACK_REASONS = ['Closed', 'Too crowded', 'Not my style', 'Too far', 'Too expensive', 'Other'];
@@ -400,7 +400,7 @@ const styles = StyleSheet.create({
 
   title: {
     fontSize: 28, color: COLORS.textPrimary,
-    fontFamily: 'PlayfairDisplay_800ExtraBold',
+    fontFamily: FONTS.displayHeavy,
     textAlign: 'center', marginBottom: 20,
   },
 
@@ -518,7 +518,7 @@ const styles = StyleSheet.create({
   },
   fbTitle: {
     fontSize: 16, fontWeight: '700', color: COLORS.textPrimary,
-    fontFamily: 'PlayfairDisplay_700Bold',
+    fontFamily: FONTS.display,
     textAlign: 'center', paddingVertical: 18,
     borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
