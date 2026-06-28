@@ -847,7 +847,7 @@ export default function PlanScreen() {
       setWeather(data.weather);
       setMeta(data.meta);
       setIsFallback(data.isFallback ?? false);
-      setResearch(data.research ?? null);
+      setResearch(data.discovery ?? null);
       setView('itinerary');
 
       try {

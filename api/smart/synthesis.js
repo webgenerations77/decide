@@ -34,7 +34,7 @@ Rules:
 - Include lunch if midday is in the window and dinner if evening is. Match budget. Don't repeat a place.
 - ${p.pace === 'relaxed' ? '4–5' : p.pace === 'packed' ? '7–8' : '5–6'} stops.
 
-Return a JSON array. Each stop: time, duration_mins, category, name, place_id, address, lat, lng, reason, excitement_score, and provenance (only for anchor/find stops).`;
+Return a JSON array. Each stop: time, duration_mins, category, name, place_id, address, lat, lng, reason, excitement_score, admission_cost ("Free" | "$15/adult" | "Prices vary — check website" | null for food/shopping), and provenance (only for anchor/find stops).`;
 
   return { system, user };
 }
@@ -49,6 +49,7 @@ export function validateStops(raw) {
     name: s.name, place_id: s.place_id || `stop_${Math.round((s.lat || 0) * 1000)}`,
     address: s.address || '', lat: s.lat, lng: s.lng,
     reason: s.reason || '', excitement_score: Number(s.excitement_score) || 70,
+    admission_cost: s.admission_cost ?? null,
     ...(s.provenance ? { provenance: s.provenance } : {}),
   }));
 }

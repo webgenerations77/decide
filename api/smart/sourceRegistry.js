@@ -30,7 +30,7 @@ async function runOverpass(ctx, interest) {
   const q = `[out:json][timeout:20];node["${k}"="${v}"](around:${radius},${latitude},${longitude});out body 12;`;
   const res = await fetch('https://overpass-api.de/api/interpreter', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': 'Decide/1.0 (itinerary app)' },
     body: 'data=' + encodeURIComponent(q),
   });
   if (!res.ok) throw new Error(`overpass ${res.status}`);
@@ -73,7 +73,7 @@ async function runSurf(ctx, interest) {
   const d = (await res.json()).daily || {};
   return (d.time || []).map((day, i) => ({
     title: `Surf forecast — ${day}`, category: 'outdoor', interest, lat: latitude, lng: longitude,
-    address: '', when: day, url: '', snippet: `Max wave height ~${d.wave_height_max?.[i]}m`, sourceLabel: 'Open-Meteo',
+    address: '', when: day, url: '', snippet: d.wave_height_max?.[i] != null ? `Max wave height ~${d.wave_height_max[i]}m` : 'Wave data unavailable', sourceLabel: 'Open-Meteo',
   }));
 }
 
@@ -95,9 +95,10 @@ async function runGoldenHour(ctx, interest) {
   const res = await fetch(`https://api.sunrise-sunset.org/json?lat=${latitude}&lng=${longitude}&date=${date}&formatted=0`);
   if (!res.ok) throw new Error(`goldenhour ${res.status}`);
   const r = (await res.json()).results || {};
+  if (!r.sunset) return [];
   return [{
     title: 'Golden hour', category: 'outdoor', interest, lat: latitude, lng: longitude, address: '',
-    when: r.sunset, url: '', snippet: `Sunset ${r.sunset ? new Date(r.sunset).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '—'}`,
+    when: r.sunset, url: '', snippet: `Sunset ${new Date(r.sunset).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`,
     sourceLabel: 'sunrise-sunset.org',
   }];
 }
