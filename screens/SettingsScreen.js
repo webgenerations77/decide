@@ -407,7 +407,7 @@ export default function SettingsScreen() {
   if (!loaded) {
     return (
       <SafeAreaView style={[styles.screen, { justifyContent: 'center', alignItems: 'center' }]} edges={['top']}>
-        <ActivityIndicator color={COLORS.teal} size="large" />
+        <ActivityIndicator color={COLORS.amber} size="large" />
       </SafeAreaView>
     );
   }
@@ -419,7 +419,7 @@ export default function SettingsScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.screenTitle}>SETTINGS</Text>
+        <Text style={styles.screenTitle}>Settings</Text>
 
         {/* ── Demo Mode ──────────────────────────────────────────────────── */}
         <View style={styles.demoCard}>
@@ -436,8 +436,8 @@ export default function SettingsScreen() {
             <Switch
               value={demoMode}
               onValueChange={handleDemoToggle}
-              trackColor={{ false: COLORS.border, true: COLORS.teal }}
-              thumbColor={demoMode ? COLORS.teal : COLORS.textMuted}
+              trackColor={{ false: COLORS.border, true: COLORS.amber }}
+              thumbColor={demoMode ? COLORS.amber : COLORS.textMuted}
             />
           </View>
           {demoMode && (
@@ -482,7 +482,7 @@ export default function SettingsScreen() {
         <View style={styles.card}>
           <View style={styles.appRow}>
             <Text style={styles.appRowLabel}>Plan</Text>
-            <Text style={[styles.appRowValue, proStatus && { color: COLORS.teal }]}>
+            <Text style={[styles.appRowValue, proStatus && { color: COLORS.amber }]}>
               {proStatus ? '👑 Decide Pro' : 'Free'}
             </Text>
           </View>
@@ -501,7 +501,7 @@ export default function SettingsScreen() {
                 activeOpacity={0.7}
                 onPress={() => router.push('/paywall')}
               >
-                <Text style={[styles.appRowLabel, { color: COLORS.teal }]}>Upgrade to Pro</Text>
+                <Text style={[styles.appRowLabel, { color: COLORS.amber }]}>Upgrade to Pro</Text>
                 <Text style={styles.appRowChevron}>›</Text>
               </TouchableOpacity>
             </>
@@ -652,8 +652,8 @@ export default function SettingsScreen() {
             <Switch
               value={notifications}
               onValueChange={handleNotif}
-              trackColor={{ false: COLORS.border, true: COLORS.teal }}
-              thumbColor={notifications ? COLORS.teal : COLORS.textMuted}
+              trackColor={{ false: COLORS.border, true: COLORS.amber }}
+              thumbColor={notifications ? COLORS.amber : COLORS.textMuted}
             />
           </View>
           {notifications && (
@@ -821,10 +821,10 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   screen:        { flex: 1, backgroundColor: COLORS.bg },
   scrollContent: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 24 },
-  screenTitle:   { fontSize: 28, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: 5, textAlign: 'center', marginBottom: 28 },
+  screenTitle:   { fontSize: 28, color: COLORS.textPrimary, fontFamily: 'PlayfairDisplay_800ExtraBold', textAlign: 'center', marginBottom: 28 },
 
   sectionHeader: {
-    fontSize: 11, fontWeight: '700', color: COLORS.gold,
+    fontSize: 11, fontWeight: '700', color: COLORS.amber,
     letterSpacing: 0.8, textTransform: 'uppercase',
     marginTop: 24, marginBottom: 10, paddingHorizontal: 4,
   },
@@ -832,7 +832,7 @@ const styles = StyleSheet.create({
   card:         { backgroundColor: COLORS.surface, borderRadius: 18, borderWidth: 0.5, borderColor: COLORS.border, padding: 18, overflow: 'hidden' },
   locationCard: { backgroundColor: COLORS.surface, borderRadius: 18, borderWidth: 0.5, borderColor: COLORS.border, padding: 18, zIndex: 10 },
 
-  fieldLabel: { fontSize: 11, fontWeight: '700', color: COLORS.teal, letterSpacing: 0.8, marginBottom: 10, textTransform: 'uppercase' },
+  fieldLabel: { fontSize: 11, fontWeight: '700', color: COLORS.amber, letterSpacing: 0.8, marginBottom: 10, textTransform: 'uppercase' },
 
   textInput: {
     backgroundColor: COLORS.surfaceAlt, borderRadius: 12,
@@ -849,7 +849,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surfaceAlt, borderWidth: 1, borderColor: COLORS.border,
     alignItems: 'center', justifyContent: 'center',
   },
-  avatarPillActive: { backgroundColor: COLORS.teal, borderColor: COLORS.teal },
+  avatarPillActive: { backgroundColor: COLORS.amber, borderColor: COLORS.amber },
   avatarEmoji:      { fontSize: 22 },
 
   // Location
@@ -859,8 +859,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surfaceAlt, borderWidth: 1, borderColor: COLORS.border,
     alignItems: 'center',
   },
-  modePillActive:     { backgroundColor: COLORS.teal, borderColor: COLORS.teal },
-  modePillText:       { fontSize: 13, fontWeight: '600', color: COLORS.teal },
+  modePillActive:     { backgroundColor: COLORS.amber, borderColor: COLORS.amber },
+  modePillText:       { fontSize: 13, fontWeight: '600', color: COLORS.amber },
   modePillTextActive: { color: COLORS.bg },
   manualBlock:        { marginTop: 14, gap: 10, position: 'relative', zIndex: 10 },
   inputRow:           { flexDirection: 'row', alignItems: 'center', gap: 8 },
@@ -868,7 +868,7 @@ const styles = StyleSheet.create({
   clearBtnTxt:        { color: COLORS.textSecondary, fontSize: 14, fontWeight: '700' },
   geocodeRow:         { flexDirection: 'row', alignItems: 'center', gap: 8 },
   geocodeStatus:      { fontSize: 13, color: COLORS.textMuted },
-  geocodeSuccess:     { fontSize: 13, fontWeight: '600', color: COLORS.teal },
+  geocodeSuccess:     { fontSize: 13, fontWeight: '600', color: COLORS.amber },
   geocodeError:       { fontSize: 13, color: COLORS.error },
   suggestionsOverlay: {
     position: 'absolute', top: 54, left: 0, right: 0,
@@ -878,7 +878,7 @@ const styles = StyleSheet.create({
   },
   suggestionRow:      { height: 48, justifyContent: 'center', paddingHorizontal: 14 },
   suggestionRowBorder:{ borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  suggestionText:     { fontSize: 13, fontWeight: '500', color: COLORS.teal },
+  suggestionText:     { fontSize: 13, fontWeight: '500', color: COLORS.amber },
 
   // Chips
   chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
@@ -887,7 +887,7 @@ const styles = StyleSheet.create({
     borderRadius: 20, borderWidth: 1,
     backgroundColor: COLORS.surfaceAlt, borderColor: COLORS.border,
   },
-  chipActive:     { backgroundColor: COLORS.teal, borderColor: COLORS.teal },
+  chipActive:     { backgroundColor: COLORS.amber, borderColor: COLORS.amber },
   chipText:       { fontSize: 13, fontWeight: '500', color: COLORS.textMuted },
   chipTextActive: { color: COLORS.bg, fontWeight: '600' },
 
@@ -909,7 +909,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surfaceAlt, borderColor: COLORS.border,
   },
   prefPillActive:     { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  prefPillText:       { fontSize: 13, fontWeight: '600', color: COLORS.teal },
+  prefPillText:       { fontSize: 13, fontWeight: '600', color: COLORS.amber },
   prefPillTextActive: { color: COLORS.primaryText },
 
   // Time picker
@@ -920,9 +920,9 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: COLORS.border,
     paddingHorizontal: 12, paddingVertical: 9, gap: 3,
   },
-  timePillLabel:      { fontSize: 9, fontWeight: '700', color: COLORS.teal, letterSpacing: 1.5 },
+  timePillLabel:      { fontSize: 9, fontWeight: '700', color: COLORS.amber, letterSpacing: 1.5 },
   timePillInner:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  timePillValue:      { fontSize: 14, fontWeight: '700', color: COLORS.teal },
+  timePillValue:      { fontSize: 14, fontWeight: '700', color: COLORS.amber },
   timePillChevron:    { fontSize: 11, color: COLORS.textMuted },
   timeValidationHint: { fontSize: 11, color: COLORS.error, marginTop: 8, letterSpacing: 0.2 },
 
@@ -937,30 +937,30 @@ const styles = StyleSheet.create({
     width: 240, overflow: 'hidden',
   },
   modalTitle: {
-    fontSize: 10, fontWeight: '700', color: COLORS.teal, letterSpacing: 2,
+    fontSize: 10, fontWeight: '700', color: COLORS.amber, letterSpacing: 2,
     textAlign: 'center', paddingVertical: 14,
     borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
   modalOption:           { paddingVertical: 13, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: COLORS.surfaceAlt },
   modalOptionActive:     { backgroundColor: COLORS.surfaceAlt },
   modalOptionText:       { fontSize: 15, fontWeight: '500', color: COLORS.textMuted, textAlign: 'center' },
-  modalOptionTextActive: { color: COLORS.teal, fontWeight: '700' },
+  modalOptionTextActive: { color: COLORS.amber, fontWeight: '700' },
 
   // Distance slider — 50 mile max
   distanceHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 },
-  distanceValue:  { fontSize: 13, fontWeight: '700', color: COLORS.teal },
+  distanceValue:  { fontSize: 13, fontWeight: '700', color: COLORS.amber },
   sliderTrack: {
     height: 4, borderRadius: 2, backgroundColor: COLORS.border,
     marginVertical: 20, position: 'relative',
   },
   sliderFill: {
     position: 'absolute', top: 0, left: 0, bottom: 0,
-    backgroundColor: COLORS.teal, borderRadius: 2,
+    backgroundColor: COLORS.amber, borderRadius: 2,
   },
   sliderThumb: {
     position: 'absolute', top: -12,
     width: 28, height: 28, borderRadius: 14,
-    backgroundColor: COLORS.teal, borderWidth: 2, borderColor: COLORS.surface,
+    backgroundColor: COLORS.amber, borderWidth: 2, borderColor: COLORS.surface,
   },
   distanceTicks: { flexDirection: 'row', justifyContent: 'space-between' },
   distanceTick:  { fontSize: 10, color: COLORS.textMuted },
@@ -968,35 +968,35 @@ const styles = StyleSheet.create({
   // Demo mode
   demoCard: {
     backgroundColor: COLORS.surfaceAlt, borderRadius: 18,
-    borderWidth: 1.5, borderColor: COLORS.teal + '44',
+    borderWidth: 1.5, borderColor: COLORS.amber + '44',
     padding: 18, marginBottom: 8,
   },
   demoToggleRow:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   demoLabelGroup: { flex: 1, marginRight: 12 },
   demoLabelRow:   { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
-  demoLabel:      { fontSize: 15, fontWeight: '700', color: COLORS.teal },
+  demoLabel:      { fontSize: 15, fontWeight: '700', color: COLORS.amber },
   demoDot: {
     width: 8, height: 8, borderRadius: 4,
-    backgroundColor: COLORS.teal,
+    backgroundColor: COLORS.amber,
   },
   demoSub:        { fontSize: 12, color: COLORS.textMuted, lineHeight: 16 },
   demoInfoCard: {
     marginTop: 14, backgroundColor: COLORS.surface, borderRadius: 12,
-    borderWidth: 1, borderColor: COLORS.teal + '33', padding: 12,
+    borderWidth: 1, borderColor: COLORS.amber + '33', padding: 12,
   },
-  demoInfoText: { fontSize: 13, color: COLORS.teal, lineHeight: 18 },
+  demoInfoText: { fontSize: 13, color: COLORS.amber, lineHeight: 18 },
 
   // Toast
   toast: {
     position: 'absolute', bottom: 32, left: 20, right: 20,
     backgroundColor: COLORS.surfaceAlt, borderRadius: 14,
-    borderWidth: 1, borderColor: COLORS.teal + '55',
+    borderWidth: 1, borderColor: COLORS.amber + '55',
     paddingVertical: 12, paddingHorizontal: 18,
     alignItems: 'center',
-    shadowColor: COLORS.teal, shadowOffset: { width: 0, height: 0 },
+    shadowColor: COLORS.amber, shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.3, shadowRadius: 12, elevation: 10,
   },
-  toastText: { fontSize: 13, fontWeight: '600', color: COLORS.teal },
+  toastText: { fontSize: 13, fontWeight: '600', color: COLORS.amber },
 
   // App section
   appRow:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 13 },

@@ -311,7 +311,7 @@ export default function HistoryScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
-        <Text style={styles.title}>HISTORY</Text>
+        <Text style={styles.title}>History</Text>
 
         {/* Filter pills */}
         <View style={styles.filterRow}>
@@ -399,8 +399,9 @@ const styles = StyleSheet.create({
   scrollContent: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 24 },
 
   title: {
-    fontSize: 28, fontWeight: '800', color: COLORS.textPrimary,
-    letterSpacing: 5, textAlign: 'center', marginBottom: 20,
+    fontSize: 28, color: COLORS.textPrimary,
+    fontFamily: 'PlayfairDisplay_800ExtraBold',
+    textAlign: 'center', marginBottom: 20,
   },
 
   // Filter pills
@@ -412,7 +413,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
   },
   filterPillActive:    { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  filterPillTxt:       { fontSize: 13, fontWeight: '600', color: COLORS.teal },
+  filterPillTxt:       { fontSize: 13, fontWeight: '600', color: COLORS.amber },
   filterPillTxtActive: { color: COLORS.primaryText },
   countTxt:            { fontSize: 12, color: COLORS.textMuted, marginLeft: 4 },
 
@@ -439,7 +440,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 7, paddingVertical: 2,
     borderWidth: 1, borderColor: COLORS.primary + '55',
   },
-  exciteText: { color: COLORS.teal, fontSize: 10, fontWeight: '700' },
+  exciteText: { color: COLORS.amber, fontSize: 10, fontWeight: '700' },
 
   decisionReason:  { fontSize: 13, color: COLORS.textSecondary, fontStyle: 'italic', lineHeight: 17 },
   decisionMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 2 },
@@ -447,8 +448,8 @@ const styles = StyleSheet.create({
   decisionMeta:    { fontSize: 11, color: COLORS.textMuted },
 
   feedbackTag: {
-    alignSelf: 'flex-start', backgroundColor: '#7f1d1d33',
-    borderRadius: 8, borderWidth: 1, borderColor: '#991b1b55',
+    alignSelf: 'flex-start', backgroundColor: COLORS.error + '22',
+    borderRadius: 8, borderWidth: 1, borderColor: COLORS.error + '44',
     paddingHorizontal: 8, paddingVertical: 3, marginTop: 2,
   },
   feedbackTagTxt: { fontSize: 11, color: COLORS.error, fontWeight: '600' },
@@ -459,8 +460,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 8,
   },
   thumbBtn:     { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 8 },
-  thumbBtnUp:   { backgroundColor: '#14532d33' },
-  thumbBtnDown: { backgroundColor: '#7f1d1d33' },
+  thumbBtnUp:   { backgroundColor: COLORS.success + '33' },
+  thumbBtnDown: { backgroundColor: COLORS.error + '22' },
   thumbTxt:     { fontSize: 15 },
   thumbDivider: { width: 1, height: 18, backgroundColor: COLORS.border, marginHorizontal: 6 },
 
@@ -472,14 +473,14 @@ const styles = StyleSheet.create({
   },
   itinHeader:  { gap: 2 },
   itinDate:    { fontSize: 17, fontWeight: '800', color: COLORS.textPrimary },
-  itinCity:    { fontSize: 11, color: COLORS.gold },
+  itinCity:    { fontSize: 11, color: COLORS.amber },
   itinMetaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   prefPill: {
     paddingHorizontal: 10, paddingVertical: 4,
     borderRadius: 999, backgroundColor: COLORS.surfaceAlt,
     borderWidth: 1, borderColor: COLORS.border,
   },
-  prefPillTxt:  { fontSize: 11, color: COLORS.teal, fontWeight: '600' },
+  prefPillTxt:  { fontSize: 11, color: COLORS.amber, fontWeight: '600' },
   itinStatsRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
   itinStats:    { fontSize: 11, color: COLORS.textSecondary },
   chipsScroll:  { paddingVertical: 4, gap: 6, flexDirection: 'row' },
@@ -516,7 +517,8 @@ const styles = StyleSheet.create({
     paddingBottom: 34, overflow: 'hidden',
   },
   fbTitle: {
-    fontSize: 11, fontWeight: '700', color: COLORS.gold, letterSpacing: 2,
+    fontSize: 16, fontWeight: '700', color: COLORS.textPrimary,
+    fontFamily: 'PlayfairDisplay_700Bold',
     textAlign: 'center', paddingVertical: 18,
     borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },

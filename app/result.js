@@ -2,6 +2,7 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { COLORS } from '../constants/theme';
 
 function deriveProsAndCons(rating, userRatingsTotal, isOpenNow) {
   const pros = [];
@@ -181,7 +182,7 @@ export default function ResultScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#00191f' },
+  screen: { flex: 1, backgroundColor: COLORS.bg },
 
   header: {
     flexDirection: 'row',
@@ -192,27 +193,27 @@ const styles = StyleSheet.create({
   },
   backButton: {
     width: 40, height: 40, borderRadius: 20,
-    backgroundColor: '#00262e', borderWidth: 1, borderColor: '#003040',
+    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
     alignItems: 'center', justifyContent: 'center',
   },
-  backArrow:    { color: '#00D2BE', fontSize: 20, lineHeight: 22 },
+  backArrow:    { color: COLORS.amber, fontSize: 20, lineHeight: 22 },
   headerCenter: { flex: 1, alignItems: 'center' },
-  title:        { fontSize: 28, fontWeight: '800', color: '#ffffff' },
+  title:        { fontSize: 28, color: COLORS.textPrimary, fontFamily: 'PlayfairDisplay_800ExtraBold' },
   timeframeBadge: {
     marginTop: 4, paddingHorizontal: 10, paddingVertical: 3,
-    borderRadius: 12, backgroundColor: '#2d1a5e33', borderWidth: 1, borderColor: '#7c3aed44',
+    borderRadius: 12, backgroundColor: COLORS.amberFaint, borderWidth: 1, borderColor: COLORS.amber + '44',
   },
-  timeframeText: { color: '#a855f7', fontSize: 11, fontWeight: '600' },
+  timeframeText: { color: COLORS.amber, fontSize: 11, fontWeight: '600' },
 
   listContent: { paddingHorizontal: 20, paddingBottom: 40 },
 
   // Place card
   card: {
     flexDirection: 'row',
-    backgroundColor: '#00262e',
+    backgroundColor: COLORS.surface,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#003040',
+    borderColor: COLORS.border,
     marginBottom: 14,
     marginHorizontal: 0,
     overflow: 'hidden',
@@ -221,58 +222,59 @@ const styles = StyleSheet.create({
     width: 40,
     alignItems: 'center',
     paddingTop: 18,
-    backgroundColor: '#00262e',
+    backgroundColor: COLORS.surface,
   },
   rankCircle: {
     width: 26, height: 26, borderRadius: 13,
-    backgroundColor: '#00d2be', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: COLORS.amber, alignItems: 'center', justifyContent: 'center',
   },
-  rankText: { color: '#fff', fontSize: 12, fontWeight: '800' },
+  rankText: { color: COLORS.bg, fontSize: 12, fontWeight: '800' },
 
   cardBody:     { flex: 1, padding: 14, gap: 6 },
   cardTitleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, paddingRight: 40 },
   cardEmoji:    { fontSize: 18 },
-  cardName:     { flex: 1, fontSize: 24, fontWeight: '700', color: '#ffffff', lineHeight: 28 },
+  cardName:     { flex: 1, fontSize: 24, fontWeight: '700', color: COLORS.textPrimary, lineHeight: 28 },
 
   exciteBadge: {
     position: 'absolute', top: 12, right: 12,
-    backgroundColor: '#9333EA', borderRadius: 10,
+    backgroundColor: COLORS.amber + '22', borderRadius: 10,
     paddingHorizontal: 7, paddingVertical: 2,
+    borderWidth: 1, borderColor: COLORS.amber + '44',
   },
-  exciteText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+  exciteText: { color: COLORS.amber, fontSize: 10, fontWeight: '700' },
 
-  vicinity: { fontSize: 14, color: '#666', lineHeight: 19, fontStyle: 'italic' },
+  vicinity: { fontSize: 14, color: COLORS.textMuted, lineHeight: 19, fontStyle: 'italic' },
 
   metaRow:    { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  metaText:   { fontSize: 13, color: '#888' },
-  metaDot:    { fontSize: 13, color: '#444' },
-  openText:   { fontSize: 13, color: '#4ade80', fontWeight: '600' },
-  closedText: { fontSize: 13, color: '#888' },
+  metaText:   { fontSize: 13, color: COLORS.textMuted },
+  metaDot:    { fontSize: 13, color: COLORS.border },
+  openText:   { fontSize: 13, color: COLORS.success, fontWeight: '600' },
+  closedText: { fontSize: 13, color: COLORS.textMuted },
 
   prosConsBlock: { gap: 3 },
-  proLine: { fontSize: 13, color: '#4ade80', letterSpacing: 0.2 },
-  conLine: { fontSize: 13, color: '#f59e0b', letterSpacing: 0.2 },
+  proLine: { fontSize: 13, color: COLORS.success, letterSpacing: 0.2 },
+  conLine: { fontSize: 13, color: COLORS.warning, letterSpacing: 0.2 },
 
   goBtn: {
     marginTop: 4,
-    backgroundColor: '#00d2be', borderRadius: 16,
+    backgroundColor: COLORS.primary, borderRadius: 16,
     height: 56, alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#00d2be', shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5, shadowRadius: 8, elevation: 8,
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4, shadowRadius: 12, elevation: 8,
   },
-  goBtnText: { color: '#00191f', fontSize: 13, fontWeight: '800', letterSpacing: 2 },
+  goBtnText: { color: COLORS.primaryText, fontSize: 15, fontWeight: '700' },
 
   // Empty state
   emptyState:    { paddingTop: 80, alignItems: 'center', gap: 12 },
   emptyEmoji:    { fontSize: 48 },
-  emptyTitle:    { fontSize: 20, fontWeight: '700', color: '#ffffff' },
-  emptySubtitle: { fontSize: 15, color: '#555', textAlign: 'center', lineHeight: 20 },
+  emptyTitle:    { fontSize: 20, fontWeight: '700', color: COLORS.textPrimary },
+  emptySubtitle: { fontSize: 15, color: COLORS.textMuted, textAlign: 'center', lineHeight: 20 },
 
   // "Find something different" button
   differentBtn: {
     marginTop: 6,
     borderRadius: 16, height: 56, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: '#00262e', borderWidth: 1, borderColor: '#003040',
+    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
   },
-  differentBtnText: { color: '#00D2BE', fontSize: 15, fontWeight: '700' },
+  differentBtnText: { color: COLORS.amber, fontSize: 15, fontWeight: '700' },
 });
