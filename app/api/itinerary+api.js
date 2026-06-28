@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { runResearchPhase, formatResearchSummary } from '../../api/researchPhase.js';
 
 const GOOGLE_KEY    = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 const NPS_KEY       = process.env.EXPO_PUBLIC_NPS_API_KEY;
@@ -321,16 +322,12 @@ export async function POST(request) {
 
     const { city, state } = geoInfo;
 
-    const [npsParks, ridbFacilities] = await Promise.all([
-      fetchNPSParks(city, state),
-      fetchRIDB(latitude, longitude),
-    ]);
-
     const dateObj      = date ? new Date(date) : new Date();
     const dayOfWeek    = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
     const formattedDate = dateObj.toLocaleDateString('en-US', {
       month: 'long', day: 'numeric', year: 'numeric',
     });
+    const travelDateISO = dateObj.toISOString().slice(0, 10);
 
     const windStr   = weather?.wind_speed_mph
       ? ` · Wind ${weather.wind_speed_mph}mph${weather.wind_dir ? ` ${weather.wind_dir}` : ''}`
@@ -340,7 +337,21 @@ export async function POST(request) {
       : 'Weather data unavailable';
 
     const cityStr = city ? `${city}${state ? `, ${state}` : ''}` : 'the local area';
+
+    // Live intelligence research fires in parallel with NPS/RIDB lookups.
+    // It never throws — a failure here must not block itinerary generation.
+    const [npsParks, ridbFacilities, research] = await Promise.all([
+      fetchNPSParks(city, state),
+      fetchRIDB(latitude, longitude),
+      runResearchPhase({
+        location: cityStr,
+        travelDates: { start: travelDateISO, end: travelDateISO },
+        userContext: { pace, budget, group_type, cuisines },
+      }),
+    ]);
+
     const allOutdoor = [...outdoor, ...npsParks, ...ridbFacilities];
+    const researchBlock = formatResearchSummary(research);
 
     const sensitivityNote = sensitivities.length
       ? ` User sensitivities: ${sensitivities.join(', ')}. Flag any relevant risk in the admission_cost or reason field if applicable.`
@@ -349,9 +360,8 @@ export async function POST(request) {
     const systemPrompt =
       'You are Cheddar, a knowledgeable and warm travel companion who builds brilliant day itineraries. ' +
       'You think like a well-traveled friend: you have opinions, you know the local spots, and you give honest advice. ' +
-      'Before building the itinerary, search for local events, festivals, markets, concerts, ' +
-      'races, air shows, or community gatherings happening near the provided city on the provided date. ' +
-      'Incorporate any found events as priority stops. ' +
+      'Real-time local events, specials, and entertainment for the city and date are provided ' +
+      'under "What\'s Happening Right Now" when available — incorporate any that fit as priority stops. ' +
       'Then return ONLY a valid JSON array of itinerary stops. No prose, no markdown outside the JSON array.' +
       (dislikedPlaces.length
         ? ` The user has previously disliked these places — do NOT include them: ${dislikedPlaces.join(', ')}.`
@@ -371,12 +381,16 @@ export async function POST(request) {
       cuisines.length     ? `Preferred cuisines: ${cuisines.join(', ')}` : '',
     ].filter(Boolean).join('\n');
 
+    const researchSection = researchBlock
+      ? `\n\n## What's Happening Right Now\n\nThe following live events, specials, and entertainment were found for ${cityStr} during ${formattedDate}:\n\n${researchBlock}\n\nUse this information to:\n- Lead with time-sensitive or unique experiences the user can only do on these dates\n- Weave major events (festivals, car shows, concerts) into the itinerary structure rather than ignoring them\n- Flag anything requiring advance tickets or reservations\n- Note "Tonight only," "This weekend," or "Ends Sunday" when relevant\n- If a major event is happening (e.g. a car show, air show, or festival), let it anchor the day's plan\n\nIf no live data was available, proceed with your best general knowledge and note it.`
+      : '';
+
     const userPrompt = `City: ${cityStr}
 Date: ${formattedDate} (${dayOfWeek})
 Weather: ${weatherStr}
 User preferences: pace (${pace}), budget (${budget}), group type (${group_type})
 Time window: ${startTime} to ${endTime}
-${feedbackLines ? `\nUser history & preferences:\n${feedbackLines}` : ''}
+${feedbackLines ? `\nUser history & preferences:\n${feedbackLines}` : ''}${researchSection}
 
 Available places by category:
 ${JSON.stringify({ food, activity, shopping, outdoor: allOutdoor }, null, 2)}
@@ -390,7 +404,8 @@ Constraints:
 - relaxed pace: 4–5 stops. moderate: 5–6 stops. packed: 7–8 stops. Scale stop count to fit the time window.
 - Match price_level to budget: $ = PRICE_LEVEL_INEXPENSIVE, $$ = PRICE_LEVEL_MODERATE, $$$ = PRICE_LEVEL_EXPENSIVE
 - Prefer places where is_open is true or likely open on ${dayOfWeek}
-- Only use places from the data above — use their exact place_id, lat, and lng values
+- For ordinary stops, only use places from the data above — use their exact place_id, lat, and lng values
+- EXCEPTION: a live event/special from "What's Happening Right Now" may be its own stop. Give it a place_id prefixed "event_", set category to "activity", reference the event's real venue/name, and use the closest matching venue's lat/lng from the data (or the city center if none) — never invent precise coordinates
 - Do not repeat the same place
 - First stop must be at or after ${startTime}. Last stop must end by ${endTime}.
 
@@ -458,6 +473,12 @@ Return a JSON array only. Each element must have exactly these fields:
         time_window: `${startTime} – ${endTime}`,
         preferences: { pace, budget, group_type },
         city:        cityStr,
+      },
+      research: {
+        hadLiveData:  research.hadLiveData,
+        sourcesUsed:  research.sourcesUsed,
+        eventCount:   research.summary?.events?.length   || 0,
+        specialCount: research.summary?.specials?.length || 0,
       },
       generated_at: new Date().toISOString(),
       isFallback,
