@@ -99,12 +99,30 @@ ts}` TTL caches, `process.env` keys, never throw out of the top-level entry).
   ```
   { key, match: [tags...], type: 'api' | 'firecrawl-scrape' | 'firecrawl-search', run(ctx) → Find[] }
   ```
-- Reference entries:
-  - **Pinball Map** (`api`): `GET https://pinballmap.com/api/v1/locations/closest_by_lat_lon.json?lat={lat}&lon={lng}&send_all_within_distance=1&max_distance={miles}` — free, returns machines + lat/lng.
-  - Beach-corridor event sites (`firecrawl-scrape`) — carried over from
-    `researchPhase.js` as the always-on baseline for covered geographies.
-  - Generic interest fallback (`firecrawl-search`) using the hunt's
-    `suggestedQuery`.
+- **Starter set is entirely keyless / no new accounts** (Firecrawl key, already
+  present, covers the scrape entries). Verify each endpoint's exact shape +
+  current rate limits before wiring — see Testing strategy.
+
+  | Source | Type | Covers | Account |
+  |---|---|---|---|
+  | **OSM Overpass** (backbone) | `api` | arcades, mini golf, disc golf, climbing, skate parks, record/book/game shops, board-game cafes, lighthouses, viewpoints (by OSM tag) | none |
+  | **Pinball Map** | `api` | pinball (specialist; better than OSM here) | none |
+  | **Open-Meteo Marine** | `api` | surf/swell forecast | none |
+  | **NOAA CO-OPS Tides** | `api` | tide windows | none |
+  | **sunrise-sunset.org** | `api` | golden hour / sunrise / sunset | none |
+  | **Open Brewery DB** | `api` | breweries | none |
+  | Beach-corridor event sites | `firecrawl-scrape` | always-on local events (carried from `researchPhase.js`) | Firecrawl (have) |
+  | Atlas Obscura / Roadside America | `firecrawl-scrape` | weird/unusual places | Firecrawl (have) |
+  | Generic fallback | `firecrawl-search` | any unmatched interest, via hunt `suggestedQuery` | Firecrawl (have) |
+
+- **Deferred (free signup, add only if needed):** a concert API
+  (Bandsintown / SeatGeek) *only if* the existing Ticketmaster + Eventbrite keys
+  miss small-venue shows. Skip Discogs — OSM `shop=music` locates record stores
+  without it. TheSportsDB (local games) has a keyless test key; real key only for
+  higher limits.
+- **Overpass is the backbone:** one adapter querying OSM tags lights up ~15
+  niche interests at once; specialist sources (Pinball Map, etc.) layer on top
+  where they genuinely beat OSM.
 - Fuzzy, case-insensitive tag match. Unknown interest → `firecrawl-search`.
 - `// add new interest→source mappings here as the app expands`.
 
@@ -195,6 +213,10 @@ Every external call wrapped; the orchestrator never throws.
 
 ## Testing strategy
 
+- **Endpoint verification (before wiring each source):** hit each registry
+  endpoint once with real coords, confirm the response shape and current rate
+  limits, and capture a sample payload for the normalizer. Same discipline used
+  to verify Firecrawl at the start of the project.
 - **Unit:** `sourceRegistry` fuzzy matching; `discovery` normalization + dedupe;
   Find/Hunt/Anchor schema validation; cache key includes interest hash.
 - **Integration (live, gated):** run the orchestrator for Ocean City, MD with a
