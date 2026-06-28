@@ -8,7 +8,6 @@ import SkeletonStopCard from '../../components/SkeletonCard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
-import Constants from 'expo-constants';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { generateItinerary, swapStop } from '../../services/itineraryService';
@@ -19,13 +18,6 @@ import { COLORS, CATEGORY_COLORS, CATEGORY_EMOJIS, PRICE_LEGEND, FONTS } from '.
 import { getLocalKnowledge, getAllergyAlerts } from '../../constants/localKnowledge';
 
 const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
-
-function getApiBase() {
-  if (Platform.OS === 'web') return '';
-  const hostUri = Constants.expoConfig?.hostUri;
-  if (hostUri) return `http://${hostUri.split(':')[0]}:8081`;
-  return process.env.EXPO_PUBLIC_API_BASE_URL ?? '';
-}
 
 // ─── Date helpers ─────────────────────────────────────────────────────────────
 function getNextSevenDays() {
@@ -693,13 +685,21 @@ export default function PlanScreen() {
           console.warn('[location] reverseGeocodeAsync failed:', e?.message ?? e);
         }
 
-        if (!label) {
+        if (!label && GOOGLE_KEY) {
           try {
-            const res  = await fetch(`${getApiBase()}/api/geocode?lat=${latitude}&lng=${longitude}`);
+            const res  = await fetch(
+              `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_KEY}`
+            );
             const data = await res.json();
-            if (data.label) label = data.label;
+            if (data.results?.length) {
+              const parts = data.results[0].address_components;
+              const get   = (t) => parts.find((c) => c.types.includes(t));
+              const city  = get('locality')?.long_name;
+              const state = get('administrative_area_level_1')?.short_name;
+              label = city && state ? `${city}, ${state}` : city ?? state ?? null;
+            }
           } catch (e) {
-            console.warn('[location] geocode API fetch failed:', e?.message ?? e);
+            console.warn('[location] geocode fetch failed:', e?.message ?? e);
           }
         }
 

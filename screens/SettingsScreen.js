@@ -7,19 +7,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
-import Constants from 'expo-constants';
 import { loadAllSettings, save, KEYS } from '../services/settingsService';
 import { useAuth } from '../context/AuthContext';
 import { isPro, getDecisionCount, getSpinCount, LIMITS } from '../services/subscriptionService';
 import { scheduleDailyReminder, cancelDailyReminder, loadReminderTime } from '../services/notificationService';
 import { COLORS } from '../constants/theme';
 
-function getApiBase() {
-  if (Platform.OS === 'web') return '';
-  const hostUri = Constants.expoConfig?.hostUri;
-  if (hostUri) return `http://${hostUri.split(':')[0]}:8081`;
-  return process.env.EXPO_PUBLIC_API_BASE_URL ?? '';
-}
+const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const AVATARS         = ['🧭', '🎯', '🎲', '🌮', '🎭', '🏄', '🎸', '🌟'];
@@ -61,16 +55,38 @@ function timeToMinutes(str) {
   return hours * 60;
 }
 
-// Proxies through server-side route — avoids CORS issues and keeps key server-side
 async function searchLocation(text) {
   if (!text || text.length < 3) return null;
-  const base = getApiBase();
+  if (!GOOGLE_KEY) return { error: 'api_key' };
   try {
-    const res  = await fetch(`${base}/api/geocode?q=${encodeURIComponent(text)}`);
-    const data = await res.json();
-    if (data.error === 'api_key' || data.error === 'api_key_missing') return { error: 'api_key' };
-    if (!data.results?.length) return { error: 'not_found' };
-    return data.results;
+    const acRes  = await fetch(
+      `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(text)}&types=(cities)&language=en&key=${GOOGLE_KEY}`
+    );
+    const acData = await acRes.json();
+    if (acData.status === 'REQUEST_DENIED') return { error: 'api_key' };
+    if (!acData.predictions?.length) return { error: 'not_found' };
+
+    const results = await Promise.all(
+      acData.predictions.slice(0, 5).map(async (p) => {
+        try {
+          const dRes  = await fetch(
+            `https://maps.googleapis.com/maps/api/place/details/json?place_id=${p.place_id}&fields=geometry,address_components,formatted_address&key=${GOOGLE_KEY}`
+          );
+          const dData = await dRes.json();
+          const r     = dData.result;
+          if (!r?.geometry?.location) return null;
+          const parts = r.address_components ?? [];
+          const get   = (t) => parts.find((c) => c.types.includes(t));
+          const city  = get('locality')?.long_name ?? get('sublocality')?.long_name ?? get('postal_town')?.long_name;
+          const state = get('administrative_area_level_1')?.short_name;
+          const short = city && state ? `${city}, ${state}`
+                      : r.formatted_address?.split(',').slice(0, 2).join(',').trim();
+          return { label: p.description, short, latitude: r.geometry.location.lat, longitude: r.geometry.location.lng };
+        } catch { return null; }
+      })
+    );
+    const filtered = results.filter(Boolean);
+    return filtered.length ? filtered : { error: 'not_found' };
   } catch {
     return { error: 'network' };
   }
