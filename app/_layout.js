@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, AppState, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, AppState } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -25,6 +25,9 @@ import {
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import OfflineBanner from '../components/OfflineBanner';
 import { COLORS } from '../constants/theme';
+import ScreenBackground from '../components/brand/ScreenBackground';
+import BrandLogo from '../components/brand/BrandLogo';
+import SectionLabel from '../components/brand/SectionLabel';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -49,18 +52,10 @@ function DemoBanner({ onDismiss }) {
 
 function SplashScreen() {
   return (
-    <View style={styles.splash}>
-      <Image
-        source={require('../assets/logo-small.png')}
-        style={styles.splashLogo}
-        resizeMode="contain"
-      />
-      <View style={styles.splashDotRow}>
-        <View style={[styles.splashDot, styles.splashDotActive]} />
-        <View style={styles.splashDot} />
-        <View style={styles.splashDot} />
-      </View>
-    </View>
+    <ScreenBackground variant="paper" style={{ alignItems: 'center', justifyContent: 'center', gap: 24 }}>
+      <BrandLogo variant="stacked" size={80} />
+      <SectionLabel>Tap · Pack · Go</SectionLabel>
+    </ScreenBackground>
   );
 }
 
@@ -116,7 +111,7 @@ function RootLayoutInner() {
 
   return (
     <>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       <Stack screenOptions={{ headerShown: false }} />
       {demoMode && <DemoBanner onDismiss={disableDemo} />}
       <OfflineBanner />
@@ -140,13 +135,9 @@ export default function RootLayout() {
 
   if (!fontsLoaded) {
     return (
-      <View style={styles.splash}>
-        <Image
-          source={require('../assets/logo-small.png')}
-          style={styles.splashLogo}
-          resizeMode="contain"
-        />
-      </View>
+      <ScreenBackground variant="paper" style={{ alignItems: 'center', justifyContent: 'center' }}>
+        <BrandLogo variant="mark" size={80} />
+      </ScreenBackground>
     );
   }
 
@@ -170,16 +161,4 @@ const styles = StyleSheet.create({
   bannerSide: { width: 32, alignItems: 'flex-end', justifyContent: 'center' },
   bannerText: { flex: 1, fontSize: 12, fontWeight: '700', color: COLORS.bg, textAlign: 'center' },
   bannerX:    { fontSize: 14, fontWeight: '700', color: COLORS.bg },
-  splash: {
-    flex: 1, backgroundColor: COLORS.bg,
-    alignItems: 'center', justifyContent: 'center',
-    gap: 32,
-  },
-  splashLogo: { width: 180, height: 180 },
-  splashDotRow: { flexDirection: 'row', gap: 8 },
-  splashDot: {
-    width: 6, height: 6, borderRadius: 3,
-    backgroundColor: COLORS.border,
-  },
-  splashDotActive: { backgroundColor: COLORS.amber },
 });

@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../../constants/theme';
+import { COLORS, FONTS } from '../../constants/theme';
 
 function TabIcon({ active, inactive, focused, color }) {
   return (
@@ -18,7 +18,7 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: styles.tabBar,
-        tabBarActiveTintColor: COLORS.amber,
+        tabBarActiveTintColor: COLORS.primary,
         tabBarInactiveTintColor: COLORS.textMuted,
         tabBarLabelStyle: styles.tabLabel,
         tabBarItemStyle: styles.tabItem,
@@ -89,6 +89,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 0,
     fontWeight: '600',
+    fontFamily: FONTS.bodyMedium,
   },
   iconWrap: {
     alignItems: 'center',
@@ -102,6 +103,6 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   indicatorActive: {
-    backgroundColor: COLORS.amber,
+    backgroundColor: COLORS.primary,
   },
 });
