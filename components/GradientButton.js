@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { TouchableOpacity, Animated, Text, ActivityIndicator, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { COLORS } from '../constants/theme';
+import { COLORS, FONTS } from '../constants/theme';
 
 export default function GradientButton({
   onPress,
@@ -109,6 +109,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   text: {
+    fontFamily: FONTS.displayHeavy,
     color: COLORS.primaryText,
     fontSize: 17,
     fontWeight: '700',
