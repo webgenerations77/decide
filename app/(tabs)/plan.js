@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, ScrollView,
+  View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView,
   Linking, ActivityIndicator, Animated, Modal, Platform, Dimensions, Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -14,7 +14,7 @@ import { generateItinerary, swapStop } from '../../services/itineraryService';
 import { loadPlanDefaults, KEYS } from '../../services/settingsService';
 import { isAtDecisionLimit, incrementDecisionCount, getRemainingDecisions, LIMITS } from '../../services/subscriptionService';
 import { scheduleItineraryAlerts, cancelItineraryAlerts } from '../../services/notificationService';
-import { COLORS, CATEGORY_COLORS, CATEGORY_EMOJIS, PRICE_LEGEND, FONTS } from '../../constants/theme';
+import { COLORS, CATEGORY_COLORS, CATEGORY_EMOJIS, PRICE_LEGEND, FONTS, RADII } from '../../constants/theme';
 import { getLocalKnowledge, getAllergyAlerts } from '../../constants/localKnowledge';
 
 const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
@@ -593,6 +593,7 @@ export default function PlanScreen() {
   const [startTime, setStartTime] = useState('11:00 AM');
   const [endTime,   setEndTime]   = useState('8:00 PM');
   const [cuisines,  setCuisines]  = useState([]);
+  const [tripNote,  setTripNote]  = useState('');
 
   const [itinerary,      setItinerary]      = useState(null);
   const [weather,        setWeather]        = useState(null);
@@ -794,6 +795,7 @@ export default function PlanScreen() {
 
   const goToLanding = () => {
     setItinerary(null); setWeather(null); setMeta(null); setError(null); setIsFallback(false); setResearch(null);
+    setTripNote('');
     setView('landing');
     cancelItineraryAlerts().catch(() => {});
   };
@@ -825,6 +827,13 @@ export default function PlanScreen() {
       const maxDistRaw = await AsyncStorage.getItem('@decide/max_distance').catch(() => null);
       const maxDistanceMiles = maxDistRaw ? parseInt(maxDistRaw, 10) : 25;
 
+      const [stylesRaw, dietRaw] = await Promise.all([
+        AsyncStorage.getItem('@decide/activity_styles'),
+        AsyncStorage.getItem('@decide/dietary'),
+      ]);
+      const activityStyles = stylesRaw ? JSON.parse(stylesRaw) : [];
+      const dietary = dietRaw ? JSON.parse(dietRaw) : [];
+
       const data = await generateItinerary({
         latitude:  coords.latitude,
         longitude: coords.longitude,
@@ -832,6 +841,7 @@ export default function PlanScreen() {
         startTime, endTime, date: planDate,
         feedback: feedbackCtx,
         maxDistanceMiles,
+        tripNote, activityStyles, dietary,
       });
       setItinerary(data.itinerary);
       setWeather(data.weather);
@@ -902,6 +912,7 @@ export default function PlanScreen() {
 
   const resetToConfiguring = () => {
     setItinerary(null); setWeather(null); setMeta(null); setError(null); setIsFallback(false); setResearch(null);
+    setTripNote('');
     setView('configuring');
   };
 
@@ -1023,6 +1034,15 @@ export default function PlanScreen() {
               {!isValidTimeWindow && (
                 <Text style={styles.timeValidationHint}>Please allow at least 3 hours</Text>
               )}
+
+              <Text style={styles.prefLabel}>Into anything specific this trip?</Text>
+              <TextInput
+                style={styles.tripNoteInput}
+                placeholder="e.g. pinball, vinyl, breweries, surf"
+                placeholderTextColor={COLORS.textMuted}
+                value={tripNote}
+                onChangeText={setTripNote}
+              />
             </View>
 
             {error ? (
@@ -1345,6 +1365,7 @@ const styles = StyleSheet.create({
   timePillInner:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   timePillValue:   { fontSize: 14, fontWeight: '700', color: COLORS.amber },
   timeValidationHint: { fontSize: 11, color: COLORS.error, marginTop: 2 },
+  tripNoteInput: { backgroundColor: COLORS.surface, borderColor: COLORS.border, borderWidth: 1, borderRadius: RADII.md, color: COLORS.textPrimary, paddingHorizontal: 14, paddingVertical: 10, fontSize: 15 },
 
   // Time picker modal
   modalOverlay: {
