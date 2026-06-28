@@ -6,6 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
+import { COLORS } from '../../constants/theme';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -23,7 +24,7 @@ export default function ForgotPasswordScreen() {
       await resetPassword(email.trim());
       setSent(true);
     } catch (e) {
-      const msg = e.code === 'auth/user-not-found' ? 'No account found with this email.'
+      const msg = e.code === 'auth/user-not-found' ? 'No account found with that email.'
         : e.code === 'auth/invalid-email' ? 'Please enter a valid email address.'
         : e.message || 'Failed to send reset email.';
       setError(msg);
@@ -39,9 +40,12 @@ export default function ForgotPasswordScreen() {
         style={styles.flex}
       >
         <View style={styles.content}>
+          <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7} style={styles.backBtn}>
+            <Text style={styles.backTxt}>← Back</Text>
+          </TouchableOpacity>
+
           <View style={styles.hero}>
-            <Text style={styles.heroEmoji}>🔑</Text>
-            <Text style={styles.heroTitle}>Reset Password</Text>
+            <Text style={styles.heroTitle}>Reset password</Text>
             <Text style={styles.heroSub}>
               {sent
                 ? 'Check your email for a reset link.'
@@ -57,7 +61,7 @@ export default function ForgotPasswordScreen() {
 
           {sent ? (
             <View style={styles.successBox}>
-              <Text style={styles.successText}>Reset email sent! Check your inbox.</Text>
+              <Text style={styles.successText}>Reset email sent — check your inbox.</Text>
             </View>
           ) : (
             <View style={styles.form}>
@@ -67,10 +71,12 @@ export default function ForgotPasswordScreen() {
                 value={email}
                 onChangeText={setEmail}
                 placeholder="you@example.com"
-                placeholderTextColor="#4a6a6e"
+                placeholderTextColor={COLORS.textMuted}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoComplete="email"
+                returnKeyType="done"
+                onSubmitEditing={handleReset}
               />
 
               <TouchableOpacity
@@ -80,19 +86,13 @@ export default function ForgotPasswordScreen() {
                 activeOpacity={0.7}
               >
                 {loading ? (
-                  <ActivityIndicator color="#00191f" />
+                  <ActivityIndicator color={COLORS.primaryText} />
                 ) : (
-                  <Text style={styles.primaryBtnText}>Send Reset Email</Text>
+                  <Text style={styles.primaryBtnText}>Send reset link</Text>
                 )}
               </TouchableOpacity>
             </View>
           )}
-
-          <View style={styles.links}>
-            <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7}>
-              <Text style={styles.linkText}>Back to Sign In</Text>
-            </TouchableOpacity>
-          </View>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -100,29 +100,43 @@ export default function ForgotPasswordScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#00191f' },
+  container: { flex: 1, backgroundColor: COLORS.bg },
   flex: { flex: 1 },
   content: { flex: 1, justifyContent: 'center', paddingHorizontal: 24 },
+  backBtn: { marginBottom: 24 },
+  backTxt: { color: COLORS.amber, fontSize: 14, fontWeight: '600' },
   hero: { alignItems: 'center', marginBottom: 32 },
-  heroEmoji: { fontSize: 56, marginBottom: 8 },
-  heroTitle: { fontSize: 28, fontWeight: '800', color: '#ffffff' },
-  heroSub: { fontSize: 15, color: '#9ca3af', marginTop: 4, textAlign: 'center' },
-  errorBox: { backgroundColor: 'rgba(248,113,113,0.15)', borderRadius: 12, padding: 12, marginBottom: 16 },
-  errorText: { color: '#f87171', fontSize: 14, textAlign: 'center' },
-  successBox: { backgroundColor: 'rgba(0,210,190,0.15)', borderRadius: 12, padding: 16, marginBottom: 16 },
-  successText: { color: '#00d2be', fontSize: 15, textAlign: 'center', fontWeight: '600' },
+  heroTitle: {
+    fontSize: 26, color: COLORS.textPrimary,
+    fontFamily: 'PlayfairDisplay_800ExtraBold',
+    marginBottom: 8,
+  },
+  heroSub: { fontSize: 15, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 22 },
+  errorBox: {
+    backgroundColor: COLORS.error + '18', borderRadius: 12,
+    padding: 14, marginBottom: 16,
+    borderWidth: 1, borderColor: COLORS.error + '44',
+  },
+  errorText: { color: COLORS.error, fontSize: 14, textAlign: 'center' },
+  successBox: {
+    backgroundColor: COLORS.success + '18', borderRadius: 12,
+    padding: 16, marginBottom: 16,
+    borderWidth: 1, borderColor: COLORS.success + '44',
+  },
+  successText: { color: COLORS.success, fontSize: 15, textAlign: 'center', fontWeight: '600' },
   form: { gap: 12 },
-  label: { color: '#9ca3af', fontSize: 13, fontWeight: '600', marginBottom: 2 },
+  label: { color: COLORS.textSecondary, fontSize: 13, fontWeight: '600' },
   input: {
-    backgroundColor: '#00262e', borderWidth: 1, borderColor: '#003040',
-    borderRadius: 12, padding: 14, fontSize: 16, color: '#ffffff',
+    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
+    borderRadius: 14, paddingHorizontal: 16, height: 52,
+    fontSize: 16, color: COLORS.textPrimary,
   },
   primaryBtn: {
-    backgroundColor: '#00d2be', borderRadius: 14, height: 52,
-    alignItems: 'center', justifyContent: 'center', marginTop: 8,
+    backgroundColor: COLORS.primary, borderRadius: 16, height: 56,
+    alignItems: 'center', justifyContent: 'center', marginTop: 4,
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35, shadowRadius: 12, elevation: 8,
   },
-  primaryBtnText: { color: '#00191f', fontSize: 17, fontWeight: '700' },
+  primaryBtnText: { color: COLORS.primaryText, fontSize: 17, fontWeight: '700' },
   btnDisabled: { opacity: 0.6 },
-  links: { alignItems: 'center', marginTop: 24 },
-  linkText: { color: '#00d2be', fontSize: 14, fontWeight: '600' },
 });

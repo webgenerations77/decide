@@ -9,7 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 import { signInWithGoogleCredential } from '../../services/authService';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
-import { COLORS } from '../../constants/theme';
+import { COLORS, FONTS } from '../../constants/theme';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -34,9 +34,9 @@ export default function LoginScreen() {
     try {
       await signIn(email.trim(), password);
     } catch (e) {
-      const msg = e.code === 'auth/invalid-credential' ? 'Invalid email or password.'
-        : e.code === 'auth/user-not-found' ? 'No account found with this email.'
-        : e.code === 'auth/too-many-requests' ? 'Too many attempts. Try again later.'
+      const msg = e.code === 'auth/invalid-credential' ? 'Wrong email or password — give it another try.'
+        : e.code === 'auth/user-not-found' ? 'No account found with that email.'
+        : e.code === 'auth/too-many-requests' ? 'Too many attempts. Take a breath and try again.'
         : e.message || 'Sign in failed.';
       setError(msg);
     } finally {
@@ -73,7 +73,7 @@ export default function LoginScreen() {
               style={styles.heroLogo}
               resizeMode="contain"
             />
-            <Text style={styles.heroSub}>Your day, decided by Cheddar.</Text>
+            <Text style={styles.heroTag}>Your day, decided by Cheddar.</Text>
           </View>
 
           {!!error && (
@@ -83,28 +83,35 @@ export default function LoginScreen() {
           )}
 
           <View style={styles.form}>
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={styles.input}
-              value={email}
-              onChangeText={setEmail}
-              placeholder="you@example.com"
-              placeholderTextColor={COLORS.textMuted}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoComplete="email"
-            />
+            <View style={styles.fieldBlock}>
+              <Text style={styles.label}>Email</Text>
+              <TextInput
+                style={styles.input}
+                value={email}
+                onChangeText={setEmail}
+                placeholder="you@example.com"
+                placeholderTextColor={COLORS.textMuted}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoComplete="email"
+                returnKeyType="next"
+              />
+            </View>
 
-            <Text style={styles.label}>Password</Text>
-            <TextInput
-              style={styles.input}
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Your password"
-              placeholderTextColor={COLORS.textMuted}
-              secureTextEntry
-              autoComplete="password"
-            />
+            <View style={styles.fieldBlock}>
+              <Text style={styles.label}>Password</Text>
+              <TextInput
+                style={styles.input}
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Your password"
+                placeholderTextColor={COLORS.textMuted}
+                secureTextEntry
+                autoComplete="password"
+                returnKeyType="done"
+                onSubmitEditing={handleEmailSignIn}
+              />
+            </View>
 
             <TouchableOpacity
               style={[styles.primaryBtn, loading && styles.btnDisabled]}
@@ -113,9 +120,9 @@ export default function LoginScreen() {
               activeOpacity={0.7}
             >
               {loading ? (
-                <ActivityIndicator color={COLORS.bg} />
+                <ActivityIndicator color={COLORS.primaryText} />
               ) : (
-                <Text style={styles.primaryBtnText}>Sign In</Text>
+                <Text style={styles.primaryBtnText}>Sign in</Text>
               )}
             </TouchableOpacity>
 
@@ -125,16 +132,16 @@ export default function LoginScreen() {
               disabled={loading || !request}
               activeOpacity={0.7}
             >
-              <Text style={styles.googleBtnText}>Sign in with Google</Text>
+              <Text style={styles.googleBtnText}>Continue with Google</Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.links}>
             <TouchableOpacity onPress={() => router.push('/auth/forgot-password')} activeOpacity={0.7}>
-              <Text style={styles.linkText}>Forgot Password?</Text>
+              <Text style={styles.linkText}>Forgot password?</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => router.push('/auth/signup')} activeOpacity={0.7}>
-              <Text style={styles.linkText}>Create Account</Text>
+              <Text style={styles.linkText}>Create account</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -146,29 +153,52 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bg },
   flex: { flex: 1 },
-  scroll: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingBottom: 40 },
-  hero: { alignItems: 'center', marginBottom: 32 },
-  heroLogo: { width: 140, height: 140, marginBottom: 12 },
-  heroSub: { fontSize: 16, color: COLORS.textSecondary, marginTop: 4 },
-  errorBox: { backgroundColor: 'rgba(248,113,113,0.15)', borderRadius: 12, padding: 12, marginBottom: 16 },
-  errorText: { color: COLORS.error, fontSize: 14, textAlign: 'center' },
-  form: { gap: 12 },
-  label: { color: COLORS.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 2 },
+  scroll: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingBottom: 48 },
+
+  hero: { alignItems: 'center', marginBottom: 40 },
+  heroLogo: { width: 130, height: 130, marginBottom: 16 },
+  heroTag: {
+    fontSize: 16, color: COLORS.textSecondary,
+    fontFamily: 'PlayfairDisplay_700Bold',
+    letterSpacing: 0.2,
+  },
+
+  errorBox: {
+    backgroundColor: COLORS.error + '18',
+    borderRadius: 12, padding: 14,
+    marginBottom: 20,
+    borderWidth: 1, borderColor: COLORS.error + '44',
+  },
+  errorText: { color: COLORS.error, fontSize: 14, textAlign: 'center', lineHeight: 20 },
+
+  form: { gap: 16 },
+  fieldBlock: { gap: 6 },
+  label: {
+    color: COLORS.textSecondary, fontSize: 13, fontWeight: '600',
+  },
   input: {
     backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
-    borderRadius: 12, padding: 14, fontSize: 16, color: COLORS.textPrimary,
+    borderRadius: 14, paddingHorizontal: 16, height: 52,
+    fontSize: 16, color: COLORS.textPrimary,
   },
   primaryBtn: {
-    backgroundColor: COLORS.primary, borderRadius: 14, height: 52,
-    alignItems: 'center', justifyContent: 'center', marginTop: 8,
+    backgroundColor: COLORS.primary, borderRadius: 16, height: 56,
+    alignItems: 'center', justifyContent: 'center', marginTop: 4,
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35, shadowRadius: 12, elevation: 8,
   },
-  primaryBtnText: { color: COLORS.primaryText, fontSize: 17, fontWeight: '700' },
+  primaryBtnText: {
+    color: COLORS.primaryText, fontSize: 17, fontWeight: '700',
+  },
   btnDisabled: { opacity: 0.6 },
   googleBtn: {
     backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
-    borderRadius: 14, height: 52, alignItems: 'center', justifyContent: 'center',
+    borderRadius: 16, height: 56, alignItems: 'center', justifyContent: 'center',
   },
   googleBtnText: { color: COLORS.textPrimary, fontSize: 16, fontWeight: '600' },
-  links: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 24, paddingHorizontal: 4 },
-  linkText: { color: COLORS.teal, fontSize: 14, fontWeight: '600' },
+  links: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    marginTop: 28, paddingHorizontal: 4,
+  },
+  linkText: { color: COLORS.amber, fontSize: 14, fontWeight: '600' },
 });
