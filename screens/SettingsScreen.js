@@ -58,35 +58,32 @@ function timeToMinutes(str) {
 async function searchLocation(text) {
   if (!text || text.length < 3) return null;
   if (!GOOGLE_KEY) return { error: 'api_key' };
+  const endpoint = `https://places.googleapis.com/v1/places:searchText?key=${GOOGLE_KEY}`;
+  const fetchUrl = Platform.OS === 'web'
+    ? `https://corsproxy.io/?${encodeURIComponent(endpoint)}`
+    : endpoint;
   try {
-    const acRes  = await fetch(
-      `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(text)}&types=(cities)&language=en&key=${GOOGLE_KEY}`
-    );
-    const acData = await acRes.json();
-    if (acData.status === 'REQUEST_DENIED') return { error: 'api_key' };
-    if (!acData.predictions?.length) return { error: 'not_found' };
-
-    const results = await Promise.all(
-      acData.predictions.slice(0, 5).map(async (p) => {
-        try {
-          const dRes  = await fetch(
-            `https://maps.googleapis.com/maps/api/place/details/json?place_id=${p.place_id}&fields=geometry,address_components,formatted_address&key=${GOOGLE_KEY}`
-          );
-          const dData = await dRes.json();
-          const r     = dData.result;
-          if (!r?.geometry?.location) return null;
-          const parts = r.address_components ?? [];
-          const get   = (t) => parts.find((c) => c.types.includes(t));
-          const city  = get('locality')?.long_name ?? get('sublocality')?.long_name ?? get('postal_town')?.long_name;
-          const state = get('administrative_area_level_1')?.short_name;
-          const short = city && state ? `${city}, ${state}`
-                      : r.formatted_address?.split(',').slice(0, 2).join(',').trim();
-          return { label: p.description, short, latitude: r.geometry.location.lat, longitude: r.geometry.location.lng };
-        } catch { return null; }
-      })
-    );
-    const filtered = results.filter(Boolean);
-    return filtered.length ? filtered : { error: 'not_found' };
+    const res  = await fetch(fetchUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type':    'application/json',
+        'X-Goog-FieldMask': 'places.id,places.displayName,places.location,places.addressComponents,places.formattedAddress',
+      },
+      body: JSON.stringify({ textQuery: text, languageCode: 'en', pageSize: 5 }),
+    });
+    const data = await res.json();
+    if (data.error?.status === 'PERMISSION_DENIED') return { error: 'api_key' };
+    if (!data.places?.length) return { error: 'not_found' };
+    const results = data.places.map((p) => {
+      const parts = p.addressComponents ?? [];
+      const get   = (t) => parts.find((c) => c.types?.includes(t));
+      const city  = p.displayName?.text ?? get('locality')?.longText ?? get('sublocality')?.longText;
+      const state = get('administrative_area_level_1')?.shortText;
+      const short = city && state ? `${city}, ${state}`
+                  : p.formattedAddress?.split(',').slice(0, 2).join(',').trim();
+      return { label: p.formattedAddress ?? short, short, latitude: p.location?.latitude, longitude: p.location?.longitude };
+    }).filter((r) => r.latitude && r.longitude);
+    return results.length ? results : { error: 'not_found' };
   } catch {
     return { error: 'network' };
   }
