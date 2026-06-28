@@ -1,5 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
-import { runResearchPhase, formatResearchSummary } from './researchPhase.js';
+import { runSmartEngine } from './smart/index.js';
 
 const GOOGLE_KEY    = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 const NPS_KEY       = process.env.EXPO_PUBLIC_NPS_API_KEY;
@@ -182,10 +181,10 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { latitude, longitude, date, preferences = {}, startTime = '11:00 AM', endTime = '8:00 PM', feedback = {} } = req.body;
+    const { latitude, longitude, date, preferences = {}, startTime = '11:00 AM', endTime = '8:00 PM', feedback = {}, tripNote = '' } = req.body;
     if (!latitude || !longitude) return res.status(400).json({ error: 'latitude and longitude are required' });
 
-    const { pace='moderate', budget='$$', group_type='couple', cuisines=[] } = preferences;
+    const { pace='moderate', budget='$$', group_type='couple', cuisines=[], activityStyles=[], dietary=[] } = preferences;
     const { dislikedPlaces=[], likedPlaces=[], dislikedReasons=[] } = feedback;
 
     const [places, weather, geoInfo] = await Promise.all([
@@ -204,44 +203,38 @@ export default async function handler(req, res) {
     const cityStr=city?`${city}${state?`, ${state}`:''}`:'the local area';
     const travelDateISO=dateObj.toISOString().slice(0,10);
 
-    // Live intelligence research fires in parallel with NPS/RIDB lookups.
-    // It never throws — a failure here must not block itinerary generation.
-    const [npsParks, ridbFacilities, research] = await Promise.all([
+    const [npsParks, ridbFacilities] = await Promise.all([
       fetchNPSParks(city, state),
       fetchRIDB(latitude, longitude),
-      runResearchPhase({
-        location: cityStr,
-        travelDates: { start: travelDateISO, end: travelDateISO },
-        userContext: { pace, budget, group_type, cuisines },
-      }),
     ]);
 
     const allOutdoor=[...outdoor,...npsParks,...ridbFacilities];
-    const researchBlock=formatResearchSummary(research);
 
-    const systemPrompt='You are a day planner. You receive nearby places data, weather, and user preferences. Return ONLY a valid JSON array of itinerary stops. No prose, no markdown outside the JSON array.'+(dislikedPlaces.length?` The user has previously disliked these places — do NOT include them: ${dislikedPlaces.join(', ')}.`:'')+(dislikedReasons.length?` Patterns the user dislikes: ${dislikedReasons.join(', ')} — avoid places likely to share these qualities.`:'')+(cuisines.length?` Strongly prefer food stops from these cuisine types: ${cuisines.join(', ')}.`:'');
+    const ctx = {
+      location: cityStr,
+      travelDates: { start: travelDateISO, end: travelDateISO },
+      coords: { latitude, longitude },
+      maxMiles: 25,
+      weather,
+      prefs: { pace, budget, group_type, cuisines, activityStyles, dietary },
+      feedback: { likedPlaces, dislikedPlaces, dislikedReasons },
+      tripNote,
+      startTime, endTime,
+    };
+    const smart = await runSmartEngine({
+      ctx,
+      places: { food, activity, shopping, outdoor: allOutdoor },
+    });
 
-    const feedbackLines=[likedPlaces.length?`Liked places: ${likedPlaces.join(', ')}`:'',dislikedPlaces.length?`Disliked places (exclude): ${dislikedPlaces.join(', ')}`:'',dislikedReasons.length?`Feedback themes to avoid: ${dislikedReasons.join(', ')}`:'',cuisines.length?`Preferred cuisines: ${cuisines.join(', ')}`:''].filter(Boolean).join('\n');
-
-    const researchSection=researchBlock?`\n\n## What's Happening Right Now\n\nThe following live events, specials, and entertainment were found for ${cityStr} during ${formattedDate}:\n\n${researchBlock}\n\nUse this information to:\n- Lead with time-sensitive or unique experiences the user can only do on these dates\n- Weave major events (festivals, car shows, concerts) into the itinerary structure rather than ignoring them\n- Flag anything requiring advance tickets or reservations\n- Note "Tonight only," "This weekend," or "Ends Sunday" when relevant\n- If a major event is happening (e.g. a car show, air show, or festival), let it anchor the day's plan\n\nIf no live data was available, proceed with your best general knowledge and note it.`:'';
-
-    const userPrompt=`City: ${cityStr}\nDate: ${formattedDate} (${dayOfWeek})\nWeather: ${weatherStr}\nUser preferences: pace (${pace}), budget (${budget}), group type (${group_type})\nTime window: ${startTime} to ${endTime}\n${feedbackLines?`\nUser history & preferences:\n${feedbackLines}`:''}${researchSection}\n\nAvailable places by category:\n${JSON.stringify({food,activity,shopping,outdoor:allOutdoor},null,2)}\n\nConstraints:\n- Plan the day from ${startTime} to ${endTime}\n- If the window includes midday (11:30 AM–1:30 PM), include a lunch stop from the food category\n- If the window includes evening (6:00 PM–8:30 PM), include a dinner stop from the food category\n- Mix activity types between meals\n- Account for ~15–20 min travel time between stops\n- relaxed pace: 4–5 stops. moderate: 5–6 stops. packed: 7–8 stops.\n- Match price_level to budget\n- Prefer places where is_open is true\n- For ordinary stops, only use places from the data above — use their exact place_id, lat, and lng values\n- EXCEPTION: a live event/special from "What's Happening Right Now" may be its own stop. Give it a place_id prefixed "event_", set its category to "activity", reference the event's real venue/name, and use the closest matching venue's lat/lng from the data (or the city center if none) — never invent precise coordinates\n- Do not repeat the same place\n\nReturn a JSON array only. Each element must have: time, duration_mins, category, name, place_id, address, lat, lng, reason, excitement_score`;
-
-    let itinerary; let isFallback=false;
-    try {
-      const client=new Anthropic({apiKey:process.env.ANTHROPIC_API_KEY});
-      const message=await client.messages.create({model:'claude-haiku-4-5-20251001',max_tokens:4096,system:systemPrompt,messages:[{role:'user',content:userPrompt}]});
-      const raw=message.content[0]?.text??'[]';
-      const parsed=JSON.parse(extractJSON(raw));
-      if(!Array.isArray(parsed)||parsed.length===0) throw new Error('Not a non-empty array');
-      itinerary=parsed;
-    } catch(e) {
-      console.warn('[itinerary] Claude unavailable, using fallback:',e.message);
-      itinerary=buildFallbackItinerary({food,activity,shopping,outdoor:allOutdoor,startTime,endTime,pace,lat:latitude,lng:longitude});
-      isFallback=true;
+    let itinerary, isFallback = false;
+    if (smart.itinerary && smart.itinerary.length) {
+      itinerary = smart.itinerary;
+    } else {
+      itinerary = buildFallbackItinerary({ food, activity, shopping, outdoor: allOutdoor, startTime, endTime, pace, lat: latitude, lng: longitude });
+      isFallback = true;
     }
     const enriched=await enrichWithDrivingTimes(itinerary);
-    return res.json({itinerary:enriched,weather,meta:{date:formattedDate,day_of_week:dayOfWeek,time_window:`${startTime} – ${endTime}`,preferences:{pace,budget,group_type},city:cityStr},research:{hadLiveData:research.hadLiveData,sourcesUsed:research.sourcesUsed,eventCount:(research.summary?.events?.length||0),specialCount:(research.summary?.specials?.length||0)},generated_at:new Date().toISOString(),isFallback});
+    return res.json({itinerary:enriched,weather,meta:{date:formattedDate,day_of_week:dayOfWeek,time_window:`${startTime} – ${endTime}`,preferences:{pace,budget,group_type},city:cityStr},discovery:{hadLiveData:smart.hadLiveData,findCount:smart.finds.length,anchorCount:smart.anchors.length,anchors:smart.anchors.map((a)=>({title:a.find?.title,interest:a.find?.interest,why:a.rationale}))},generated_at:new Date().toISOString(),isFallback});
   } catch(err) {
     console.error('[itinerary] error:',err);
     return res.status(500).json({error:err.message});
