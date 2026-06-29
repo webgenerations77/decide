@@ -4,8 +4,8 @@
 import { wantsAlcohol } from '../api/smart/sourceRegistry.js';
 import { wantsLiveMusic, summarizeShow } from '../api/smart/liveMusic.js';
 import { buildScoutPrompt } from '../api/smart/scout.js';
-import { buildSynthesisPrompt } from '../api/smart/synthesis.js';
-import { computeCostSummary, pickForecastForDate } from '../api/itineraryHelpers.js';
+import { buildSynthesisPrompt, validateStops } from '../api/smart/synthesis.js';
+import { computeCostSummary, pickForecastForDate, priceEnumToNum, attachPriceLevels } from '../api/itineraryHelpers.js';
 
 let passed = 0;
 let failed = 0;
@@ -238,6 +238,48 @@ assert('Not flagged beyond',         day1?.beyondForecast === false);
 const far = pickForecastForDate(j1, '2026-09-01');
 assert('Beyond window flagged',      far?.beyondForecast === true);
 assert('Null data → null',           pickForecastForDate(null, '2026-07-02') === null);
+
+// ─── SESSION 2 — Price normalization ─────────────────────────────────────────
+console.log('\nSESSION 2 — Price normalization:');
+assert('Enum MODERATE → 2', priceEnumToNum('PRICE_LEVEL_MODERATE') === 2);
+assert('Integer passes through', priceEnumToNum(3) === 3);
+assert('Unknown enum → null', priceEnumToNum('PRICE_LEVEL_FREE') === null);
+assert('Null → null', priceEnumToNum(null) === null);
+assert('attachPriceLevels fills from place_id by match', (() => {
+  const out = attachPriceLevels(
+    [{ place_id: 'a', category: 'food' }, { place_id: 'b', category: 'activity' }],
+    [{ place_id: 'a', price_level: 'PRICE_LEVEL_EXPENSIVE' }]
+  );
+  return out[0].price_level === 3 && out[1].price_level == null;
+})());
+assert('attachPriceLevels keeps existing price_level', (() => {
+  const out = attachPriceLevels([{ place_id: 'a', price_level: 'PRICE_LEVEL_MODERATE' }], []);
+  return out[0].price_level === 2;
+})());
+// Realistic synthesis-shaped cost case (the bug the old test masked):
+assert('computeCostSummary counts food after attach', (() => {
+  const stops = attachPriceLevels(
+    [{ place_id: 'f', category: 'food' }, { place_id: 'x', category: 'activity', admission_cost: '$20' }],
+    [{ place_id: 'f', price_level: 'PRICE_LEVEL_MODERATE' }]
+  );
+  const cs = computeCostSummary(stops);
+  return cs && cs.high > 20; // food ($15–30) added on top of the $20 admission
+})());
+
+// ─── SESSION 2 — validateStops live-music coords ──────────────────────────────
+console.log('\nSESSION 2 — validateStops live-music coords:');
+assert('Keeps live-music stop with null coords', (() => {
+  const out = validateStops([{ time: '8:00 PM', name: 'Burley Oak', category: 'activity', lat: null, lng: null, live_music: { note: '🎵 The Beths · 8 PM' } }]);
+  return out.length === 1 && out[0].lat === null && out[0].live_music;
+})());
+assert('Still drops ordinary stop with null coords', (() => {
+  const out = validateStops([{ time: '1:00 PM', name: 'X', category: 'food', lat: null, lng: null }]);
+  return out.length === 0;
+})());
+assert('Keeps ordinary stop with real coords', (() => {
+  const out = validateStops([{ time: '1:00 PM', name: 'X', category: 'food', lat: 38.3, lng: -75.1 }]);
+  return out.length === 1;
+})());
 
 // ─── Summary ──────────────────────────────────────────────────────────────────
 console.log(`\n${'─'.repeat(50)}`);

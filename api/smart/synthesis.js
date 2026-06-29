@@ -47,13 +47,16 @@ Return a JSON array. Each stop: time, duration_mins, category, name, place_id, a
 
 export function validateStops(raw) {
   const arr = Array.isArray(raw) ? raw : [];
+  const isMusic = (s) => !!s.live_music || s.provenance?.interest === 'live music';
   return arr.filter((s) =>
     s && s.time && s.name && s.category &&
-    (s.lat === 0 || typeof s.lat === 'number') && (s.lng === 0 || typeof s.lng === 'number')
+    (((s.lat === 0 || typeof s.lat === 'number') && (s.lng === 0 || typeof s.lng === 'number')) || isMusic(s))
   ).map((s) => ({
     time: s.time, duration_mins: Number(s.duration_mins) || 60, category: s.category,
     name: s.name, place_id: s.place_id || `stop_${Math.round((s.lat || 0) * 1000)}`,
-    address: s.address || '', lat: s.lat, lng: s.lng,
+    address: s.address || '',
+    lat: typeof s.lat === 'number' ? s.lat : null,
+    lng: typeof s.lng === 'number' ? s.lng : null,
     reason: s.reason || '', excitement_score: Number(s.excitement_score) || 70,
     admission_cost: s.admission_cost ?? null,
     ...(s.provenance ? { provenance: s.provenance } : {}),

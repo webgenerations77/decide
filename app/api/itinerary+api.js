@@ -1,5 +1,5 @@
 import { runSmartEngine } from '../../api/smart/index.js';
-import { computeCostSummary, pickForecastForDate } from '../../api/itineraryHelpers.js';
+import { computeCostSummary, pickForecastForDate, attachPriceLevels } from '../../api/itineraryHelpers.js';
 
 const GOOGLE_KEY    = process.env.GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 const NPS_KEY       = process.env.EXPO_PUBLIC_NPS_API_KEY;
@@ -342,13 +342,6 @@ export async function POST(request) {
 
     const { city, state } = geoInfo;
 
-    const windStr   = weather?.wind_speed_mph
-      ? ` · Wind ${weather.wind_speed_mph}mph${weather.wind_dir ? ` ${weather.wind_dir}` : ''}`
-      : '';
-    const weatherStr = weather
-      ? `${weather.emoji} ${weather.condition}, ${weather.temp_f}°F (feels like ${weather.feels_like_f}°F)${windStr}`
-      : 'Weather data unavailable';
-
     const cityStr = city ? `${city}${state ? `, ${state}` : ''}` : 'the local area';
 
     const [npsParks, ridbFacilities] = await Promise.all([
@@ -398,10 +391,12 @@ export async function POST(request) {
     });
     const withLinks = await enrichWithContactLinks(withDistance);
     const enriched = await enrichWithDrivingTimes(withLinks);
-    const costSummary = computeCostSummary(enriched);
+    const allPlaces = [...food, ...activity, ...shopping, ...allOutdoor];
+    const priced = attachPriceLevels(enriched, allPlaces);
+    const costSummary = computeCostSummary(priced);
 
     return Response.json({
-      itinerary: enriched,
+      itinerary: priced,
       weather,
       meta: {
         date:         formattedDate,

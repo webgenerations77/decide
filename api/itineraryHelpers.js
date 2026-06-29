@@ -3,6 +3,34 @@
 // Per-person price-level → rough USD [low, high] for a food/drink stop.
 const PRICE_LEVEL_USD = { 1: [8, 15], 2: [15, 30], 3: [30, 60], 4: [60, 120] };
 
+// Google Places v1 returns priceLevel as an enum string; normalize to the 1–4
+// integer the rest of the app uses. Passes integers through unchanged.
+const PRICE_ENUM_TO_NUM = {
+  PRICE_LEVEL_INEXPENSIVE: 1,
+  PRICE_LEVEL_MODERATE: 2,
+  PRICE_LEVEL_EXPENSIVE: 3,
+  PRICE_LEVEL_VERY_EXPENSIVE: 4,
+};
+export function priceEnumToNum(level) {
+  if (level == null) return null;
+  if (typeof level === 'number') return level;
+  return PRICE_ENUM_TO_NUM[level] ?? null;
+}
+
+// Attach a numeric price_level to each stop that lacks one, by matching the
+// stop's place_id back to the Google place it came from. Pure; returns a new array.
+export function attachPriceLevels(stops, places) {
+  const byId = new Map();
+  for (const p of places || []) {
+    if (p && p.place_id) byId.set(p.place_id, priceEnumToNum(p.price_level));
+  }
+  return (stops || []).map((s) => {
+    if (s.price_level != null) return { ...s, price_level: priceEnumToNum(s.price_level) };
+    const pl = byId.get(s.place_id);
+    return pl != null ? { ...s, price_level: pl } : s;
+  });
+}
+
 function admissionUSD(text) {
   if (!text || /free/i.test(text)) return [0, 0];
   const nums = String(text).match(/\d+(\.\d+)?/g);
@@ -17,7 +45,8 @@ export function computeCostSummary(stops) {
   for (const s of stops || []) {
     let range = null;
     if (s.admission_cost != null) range = admissionUSD(s.admission_cost);
-    if (!range && s.price_level && PRICE_LEVEL_USD[s.price_level]) range = PRICE_LEVEL_USD[s.price_level];
+    const pl = priceEnumToNum(s.price_level);
+    if (!range && pl && PRICE_LEVEL_USD[pl]) range = PRICE_LEVEL_USD[pl];
     if (!range) continue;
     low += range[0]; high += range[1]; priced++;
   }
