@@ -38,14 +38,20 @@ export function discoveryCacheKey(location, interests) {
 
 export async function runDiscovery(hunts, ctx) {
   try {
-    const interests = hunts.map((h) => h.interest);
+    let huntList = hunts;
+    const askedMusic = (ctx.prefs?.activityStyles || []).join(' ').match(/live music/i)
+      || (ctx.tripNote || '').match(/live music|concert|\bband\b|\bgig\b/i);
+    if (askedMusic && !huntList.some((h) => /live music|concert/i.test(h.interest))) {
+      huntList = [...huntList, { interest: 'live music', why: 'requested', priority: 9, suggestedQuery: `live music ${ctx.location}` }];
+    }
+    const interests = huntList.map((h) => h.interest);
     const cacheKey = discoveryCacheKey(ctx.location, interests);
     const cached = discoveryCache.get(cacheKey);
     if (cached && Date.now() - cached.ts < CACHE_TTL) return cached.finds;
     if (cached) discoveryCache.delete(cacheKey); // expired — drop so it doesn't linger
 
     // Cap paid web-search hunts to the top 4 by priority; API/registry sources are free.
-    const ranked = [...hunts].sort((a, b) => (b.priority || 0) - (a.priority || 0));
+    const ranked = [...huntList].sort((a, b) => (b.priority || 0) - (a.priority || 0));
     let searchBudget = 4;
     const tasks = [];
     for (const hunt of ranked) {

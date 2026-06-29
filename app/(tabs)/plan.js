@@ -308,6 +308,14 @@ function PlaceDetailModal({ visible, stop, onClose }) {
                 </View>
               )}
 
+              {stop.live_music?.note ? (
+                <View style={styles.admissionRow}>
+                  <Ionicons name="musical-notes-outline" size={14} color={COLORS.primary} />
+                  <Text style={styles.admissionLabel}>Live music</Text>
+                  <Text style={styles.admissionValue}>{stop.live_music.note}</Text>
+                </View>
+              ) : null}
+
               {detailLoading && <ActivityIndicator color={COLORS.primary} style={{ marginVertical: 20 }} />}
 
               {stop.place_id?.startsWith('nps_')  && <View style={styles.detailSourceBadge}><Text style={styles.detailSourceTxt}>🌲 National Park Service</Text></View>}
@@ -475,6 +483,13 @@ function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, 
               <Text style={styles.admissionBadgeTxt}>{stop.admission_cost}</Text>
             </View>
           )}
+
+          {stop.live_music?.note ? (
+            <View style={styles.liveMusicBadge}>
+              <Ionicons name="musical-notes-outline" size={12} color={COLORS.primary} style={{ marginRight: 4 }} />
+              <Text style={styles.liveMusicTxt} numberOfLines={1}>{stop.live_music.note}</Text>
+            </View>
+          ) : null}
 
           {isFood && stop.price_level ? (
             <TouchableOpacity onPress={() => setShowLegend(true)} activeOpacity={0.7} style={styles.pricePill}>
@@ -1425,6 +1440,8 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: COLORS.gold + '44',
   },
   admissionBadgeTxt: { fontSize: 12, color: COLORS.goldText, fontFamily: FONTS.bodySemiBold },
+  liveMusicBadge: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', marginTop: 6, paddingHorizontal: 8, paddingVertical: 4, borderRadius: RADII.sm, backgroundColor: COLORS.sky100 },
+  liveMusicTxt:   { fontFamily: FONTS.bodyMedium, fontSize: 12, color: COLORS.primary },
 
   // Price tier pill
   pricePill: {

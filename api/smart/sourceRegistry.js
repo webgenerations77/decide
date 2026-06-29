@@ -1,4 +1,5 @@
 import { firecrawlSearch } from './firecrawl.js';
+import { runLiveMusic, wantsLiveMusic } from './liveMusic.js';
 
 // Interest tag → OSM tag the Overpass backbone queries. Add new rows here.
 export const INTEREST_OSM_TAGS = {
@@ -131,6 +132,8 @@ export const SOURCES = [
   { key: 'surf',       match: ['surf', 'surfing', 'waves'], run: runSurf },
   { key: 'tides',      match: ['tides', 'tide', 'beach walk', 'tide pools'], run: runTides },
   { key: 'goldenhour', match: ['sunset', 'sunrise', 'golden hour', 'stargazing'], run: runGoldenHour },
+  { key: 'livemusic', match: ['live music', 'concert', 'show', 'band', 'gig', 'dj'],
+    run: async (ctx, interest) => (wantsLiveMusic(ctx.prefs, ctx.tripNote) ? runLiveMusic(ctx, interest) : []) },
   SEARCH_FALLBACK,
 ];
 

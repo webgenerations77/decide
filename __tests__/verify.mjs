@@ -2,6 +2,7 @@
 // Run with: node __tests__/verify.mjs
 
 import { wantsAlcohol } from '../api/smart/sourceRegistry.js';
+import { wantsLiveMusic, summarizeShow } from '../api/smart/liveMusic.js';
 import { buildScoutPrompt } from '../api/smart/scout.js';
 import { buildSynthesisPrompt } from '../api/smart/synthesis.js';
 
@@ -178,6 +179,15 @@ const synthP = buildSynthesisPrompt({
 }).user;
 assert('Synthesis caps a single type',  /at most 1.?2 stops|cap any single|no more than (1|2)/i.test(synthP));
 assert('Synthesis sees the trip note',  synthP.includes('pinball and live music'));
+
+// ─── SESSION 2 — Live music ───────────────────────────────────────────────────
+console.log('\nSESSION 2 — Live music:');
+assert('Live Music style → true',     wantsLiveMusic({ activityStyles: ['Live Music'] }, '') === true);
+assert('tripNote concert → true',      wantsLiveMusic({}, 'see a concert tonight') === true);
+assert('tripNote band → true',         wantsLiveMusic({}, 'catch a band') === true);
+assert('No music signal → false',      wantsLiveMusic({ activityStyles: ['Arcades'] }, 'pinball') === false);
+assert('Confirmed show snippet',       summarizeShow({ artist: 'The Beths', showtime: '8 PM', confirmed: true }) === '🎵 The Beths · 8 PM');
+assert('Unconfirmed → likely note',    /Live music likely/i.test(summarizeShow({ confirmed: false, url: 'https://v.com' })));
 
 // ─── Summary ──────────────────────────────────────────────────────────────────
 console.log(`\n${'─'.repeat(50)}`);
