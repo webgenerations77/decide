@@ -496,7 +496,7 @@ export default function SettingsScreen() {
           <Card style={styles.card}>
             <View style={styles.appRow}>
               <Text style={styles.appRowLabel}>Plan</Text>
-              <Text style={[styles.appRowValue, proStatus && { color: COLORS.goldText }]}>
+              <Text style={[styles.appRowValue, proStatus && { color: COLORS.primary }]}>
                 {proStatus ? '👑 Decide Pro' : 'Free'}
               </Text>
             </View>
@@ -860,7 +860,7 @@ const styles = StyleSheet.create({
   card:         { borderRadius: 18, borderWidth: 0.5, borderColor: COLORS.border, padding: 18, overflow: 'hidden' },
   locationCard: { borderRadius: 18, borderWidth: 0.5, borderColor: COLORS.border, padding: 18, zIndex: 10 },
 
-  fieldLabel: { fontSize: 11, fontFamily: FONTS.monoBold, color: COLORS.goldText, letterSpacing: 0.8, marginBottom: 10, textTransform: 'uppercase' },
+  fieldLabel: { fontSize: 11, fontFamily: FONTS.monoBold, color: COLORS.textMuted, letterSpacing: 0.8, marginBottom: 10, textTransform: 'uppercase' },
 
   textInput: {
     backgroundColor: COLORS.surfaceAlt, borderRadius: 12,
@@ -888,7 +888,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modePillActive:     { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  modePillText:       { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: COLORS.goldText },
+  modePillText:       { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: COLORS.textSecondary },
   modePillTextActive: { color: COLORS.primaryText },
   manualBlock:        { marginTop: 14, gap: 10, position: 'relative', zIndex: 10 },
   inputRow:           { flexDirection: 'row', alignItems: 'center', gap: 8 },
@@ -896,7 +896,7 @@ const styles = StyleSheet.create({
   clearBtnTxt:        { color: COLORS.textSecondary, fontSize: 14, fontFamily: FONTS.bodyBold },
   geocodeRow:         { flexDirection: 'row', alignItems: 'center', gap: 8 },
   geocodeStatus:      { fontSize: 13, color: COLORS.textMuted },
-  geocodeSuccess:     { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: COLORS.goldText },
+  geocodeSuccess:     { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: COLORS.success },
   geocodeError:       { fontSize: 13, color: COLORS.error },
   suggestionsOverlay: {
     position: 'absolute', top: 54, left: 0, right: 0,
@@ -906,7 +906,7 @@ const styles = StyleSheet.create({
   },
   suggestionRow:      { height: 48, justifyContent: 'center', paddingHorizontal: 14 },
   suggestionRowBorder:{ borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  suggestionText:     { fontSize: 13, fontFamily: FONTS.bodyMedium, color: COLORS.goldText },
+  suggestionText:     { fontSize: 13, fontFamily: FONTS.bodyMedium, color: COLORS.textSecondary },
 
   // Chips
   chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
@@ -937,7 +937,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surfaceAlt, borderColor: COLORS.border,
   },
   prefPillActive:     { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  prefPillText:       { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: COLORS.goldText },
+  prefPillText:       { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: COLORS.textSecondary },
   prefPillTextActive: { color: COLORS.primaryText },
 
   // Time picker
@@ -948,9 +948,9 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: COLORS.border,
     paddingHorizontal: 12, paddingVertical: 9, gap: 3,
   },
-  timePillLabel:      { fontSize: 9, fontFamily: FONTS.monoBold, color: COLORS.goldText, letterSpacing: 1.5 },
+  timePillLabel:      { fontSize: 9, fontFamily: FONTS.monoBold, color: COLORS.textMuted, letterSpacing: 1.5 },
   timePillInner:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  timePillValue:      { fontSize: 14, fontFamily: FONTS.bodyBold, color: COLORS.goldText },
+  timePillValue:      { fontSize: 14, fontFamily: FONTS.bodyBold, color: COLORS.textPrimary },
   timePillChevron:    { fontSize: 11, color: COLORS.textMuted },
   timeValidationHint: { fontSize: 11, color: COLORS.error, marginTop: 8, letterSpacing: 0.2 },
 
@@ -965,18 +965,18 @@ const styles = StyleSheet.create({
     width: 240, overflow: 'hidden',
   },
   modalTitle: {
-    fontSize: 10, fontFamily: FONTS.monoBold, color: COLORS.goldText, letterSpacing: 2,
+    fontSize: 10, fontFamily: FONTS.monoBold, color: COLORS.textMuted, letterSpacing: 2,
     textAlign: 'center', paddingVertical: 14,
     borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
   modalOption:           { paddingVertical: 13, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: COLORS.surfaceAlt },
   modalOptionActive:     { backgroundColor: COLORS.surfaceAlt },
   modalOptionText:       { fontSize: 15, fontFamily: FONTS.bodyMedium, color: COLORS.textMuted, textAlign: 'center' },
-  modalOptionTextActive: { color: COLORS.goldText, fontFamily: FONTS.bodyBold },
+  modalOptionTextActive: { color: COLORS.primary, fontFamily: FONTS.bodyBold },
 
   // Distance slider — 50 mile max
   distanceHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 },
-  distanceValue:  { fontSize: 13, fontFamily: FONTS.bodyBold, color: COLORS.goldText },
+  distanceValue:  { fontSize: 13, fontFamily: FONTS.bodyBold, color: COLORS.textPrimary },
   sliderTrack: {
     height: 4, borderRadius: 2, backgroundColor: COLORS.border,
     marginVertical: 20, position: 'relative',
@@ -1002,7 +1002,7 @@ const styles = StyleSheet.create({
   demoToggleRow:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   demoLabelGroup: { flex: 1, marginRight: 12 },
   demoLabelRow:   { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
-  demoLabel:      { fontSize: 15, fontFamily: FONTS.bodyBold, color: COLORS.goldText },
+  demoLabel:      { fontSize: 15, fontFamily: FONTS.bodyBold, color: COLORS.textPrimary },
   demoDot: {
     width: 8, height: 8, borderRadius: 4,
     backgroundColor: COLORS.primary,
@@ -1012,7 +1012,7 @@ const styles = StyleSheet.create({
     marginTop: 14, backgroundColor: COLORS.surface, borderRadius: 12,
     borderWidth: 1, borderColor: COLORS.primary + '33', padding: 12,
   },
-  demoInfoText: { fontSize: 13, color: COLORS.goldText, lineHeight: 18 },
+  demoInfoText: { fontSize: 13, color: COLORS.textSecondary, lineHeight: 18 },
 
   // Toast
   toast: {
@@ -1024,7 +1024,7 @@ const styles = StyleSheet.create({
     shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.3, shadowRadius: 12, elevation: 10,
   },
-  toastText: { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: COLORS.goldText },
+  toastText: { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: COLORS.textSecondary },
 
   // App section
   appRow:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 13 },
