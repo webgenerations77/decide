@@ -4,7 +4,6 @@ import {
   Linking, ActivityIndicator, Animated, Modal, Platform, Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import SkeletonStopCard from '../../components/SkeletonCard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
@@ -21,6 +20,7 @@ import Card from '../../components/brand/Card';
 import CTAButton from '../../components/brand/CTAButton';
 import SectionLabel from '../../components/brand/SectionLabel';
 import BrandLogo from '../../components/brand/BrandLogo';
+import LoadingAnimation from '../../components/LoadingAnimation';
 
 const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 
@@ -1045,14 +1045,7 @@ export default function PlanScreen() {
               </View>
             ) : null}
 
-            {loading && (
-              <View style={styles.skeletonSection}>
-                <SectionLabel tone="cobalt" style={{ marginBottom: 20, textAlign: 'center' }}>Building your day…</SectionLabel>
-                <SkeletonStopCard delay={0} />
-                <SkeletonStopCard delay={180} />
-                <SkeletonStopCard delay={360} />
-              </View>
-            )}
+            {loading && <LoadingAnimation />}
           </View>
         )}
 
@@ -1272,9 +1265,6 @@ const styles = StyleSheet.create({
   decideBtnTitle: { color: COLORS.primaryText, fontSize: 18, fontFamily: FONTS.displayHeavy },
   decideBtnSub:   { color: COLORS.sky200, fontSize: 12, letterSpacing: 0.2 },
   landingSubtext: { fontSize: 12, color: COLORS.textMuted, letterSpacing: 0.2, textAlign: 'center', marginTop: 20 },
-
-  // Skeleton loading
-  skeletonSection: { marginTop: 24, gap: 0 },
 
   // ── Plan / Itinerary container ────────────────────────────────────────────
   planContainer: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 8 },
