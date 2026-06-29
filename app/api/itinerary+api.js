@@ -1,5 +1,5 @@
 import { runSmartEngine } from '../../api/smart/index.js';
-import { computeCostSummary } from '../../api/itineraryHelpers.js';
+import { computeCostSummary, pickForecastForDate } from '../../api/itineraryHelpers.js';
 
 const GOOGLE_KEY    = process.env.GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 const NPS_KEY       = process.env.EXPO_PUBLIC_NPS_API_KEY;
@@ -97,21 +97,14 @@ function getWeatherEmoji(condition) {
   return '🌤';
 }
 
-async function fetchWeather(lat, lng) {
+async function fetchWeather(lat, lng, dateISO) {
   try {
     const res  = await fetch(`https://wttr.in/${lat},${lng}?format=j1`);
     const data = await res.json();
-    const c    = data.current_condition?.[0];
-    if (!c) return null;
-    const condition = c.weatherDesc?.[0]?.value ?? 'Clear';
-    return {
-      condition,
-      emoji:          getWeatherEmoji(condition),
-      temp_f:         c.temp_F,
-      feels_like_f:   c.FeelsLikeF,
-      wind_speed_mph: c.windspeedMiles ?? null,
-      wind_dir:       c.winddir16Point ?? null,
-    };
+    const f = pickForecastForDate(data, dateISO);
+    if (!f) return null;
+    if (f.beyondForecast) return { beyondForecast: true, condition: null, emoji: '🗓', temp_f: null, feels_like_f: null, wind_speed_mph: null, wind_dir: null };
+    return { condition: f.condition, emoji: getWeatherEmoji(f.condition), temp_f: f.temp_f, feels_like_f: f.feels_like_f, wind_speed_mph: f.wind_speed_mph, wind_dir: f.wind_dir, beyondForecast: false };
   } catch {
     return null;
   }
@@ -312,23 +305,23 @@ export async function POST(request) {
     const searchRadiusMeters = Math.round(Math.min(maxDistanceMiles, 50) * 1609.34);
     const { dislikedPlaces = [], likedPlaces = [], dislikedReasons = [] } = feedback;
 
-    const [food, activity, shopping, outdoor, weather, geoInfo] = await Promise.all([
-      fetchPlaces(latitude, longitude, PLACE_TYPES.food,     searchRadiusMeters),
-      fetchPlaces(latitude, longitude, PLACE_TYPES.activity, searchRadiusMeters),
-      fetchPlaces(latitude, longitude, PLACE_TYPES.shopping, searchRadiusMeters),
-      fetchPlaces(latitude, longitude, PLACE_TYPES.outdoor,  searchRadiusMeters),
-      fetchWeather(latitude, longitude),
-      reverseGeocode(latitude, longitude),
-    ]);
-
-    const { city, state } = geoInfo;
-
     const dateObj      = date ? new Date(date) : new Date();
     const dayOfWeek    = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
     const formattedDate = dateObj.toLocaleDateString('en-US', {
       month: 'long', day: 'numeric', year: 'numeric',
     });
     const travelDateISO = dateObj.toISOString().slice(0, 10);
+
+    const [food, activity, shopping, outdoor, weather, geoInfo] = await Promise.all([
+      fetchPlaces(latitude, longitude, PLACE_TYPES.food,     searchRadiusMeters),
+      fetchPlaces(latitude, longitude, PLACE_TYPES.activity, searchRadiusMeters),
+      fetchPlaces(latitude, longitude, PLACE_TYPES.shopping, searchRadiusMeters),
+      fetchPlaces(latitude, longitude, PLACE_TYPES.outdoor,  searchRadiusMeters),
+      fetchWeather(latitude, longitude, travelDateISO),
+      reverseGeocode(latitude, longitude),
+    ]);
+
+    const { city, state } = geoInfo;
 
     const windStr   = weather?.wind_speed_mph
       ? ` · Wind ${weather.wind_speed_mph}mph${weather.wind_dir ? ` ${weather.wind_dir}` : ''}`
@@ -374,7 +367,8 @@ export async function POST(request) {
       if (!stop.lat || !stop.lng) return stop;
       const distMiles = haversineDistance(latitude, longitude, stop.lat, stop.lng);
       const driveMins = estimateDriveTime(distMiles);
-      const trafficNote = (weather?.wind_speed_mph > 20 || (new Date().getMonth() >= 5 && new Date().getMonth() <= 8))
+      const planMonth = dateObj.getMonth();
+      const trafficNote = (weather?.wind_speed_mph > 20 || (planMonth >= 5 && planMonth <= 8))
         ? ' (traffic may vary)' : '';
       return {
         ...stop,

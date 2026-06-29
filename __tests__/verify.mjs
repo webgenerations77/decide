@@ -5,7 +5,7 @@ import { wantsAlcohol } from '../api/smart/sourceRegistry.js';
 import { wantsLiveMusic, summarizeShow } from '../api/smart/liveMusic.js';
 import { buildScoutPrompt } from '../api/smart/scout.js';
 import { buildSynthesisPrompt } from '../api/smart/synthesis.js';
-import { computeCostSummary } from '../api/itineraryHelpers.js';
+import { computeCostSummary, pickForecastForDate } from '../api/itineraryHelpers.js';
 
 let passed = 0;
 let failed = 0;
@@ -203,6 +203,22 @@ assert('Low ≤ high',       cs.low <= cs.high);
 assert('Free contributes 0 low', cs.low >= 15); // 15 admission + food mins
 assert('No priced stops → null', computeCostSummary([{ category: 'outdoor' }]) === null);
 assert('Empty → null',           computeCostSummary([]) === null);
+
+// ─── SESSION 2 — Weather by date ──────────────────────────────────────────────
+console.log('\nSESSION 2 — Weather by date:');
+const j1 = {
+  current_condition: [{ weatherDesc: [{ value: 'Sunny' }], temp_F: '70', FeelsLikeF: '69', windspeedMiles: '5', winddir16Point: 'N' }],
+  weather: [
+    { date: '2026-07-01', hourly: [{ weatherDesc: [{ value: 'Cloudy' }], tempF: '66', FeelsLikeF: '64', windspeedMiles: '10', winddir16Point: 'E', time: '1200' }] },
+    { date: '2026-07-02', hourly: [{ weatherDesc: [{ value: 'Rain' }],   tempF: '60', FeelsLikeF: '58', windspeedMiles: '14', winddir16Point: 'S', time: '1200' }] },
+  ],
+};
+const day1 = pickForecastForDate(j1, '2026-07-02');
+assert('Matches the requested date', day1?.condition === 'Rain');
+assert('Not flagged beyond',         day1?.beyondForecast === false);
+const far = pickForecastForDate(j1, '2026-09-01');
+assert('Beyond window flagged',      far?.beyondForecast === true);
+assert('Null data → null',           pickForecastForDate(null, '2026-07-02') === null);
 
 // ─── Summary ──────────────────────────────────────────────────────────────────
 console.log(`\n${'─'.repeat(50)}`);

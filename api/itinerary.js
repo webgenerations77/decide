@@ -1,5 +1,5 @@
 import { runSmartEngine } from './smart/index.js';
-import { computeCostSummary } from './itineraryHelpers.js';
+import { computeCostSummary, pickForecastForDate } from './itineraryHelpers.js';
 
 const GOOGLE_KEY    = process.env.GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 const NPS_KEY       = process.env.EXPO_PUBLIC_NPS_API_KEY;
@@ -95,16 +95,21 @@ function getWeatherEmoji(c) {
   return '🌤';
 }
 
-async function fetchWeather(lat, lng) {
-  const key = cacheKey(lat, lng);
+async function fetchWeather(lat, lng, dateISO) {
+  const key = `${cacheKey(lat, lng)}@${dateISO}`;
   const cached = cacheGet(weatherCache, key);
   if (cached) return cached;
   try {
     const res = await fetch(`https://wttr.in/${lat},${lng}?format=j1`);
     const data = await res.json();
-    const c = data.current_condition?.[0]; if (!c) return null;
-    const condition = c.weatherDesc?.[0]?.value ?? 'Clear';
-    const result = { condition, emoji: getWeatherEmoji(condition), temp_f: c.temp_F, feels_like_f: c.FeelsLikeF, wind_speed_mph: c.windspeedMiles ?? null, wind_dir: c.winddir16Point ?? null };
+    const f = pickForecastForDate(data, dateISO);
+    if (!f) return null;
+    if (f.beyondForecast) {
+      const result = { beyondForecast: true, condition: null, emoji: '🗓', temp_f: null, feels_like_f: null, wind_speed_mph: null, wind_dir: null };
+      cacheSet(weatherCache, key, result);
+      return result;
+    }
+    const result = { condition: f.condition, emoji: getWeatherEmoji(f.condition), temp_f: f.temp_f, feels_like_f: f.feels_like_f, wind_speed_mph: f.wind_speed_mph, wind_dir: f.wind_dir, beyondForecast: false };
     cacheSet(weatherCache, key, result);
     return result;
   } catch { return null; }
@@ -188,21 +193,22 @@ export default async function handler(req, res) {
     const { pace='moderate', budget='$$', group_type='couple', cuisines=[], activityStyles=[], dietary=[] } = preferences;
     const { dislikedPlaces=[], likedPlaces=[], dislikedReasons=[] } = feedback;
 
+    const dateObj=date?new Date(date):new Date();
+    const dayOfWeek=dateObj.toLocaleDateString('en-US',{weekday:'long'});
+    const formattedDate=dateObj.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+    const travelDateISO=dateObj.toISOString().slice(0,10);
+
     const [places, weather, geoInfo] = await Promise.all([
       fetchAllPlaces(latitude, longitude),
-      fetchWeather(latitude, longitude),
+      fetchWeather(latitude, longitude, travelDateISO),
       reverseGeocode(latitude, longitude),
     ]);
     const { food, activity, shopping, outdoor } = places;
     const { city, state } = geoInfo;
 
-    const dateObj=date?new Date(date):new Date();
-    const dayOfWeek=dateObj.toLocaleDateString('en-US',{weekday:'long'});
-    const formattedDate=dateObj.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
     const windStr=weather?.wind_speed_mph?` · Wind ${weather.wind_speed_mph}mph${weather.wind_dir?` ${weather.wind_dir}`:''}`:'';
     const weatherStr=weather?`${weather.emoji} ${weather.condition}, ${weather.temp_f}°F (feels like ${weather.feels_like_f}°F)${windStr}`:'Weather data unavailable';
     const cityStr=city?`${city}${state?`, ${state}`:''}`:'the local area';
-    const travelDateISO=dateObj.toISOString().slice(0,10);
 
     const [npsParks, ridbFacilities] = await Promise.all([
       fetchNPSParks(city, state),

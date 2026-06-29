@@ -927,7 +927,9 @@ export default function PlanScreen() {
 
   const locationPillText = `${isManual ? '📌 ' : '📍 '}${locationLabel}`;
   const hasItinerary     = Array.isArray(itinerary) && itinerary.length > 0;
-  const weatherPillText  = weather
+  const weatherPillText  = weather?.beyondForecast
+    ? `🗓 Extended forecast not available — check back closer to your trip · ${meta?.time_window ?? `${startTime} – ${endTime}`}`
+    : weather
     ? `${weather.emoji ?? ''} ${weather.condition} · ${weather.temp_f}°F${weather.wind_speed_mph ? ` · 💨 ${weather.wind_speed_mph}mph` : ''} · ${meta?.time_window ?? `${startTime} – ${endTime}`}`
     : `${startTime} – ${endTime}`;
 
