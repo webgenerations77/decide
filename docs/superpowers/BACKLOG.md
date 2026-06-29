@@ -113,16 +113,27 @@ before implementing.
 
 ---
 
-## 5b. Beta feedback — production hardening  (before exposing `/api/feedback` beyond beta)
-The beta-tester feature is built (branch `feat/beta-tester-feedback`, final review clean). Two
-production-only gaps the review flagged, deliberately out of beta scope:
-- `/api/feedback` has **no auth/rate-limiting** — anyone can POST and trigger an email, and
-  `userEmail`/`userName` are client-supplied (spoofable). Fine for a single-tester beta; add a
-  shared-secret header or rate-limit before public exposure.
-- Resend sender is the **sandbox `onboarding@resend.dev`** (only delivers to the account owner).
-  Switch to a verified-domain sender (`feedback@<domain>`) to email anyone.
-- Optional cosmetic: `BetaBanner` still shows on `/beta-guide` (spec said this is fine; the feedback
-  button is already hidden there). Hide the banner too if the overlap on the guide header bothers you.
+## 5b. Beta feedback — production hardening  ✅ DONE (merged to `main` — branch `feat/feedback-hardening`, 2026-06-29)
+Spec/plan: `docs/superpowers/{specs,plans}/2026-06-29-feedback-hardening*`. Final review clean (Yes-to-merge).
+
+**What shipped (all gating lives in shared `api/feedbackEmail.js`; both handlers inherit it):**
+- **Auth/rate-limiting** — shared-secret header (`x-feedback-secret`) via `gateFeedbackRequest`, which
+  **fails open** when `FEEDBACK_SHARED_SECRET` is unset (dev/beta keep working). Length caps in
+  `validateFeedback` (message ≤4000, fields ≤200 — reject, not truncate) + `rating` clamped to int 1–5
+  or null. Best-effort in-memory rate limit (`checkFeedbackRate`, 5/10 min per key) with a bounded
+  opportunistic sweep (evicts expired keys once the map exceeds 1000). Email body labels the
+  client-supplied email/name as **unverified**. ⚠ Honest limits (accepted): the EXPO_PUBLIC client
+  secret is bundle-extractable (raises the bar, not cryptographic); in-memory limit is per-warm-instance;
+  with the secret set, all clients share one rate-limit bucket (fine for a single tester).
+- **Configurable sender** — `from = process.env.FEEDBACK_FROM_EMAIL || 'onboarding@resend.dev'`. Verify a
+  domain at resend.com, then set `FEEDBACK_FROM_EMAIL=feedback@<domain>` in Vercel + `.env` (no code change).
+- **Cosmetic** — `BetaBanner` now hidden on `/beta-guide` (`app/_layout.js`), matching the feedback button.
+- New env vars documented in `.env.example` (+ `.env`/`decide.env.txt` on disk): `FEEDBACK_FROM_EMAIL`,
+  `FEEDBACK_SHARED_SECRET`, `EXPO_PUBLIC_FEEDBACK_SHARED_SECRET`. All blank by default (gate disabled).
+
+**⚠ TODO when ready to enable the gate (user action, not code):** set `FEEDBACK_SHARED_SECRET` (server) +
+`EXPO_PUBLIC_FEEDBACK_SHARED_SECRET` (client, **same value**) in Vercel env + local `.env`. Until then the
+endpoint stays open (fail-open). And verify a Resend domain before emailing anyone but the account owner.
 
 ## 6. Full brand-consistency audit  ✅ DONE (branch `chore/brand-consistency`, 2026-06-29)
 - **Audit clean:** verified no raw hex, no `fontWeight` conflicts, no raster logos in
