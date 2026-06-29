@@ -84,7 +84,7 @@ export default function ForgotPasswordScreen() {
                     onSubmitEditing={handleReset}
                   />
                   <CTAButton
-                    variant="go"
+                    variant="cobalt"
                     title="Send reset link"
                     onPress={handleReset}
                     loading={loading}

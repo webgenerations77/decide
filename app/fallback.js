@@ -313,9 +313,9 @@ const styles = StyleSheet.create({
   conLine:  { fontSize: 13, color: COLORS.warning, letterSpacing: 0.2, fontFamily: FONTS.body },
 
   goBtn: {
-    marginTop: 4, backgroundColor: COLORS.accent, borderRadius: 16,
+    marginTop: 4, backgroundColor: COLORS.primary, borderRadius: 16,
     height: 56, alignItems: 'center', justifyContent: 'center',
-    shadowColor: COLORS.accent, shadowOffset: { width: 0, height: 4 },
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4, shadowRadius: 12, elevation: 8,
   },
   goBtnText: { color: COLORS.primaryText, fontSize: 15, fontFamily: FONTS.bodyBold },

@@ -185,7 +185,7 @@ export default function OnboardingScreen() {
 
         {/* ── Fixed bottom CTA ──────────────────────────────────────────────── */}
         <View style={styles.bottomBar}>
-          <CTAButton variant="go" title="Let's go →" onPress={complete} />
+          <CTAButton variant="cobalt" title="Let's go →" onPress={complete} />
           <TouchableOpacity onPress={skip} style={styles.skipWrap} activeOpacity={0.7}>
             <Text style={styles.skipText}>Skip for now</Text>
           </TouchableOpacity>

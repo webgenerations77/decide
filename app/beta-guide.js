@@ -92,7 +92,7 @@ export default function BetaGuide() {
             </Text>
           </Card>
 
-          <CTAButton title="Got it — let's go" variant="go" onPress={done} style={{ marginTop: 8 }} />
+          <CTAButton title="Got it — let's go" variant="cobalt" onPress={done} style={{ marginTop: 8 }} />
         </ScrollView>
       </SafeAreaView>
     </ScreenBackground>

@@ -104,7 +104,7 @@ export default function PaywallScreen() {
         </View>
 
         <CTAButton
-          variant="go"
+          variant="cobalt"
           title="Upgrade to Pro — $3.99/mo"
           onPress={handleUpgrade}
           loading={loading}

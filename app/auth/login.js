@@ -127,7 +127,7 @@ export default function LoginScreen() {
                 </View>
 
                 <CTAButton
-                  variant="go"
+                  variant="cobalt"
                   title="Sign in →"
                   onPress={handleEmailSignIn}
                   loading={loading}

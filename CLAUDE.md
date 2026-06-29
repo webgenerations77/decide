@@ -12,8 +12,9 @@
 - RevenueCat (subscriptions — Phase 4, not yet wired)
 
 ## Brand & Theme (source of truth: constants/theme.js — no hardcoded hex in components)
-Light, editorial travel system. Cobalt leads; orange is the one "go" accent per screen;
-gold warms; warm cream/paper grounds. Brand kit reference: `docs/brand/`.
+Light, editorial travel system. Cobalt leads ALL CTAs and active states; orange is reserved
+for the BrandLogo dot and the food category color only (never a button); gold warms badges;
+warm cream/paper grounds. Brand kit reference: `docs/brand/`.
 
 Color (COLORS):
 - Background:  #FCF9F4 (bg, paper) · Surface: #FFFFFF · Surface alt: #F6F0E6 (cream)

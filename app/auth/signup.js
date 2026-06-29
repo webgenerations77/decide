@@ -162,7 +162,7 @@ export default function SignupScreen() {
                 </TouchableOpacity>
 
                 <CTAButton
-                  variant="go"
+                  variant="cobalt"
                   title="Create account →"
                   onPress={handleSignUp}
                   disabled={!canSubmit}
