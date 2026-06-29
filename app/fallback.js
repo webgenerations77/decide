@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, Linking, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { COLORS, FONTS } from '../constants/theme';
 import ScreenBackground from '../components/brand/ScreenBackground';
 import Card from '../components/brand/Card';
+import { searchNearbyPlaces } from '../services/placesService';
 
 // Same confirmed Table A types as HomeScreen
 const CATEGORY_TYPES = {
@@ -150,35 +151,20 @@ export default function FallbackScreen() {
     setLoading(true);
     setError(null);
     try {
-      const apiKey = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
-      if (!apiKey || !lat || !lng) {
+      if (!lat || !lng) {
         setError('Location data missing — go back and try again.');
         return;
       }
 
       const types = CATEGORY_TYPES[category];
-      const endpoint = `https://places.googleapis.com/v1/places:searchNearby?key=${apiKey}`;
-      const fetchUrl = Platform.OS === 'web'
-        ? `https://corsproxy.io/?${encodeURIComponent(endpoint)}`
-        : endpoint;
-
-      const requestBody = {
-        locationRestriction: {
-          circle: { center: { latitude: lat, longitude: lng }, radius: 50000 },
+      const data = await searchNearbyPlaces(
+        {
+          locationRestriction: { circle: { center: { latitude: lat, longitude: lng }, radius: 50000 } },
+          maxResultCount: 20,
+          includedTypes:  types,
         },
-        maxResultCount: 20,
-        includedTypes:  types,
-      };
-
-      const response = await fetch(fetchUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type':     'application/json',
-          'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.currentOpeningHours,places.location',
-        },
-        body: JSON.stringify(requestBody),
-      });
-      const data = await response.json();
+        'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.currentOpeningHours,places.location',
+      );
 
       if (!data.places?.length) {
         setError('No additional places found. Try a different category.');

@@ -21,8 +21,8 @@ import CTAButton from '../../components/brand/CTAButton';
 import SectionLabel from '../../components/brand/SectionLabel';
 import BrandLogo from '../../components/brand/BrandLogo';
 import LoadingAnimation from '../../components/LoadingAnimation';
-
-const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
+import { placeDetails as fetchPlaceDetails } from '../../services/placesService';
+import { getApiBase } from '../../services/apiBase';
 
 // ─── Date helpers ─────────────────────────────────────────────────────────────
 function getNextSevenDays() {
@@ -216,7 +216,7 @@ function PlaceDetailModal({ visible, stop, onClose }) {
     const pid = stop.place_id ?? '';
     const isDemo     = pid.startsWith('demo_');
     const isExternal = pid.startsWith('nps_') || pid.startsWith('ridb_');
-    if (isDemo || isExternal || !GOOGLE_KEY || !pid) {
+    if (isDemo || isExternal || !pid) {
       setPlaceDetails(null);
       setDetailLoading(false);
       return;
@@ -224,10 +224,7 @@ function PlaceDetailModal({ visible, stop, onClose }) {
     setDetailLoading(true);
     setPlaceDetails(null);
     const fields = 'name,rating,user_ratings_total,formatted_phone_number,website,opening_hours,price_level';
-    const base = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${pid}&fields=${encodeURIComponent(fields)}&key=${GOOGLE_KEY}`;
-    const url  = Platform.OS === 'web' ? `https://corsproxy.io/?${encodeURIComponent(base)}` : base;
-    fetch(url)
-      .then((r) => r.json())
+    fetchPlaceDetails(pid, fields)
       .then((data) => { setPlaceDetails(data.result ?? null); setDetailLoading(false); })
       .catch(() => setDetailLoading(false));
   }, [visible, stop?.place_id]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -692,19 +689,11 @@ export default function PlanScreen() {
           console.warn('[location] reverseGeocodeAsync failed:', e?.message ?? e);
         }
 
-        if (!label && GOOGLE_KEY) {
+        if (!label) {
           try {
-            const res  = await fetch(
-              `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_KEY}`
-            );
+            const res  = await fetch(`${getApiBase()}/api/geocode?lat=${latitude}&lng=${longitude}`);
             const data = await res.json();
-            if (data.results?.length) {
-              const parts = data.results[0].address_components;
-              const get   = (t) => parts.find((c) => c.types.includes(t));
-              const city  = get('locality')?.long_name;
-              const state = get('administrative_area_level_1')?.short_name;
-              label = city && state ? `${city}, ${state}` : city ?? state ?? null;
-            }
+            if (data.label) label = data.label;
           } catch (e) {
             console.warn('[location] geocode fetch failed:', e?.message ?? e);
           }

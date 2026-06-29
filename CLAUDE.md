@@ -124,7 +124,7 @@ Client never calls Anthropic directly.
 - @decide/demo_mode (uses Berlin, MD sample data)
 
 ## Environment Variables
-EXPO_PUBLIC_GOOGLE_PLACES_API_KEY= (Places Nearby, Autocomplete, Details, Geocoding)
+GOOGLE_PLACES_API_KEY=             (server-only; Places Nearby, Autocomplete, Details, Geocoding — proxied via /api/places/* and /api/geocode)
 ANTHROPIC_API_KEY=                 (server-side only)
 EXPO_PUBLIC_NPS_API_KEY=           (National Park Service)
 EXPO_PUBLIC_RIDB_API_KEY=          (Recreation.gov)
