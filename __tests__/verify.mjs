@@ -1,6 +1,8 @@
 // Quick verification script for the new feature logic
 // Run with: node __tests__/verify.mjs
 
+import { wantsAlcohol } from '../api/smart/sourceRegistry.js';
+
 let passed = 0;
 let failed = 0;
 
@@ -155,6 +157,14 @@ const feedbackKey = (placeId) => `@decide/feedback_${placeId}`;
 assert('Google place key',  feedbackKey('ChIJabc') === '@decide/feedback_ChIJabc');
 assert('NPS place key',     feedbackKey('nps_123') === '@decide/feedback_nps_123');
 assert('RIDB place key',    feedbackKey('ridb_456') === '@decide/feedback_ridb_456');
+
+// ─── SESSION 2 — Alcohol gating ───────────────────────────────────────────────
+console.log('\nSESSION 2 — wantsAlcohol gating:');
+assert('Bars & Breweries style → true',  wantsAlcohol({ activityStyles: ['Bars & Breweries'] }, '') === true);
+assert('tripNote mentions beer → true',  wantsAlcohol({}, 'want to grab a beer') === true);
+assert('tripNote mentions brewery → true', wantsAlcohol({}, 'a brewery tour') === true);
+assert('No drink signal → false',        wantsAlcohol({ activityStyles: ['Arcades'] }, 'pinball and parks') === false);
+assert('Empty → false',                  wantsAlcohol({}, '') === false);
 
 // ─── Summary ──────────────────────────────────────────────────────────────────
 console.log(`\n${'─'.repeat(50)}`);

@@ -32,6 +32,7 @@ Rules:
 - For an anchor or find used as a stop: set place_id to "find_" + a slug of its name, use its lat/lng, set category to its category, and add "provenance": {"interest","sourceLabel","why"}.
 - Fill remaining stops from the Google places (use their exact place_id/lat/lng).
 - Include lunch if midday is in the window and dinner if evening is. Match budget. Don't repeat a place.
+- Do not include bars, breweries, or alcohol-serving venues as stops unless the user explicitly requested them OR the venue is hosting live music on this date (a stop whose provenance interest is "live music").
 - ${p.pace === 'relaxed' ? '4–5' : p.pace === 'packed' ? '7–8' : '5–6'} stops.
 
 Return a JSON array. Each stop: time, duration_mins, category, name, place_id, address, lat, lng, reason, excitement_score, admission_cost ("Free" | "$15/adult" | "Prices vary — check website" | null for food/shopping), and provenance (only for anchor/find stops).`;
