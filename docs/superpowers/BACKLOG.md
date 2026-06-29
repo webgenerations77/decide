@@ -50,6 +50,12 @@ were left as gold.
   If it's a stale leftover, delete it; if intentional, ignore.
 - **Vercel:** if it auto-builds `main`, this is live — confirm `FIRECRAWL_API_KEY` (cloud `fc-` key)
   is set in the Vercel project env (it's in local `.env`, which is gitignored).
+- **⚠ SECURITY (deferred by user):** the live `FIRECRAWL_API_KEY` (`fc-110f…`) was committed to
+  history (commit `3d3056f`, pushed to `origin/main` on GitHub) via a stray skill block in
+  `CLAUDE.md`. Removed from the working tree (commit `27cb6ea`), but it remains in history and must
+  be treated as compromised. **TODO when ready: rotate the key at firecrawl.dev → update `.env` +
+  Vercel env.** Rotation neutralizes it; optional history scrub (filter-repo/BFG + force-push) only
+  if desired afterward.
 
 ---
 
