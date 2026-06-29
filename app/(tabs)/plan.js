@@ -930,9 +930,12 @@ export default function PlanScreen() {
     const encode = (s) => s.lat && s.lng
       ? `${s.lat},${s.lng}`
       : encodeURIComponent(s.address || s.name);
-    const stops = itinerary.map(encode);
-    let url = `https://www.google.com/maps/dir/?api=1&origin=${stops[0]}&destination=${stops[stops.length - 1]}&travelmode=driving`;
-    if (stops.length > 2) url += `&waypoints=${stops.slice(1, -1).join('|')}`;
+    const stopStrs = itinerary.map(encode);
+    const originStr = coords?.latitude && coords?.longitude
+      ? `${coords.latitude},${coords.longitude}` : null;
+    const points = originStr ? [originStr, ...stopStrs] : stopStrs;
+    let url = `https://www.google.com/maps/dir/?api=1&origin=${points[0]}&destination=${points[points.length - 1]}&travelmode=driving`;
+    if (points.length > 2) url += `&waypoints=${points.slice(1, -1).join('|')}`;
     Linking.openURL(url);
   };
 

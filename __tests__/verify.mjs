@@ -43,14 +43,17 @@ function extractJSON(text) {
   return text.trim();
 }
 
-function buildNavURL(itinerary) {
+function buildNavURL(itinerary, origin) {
   if (!itinerary?.length) return null;
   const encode = (s) => s.lat && s.lng
     ? `${s.lat},${s.lng}`
     : encodeURIComponent(s.address || s.name);
-  const stops = itinerary.map(encode);
-  let url = `https://www.google.com/maps/dir/?api=1&origin=${stops[0]}&destination=${stops[stops.length - 1]}&travelmode=driving`;
-  if (stops.length > 2) url += `&waypoints=${stops.slice(1, -1).join('|')}`;
+  const stopStrs = itinerary.map(encode);
+  const originStr = origin?.latitude && origin?.longitude
+    ? `${origin.latitude},${origin.longitude}` : null;
+  const points = originStr ? [originStr, ...stopStrs] : stopStrs;
+  let url = `https://www.google.com/maps/dir/?api=1&origin=${points[0]}&destination=${points[points.length - 1]}&travelmode=driving`;
+  if (points.length > 2) url += `&waypoints=${points.slice(1, -1).join('|')}`;
   return url;
 }
 
@@ -145,6 +148,22 @@ assert('Falls back to address when lat/lng=0', (() => {
 
 assert('Empty itinerary → null', buildNavURL([]) === null);
 assert('Null itinerary → null',  buildNavURL(null) === null);
+
+// ─── SESSION 2 — Nav origin ───────────────────────────────────────────────────
+console.log('\nSESSION 2 — Nav origin:');
+const origin = { latitude: 38.0, longitude: -75.0 };
+assert('Origin becomes route origin', (() => {
+  const url = buildNavURL(stops2, origin);
+  return url.includes('origin=38,-75') && url.includes('destination=37.78,-122.42');
+})());
+assert('First stop moves to waypoints', (() => {
+  const url = buildNavURL(stops2, origin);
+  return url.includes('waypoints=37.77,-122.41');
+})());
+assert('Null origin → unchanged', (() => {
+  const url = buildNavURL(stops2);
+  return url.includes('origin=37.77,-122.41') && !url.includes('waypoints');
+})());
 
 // ─── PRIORITY 2: NPS/RIDB place_id detection (detail modal logic) ─────────────
 console.log('\nPRIORITY 2+4 — External place_id detection:');
