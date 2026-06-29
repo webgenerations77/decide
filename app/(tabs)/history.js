@@ -58,7 +58,7 @@ function FeedbackModal({ visible, itemName, onClose, onSelect }) {
 
 // ─── DecisionCard ─────────────────────────────────────────────────────────────
 function DecisionCard({ item, onFeedbackUp, onFeedbackDown }) {
-  const color    = CATEGORY_COLORS[item.category] ?? COLORS.teal;
+  const color    = CATEGORY_COLORS[item.category] ?? COLORS.primary;
   const catEmoji = CATEGORY_EMOJIS[item.category] ?? '⚡';
   const score    = item.excitementScore ?? item.excitement_score ?? 0;
 
@@ -416,7 +416,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
   },
   filterPillActive:    { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  filterPillTxt:       { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: COLORS.goldText },
+  filterPillTxt:       { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: COLORS.textSecondary },
   filterPillTxtActive: { color: COLORS.primaryText },
   countTxt:            { fontSize: 12, color: COLORS.textMuted, marginLeft: 4 },
 
