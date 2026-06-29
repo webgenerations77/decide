@@ -16,26 +16,22 @@ is `constants/theme.js`; brand system is documented in `CLAUDE.md` (## Brand & T
 
 ---
 
-## 1. Warm-text a11y pass  (recommended next — its own focused task)
-**Problem:** `COLORS.amber`/`COLORS.gold` (#F4B63A) used as **text color** on the light paper
-background is ~2.5:1 contrast (below WCAG AA). ~37 occurrences across 9 files. (Gold/amber as
-*background, border, or badge fill* is fine — leave those.)
+## 1. Warm-text a11y pass  ✅ DONE (merged to `main` — branch `chore/a11y-warm-text`)
+**Was:** `COLORS.amber`/`COLORS.gold` (#F4B63A) used as **text color** on light paper was
+~2.5:1 contrast (below WCAG AA). 37 occurrences across 9 files. Fills/borders/badge backgrounds
+were left as gold.
 
-**Find them:** `grep -rn "color: *COLORS\.\(amber\|gold\)" app components screens --include=*.js`
-Affected files: `app/(tabs)/history.js`, `app/(tabs)/plan.js`, `app/auth/{login,signup,forgot-password}.js`,
-`app/fallback.js`, `app/paywall.js`, `app/result.js`, `screens/SettingsScreen.js`, `screens/SpinScreen.js`.
-
-**Recommended approach:**
-- **Interactive text** (links, back buttons/arrows, "Upgrade to Pro" links — e.g. `backTxt`,
-  `linkText`, `tosLink`, `backArrow`) → `COLORS.primary` (cobalt). Wins on BOTH contrast and
-  affordance (links should read as interactive/cobalt, not gold).
-- **Non-interactive warm accents** (eyebrow labels, pill/badge text, values, ratings) → add a new
-  AA-on-paper warm-text token to `theme.js`, e.g. `goldText: '#9A6A12'` (deep ochre, ~4.5:1 on
-  `#FCF9F4`), and remap these. Keep `gold` (#F4B63A) for fills/accents.
-- Re-check badge text that sits on a faint gold tint (e.g. `exciteText` on `COLORS.amber + '22'`):
-  ensure the text token contrasts with the tint, not just paper.
-- Verify with `npx expo export --platform web`; ideally eyeball key screens.
-- Branch off `main` (e.g. `chore/a11y-warm-text`), then merge.
+**What shipped:**
+- New token `COLORS.goldText: '#8C6010'` (deep ochre) — ~5.3:1 on paper, ~4.9:1 on gold-tint
+  badges (`gold + '22'`). Used for all non-interactive warm accents (eyebrows, pill/badge text,
+  values, ratings, prices) — 29 spots. `gold` (#F4B63A) retained for fills/accents.
+  *(Note: deeper than the originally-suggested `#9A6A12`, which sat right at 4.5:1 on paper with
+  zero margin and dipped to ~4.2:1 on the gold-tint badges — `#8C6010` clears AA on both.)*
+- Interactive text (links, back arrows, "Upgrade to Pro") → `COLORS.primary` (cobalt) — 7 spots.
+  Wins on both contrast and link affordance.
+- `history.js` `exciteText` sits on a **cobalt** tint (`primary + '33'`), not gold — warm text
+  can't reach AA there, so it → `COLORS.primaryDark` (~7:1), matching its own badge.
+- Verified with `npx expo export --platform web` (clean build). Not yet eyeballed in a running app.
 
 ## 2. Engine cost / robustness minors
 - `api/smart/discovery.js` — module cache `Map` has no eviction (unbounded growth in a
