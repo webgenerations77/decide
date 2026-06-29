@@ -1090,6 +1090,12 @@ export default function PlanScreen() {
                         </View>
                       ))}
                   </View>
+                  {meta.cost_summary ? (
+                    <View style={styles.costSummaryRow}>
+                      <Ionicons name="wallet-outline" size={14} color={COLORS.primary} style={{ marginRight: 5 }} />
+                      <Text style={styles.costSummaryTxt}>{meta.cost_summary}</Text>
+                    </View>
+                  ) : null}
                   {research?.hadLiveData && (
                     <Text style={styles.liveDataNote}>
                       ✨ Cheddar checked what's happening this week
@@ -1399,6 +1405,8 @@ const styles = StyleSheet.create({
   metaChipText:     { color: COLORS.textSecondary, fontSize: 11, fontFamily: FONTS.bodySemiBold },
   metaChipTimeText: { color: COLORS.textSecondary },
   liveDataNote:     { color: COLORS.teal, fontSize: 11, fontStyle: 'italic', marginTop: 10, textAlign: 'center' },
+  costSummaryRow:   { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
+  costSummaryTxt:   { fontFamily: FONTS.bodySemiBold, fontSize: 13, color: COLORS.primary },
 
   // Stop card + timeline
   stopRow:     { flexDirection: 'row', marginBottom: 14 },

@@ -1,4 +1,5 @@
 import { runSmartEngine } from '../../api/smart/index.js';
+import { computeCostSummary } from '../../api/itineraryHelpers.js';
 
 const GOOGLE_KEY    = process.env.GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 const NPS_KEY       = process.env.EXPO_PUBLIC_NPS_API_KEY;
@@ -383,16 +384,18 @@ export async function POST(request) {
       };
     });
     const enriched = await enrichWithDrivingTimes(withDistance);
+    const costSummary = computeCostSummary(enriched);
 
     return Response.json({
       itinerary: enriched,
       weather,
       meta: {
-        date:        formattedDate,
-        day_of_week: dayOfWeek,
-        time_window: `${startTime} – ${endTime}`,
-        preferences: { pace, budget, group_type },
-        city:        cityStr,
+        date:         formattedDate,
+        day_of_week:  dayOfWeek,
+        time_window:  `${startTime} – ${endTime}`,
+        preferences:  { pace, budget, group_type },
+        city:         cityStr,
+        cost_summary: costSummary?.label ?? null,
       },
       discovery: {
         hadLiveData: smart.hadLiveData,

@@ -5,6 +5,7 @@ import { wantsAlcohol } from '../api/smart/sourceRegistry.js';
 import { wantsLiveMusic, summarizeShow } from '../api/smart/liveMusic.js';
 import { buildScoutPrompt } from '../api/smart/scout.js';
 import { buildSynthesisPrompt } from '../api/smart/synthesis.js';
+import { computeCostSummary } from '../api/itineraryHelpers.js';
 
 let passed = 0;
 let failed = 0;
@@ -188,6 +189,20 @@ assert('tripNote band → true',         wantsLiveMusic({}, 'catch a band') === 
 assert('No music signal → false',      wantsLiveMusic({ activityStyles: ['Arcades'] }, 'pinball') === false);
 assert('Confirmed show snippet',       summarizeShow({ artist: 'The Beths', showtime: '8 PM', confirmed: true }) === '🎵 The Beths · 8 PM');
 assert('Unconfirmed → likely note',    /Live music likely/i.test(summarizeShow({ confirmed: false, url: 'https://v.com' })));
+
+// ─── SESSION 2 — Cost summary ─────────────────────────────────────────────────
+console.log('\nSESSION 2 — Cost summary:');
+const cs = computeCostSummary([
+  { category: 'activity', admission_cost: '$15/adult' },
+  { category: 'food', price_level: 2 },
+  { category: 'outdoor', admission_cost: 'Free' },
+  { category: 'food', price_level: 3 },
+]);
+assert('Returns a label', typeof cs?.label === 'string' && cs.label.includes('for the day'));
+assert('Low ≤ high',       cs.low <= cs.high);
+assert('Free contributes 0 low', cs.low >= 15); // 15 admission + food mins
+assert('No priced stops → null', computeCostSummary([{ category: 'outdoor' }]) === null);
+assert('Empty → null',           computeCostSummary([]) === null);
 
 // ─── Summary ──────────────────────────────────────────────────────────────────
 console.log(`\n${'─'.repeat(50)}`);

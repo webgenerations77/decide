@@ -1,4 +1,5 @@
 import { runSmartEngine } from './smart/index.js';
+import { computeCostSummary } from './itineraryHelpers.js';
 
 const GOOGLE_KEY    = process.env.GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 const NPS_KEY       = process.env.EXPO_PUBLIC_NPS_API_KEY;
@@ -234,7 +235,8 @@ export default async function handler(req, res) {
       isFallback = true;
     }
     const enriched=await enrichWithDrivingTimes(itinerary);
-    return res.json({itinerary:enriched,weather,meta:{date:formattedDate,day_of_week:dayOfWeek,time_window:`${startTime} – ${endTime}`,preferences:{pace,budget,group_type},city:cityStr},discovery:{hadLiveData:smart.hadLiveData,findCount:smart.finds.length,anchorCount:smart.anchors.length,anchors:smart.anchors.map((a)=>({title:a.find?.title,interest:a.find?.interest,why:a.rationale}))},generated_at:new Date().toISOString(),isFallback});
+    const costSummary = computeCostSummary(enriched);
+    return res.json({itinerary:enriched,weather,meta:{date:formattedDate,day_of_week:dayOfWeek,time_window:`${startTime} – ${endTime}`,preferences:{pace,budget,group_type},city:cityStr,cost_summary:costSummary?.label??null},discovery:{hadLiveData:smart.hadLiveData,findCount:smart.finds.length,anchorCount:smart.anchors.length,anchors:smart.anchors.map((a)=>({title:a.find?.title,interest:a.find?.interest,why:a.rationale}))},generated_at:new Date().toISOString(),isFallback});
   } catch(err) {
     console.error('[itinerary] error:',err);
     return res.status(500).json({error:err.message});
