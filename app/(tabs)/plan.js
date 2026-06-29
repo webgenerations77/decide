@@ -21,7 +21,7 @@ import CTAButton from '../../components/brand/CTAButton';
 import SectionLabel from '../../components/brand/SectionLabel';
 import BrandLogo from '../../components/brand/BrandLogo';
 import LoadingAnimation from '../../components/LoadingAnimation';
-import { placeDetails } from '../../services/placesService';
+import { placeDetails as fetchPlaceDetails } from '../../services/placesService';
 import { getApiBase } from '../../services/apiBase';
 
 // ─── Date helpers ─────────────────────────────────────────────────────────────
@@ -224,7 +224,7 @@ function PlaceDetailModal({ visible, stop, onClose }) {
     setDetailLoading(true);
     setPlaceDetails(null);
     const fields = 'name,rating,user_ratings_total,formatted_phone_number,website,opening_hours,price_level';
-    placeDetails(pid, fields)
+    fetchPlaceDetails(pid, fields)
       .then((data) => { setPlaceDetails(data.result ?? null); setDetailLoading(false); })
       .catch(() => setDetailLoading(false));
   }, [visible, stop?.place_id]); // eslint-disable-line react-hooks/exhaustive-deps
