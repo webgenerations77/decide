@@ -1290,11 +1290,6 @@ const styles = StyleSheet.create({
 
   // Skeleton loading
   skeletonSection: { marginTop: 24, gap: 0 },
-  skeletonLabel: {
-    fontSize: 12, color: COLORS.primary, fontFamily: FONTS.monoBold,
-    letterSpacing: 0.8, textTransform: 'uppercase',
-    marginBottom: 20, textAlign: 'center',
-  },
 
   // ── Plan / Itinerary container ────────────────────────────────────────────
   planContainer: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 8 },
@@ -1327,10 +1322,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 12,
   },
   datePillValue:   { fontSize: 14, fontFamily: FONTS.bodyBold, color: COLORS.primary },
-  prefLabel: {
-    fontSize: 12, fontFamily: FONTS.monoBold, color: COLORS.primary,
-    letterSpacing: 1.6, textTransform: 'uppercase', marginTop: 4,
-  },
   pillsRow:        { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   prefPill: {
     paddingHorizontal: 14, paddingVertical: 9,
@@ -1385,17 +1376,6 @@ const styles = StyleSheet.create({
   },
 
   // Generate button
-  loadingRow:      { flexDirection: 'row', alignItems: 'center' },
-  generateBtn: {
-    borderRadius: 18, height: 58,
-    alignItems: 'center', justifyContent: 'center',
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.45, shadowRadius: 18, elevation: 14,
-  },
-  generateBtnDisabled: { opacity: 0.45 },
-  generateBtnText: {
-    color: COLORS.primaryText, fontSize: 17, fontFamily: FONTS.bodyBold,
-  },
   generateSubtext: { textAlign: 'center', fontSize: 12, color: COLORS.textMuted, marginTop: 10 },
   remainingText:   { textAlign: 'center', fontSize: 11, color: COLORS.textMuted, marginTop: 4 },
   retryBtn: {
@@ -1662,10 +1642,6 @@ const styles = StyleSheet.create({
   admissionValue: { fontSize: 13, color: COLORS.textPrimary, fontFamily: FONTS.bodyMedium, flex: 1 },
 
   detailSection:      { marginBottom: 18 },
-  detailSectionLabel: {
-    fontSize: 11, fontFamily: FONTS.monoBold, color: COLORS.primary,
-    letterSpacing: 1.2, marginBottom: 10, textTransform: 'uppercase',
-  },
   detailReasonText:   { fontSize: 15, color: COLORS.textPrimary, lineHeight: 23, fontStyle: 'italic', fontFamily: FONTS.body },
 
   highlightRow: {

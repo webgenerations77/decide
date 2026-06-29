@@ -1,7 +1,7 @@
 import { useRef, useEffect } from 'react';
 import { View, Animated, StyleSheet, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { COLORS } from '../constants/theme';
+import { COLORS, RADII } from '../constants/theme';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -23,7 +23,7 @@ function ShimmerLine({ height = 14, width = '100%', style }) {
   return (
     <View
       style={[
-        { height, borderRadius: height / 2, backgroundColor: COLORS.surface, overflow: 'hidden', width },
+        { height, borderRadius: height / 2, backgroundColor: COLORS.surfaceAlt, overflow: 'hidden', width },
         style,
       ]}
     >
@@ -31,7 +31,7 @@ function ShimmerLine({ height = 14, width = '100%', style }) {
         style={[StyleSheet.absoluteFill, { transform: [{ translateX: shimmerX }] }]}
       >
         <LinearGradient
-          colors={['transparent', COLORS.borderLight + 'CC', 'transparent']}
+          colors={['transparent', COLORS.sky100 + 'CC', 'transparent']}
           start={{ x: 0, y: 0.5 }}
           end={{ x: 1, y: 0.5 }}
           style={StyleSheet.absoluteFill}
@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
   card: {
     flex: 1,
     backgroundColor: COLORS.surface,
-    borderRadius: 20,
+    borderRadius: RADII.md,
     borderWidth: 1,
     borderColor: COLORS.border,
     padding: 16,

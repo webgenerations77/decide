@@ -1,8 +1,8 @@
-import { TouchableOpacity, Text, ActivityIndicator } from 'react-native';
+import { TouchableOpacity, Text, ActivityIndicator, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, RADII, FONTS } from '../../constants/theme';
 
-export default function CTAButton({ title, onPress, variant = 'go', disabled = false, loading = false, style }) {
+export default function CTAButton({ title, onPress, variant = 'go', disabled = false, loading = false, style, leftIcon = null }) {
   const isDisabled = disabled || loading;
   const isSecondary = variant === 'secondary';
   const colors = variant === 'cobalt'
@@ -12,7 +12,9 @@ export default function CTAButton({ title, onPress, variant = 'go', disabled = f
 
   const inner = loading
     ? <ActivityIndicator color={labelColor} size="small" />
-    : <Text style={{ fontFamily: FONTS.displayHeavy, fontSize: 17, color: labelColor, letterSpacing: 0.2 }}>{title}</Text>;
+    : leftIcon
+      ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>{leftIcon}<Text style={{ fontFamily: FONTS.displayHeavy, fontSize: 17, color: labelColor, letterSpacing: 0.2 }}>{title}</Text></View>
+      : <Text style={{ fontFamily: FONTS.displayHeavy, fontSize: 17, color: labelColor, letterSpacing: 0.2 }}>{title}</Text>;
 
   const body = isSecondary ? (
     <TouchableOpacity

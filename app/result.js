@@ -208,7 +208,7 @@ export default function ResultScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.bg },
+  screen: { flex: 1 },
 
   header: {
     flexDirection: 'row',

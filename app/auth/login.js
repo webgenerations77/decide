@@ -9,6 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 import { signInWithGoogleCredential } from '../../services/authService';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
+import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../../constants/theme';
 import BrandLogo from '../../components/brand/BrandLogo';
 import ScreenBackground from '../../components/brand/ScreenBackground';
@@ -138,6 +139,7 @@ export default function LoginScreen() {
                   title="Continue with Google"
                   onPress={handleGoogleSignIn}
                   disabled={loading || !request}
+                  leftIcon={<Ionicons name="logo-google" size={18} color={COLORS.primary} />}
                 />
               </View>
             </Card>

@@ -88,7 +88,6 @@ const styles = StyleSheet.create({
   tabLabel: {
     fontSize: 11,
     marginTop: 0,
-    fontWeight: '600',
     fontFamily: FONTS.bodyMedium,
   },
   iconWrap: {
