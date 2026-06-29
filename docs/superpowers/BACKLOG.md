@@ -33,17 +33,17 @@ were left as gold.
   can't reach AA there, so it → `COLORS.primaryDark` (~7:1), matching its own badge.
 - Verified with `npx expo export --platform web` (clean build). Not yet eyeballed in a running app.
 
-## 2. Engine cost / robustness minors
-- `api/smart/discovery.js` — module cache `Map` has no eviction (unbounded growth in a
-  long-running process). Add a max-size or TTL sweep.
-- `api/smart/index.js` — Sonnet synthesis runs even when there are **0 finds** (and even on a
-  transient scout failure). Cheap optimization: skip synthesis → go straight to
-  `buildFallbackItinerary` when `finds.length === 0` AND Google places are empty. (Deliberate
-  cost-vs-quality call — confirm intent.)
-- `discoveryCacheKey` doesn't dedupe interests (`[...new Set(...)]` one-liner).
+## 2. Engine cost / robustness minors  ✅ DONE (merged to `main`)
+- ✅ `api/smart/discovery.js` — `discoveryCache` now capped at 200 entries (evicts oldest on
+  insert) and drops expired entries on read. Bounded both ways (TTL + size).
+- ✅ `api/smart/index.js` — when `finds.length === 0` AND all Google places arrays are empty,
+  the engine returns empty (skips the Sonnet synthesis call) so the caller builds the local
+  fallback. Confirmed with user: avoids paying for a call that could only hallucinate venues.
+  Synthesis still runs whenever places OR finds exist.
+- ✅ `discoveryCacheKey` now dedupes interests via `Set`.
 
-## 3. Trivia
-- `components/brand/BrandLogo.js` — `Mark` has an unused `needleHi` prop; remove it.
+## 3. Trivia  ✅ DONE (merged to `main`)
+- ✅ `components/brand/BrandLogo.js` — removed the unused `needleHi` prop from `Mark`.
 
 ## 4. Ops / housekeeping heads-ups (not code)
 - **`origin/master`** still exists as a second remote branch alongside `origin/main` (the default).
