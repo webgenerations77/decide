@@ -11,9 +11,14 @@ function getApiBase() {
 // Posts feedback to /api/feedback. Resolves to { success } or { success:false, error }.
 export async function submitFeedback({ page, feedbackType, message, rating, userEmail, userName }) {
   try {
+    const headers = { 'Content-Type': 'application/json' };
+    // Shared secret raises the bar on the open endpoint. EXPO_PUBLIC vars are bundle-extractable,
+    // so this is best-effort, not a true secret. Blank env var → header omitted (gate fails open).
+    const secret = process.env.EXPO_PUBLIC_FEEDBACK_SHARED_SECRET;
+    if (secret) headers['x-feedback-secret'] = secret;
     const res = await fetch(`${getApiBase()}/api/feedback`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({
         page, feedbackType, message,
         rating: rating || null,
