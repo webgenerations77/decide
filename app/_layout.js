@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, AppState } from 'react-native';
 import { Stack, useRouter, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -69,6 +69,7 @@ function RootLayoutInner() {
   const [betaBannerDismissed, setBetaBannerDismissed] = useState(false);
   const [demoMode, setDemoMode] = useState(false);
   const [ready, setReady] = useState(false);
+  const guideCheckedRef = useRef(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -84,6 +85,17 @@ function RootLayoutInner() {
         setReady(true);
       });
   }, [authLoading, user]);
+
+  useEffect(() => {
+    if (!ready || !isBetaTester || guideCheckedRef.current) return;
+    guideCheckedRef.current = true;
+    (async () => {
+      const seen = await AsyncStorage.getItem('@decide/beta_guide_seen').catch(() => null);
+      if (seen === 'true') return;
+      const onboarded = await AsyncStorage.getItem('@decide/onboardingComplete').catch(() => null);
+      if (onboarded === 'true') router.push('/beta-guide');
+    })();
+  }, [ready, isBetaTester]);
 
   useEffect(() => {
     const sub = Notifications.addNotificationResponseReceivedListener(response => {
