@@ -25,7 +25,7 @@ export function validateFeedback(body = {}) {
       page: String(page) || 'unknown',
       feedbackType: String(feedbackType) || 'General Impression',
       message: msg.trim(),
-      rating: rating || null,
+      rating: (() => { const r = Number(rating); return Number.isInteger(r) && r >= 1 && r <= 5 ? r : null; })(),
       userEmail: email,
       userName: String(userName) || (email.split('@')[0] || 'a beta tester'),
       timestamp: String(timestamp) || new Date().toISOString(),
@@ -47,16 +47,19 @@ export function gateFeedbackRequest(secretHeader) {
 // distributed attacker. When the shared secret is set, all clients share one key/bucket.
 const RATE = { max: 5, windowMs: 10 * 60 * 1000 };
 const hits = new Map();
+function save(key, arr) {
+  if (arr.length) hits.set(key, arr); else hits.delete(key);
+}
 
 export function checkFeedbackRate(key = 'anon') {
   const now = Date.now();
   const fresh = (hits.get(key) || []).filter((t) => now - t < RATE.windowMs);
   if (fresh.length >= RATE.max) {
-    hits.set(key, fresh);
+    save(key, fresh);
     return { ok: false, limited: true };
   }
   fresh.push(now);
-  hits.set(key, fresh);
+  save(key, fresh);
   return { ok: true };
 }
 
