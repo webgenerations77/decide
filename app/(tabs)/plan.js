@@ -16,6 +16,10 @@ import { isAtDecisionLimit, incrementDecisionCount, getRemainingDecisions, LIMIT
 import { scheduleItineraryAlerts, cancelItineraryAlerts } from '../../services/notificationService';
 import { COLORS, CATEGORY_COLORS, CATEGORY_EMOJIS, PRICE_LEGEND, FONTS, RADII } from '../../constants/theme';
 import { getLocalKnowledge, getAllergyAlerts } from '../../constants/localKnowledge';
+import ScreenBackground from '../../components/brand/ScreenBackground';
+import Card from '../../components/brand/Card';
+import CTAButton from '../../components/brand/CTAButton';
+import SectionLabel from '../../components/brand/SectionLabel';
 
 const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 
@@ -300,27 +304,27 @@ function PlaceDetailModal({ visible, stop, onClose }) {
 
               {stop.admission_cost && (
                 <View style={styles.admissionRow}>
-                  <Ionicons name="ticket-outline" size={14} color={COLORS.amber} />
+                  <Ionicons name="ticket-outline" size={14} color={COLORS.gold} />
                   <Text style={styles.admissionLabel}>Admission</Text>
                   <Text style={styles.admissionValue}>{stop.admission_cost}</Text>
                 </View>
               )}
 
-              {detailLoading && <ActivityIndicator color={COLORS.amber} style={{ marginVertical: 20 }} />}
+              {detailLoading && <ActivityIndicator color={COLORS.primary} style={{ marginVertical: 20 }} />}
 
               {stop.place_id?.startsWith('nps_')  && <View style={styles.detailSourceBadge}><Text style={styles.detailSourceTxt}>🌲 National Park Service</Text></View>}
               {stop.place_id?.startsWith('ridb_') && <View style={styles.detailSourceBadge}><Text style={styles.detailSourceTxt}>🏕️ Recreation.gov</Text></View>}
 
               {stop.reason ? (
                 <View style={styles.detailSection}>
-                  <Text style={styles.detailSectionLabel}>Cheddar's take</Text>
+                  <SectionLabel tone="cobalt" style={{ marginBottom: 10 }}>Cheddar's take</SectionLabel>
                   <Text style={styles.detailReasonText}>{stop.reason}</Text>
                 </View>
               ) : null}
 
               {stop.highlights?.length > 0 && (
                 <View style={styles.detailSection}>
-                  <Text style={styles.detailSectionLabel}>Highlights</Text>
+                  <SectionLabel tone="cobalt" style={{ marginBottom: 10 }}>Highlights</SectionLabel>
                   {stop.highlights.map((h, i) => {
                     const cfg = highlightConfig[h.type] ?? highlightConfig.feature;
                     return (
@@ -337,7 +341,7 @@ function PlaceDetailModal({ visible, stop, onClose }) {
                 <View style={styles.detailStatsRow}>
                   {stop.distance ? (
                     <TouchableOpacity onPress={() => openMaps(stop)} activeOpacity={0.7} style={styles.distanceLink}>
-                      <Ionicons name="location-outline" size={14} color={COLORS.amber} style={{ marginRight: 4 }} />
+                      <Ionicons name="location-outline" size={14} color={COLORS.primary} style={{ marginRight: 4 }} />
                       <Text style={styles.distanceLinkTxt}>{stop.distance}</Text>
                     </TouchableOpacity>
                   ) : <View />}
@@ -362,7 +366,7 @@ function PlaceDetailModal({ visible, stop, onClose }) {
                       onPress={() => Linking.openURL(`tel:${phone}`)}
                       activeOpacity={0.7}
                     >
-                      <Ionicons name="call-outline" size={16} color={COLORS.amber} style={{ marginRight: 6 }} />
+                      <Ionicons name="call-outline" size={16} color={COLORS.primary} style={{ marginRight: 6 }} />
                       <Text style={styles.detailSecBtnTxt}>Call</Text>
                     </TouchableOpacity>
                   ) : null}
@@ -372,7 +376,7 @@ function PlaceDetailModal({ visible, stop, onClose }) {
                       onPress={() => Linking.openURL(website)}
                       activeOpacity={0.7}
                     >
-                      <Ionicons name="globe-outline" size={16} color={COLORS.amber} style={{ marginRight: 6 }} />
+                      <Ionicons name="globe-outline" size={16} color={COLORS.primary} style={{ marginRight: 6 }} />
                       <Text style={styles.detailSecBtnTxt}>Website</Text>
                     </TouchableOpacity>
                   ) : null}
@@ -462,14 +466,14 @@ function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, 
 
           {stop.distance ? (
             <TouchableOpacity onPress={() => openMaps(stop)} activeOpacity={0.7} style={styles.distancePill}>
-              <Ionicons name="location-outline" size={12} color={COLORS.amber} style={{ marginRight: 3 }} />
+              <Ionicons name="location-outline" size={12} color={COLORS.primary} style={{ marginRight: 3 }} />
               <Text style={styles.distancePillTxt}>{stop.distance}</Text>
             </TouchableOpacity>
           ) : null}
 
           {stop.admission_cost && (
             <View style={styles.admissionBadge}>
-              <Ionicons name="ticket-outline" size={12} color={COLORS.amber} style={{ marginRight: 4 }} />
+              <Ionicons name="ticket-outline" size={12} color={COLORS.gold} style={{ marginRight: 4 }} />
               <Text style={styles.admissionBadgeTxt}>{stop.admission_cost}</Text>
             </View>
           )}
@@ -931,11 +935,7 @@ export default function PlanScreen() {
       >
         {/* ─── LANDING ──────────────────────────────────────────────────────── */}
         {view === 'landing' && (
-          <LinearGradient
-            colors={[COLORS.bg, '#0D2040', '#0A1C38', COLORS.bg]}
-            locations={[0, 0.28, 0.68, 1]}
-            style={styles.landingContainer}
-          >
+          <ScreenBackground variant="paper" style={styles.landingContainer}>
             {/* Logo — springs in */}
             <Animated.View style={[styles.landingHeader, { opacity: logoAnim, transform: [{ scale: logoScale }] }]}>
               {displayName ? (
@@ -956,7 +956,7 @@ export default function PlanScreen() {
             {/* Location pill */}
             <Animated.View style={[styles.locationPillWrap, { opacity: locAnim }]}>
               <View style={styles.locationPill}>
-                <Ionicons name={isManual ? 'pin' : 'location'} size={13} color={COLORS.amber} />
+                <Ionicons name={isManual ? 'pin' : 'location'} size={13} color={COLORS.primary} />
                 <Text style={styles.locationText}>{locationLabel}</Text>
               </View>
             </Animated.View>
@@ -980,7 +980,7 @@ export default function PlanScreen() {
               <Animated.View style={{ opacity: btn2Anim, transform: [{ translateY: btn2Slide }], width: '100%' }}>
                 <TouchableOpacity style={styles.landingBtnTouch} onPress={() => setShowWeekPicker(true)} activeOpacity={0.75}>
                   <View style={[styles.decideBtn, styles.decideBtnSecondary]}>
-                    <Text style={[styles.decideBtnTitle, { color: COLORS.amber }]}>Plan another day</Text>
+                    <Text style={[styles.decideBtnTitle, { color: COLORS.primary }]}>Plan another day</Text>
                     <Text style={[styles.decideBtnSub, { color: COLORS.textMuted }]}>Choose a day this week</Text>
                   </View>
                 </TouchableOpacity>
@@ -988,7 +988,7 @@ export default function PlanScreen() {
             </View>
 
             <Text style={styles.landingSubtext}>Cheddar-curated, based on where you are</Text>
-          </LinearGradient>
+          </ScreenBackground>
         )}
 
         {/* ─── CONFIGURING ──────────────────────────────────────────────────── */}
@@ -1004,8 +1004,8 @@ export default function PlanScreen() {
               </View>
             </View>
 
-            <View style={styles.prefsCard}>
-              <Text style={styles.prefLabel}>Date</Text>
+            <Card style={styles.prefsCard}>
+              <SectionLabel tone="cobalt">Date</SectionLabel>
               <TouchableOpacity
                 style={[styles.datePill, loading && { opacity: 0.5 }]}
                 onPress={() => !loading && setShowDatePicker(true)}
@@ -1016,16 +1016,16 @@ export default function PlanScreen() {
                 <Ionicons name="chevron-down" size={13} color={COLORS.textMuted} />
               </TouchableOpacity>
 
-              <Text style={styles.prefLabel}>Pace</Text>
+              <SectionLabel tone="cobalt">Pace</SectionLabel>
               <PillRow options={PACE_OPTIONS}   selected={pace}      onSelect={setPace}      disabled={loading} />
 
-              <Text style={styles.prefLabel}>Budget</Text>
+              <SectionLabel tone="cobalt">Budget</SectionLabel>
               <PillRow options={BUDGET_OPTIONS} selected={budget}    onSelect={setBudget}    disabled={loading} />
 
-              <Text style={styles.prefLabel}>Group</Text>
+              <SectionLabel tone="cobalt">Group</SectionLabel>
               <PillRow options={GROUP_OPTIONS}  selected={groupType} onSelect={setGroupType} disabled={loading} />
 
-              <Text style={styles.prefLabel}>Time window</Text>
+              <SectionLabel tone="cobalt">Time window</SectionLabel>
               <View style={styles.timePickerRow}>
                 <TimePickerPill label="Start" value={startTime} options={START_TIMES} onChange={setStartTime} disabled={loading} />
                 <Text style={styles.timeArrow}>→</Text>
@@ -1035,7 +1035,7 @@ export default function PlanScreen() {
                 <Text style={styles.timeValidationHint}>Please allow at least 3 hours</Text>
               )}
 
-              <Text style={styles.prefLabel}>Into anything specific this trip?</Text>
+              <SectionLabel tone="cobalt">Into anything specific this trip?</SectionLabel>
               <TextInput
                 style={styles.tripNoteInput}
                 placeholder="e.g. pinball, vinyl, breweries, surf"
@@ -1043,7 +1043,7 @@ export default function PlanScreen() {
                 value={tripNote}
                 onChangeText={setTripNote}
               />
-            </View>
+            </Card>
 
             {error ? (
               <View style={styles.errorBlock}>
@@ -1056,7 +1056,7 @@ export default function PlanScreen() {
 
             {loading && (
               <View style={styles.skeletonSection}>
-                <Text style={styles.skeletonLabel}>Building your day…</Text>
+                <SectionLabel tone="cobalt" style={{ marginBottom: 20, textAlign: 'center' }}>Building your day…</SectionLabel>
                 <SkeletonStopCard delay={0} />
                 <SkeletonStopCard delay={180} />
                 <SkeletonStopCard delay={360} />
@@ -1078,7 +1078,7 @@ export default function PlanScreen() {
             <View style={styles.itineraryContainer}>
               {isFallback && (
                 <View style={styles.fallbackBanner}>
-                  <Ionicons name="cloud-offline-outline" size={14} color={COLORS.warning} style={{ marginRight: 6 }} />
+                  <Ionicons name="cloud-offline-outline" size={14} color={COLORS.gold} style={{ marginRight: 6 }} />
                   <Text style={styles.fallbackBannerTxt}>
                     Offline mode — showing top-rated nearby places.
                   </Text>
@@ -1145,27 +1145,13 @@ export default function PlanScreen() {
       {view === 'configuring' && (
         <View style={styles.stickyNavContainer}>
           <Animated.View style={{ opacity: loading ? pulseAnim : 1 }}>
-            <TouchableOpacity
+            <CTAButton
+              variant="go"
+              title="Build my day →"
               onPress={generate}
-              disabled={loading || !isValidTimeWindow}
-              activeOpacity={0.88}
-            >
-              <LinearGradient
-                colors={[COLORS.primary, COLORS.primaryDark]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={[styles.generateBtn, (loading || !isValidTimeWindow) && styles.generateBtnDisabled]}
-              >
-                {loading ? (
-                  <View style={styles.loadingRow}>
-                    <ActivityIndicator color={COLORS.primaryText} size="small" style={{ marginRight: 10 }} />
-                    <Text style={styles.generateBtnText}>Finding the good stuff…</Text>
-                  </View>
-                ) : (
-                  <Text style={styles.generateBtnText}>Build my day →</Text>
-                )}
-              </LinearGradient>
-            </TouchableOpacity>
+              disabled={!isValidTimeWindow}
+              loading={loading}
+            />
           </Animated.View>
           {!loading && <Text style={styles.generateSubtext}>Cheddar-curated, based on where you are</Text>}
           {!loading && remainingDecisions != null && remainingDecisions !== Infinity && (
@@ -1179,13 +1165,13 @@ export default function PlanScreen() {
         <View style={styles.stickyNavContainer}>
           <TouchableOpacity onPress={handleNavigateFullDay} activeOpacity={0.88}>
             <LinearGradient
-              colors={[COLORS.amber, COLORS.amberDark]}
+              colors={[COLORS.accent, COLORS.gold]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.stickyNavBtn}
             >
-              <Ionicons name="navigate" size={18} color={COLORS.bg} style={{ marginRight: 8 }} />
-              <Text style={[styles.stickyNavTxt, { color: COLORS.bg }]}>Navigate full day</Text>
+              <Ionicons name="navigate" size={18} color={COLORS.primaryText} style={{ marginRight: 8 }} />
+              <Text style={styles.stickyNavTxt}>Navigate full day</Text>
             </LinearGradient>
           </TouchableOpacity>
         </View>
@@ -1270,7 +1256,7 @@ const styles = StyleSheet.create({
   },
   landingHeader: { alignItems: 'center', marginBottom: 8 },
   landingGreeting: {
-    fontSize: 15, color: COLORS.amber, fontWeight: '600',
+    fontSize: 15, color: COLORS.primary, fontFamily: FONTS.bodySemiBold,
     letterSpacing: 0.2, marginBottom: 8,
   },
   landingLogo: { width: 148, height: 148 },
@@ -1298,14 +1284,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.45, shadowRadius: 20, elevation: 18,
   },
   decideBtnSecondary: { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border },
-  decideBtnTitle: { color: COLORS.primaryText, fontSize: 18, fontWeight: '700' },
-  decideBtnSub:   { color: 'rgba(255,248,240,0.5)', fontSize: 12, letterSpacing: 0.2 },
+  decideBtnTitle: { color: COLORS.primaryText, fontSize: 18, fontFamily: FONTS.displayHeavy },
+  decideBtnSub:   { color: COLORS.sky200, fontSize: 12, letterSpacing: 0.2 },
   landingSubtext: { fontSize: 12, color: COLORS.textMuted, letterSpacing: 0.2, textAlign: 'center' },
 
   // Skeleton loading
   skeletonSection: { marginTop: 24, gap: 0 },
   skeletonLabel: {
-    fontSize: 12, color: COLORS.amber, fontWeight: '700',
+    fontSize: 12, color: COLORS.primary, fontFamily: FONTS.monoBold,
     letterSpacing: 0.8, textTransform: 'uppercase',
     marginBottom: 20, textAlign: 'center',
   },
@@ -1316,7 +1302,7 @@ const styles = StyleSheet.create({
   // Header
   header:         { alignItems: 'center', marginBottom: 24 },
   backRow:        { marginBottom: 10 },
-  backText:       { fontSize: 13, color: COLORS.amber, fontWeight: '600' },
+  backText:       { fontSize: 13, color: COLORS.primary, fontFamily: FONTS.bodySemiBold },
   appName: {
     fontSize: 26, color: COLORS.textPrimary,
     fontFamily: FONTS.displayHeavy,
@@ -1340,10 +1326,10 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: COLORS.border,
     paddingHorizontal: 14, paddingVertical: 12,
   },
-  datePillValue:   { fontSize: 14, fontWeight: '700', color: COLORS.amber },
+  datePillValue:   { fontSize: 14, fontFamily: FONTS.bodyBold, color: COLORS.primary },
   prefLabel: {
-    fontSize: 12, fontWeight: '700', color: COLORS.amber,
-    letterSpacing: 0.5, marginTop: 4,
+    fontSize: 12, fontFamily: FONTS.monoBold, color: COLORS.primary,
+    letterSpacing: 1.6, textTransform: 'uppercase', marginTop: 4,
   },
   pillsRow:        { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   prefPill: {
@@ -1352,20 +1338,20 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surfaceAlt, borderColor: COLORS.border,
   },
   prefPillActive:     { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  prefPillText:       { fontSize: 13, fontWeight: '600', color: COLORS.amber },
+  prefPillText:       { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: COLORS.textSecondary },
   prefPillTextActive: { color: COLORS.primaryText },
   timePickerRow:      { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  timeArrow:          { color: COLORS.textMuted, fontSize: 16, fontWeight: '300' },
+  timeArrow:          { color: COLORS.textMuted, fontSize: 16, fontFamily: FONTS.body },
   timePill: {
     flex: 1, backgroundColor: COLORS.surfaceAlt, borderRadius: 12,
     borderWidth: 1, borderColor: COLORS.border,
     paddingHorizontal: 12, paddingVertical: 10, gap: 3,
   },
-  timePillLabel:   { fontSize: 10, fontWeight: '700', color: COLORS.textMuted, letterSpacing: 0.5 },
+  timePillLabel:   { fontSize: 10, fontFamily: FONTS.bodyBold, color: COLORS.textMuted, letterSpacing: 0.5 },
   timePillInner:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  timePillValue:   { fontSize: 14, fontWeight: '700', color: COLORS.amber },
+  timePillValue:   { fontSize: 14, fontFamily: FONTS.bodyBold, color: COLORS.primary },
   timeValidationHint: { fontSize: 11, color: COLORS.error, marginTop: 2 },
-  tripNoteInput: { backgroundColor: COLORS.surface, borderColor: COLORS.border, borderWidth: 1, borderRadius: RADII.md, color: COLORS.textPrimary, paddingHorizontal: 14, paddingVertical: 10, fontSize: 15 },
+  tripNoteInput: { backgroundColor: COLORS.surface, borderColor: COLORS.border, borderWidth: 1, borderRadius: RADII.md, color: COLORS.textPrimary, paddingHorizontal: 14, paddingVertical: 10, fontSize: 15, fontFamily: FONTS.body },
 
   // Time picker modal
   modalOverlay: {
@@ -1378,15 +1364,15 @@ const styles = StyleSheet.create({
     width: 240, overflow: 'hidden',
   },
   modalTitle: {
-    fontSize: 11, fontWeight: '700', color: COLORS.amber, letterSpacing: 1,
+    fontSize: 11, fontFamily: FONTS.monoBold, color: COLORS.primary, letterSpacing: 1,
     textAlign: 'center', paddingVertical: 14,
     borderBottomWidth: 1, borderBottomColor: COLORS.border,
     textTransform: 'capitalize',
   },
   modalOption:           { paddingVertical: 13, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: COLORS.surfaceAlt },
   modalOptionActive:     { backgroundColor: COLORS.surfaceAlt },
-  modalOptionText:       { fontSize: 15, fontWeight: '500', color: COLORS.textMuted, textAlign: 'center' },
-  modalOptionTextActive: { color: COLORS.amber, fontWeight: '700' },
+  modalOptionText:       { fontSize: 15, fontFamily: FONTS.bodyMedium, color: COLORS.textMuted, textAlign: 'center' },
+  modalOptionTextActive: { color: COLORS.primary, fontFamily: FONTS.bodyBold },
 
   // Error block
   errorBlock: { alignItems: 'center', gap: 12, marginTop: 4 },
@@ -1408,7 +1394,7 @@ const styles = StyleSheet.create({
   },
   generateBtnDisabled: { opacity: 0.45 },
   generateBtnText: {
-    color: COLORS.primaryText, fontSize: 17, fontWeight: '700',
+    color: COLORS.primaryText, fontSize: 17, fontFamily: FONTS.bodyBold,
   },
   generateSubtext: { textAlign: 'center', fontSize: 12, color: COLORS.textMuted, marginTop: 10 },
   remainingText:   { textAlign: 'center', fontSize: 11, color: COLORS.textMuted, marginTop: 4 },
@@ -1417,7 +1403,7 @@ const styles = StyleSheet.create({
     borderRadius: 16, paddingHorizontal: 24, height: 44,
     alignItems: 'center', justifyContent: 'center',
   },
-  retryBtnText: { color: COLORS.amber, fontSize: 14, fontWeight: '700' },
+  retryBtnText: { color: COLORS.primary, fontSize: 14, fontFamily: FONTS.bodyBold },
 
   // Itinerary
   fallbackBanner: {
@@ -1437,7 +1423,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.displayHeavy,
   },
   itineraryDate: { fontSize: 13, color: COLORS.textMuted, marginTop: 4 },
-  itineraryCity: { fontSize: 13, color: COLORS.amber, marginTop: 3 },
+  itineraryCity: { fontSize: 13, color: COLORS.primary, marginTop: 3 },
   metaChips:     { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, marginTop: 12 },
   metaChip: {
     paddingHorizontal: 10, paddingVertical: 5,
@@ -1445,7 +1431,7 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: COLORS.border,
   },
   metaChipTime:     { borderColor: COLORS.border, backgroundColor: COLORS.surfaceAlt },
-  metaChipText:     { color: COLORS.amber, fontSize: 11, fontWeight: '600' },
+  metaChipText:     { color: COLORS.textSecondary, fontSize: 11, fontFamily: FONTS.bodySemiBold },
   metaChipTimeText: { color: COLORS.textSecondary },
   liveDataNote:     { color: COLORS.teal, fontSize: 11, fontStyle: 'italic', marginTop: 10, textAlign: 'center' },
 
@@ -1462,12 +1448,12 @@ const styles = StyleSheet.create({
   stopCardSwapping: { opacity: 0.6 },
   stopHeaderRow:    { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   timeChip:         { paddingHorizontal: 9, paddingVertical: 4, borderRadius: 999, borderWidth: 1 },
-  timeText:         { fontSize: 12, fontWeight: '700' },
-  durationText:     { fontSize: 11, color: COLORS.textMuted },
+  timeText:         { fontSize: 12, fontFamily: FONTS.bodyBold },
+  durationText:     { fontSize: 11, color: COLORS.textMuted, fontFamily: FONTS.body },
   catChip:          { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 },
   catEmoji:         { fontSize: 12 },
-  catLabel:         { fontSize: 11, fontWeight: '600' },
-  stopName:         { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary, fontFamily: FONTS.display },
+  catLabel:         { fontSize: 11, fontFamily: FONTS.bodySemiBold },
+  stopName:         { fontSize: 17, color: COLORS.textPrimary, fontFamily: FONTS.display },
   stopAddress:      { fontSize: 12, color: COLORS.textMuted, lineHeight: 17 },
 
   // Distance pill
@@ -1478,34 +1464,34 @@ const styles = StyleSheet.create({
     borderRadius: 999, backgroundColor: COLORS.surfaceAlt,
     borderWidth: 1, borderColor: COLORS.border,
   },
-  distancePillTxt: { fontSize: 12, color: COLORS.amber, fontWeight: '600' },
+  distancePillTxt: { fontSize: 12, color: COLORS.primary, fontFamily: FONTS.bodySemiBold },
 
   // Admission badge
   admissionBadge: {
     flexDirection: 'row', alignItems: 'center',
     alignSelf: 'flex-start',
     paddingHorizontal: 10, paddingVertical: 5,
-    borderRadius: 999, backgroundColor: COLORS.amberFaint,
-    borderWidth: 1, borderColor: COLORS.amber + '44',
+    borderRadius: 999, backgroundColor: COLORS.gold + '22',
+    borderWidth: 1, borderColor: COLORS.gold + '44',
   },
-  admissionBadgeTxt: { fontSize: 12, color: COLORS.amber, fontWeight: '600' },
+  admissionBadgeTxt: { fontSize: 12, color: COLORS.gold, fontFamily: FONTS.bodySemiBold },
 
   // Price tier pill
   pricePill: {
     alignSelf: 'flex-start',
     paddingHorizontal: 10, paddingVertical: 5,
-    borderRadius: 999, backgroundColor: COLORS.amberFaint,
-    borderWidth: 1, borderColor: COLORS.amber + '44',
+    borderRadius: 999, backgroundColor: COLORS.gold + '22',
+    borderWidth: 1, borderColor: COLORS.gold + '44',
   },
-  pricePillTxt: { fontSize: 12, color: COLORS.amber, fontWeight: '700' },
+  pricePillTxt: { fontSize: 12, color: COLORS.gold, fontFamily: FONTS.bodyBold },
 
   // Reason row
   reasonRow: {
     backgroundColor: COLORS.surfaceAlt, borderRadius: 10,
     paddingHorizontal: 12, paddingVertical: 9,
-    borderLeftWidth: 2, borderLeftColor: COLORS.amber + '66',
+    borderLeftWidth: 2, borderLeftColor: COLORS.gold + '66',
   },
-  stopReason: { fontSize: 13, color: COLORS.textSecondary, lineHeight: 18, fontStyle: 'italic' },
+  stopReason: { fontSize: 13, color: COLORS.textSecondary, lineHeight: 18, fontStyle: 'italic', fontFamily: FONTS.body },
 
   // Local knowledge callout
   localKnowledgeBadge: {
@@ -1517,7 +1503,7 @@ const styles = StyleSheet.create({
   lkInfo:    { backgroundColor: COLORS.amber + '10', borderLeftColor: COLORS.amber },
   lkTip:     { backgroundColor: COLORS.primary + '10', borderLeftColor: COLORS.primary },
   lkIcon:    { fontSize: 13, lineHeight: 18 },
-  lkText:    { flex: 1, fontSize: 12, color: COLORS.textSecondary, lineHeight: 17 },
+  lkText:    { flex: 1, fontSize: 12, color: COLORS.textSecondary, lineHeight: 17, fontFamily: FONTS.body },
 
   // Allergy alert
   allergyBadge: {
@@ -1528,10 +1514,10 @@ const styles = StyleSheet.create({
   allergyText: { flex: 1, fontSize: 12, color: COLORS.error, lineHeight: 17 },
 
   cardActionsRow:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
-  exciteBadge:      { backgroundColor: COLORS.amber + '22', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1, borderColor: COLORS.amber + '44' },
-  exciteText:       { color: COLORS.amber, fontSize: 10, fontWeight: '700' },
+  exciteBadge:      { backgroundColor: COLORS.gold + '22', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1, borderColor: COLORS.gold + '44' },
+  exciteText:       { color: COLORS.gold, fontSize: 10, fontFamily: FONTS.bodyBold },
   swapBtn:          { paddingVertical: 4, paddingHorizontal: 6 },
-  swapBtnText:      { color: COLORS.textMuted, fontSize: 12, fontWeight: '500' },
+  swapBtnText:      { color: COLORS.textMuted, fontSize: 12, fontFamily: FONTS.bodyMedium },
   swapLoadingRow:   { flexDirection: 'row', alignItems: 'center' },
   thumbsRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end',
@@ -1549,7 +1535,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
   },
-  resetBtnText: { color: COLORS.textSecondary, fontSize: 14, fontWeight: '600' },
+  resetBtnText: { color: COLORS.textSecondary, fontSize: 14, fontFamily: FONTS.bodySemiBold },
 
   // Sticky footer
   stickyNavContainer: {
@@ -1562,10 +1548,10 @@ const styles = StyleSheet.create({
     borderRadius: 18, height: 58,
     alignItems: 'center', justifyContent: 'center',
     flexDirection: 'row',
-    shadowColor: COLORS.amber, shadowOffset: { width: 0, height: 6 },
+    shadowColor: COLORS.gold, shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35, shadowRadius: 16, elevation: 12,
   },
-  stickyNavTxt: { color: COLORS.bg, fontSize: 17, fontWeight: '700' },
+  stickyNavTxt: { color: COLORS.primaryText, fontSize: 17, fontFamily: FONTS.bodyBold },
 
   // Week / Date picker
   weekPickerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'flex-end' },
@@ -1581,7 +1567,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
   weekPickerTitle: {
-    fontSize: 16, fontWeight: '700', color: COLORS.textPrimary,
+    fontSize: 16, color: COLORS.textPrimary,
     fontFamily: FONTS.display,
   },
   weekPickerClose: {
@@ -1596,9 +1582,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1, borderBottomColor: COLORS.surfaceAlt,
   },
   dayRowLast:    { borderBottomWidth: 0 },
-  dayLabel:      { fontSize: 16, fontWeight: '600', color: COLORS.textPrimary },
-  dayLabelToday: { color: COLORS.amber },
-  daySub:        { fontSize: 13, color: COLORS.textMuted },
+  dayLabel:      { fontSize: 16, fontFamily: FONTS.bodySemiBold, color: COLORS.textPrimary },
+  dayLabelToday: { color: COLORS.primary },
+  daySub:        { fontSize: 13, color: COLORS.textMuted, fontFamily: FONTS.body },
 
   // Feedback modal
   fbOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'flex-end' },
@@ -1614,24 +1600,24 @@ const styles = StyleSheet.create({
     alignSelf: 'center', marginTop: 12, marginBottom: 2,
   },
   fbTitle: {
-    fontSize: 16, fontWeight: '700', color: COLORS.textPrimary,
+    fontSize: 16, color: COLORS.textPrimary,
     fontFamily: FONTS.display,
     textAlign: 'center', paddingVertical: 16,
     borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
-  fbPlace:     { fontSize: 14, fontWeight: '600', color: COLORS.textSecondary, paddingHorizontal: 24, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: COLORS.surfaceAlt },
+  fbPlace:     { fontSize: 14, fontFamily: FONTS.bodySemiBold, color: COLORS.textSecondary, paddingHorizontal: 24, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: COLORS.surfaceAlt },
   fbOption:    { paddingHorizontal: 24, paddingVertical: 17, borderBottomWidth: 1, borderBottomColor: COLORS.surfaceAlt },
-  fbOptionTxt: { fontSize: 15, fontWeight: '500', color: COLORS.textSecondary },
+  fbOptionTxt: { fontSize: 15, fontFamily: FONTS.bodyMedium, color: COLORS.textSecondary },
   fbCancel: {
     marginHorizontal: 20, marginTop: 16,
     borderRadius: 16, height: 52, alignItems: 'center', justifyContent: 'center',
     backgroundColor: COLORS.surfaceAlt, borderWidth: 1, borderColor: COLORS.border,
   },
-  fbCancelTxt: { color: COLORS.textMuted, fontSize: 14, fontWeight: '600' },
+  fbCancelTxt: { color: COLORS.textMuted, fontSize: 14, fontFamily: FONTS.bodySemiBold },
 
   // Tap hint
   tapHint:    { alignItems: 'center', paddingTop: 6, paddingBottom: 2 },
-  tapHintTxt: { fontSize: 11, color: COLORS.textMuted, fontWeight: '500' },
+  tapHintTxt: { fontSize: 11, color: COLORS.textMuted, fontFamily: FONTS.bodyMedium },
 
   // Place detail modal
   detailOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.72)', justifyContent: 'flex-end' },
@@ -1652,7 +1638,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
   detailCatPill:    { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999 },
-  detailCatPillTxt: { fontSize: 11, fontWeight: '700', letterSpacing: 1 },
+  detailCatPillTxt: { fontSize: 11, fontFamily: FONTS.bodyBold, letterSpacing: 1 },
   detailCloseBtn:   { width: 32, height: 32, borderRadius: 16, backgroundColor: COLORS.surfaceAlt, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', justifyContent: 'center' },
   detailScroll:     { paddingHorizontal: 20, paddingTop: 18 },
   detailName:       {
@@ -1663,24 +1649,24 @@ const styles = StyleSheet.create({
   detailAddr:       { fontSize: 13, color: COLORS.textMuted, marginBottom: 14, lineHeight: 18 },
 
   detailInfoRow:  { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 18 },
-  detailInfoTxt:  { fontSize: 13, fontWeight: '600', color: COLORS.amber },
+  detailInfoTxt:  { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: COLORS.gold },
   detailInfoDot:  { fontSize: 13, color: COLORS.textMuted },
 
   admissionRow: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: COLORS.amberFaint, borderRadius: 10,
+    backgroundColor: COLORS.gold + '22', borderRadius: 10,
     paddingHorizontal: 12, paddingVertical: 8, marginBottom: 14,
-    borderWidth: 1, borderColor: COLORS.amber + '33',
+    borderWidth: 1, borderColor: COLORS.gold + '33',
   },
-  admissionLabel: { fontSize: 12, fontWeight: '700', color: COLORS.amber, letterSpacing: 0.5 },
-  admissionValue: { fontSize: 13, color: COLORS.textPrimary, fontWeight: '500', flex: 1 },
+  admissionLabel: { fontSize: 12, fontFamily: FONTS.bodyBold, color: COLORS.primary, letterSpacing: 0.5 },
+  admissionValue: { fontSize: 13, color: COLORS.textPrimary, fontFamily: FONTS.bodyMedium, flex: 1 },
 
   detailSection:      { marginBottom: 18 },
   detailSectionLabel: {
-    fontSize: 11, fontWeight: '700', color: COLORS.amber,
+    fontSize: 11, fontFamily: FONTS.monoBold, color: COLORS.primary,
     letterSpacing: 1.2, marginBottom: 10, textTransform: 'uppercase',
   },
-  detailReasonText:   { fontSize: 15, color: COLORS.textPrimary, lineHeight: 23, fontStyle: 'italic' },
+  detailReasonText:   { fontSize: 15, color: COLORS.textPrimary, lineHeight: 23, fontStyle: 'italic', fontFamily: FONTS.body },
 
   highlightRow: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 10,
@@ -1688,13 +1674,13 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3, marginBottom: 6,
   },
   highlightIcon: { fontSize: 16, lineHeight: 20 },
-  highlightText: { flex: 1, fontSize: 14, color: COLORS.textPrimary, lineHeight: 20 },
+  highlightText: { flex: 1, fontSize: 14, color: COLORS.textPrimary, lineHeight: 20, fontFamily: FONTS.body },
 
   detailStatsRow:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
   distanceLink:    { flexDirection: 'row', alignItems: 'center' },
-  distanceLinkTxt: { fontSize: 13, color: COLORS.amber, fontWeight: '600' },
-  detailExciteBadge: { backgroundColor: COLORS.amber + '22', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: COLORS.amber + '44' },
-  detailExciteTxt:   { color: COLORS.amber, fontSize: 12, fontWeight: '700' },
+  distanceLinkTxt: { fontSize: 13, color: COLORS.primary, fontFamily: FONTS.bodySemiBold },
+  detailExciteBadge: { backgroundColor: COLORS.gold + '22', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: COLORS.gold + '44' },
+  detailExciteTxt:   { color: COLORS.gold, fontSize: 12, fontFamily: FONTS.bodyBold },
 
   detailNavBtn: {
     backgroundColor: COLORS.primary, borderRadius: 16,
@@ -1704,7 +1690,7 @@ const styles = StyleSheet.create({
     shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35, shadowRadius: 12, elevation: 8,
   },
-  detailNavBtnTxt: { color: COLORS.primaryText, fontSize: 16, fontWeight: '700' },
+  detailNavBtnTxt: { color: COLORS.primaryText, fontSize: 16, fontFamily: FONTS.bodyBold },
 
   detailSecondaryBtns: { flexDirection: 'row', gap: 10 },
   detailSecBtn: {
@@ -1712,10 +1698,10 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surfaceAlt, borderWidth: 1, borderColor: COLORS.border,
     alignItems: 'center', justifyContent: 'center',
   },
-  detailSecBtnTxt: { fontSize: 14, fontWeight: '600', color: COLORS.amber },
+  detailSecBtnTxt: { fontSize: 14, fontFamily: FONTS.bodySemiBold, color: COLORS.primary },
 
   detailSourceBadge: { backgroundColor: COLORS.surfaceAlt, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, marginBottom: 14, alignSelf: 'flex-start', borderWidth: 1, borderColor: COLORS.border },
-  detailSourceTxt:   { color: COLORS.textSecondary, fontSize: 12, fontWeight: '600' },
+  detailSourceTxt:   { color: COLORS.textSecondary, fontSize: 12, fontFamily: FONTS.bodySemiBold },
 
   // Price legend modal
   legendCard: {
@@ -1724,12 +1710,12 @@ const styles = StyleSheet.create({
     width: 280, padding: 22,
   },
   legendTitle: {
-    fontSize: 15, fontWeight: '700', color: COLORS.textPrimary,
+    fontSize: 15, color: COLORS.textPrimary,
     fontFamily: FONTS.display,
     textAlign: 'center', marginBottom: 16,
   },
   legendRow:   { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  legendSymbol:{ fontSize: 15, fontWeight: '700', color: COLORS.amber, width: 40 },
-  legendLabel: { fontSize: 14, color: COLORS.textSecondary, flex: 1 },
-  legendSub:   { fontSize: 11, color: COLORS.textMuted, marginTop: 14, lineHeight: 15, textAlign: 'center' },
+  legendSymbol:{ fontSize: 15, fontFamily: FONTS.bodyBold, color: COLORS.gold, width: 40 },
+  legendLabel: { fontSize: 14, color: COLORS.textSecondary, flex: 1, fontFamily: FONTS.body },
+  legendSub:   { fontSize: 11, color: COLORS.textMuted, marginTop: 14, lineHeight: 15, textAlign: 'center', fontFamily: FONTS.body },
 });
