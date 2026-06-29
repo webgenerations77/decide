@@ -85,7 +85,7 @@ export default function LoginScreen() {
           <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
             <Animated.View style={[styles.hero, { opacity: heroAnim, transform: [{ translateY: heroSlide }] }]}>
               <BrandLogo variant="stacked" size={80} />
-              <Text style={styles.heroTag}>Your day, decided by Cheddar.</Text>
+              <Text style={styles.heroTag}>Your day, decided.</Text>
             </Animated.View>
 
             {!!error && (

@@ -419,7 +419,7 @@ export default function SettingsScreen() {
     return (
       <ScreenBackground variant="paper">
         <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} edges={['top']}>
-          <ActivityIndicator color={COLORS.amber} size="large" />
+          <ActivityIndicator color={COLORS.primary} size="large" />
         </SafeAreaView>
       </ScreenBackground>
     );
@@ -450,8 +450,8 @@ export default function SettingsScreen() {
               <Switch
                 value={demoMode}
                 onValueChange={handleDemoToggle}
-                trackColor={{ false: COLORS.border, true: COLORS.amber }}
-                thumbColor={demoMode ? COLORS.amber : COLORS.textMuted}
+                trackColor={{ false: COLORS.border, true: COLORS.primary }}
+                thumbColor={demoMode ? COLORS.primary : COLORS.textMuted}
               />
             </View>
             {demoMode && (
@@ -682,8 +682,8 @@ export default function SettingsScreen() {
               <Switch
                 value={notifications}
                 onValueChange={handleNotif}
-                trackColor={{ false: COLORS.border, true: COLORS.amber }}
-                thumbColor={notifications ? COLORS.amber : COLORS.textMuted}
+                trackColor={{ false: COLORS.border, true: COLORS.primary }}
+                thumbColor={notifications ? COLORS.primary : COLORS.textMuted}
               />
             </View>
             {notifications && (
@@ -877,7 +877,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surfaceAlt, borderWidth: 1, borderColor: COLORS.border,
     alignItems: 'center', justifyContent: 'center',
   },
-  avatarPillActive: { backgroundColor: COLORS.amber, borderColor: COLORS.amber },
+  avatarPillActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
   avatarEmoji:      { fontSize: 22 },
 
   // Location
@@ -887,9 +887,9 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surfaceAlt, borderWidth: 1, borderColor: COLORS.border,
     alignItems: 'center',
   },
-  modePillActive:     { backgroundColor: COLORS.amber, borderColor: COLORS.amber },
+  modePillActive:     { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
   modePillText:       { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: COLORS.goldText },
-  modePillTextActive: { color: COLORS.bg },
+  modePillTextActive: { color: COLORS.primaryText },
   manualBlock:        { marginTop: 14, gap: 10, position: 'relative', zIndex: 10 },
   inputRow:           { flexDirection: 'row', alignItems: 'center', gap: 8 },
   clearBtn:           { width: 36, height: 36, borderRadius: 18, backgroundColor: COLORS.border, alignItems: 'center', justifyContent: 'center' },
@@ -915,9 +915,9 @@ const styles = StyleSheet.create({
     borderRadius: 20, borderWidth: 1,
     backgroundColor: COLORS.surfaceAlt, borderColor: COLORS.border,
   },
-  chipActive:     { backgroundColor: COLORS.amber, borderColor: COLORS.amber },
+  chipActive:     { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
   chipText:       { fontSize: 13, fontFamily: FONTS.bodyMedium, color: COLORS.textMuted },
-  chipTextActive: { color: COLORS.bg, fontFamily: FONTS.bodySemiBold },
+  chipTextActive: { color: COLORS.primaryText, fontFamily: FONTS.bodySemiBold },
 
   // Sensitivity notes
   sensitivityNote: {
@@ -983,12 +983,12 @@ const styles = StyleSheet.create({
   },
   sliderFill: {
     position: 'absolute', top: 0, left: 0, bottom: 0,
-    backgroundColor: COLORS.amber, borderRadius: 2,
+    backgroundColor: COLORS.primary, borderRadius: 2,
   },
   sliderThumb: {
     position: 'absolute', top: -12,
     width: 28, height: 28, borderRadius: 14,
-    backgroundColor: COLORS.amber, borderWidth: 2, borderColor: COLORS.surface,
+    backgroundColor: COLORS.primary, borderWidth: 2, borderColor: COLORS.surface,
   },
   distanceTicks: { flexDirection: 'row', justifyContent: 'space-between' },
   distanceTick:  { fontSize: 10, color: COLORS.textMuted },
@@ -996,7 +996,7 @@ const styles = StyleSheet.create({
   // Demo mode
   demoCard: {
     backgroundColor: COLORS.surfaceAlt, borderRadius: 18,
-    borderWidth: 1.5, borderColor: COLORS.amber + '44',
+    borderWidth: 1.5, borderColor: COLORS.primary + '44',
     padding: 18, marginBottom: 8,
   },
   demoToggleRow:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
@@ -1005,12 +1005,12 @@ const styles = StyleSheet.create({
   demoLabel:      { fontSize: 15, fontFamily: FONTS.bodyBold, color: COLORS.goldText },
   demoDot: {
     width: 8, height: 8, borderRadius: 4,
-    backgroundColor: COLORS.amber,
+    backgroundColor: COLORS.primary,
   },
   demoSub:        { fontSize: 12, color: COLORS.textMuted, lineHeight: 16 },
   demoInfoCard: {
     marginTop: 14, backgroundColor: COLORS.surface, borderRadius: 12,
-    borderWidth: 1, borderColor: COLORS.amber + '33', padding: 12,
+    borderWidth: 1, borderColor: COLORS.primary + '33', padding: 12,
   },
   demoInfoText: { fontSize: 13, color: COLORS.goldText, lineHeight: 18 },
 
@@ -1018,10 +1018,10 @@ const styles = StyleSheet.create({
   toast: {
     position: 'absolute', bottom: 32, left: 20, right: 20,
     backgroundColor: COLORS.surfaceAlt, borderRadius: 14,
-    borderWidth: 1, borderColor: COLORS.amber + '55',
+    borderWidth: 1, borderColor: COLORS.primary + '55',
     paddingVertical: 12, paddingHorizontal: 18,
     alignItems: 'center',
-    shadowColor: COLORS.amber, shadowOffset: { width: 0, height: 0 },
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.3, shadowRadius: 12, elevation: 10,
   },
   toastText: { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: COLORS.goldText },
