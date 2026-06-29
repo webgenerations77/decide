@@ -13,6 +13,7 @@ import { COLORS, FONTS } from '../../constants/theme';
 import BrandLogo from '../../components/brand/BrandLogo';
 import ScreenBackground from '../../components/brand/ScreenBackground';
 import CTAButton from '../../components/brand/CTAButton';
+import Card from '../../components/brand/Card';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -92,52 +93,54 @@ export default function LoginScreen() {
               </View>
             )}
 
-            <View style={styles.form}>
-              <View style={styles.fieldBlock}>
-                <Text style={styles.label}>Email</Text>
-                <TextInput
-                  style={styles.input}
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="you@example.com"
-                  placeholderTextColor={COLORS.textMuted}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoComplete="email"
-                  returnKeyType="next"
+            <Card>
+              <View style={styles.form}>
+                <View style={styles.fieldBlock}>
+                  <Text style={styles.label}>Email</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={email}
+                    onChangeText={setEmail}
+                    placeholder="you@example.com"
+                    placeholderTextColor={COLORS.textMuted}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoComplete="email"
+                    returnKeyType="next"
+                  />
+                </View>
+
+                <View style={styles.fieldBlock}>
+                  <Text style={styles.label}>Password</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={password}
+                    onChangeText={setPassword}
+                    placeholder="Your password"
+                    placeholderTextColor={COLORS.textMuted}
+                    secureTextEntry
+                    autoComplete="password"
+                    returnKeyType="done"
+                    onSubmitEditing={handleEmailSignIn}
+                  />
+                </View>
+
+                <CTAButton
+                  variant="go"
+                  title="Sign in →"
+                  onPress={handleEmailSignIn}
+                  loading={loading}
+                  disabled={loading}
+                />
+
+                <CTAButton
+                  variant="secondary"
+                  title="Continue with Google"
+                  onPress={handleGoogleSignIn}
+                  disabled={loading || !request}
                 />
               </View>
-
-              <View style={styles.fieldBlock}>
-                <Text style={styles.label}>Password</Text>
-                <TextInput
-                  style={styles.input}
-                  value={password}
-                  onChangeText={setPassword}
-                  placeholder="Your password"
-                  placeholderTextColor={COLORS.textMuted}
-                  secureTextEntry
-                  autoComplete="password"
-                  returnKeyType="done"
-                  onSubmitEditing={handleEmailSignIn}
-                />
-              </View>
-
-              <CTAButton
-                variant="go"
-                title="Sign in →"
-                onPress={handleEmailSignIn}
-                loading={loading}
-                disabled={loading}
-              />
-
-              <CTAButton
-                variant="secondary"
-                title="Continue with Google"
-                onPress={handleGoogleSignIn}
-                disabled={loading || !request}
-              />
-            </View>
+            </Card>
 
             <View style={styles.links}>
               <TouchableOpacity onPress={() => router.push('/auth/forgot-password')} activeOpacity={0.7}>

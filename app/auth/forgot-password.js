@@ -9,6 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 import { COLORS, FONTS } from '../../constants/theme';
 import ScreenBackground from '../../components/brand/ScreenBackground';
 import CTAButton from '../../components/brand/CTAButton';
+import Card from '../../components/brand/Card';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -67,28 +68,30 @@ export default function ForgotPasswordScreen() {
                 <Text style={styles.successText}>Reset email sent — check your inbox.</Text>
               </View>
             ) : (
-              <View style={styles.form}>
-                <Text style={styles.label}>Email</Text>
-                <TextInput
-                  style={styles.input}
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="you@example.com"
-                  placeholderTextColor={COLORS.textMuted}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoComplete="email"
-                  returnKeyType="done"
-                  onSubmitEditing={handleReset}
-                />
-                <CTAButton
-                  variant="go"
-                  title="Send reset link"
-                  onPress={handleReset}
-                  loading={loading}
-                  disabled={loading}
-                />
-              </View>
+              <Card>
+                <View style={styles.form}>
+                  <Text style={styles.label}>Email</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={email}
+                    onChangeText={setEmail}
+                    placeholder="you@example.com"
+                    placeholderTextColor={COLORS.textMuted}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoComplete="email"
+                    returnKeyType="done"
+                    onSubmitEditing={handleReset}
+                  />
+                  <CTAButton
+                    variant="go"
+                    title="Send reset link"
+                    onPress={handleReset}
+                    loading={loading}
+                    disabled={loading}
+                  />
+                </View>
+              </Card>
             )}
           </View>
         </KeyboardAvoidingView>

@@ -11,6 +11,7 @@ import { COLORS, FONTS } from '../../constants/theme';
 import BrandLogo from '../../components/brand/BrandLogo';
 import ScreenBackground from '../../components/brand/ScreenBackground';
 import CTAButton from '../../components/brand/CTAButton';
+import Card from '../../components/brand/Card';
 
 export default function SignupScreen() {
   const router = useRouter();
@@ -82,91 +83,93 @@ export default function SignupScreen() {
               </View>
             )}
 
-            <View style={styles.form}>
-              <View style={styles.fieldBlock}>
-                <Text style={styles.label}>What should Cheddar call you? <Text style={styles.optional}>(optional)</Text></Text>
-                <TextInput
-                  style={styles.input}
-                  value={displayName}
-                  onChangeText={setDisplayName}
-                  placeholder="Your name"
-                  placeholderTextColor={COLORS.textMuted}
-                  autoCapitalize="words"
-                  returnKeyType="next"
-                />
-              </View>
-
-              <View style={styles.fieldBlock}>
-                <Text style={styles.label}>Email <Text style={styles.required}>*</Text></Text>
-                <TextInput
-                  style={styles.input}
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="you@example.com"
-                  placeholderTextColor={COLORS.textMuted}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoComplete="email"
-                  returnKeyType="next"
-                />
-              </View>
-
-              <View style={styles.fieldBlock}>
-                <Text style={styles.label}>Password <Text style={styles.required}>*</Text></Text>
-                <TextInput
-                  style={styles.input}
-                  value={password}
-                  onChangeText={setPassword}
-                  placeholder="At least 6 characters"
-                  placeholderTextColor={COLORS.textMuted}
-                  secureTextEntry
-                  autoComplete="new-password"
-                  returnKeyType="next"
-                />
-              </View>
-
-              <View style={styles.fieldBlock}>
-                <Text style={styles.label}>Confirm password <Text style={styles.required}>*</Text></Text>
-                <TextInput
-                  style={styles.input}
-                  value={confirm}
-                  onChangeText={setConfirm}
-                  placeholder="Re-enter your password"
-                  placeholderTextColor={COLORS.textMuted}
-                  secureTextEntry
-                  autoComplete="new-password"
-                  returnKeyType="done"
-                  onSubmitEditing={handleSignUp}
-                />
-              </View>
-
-              <TouchableOpacity
-                style={styles.tosRow}
-                onPress={() => setTosAccepted(!tosAccepted)}
-                activeOpacity={0.7}
-              >
-                <View style={[styles.checkbox, tosAccepted && styles.checkboxActive]}>
-                  {tosAccepted && <Text style={styles.checkmark}>✓</Text>}
+            <Card>
+              <View style={styles.form}>
+                <View style={styles.fieldBlock}>
+                  <Text style={styles.label}>What should Cheddar call you? <Text style={styles.optional}>(optional)</Text></Text>
+                  <TextInput
+                    style={styles.input}
+                    value={displayName}
+                    onChangeText={setDisplayName}
+                    placeholder="Your name"
+                    placeholderTextColor={COLORS.textMuted}
+                    autoCapitalize="words"
+                    returnKeyType="next"
+                  />
                 </View>
-                <Text style={styles.tosText}>
-                  I've read and agree to the{' '}
-                  <Text
-                    style={styles.tosLink}
-                    onPress={(e) => { e.stopPropagation?.(); router.push('/terms'); }}
-                  >
-                    Terms of Service
-                  </Text>
-                </Text>
-              </TouchableOpacity>
 
-              <CTAButton
-                variant="go"
-                title="Create account →"
-                onPress={handleSignUp}
-                disabled={!canSubmit}
-                loading={loading}
-              />
-            </View>
+                <View style={styles.fieldBlock}>
+                  <Text style={styles.label}>Email <Text style={styles.required}>*</Text></Text>
+                  <TextInput
+                    style={styles.input}
+                    value={email}
+                    onChangeText={setEmail}
+                    placeholder="you@example.com"
+                    placeholderTextColor={COLORS.textMuted}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoComplete="email"
+                    returnKeyType="next"
+                  />
+                </View>
+
+                <View style={styles.fieldBlock}>
+                  <Text style={styles.label}>Password <Text style={styles.required}>*</Text></Text>
+                  <TextInput
+                    style={styles.input}
+                    value={password}
+                    onChangeText={setPassword}
+                    placeholder="At least 6 characters"
+                    placeholderTextColor={COLORS.textMuted}
+                    secureTextEntry
+                    autoComplete="new-password"
+                    returnKeyType="next"
+                  />
+                </View>
+
+                <View style={styles.fieldBlock}>
+                  <Text style={styles.label}>Confirm password <Text style={styles.required}>*</Text></Text>
+                  <TextInput
+                    style={styles.input}
+                    value={confirm}
+                    onChangeText={setConfirm}
+                    placeholder="Re-enter your password"
+                    placeholderTextColor={COLORS.textMuted}
+                    secureTextEntry
+                    autoComplete="new-password"
+                    returnKeyType="done"
+                    onSubmitEditing={handleSignUp}
+                  />
+                </View>
+
+                <TouchableOpacity
+                  style={styles.tosRow}
+                  onPress={() => setTosAccepted(!tosAccepted)}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.checkbox, tosAccepted && styles.checkboxActive]}>
+                    {tosAccepted && <Text style={styles.checkmark}>✓</Text>}
+                  </View>
+                  <Text style={styles.tosText}>
+                    I've read and agree to the{' '}
+                    <Text
+                      style={styles.tosLink}
+                      onPress={(e) => { e.stopPropagation?.(); router.push('/terms'); }}
+                    >
+                      Terms of Service
+                    </Text>
+                  </Text>
+                </TouchableOpacity>
+
+                <CTAButton
+                  variant="go"
+                  title="Create account →"
+                  onPress={handleSignUp}
+                  disabled={!canSubmit}
+                  loading={loading}
+                />
+              </View>
+            </Card>
 
             <View style={styles.footer}>
               <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7}>
