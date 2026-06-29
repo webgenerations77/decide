@@ -24,7 +24,7 @@ import {
 } from '@expo-google-fonts/space-mono';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import OfflineBanner from '../components/OfflineBanner';
-import { COLORS } from '../constants/theme';
+import { COLORS, FONTS } from '../constants/theme';
 import ScreenBackground from '../components/brand/ScreenBackground';
 import BrandLogo from '../components/brand/BrandLogo';
 import SectionLabel from '../components/brand/SectionLabel';
@@ -159,6 +159,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   bannerSide: { width: 32, alignItems: 'flex-end', justifyContent: 'center' },
-  bannerText: { flex: 1, fontSize: 12, fontWeight: '700', color: COLORS.bg, textAlign: 'center' },
-  bannerX:    { fontSize: 14, fontWeight: '700', color: COLORS.bg },
+  bannerText: { flex: 1, fontSize: 12, fontFamily: FONTS.bodyBold, color: COLORS.navy, textAlign: 'center' },
+  bannerX:    { fontSize: 14, fontFamily: FONTS.bodyBold, color: COLORS.navy },
 });
