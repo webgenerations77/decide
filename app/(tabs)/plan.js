@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView,
-  Linking, ActivityIndicator, Animated, Modal, Platform, Dimensions, Image,
+  Linking, ActivityIndicator, Animated, Modal, Platform, Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import SkeletonStopCard from '../../components/SkeletonCard';
@@ -20,6 +20,7 @@ import ScreenBackground from '../../components/brand/ScreenBackground';
 import Card from '../../components/brand/Card';
 import CTAButton from '../../components/brand/CTAButton';
 import SectionLabel from '../../components/brand/SectionLabel';
+import BrandLogo from '../../components/brand/BrandLogo';
 
 const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 
@@ -936,33 +937,23 @@ export default function PlanScreen() {
         {/* ─── LANDING ──────────────────────────────────────────────────────── */}
         {view === 'landing' && (
           <ScreenBackground variant="paper" style={styles.landingContainer}>
-            {/* Logo — springs in */}
-            <Animated.View style={[styles.landingHeader, { opacity: logoAnim, transform: [{ scale: logoScale }] }]}>
-              {displayName ? (
-                <Text style={styles.landingGreeting}>Hey, {displayName}</Text>
-              ) : null}
-              <Image
-                source={require('../../assets/logo-small.png')}
-                style={styles.landingLogo}
-                resizeMode="contain"
-              />
+            {/* Hero — mirrors the sign-in screen (stacked logo + tagline) */}
+            <Animated.View style={[styles.landingHero, { opacity: logoAnim, transform: [{ scale: logoScale }] }]}>
+              <BrandLogo variant="stacked" size={80} />
+              <Text style={styles.landingHeroTag}>
+                {displayName ? `Hey ${displayName} — your day, decided.` : 'Your day, decided by Cheddar.'}
+              </Text>
             </Animated.View>
 
-            {/* Tagline — slides up */}
-            <Animated.View style={[styles.landingTaglineWrap, { opacity: tagAnim, transform: [{ translateY: tagSlide }] }]}>
-              <Text style={styles.landingTagline}>Your day, decided.</Text>
-            </Animated.View>
+            {/* Content card — mirrors the sign-in form card */}
+            <Card style={styles.landingCard}>
+              <Animated.View style={[styles.locationPillRow, { opacity: locAnim }]}>
+                <View style={styles.locationPill}>
+                  <Ionicons name={isManual ? 'pin' : 'location'} size={13} color={COLORS.primary} />
+                  <Text style={styles.locationText}>{locationLabel}</Text>
+                </View>
+              </Animated.View>
 
-            {/* Location pill */}
-            <Animated.View style={[styles.locationPillWrap, { opacity: locAnim }]}>
-              <View style={styles.locationPill}>
-                <Ionicons name={isManual ? 'pin' : 'location'} size={13} color={COLORS.primary} />
-                <Text style={styles.locationText}>{locationLabel}</Text>
-              </View>
-            </Animated.View>
-
-            {/* CTA buttons */}
-            <View style={styles.landingButtons}>
               <Animated.View style={{ opacity: btn1Anim, transform: [{ translateY: btn1Slide }], width: '100%' }}>
                 <TouchableOpacity style={styles.landingBtnTouch} onPress={handleToday} activeOpacity={0.88}>
                   <LinearGradient
@@ -985,7 +976,7 @@ export default function PlanScreen() {
                   </View>
                 </TouchableOpacity>
               </Animated.View>
-            </View>
+            </Card>
 
             <Text style={styles.landingSubtext}>Cheddar-curated, based on where you are</Text>
           </ScreenBackground>
@@ -1254,18 +1245,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24, paddingTop: 56, paddingBottom: 48,
     justifyContent: 'center',
   },
-  landingHeader: { alignItems: 'center', marginBottom: 8 },
-  landingGreeting: {
-    fontSize: 15, color: COLORS.primary, fontFamily: FONTS.bodySemiBold,
-    letterSpacing: 0.2, marginBottom: 8,
+  landingHero: { alignItems: 'center', marginBottom: 32 },
+  landingHeroTag: {
+    fontSize: 16, color: COLORS.textSecondary, textAlign: 'center',
+    fontFamily: FONTS.display, letterSpacing: 0.2, marginTop: 12,
   },
-  landingLogo: { width: 148, height: 148 },
-  landingTaglineWrap: { alignItems: 'center', marginBottom: 20, marginTop: 4 },
-  landingTagline: {
-    fontSize: 22, color: COLORS.textPrimary, textAlign: 'center',
-    fontFamily: FONTS.display, letterSpacing: 0.3, lineHeight: 30,
-  },
-  locationPillWrap: { marginBottom: 44 },
+  landingCard: { width: '100%', gap: 14 },
+  locationPillRow: { alignItems: 'center' },
   locationPill: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingHorizontal: 16, paddingVertical: 9,
@@ -1273,7 +1259,6 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: COLORS.border,
   },
   locationText: { fontSize: 13, color: COLORS.textSecondary, letterSpacing: 0.2 },
-  landingButtons: { width: '100%', gap: 14, marginBottom: 28 },
   landingBtnTouch: { width: '100%' },
   decideBtn: {
     width: '100%', paddingVertical: 20, paddingHorizontal: 24,
@@ -1286,7 +1271,7 @@ const styles = StyleSheet.create({
   decideBtnSecondary: { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border },
   decideBtnTitle: { color: COLORS.primaryText, fontSize: 18, fontFamily: FONTS.displayHeavy },
   decideBtnSub:   { color: COLORS.sky200, fontSize: 12, letterSpacing: 0.2 },
-  landingSubtext: { fontSize: 12, color: COLORS.textMuted, letterSpacing: 0.2, textAlign: 'center' },
+  landingSubtext: { fontSize: 12, color: COLORS.textMuted, letterSpacing: 0.2, textAlign: 'center', marginTop: 20 },
 
   // Skeleton loading
   skeletonSection: { marginTop: 24, gap: 0 },

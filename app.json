@@ -5,12 +5,12 @@
     "scheme": "decide",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/logo-small.png",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/logo-small.png",
+      "image": "./assets/icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#1A1826"
+      "backgroundColor": "#102A4C"
     },
     "ios": {
       "supportsTablet": false,
@@ -18,8 +18,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/logo-small.png",
-        "backgroundColor": "#1A1826"
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#102A4C"
       },
       "package": "com.decide.app",
       "permissions": [
@@ -30,7 +30,7 @@
     "web": {
       "bundler": "metro",
       "output": "single",
-      "favicon": "./assets/logo-favicon.png"
+      "favicon": "./assets/icon.png"
     },
     "plugins": [
       "expo-router",
@@ -43,8 +43,8 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/logo-small.png",
-          "color": "#8B5CF6"
+          "icon": "./assets/notification-icon.png",
+          "color": "#2563C9"
         }
       ]
     ],

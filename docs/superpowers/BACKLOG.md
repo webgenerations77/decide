@@ -124,17 +124,21 @@ production-only gaps the review flagged, deliberately out of beta scope:
 - Optional cosmetic: `BetaBanner` still shows on `/beta-guide` (spec said this is fine; the feedback
   button is already hidden there). Hide the banner too if the overlap on the guide header bothers you.
 
-## 6. Full brand-consistency audit  (do AFTER the beta-tester feature merges — user-requested 2026-06-29)
-Sweep every screen for off-brand logos/colors/headers and fix. The brand reskin already landed on
-auth/onboarding/splash (they use `components/brand/BrandLogo`), but gaps remain. Known findings so far:
-- **Home screen wrong logo:** `app/(tabs)/plan.js:944` renders the raster `assets/logo-small.png`
-  (148×148) instead of `BrandLogo`. Swap to `<BrandLogo variant="stacked" size={148} />`, add the
-  import, drop the now-unused `landingLogo` style. (This is the specific "home page has the wrong logo.")
-- **Native/OS assets off-brand (pre-reskin leftovers):** `app.json` splash uses `logo-small.png` on
-  dark `#1A1826` (not brand paper `#FCF9F4`); Android adaptive icon same; notification color `#8B5CF6`
-  purple is off-brand (→ a brand token, e.g. cobalt). Needs regenerated brand image assets (compass mark).
-- **Sweep the tab screens** (spin, history, settings) + result/fallback/paywall for any remaining raw
-  hex, old logos, or non-brand headers. Verify with `npx expo export --platform web`; own branch off `main`.
+## 6. Full brand-consistency audit  ✅ DONE (branch `chore/brand-consistency`, 2026-06-29)
+- **Audit clean:** verified no raw hex, no `fontWeight` conflicts, no raster logos in
+  `app/screens/components`; all 14 screens use brand `ScreenBackground`. The reskin had already
+  covered auth/onboarding/splash — the home page was the main gap.
+- **Home/Plan landing** redesigned to mirror the sign-in screen: stacked `BrandLogo` hero + tagline,
+  content in a `Card` (replaced the raster `logo-small.png`).
+- **Native assets regenerated from the real compass mark:** `assets/icon.png` (white ring + orange
+  north needle on navy `#102A4C`, 1024px) now backs icon/splash/Android adaptive icon/favicon, with
+  navy splash/adaptive backgrounds. `assets/notification-icon.png` (monochrome white-on-transparent)
+  for the notification icon. Notification accent → cobalt `#2563C9`. Old purple `logo-small.png` fully
+  de-referenced from `app.json` (file kept but unused).
+- ⚠ **Native icon/splash only appear after a new native build** (`eas build` / `expo prebuild`) — the
+  web export/existing installed app won't show them.
+- Icons rendered via `sharp` from the BrandLogo SVG (one-off script in scratch; `sharp` installed
+  `--no-save`, not a project dep).
 - **#2 Taste Profile** — onboarding additions + an always-editable "teach Cheddar" interests
   screen + storage, to give the engine's scout richer fuel than the current saved prefs + per-trip note.
 - **#3 Discovery transparency** — surface *what* the engine found and *why* in the itinerary UI.
