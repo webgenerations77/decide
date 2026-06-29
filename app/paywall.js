@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { purchasePro, restorePurchases } from '../services/subscriptionService';
 import { COLORS, FONTS } from '../constants/theme';
+import ScreenBackground from '../components/brand/ScreenBackground';
+import CTAButton from '../components/brand/CTAButton';
+import Card from '../components/brand/Card';
 
 const FREE_FEATURES = [
   { text: '5 decisions per day' },
@@ -61,75 +63,66 @@ export default function PaywallScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <TouchableOpacity
-        style={styles.closeBtn}
-        onPress={() => router.back()}
-        activeOpacity={0.7}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-      >
-        <Ionicons name="close" size={20} color={COLORS.textMuted} />
-      </TouchableOpacity>
-
-      <View style={styles.hero}>
-        <View style={styles.crownBadge}>
-          <Ionicons name="star" size={28} color={COLORS.amber} />
-        </View>
-        <Text style={styles.heroTitle}>Unlock Cheddar Pro</Text>
-        <Text style={styles.heroSub}>Unlimited decisions. Every day.</Text>
-      </View>
-
-      <View style={styles.comparison}>
-        <View style={styles.planCol}>
-          <Text style={styles.planLabel}>Free</Text>
-          {FREE_FEATURES.map((f, i) => (
-            <View key={i} style={styles.featureRow}>
-              <Ionicons name="checkmark" size={16} color={COLORS.textMuted} />
-              <Text style={styles.featureTextFree}>{f.text}</Text>
-            </View>
-          ))}
-        </View>
-        <View style={[styles.planCol, styles.planColPro]}>
-          <Text style={styles.planLabelPro}>Pro</Text>
-          {PRO_FEATURES.map((f, i) => (
-            <View key={i} style={styles.featureRow}>
-              <Ionicons name="checkmark-circle" size={16} color={COLORS.amber} />
-              <Text style={styles.featureTextPro}>{f.text}</Text>
-            </View>
-          ))}
-        </View>
-      </View>
-
-      <TouchableOpacity
-        onPress={handleUpgrade}
-        disabled={loading}
-        activeOpacity={0.88}
-        style={loading && styles.btnDisabled}
-      >
-        <LinearGradient
-          colors={[COLORS.primary, COLORS.primaryDark]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.upgradeBtn}
+    <ScreenBackground variant="paper">
+      <SafeAreaView style={styles.container}>
+        <TouchableOpacity
+          style={styles.closeBtn}
+          onPress={() => router.back()}
+          activeOpacity={0.7}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          {loading ? (
-            <ActivityIndicator color={COLORS.primaryText} />
-          ) : (
-            <Text style={styles.upgradeBtnText}>Upgrade to Pro — $3.99/mo</Text>
-          )}
-        </LinearGradient>
-      </TouchableOpacity>
+          <Ionicons name="close" size={20} color={COLORS.textMuted} />
+        </TouchableOpacity>
 
-      <TouchableOpacity onPress={handleRestore} disabled={loading} activeOpacity={0.7}>
-        <Text style={styles.restoreText}>Restore purchases</Text>
-      </TouchableOpacity>
-    </SafeAreaView>
+        <View style={styles.hero}>
+          <View style={styles.crownBadge}>
+            <Ionicons name="star" size={28} color={COLORS.amber} />
+          </View>
+          <Text style={styles.heroTitle}>Unlock Cheddar Pro</Text>
+          <Text style={styles.heroSub}>Unlimited decisions. Every day.</Text>
+        </View>
+
+        <View style={styles.comparison}>
+          <Card style={styles.planColFree}>
+            <Text style={styles.planLabel}>Free</Text>
+            {FREE_FEATURES.map((f, i) => (
+              <View key={i} style={styles.featureRow}>
+                <Ionicons name="checkmark" size={16} color={COLORS.textMuted} />
+                <Text style={styles.featureTextFree}>{f.text}</Text>
+              </View>
+            ))}
+          </Card>
+          <Card style={styles.planColPro}>
+            <Text style={styles.planLabelPro}>Pro</Text>
+            {PRO_FEATURES.map((f, i) => (
+              <View key={i} style={styles.featureRow}>
+                <Ionicons name="checkmark-circle" size={16} color={COLORS.amber} />
+                <Text style={styles.featureTextPro}>{f.text}</Text>
+              </View>
+            ))}
+          </Card>
+        </View>
+
+        <CTAButton
+          variant="go"
+          title="Upgrade to Pro — $3.99/mo"
+          onPress={handleUpgrade}
+          loading={loading}
+          disabled={loading}
+          style={styles.upgradeBtn}
+        />
+
+        <TouchableOpacity onPress={handleRestore} disabled={loading} activeOpacity={0.7}>
+          <Text style={styles.restoreText}>Restore purchases</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1, backgroundColor: COLORS.bg,
+    flex: 1,
     paddingHorizontal: 24, justifyContent: 'center',
   },
   closeBtn: {
@@ -143,48 +136,42 @@ const styles = StyleSheet.create({
   hero: { alignItems: 'center', marginBottom: 32 },
   crownBadge: {
     width: 64, height: 64, borderRadius: 32,
-    backgroundColor: COLORS.amberFaint,
+    backgroundColor: COLORS.gold + '22',
     borderWidth: 2, borderColor: COLORS.amber + '44',
     alignItems: 'center', justifyContent: 'center',
     marginBottom: 16,
   },
   heroTitle: {
     fontSize: 26, color: COLORS.textPrimary,
-    fontFamily: 'PlayfairDisplay_800ExtraBold',
+    fontFamily: FONTS.displayHeavy,
     textAlign: 'center', marginBottom: 6,
   },
-  heroSub: { fontSize: 15, color: COLORS.textSecondary, textAlign: 'center' },
+  heroSub: { fontSize: 15, color: COLORS.textSecondary, fontFamily: FONTS.body, textAlign: 'center' },
 
   comparison: { flexDirection: 'row', gap: 12, marginBottom: 32 },
-  planCol: {
-    flex: 1, backgroundColor: COLORS.surface, borderRadius: 16,
-    borderWidth: 1, borderColor: COLORS.border, padding: 16, gap: 10,
+  planColFree: {
+    flex: 1, gap: 10,
+    borderWidth: 1, borderColor: COLORS.border,
   },
   planColPro: {
-    borderColor: COLORS.amber + '55',
-    backgroundColor: COLORS.amberFaint,
+    flex: 1, gap: 10,
+    borderWidth: 1, borderColor: COLORS.amber + '55',
+    backgroundColor: COLORS.gold + '22',
   },
   planLabel: {
-    fontSize: 15, fontWeight: '700', color: COLORS.textMuted,
+    fontSize: 15, fontFamily: FONTS.bodyBold, color: COLORS.textMuted,
     textAlign: 'center', marginBottom: 2,
   },
   planLabelPro: {
-    fontSize: 15, fontWeight: '700', color: COLORS.amber,
+    fontSize: 15, fontFamily: FONTS.bodyBold, color: COLORS.amber,
     textAlign: 'center', marginBottom: 2,
   },
   featureRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  featureTextFree: { color: COLORS.textMuted, fontSize: 13, flex: 1 },
-  featureTextPro:  { color: COLORS.textPrimary, fontSize: 13, flex: 1 },
+  featureTextFree: { color: COLORS.textMuted, fontSize: 13, fontFamily: FONTS.body, flex: 1 },
+  featureTextPro:  { color: COLORS.textPrimary, fontSize: 13, fontFamily: FONTS.body, flex: 1 },
 
-  upgradeBtn: {
-    borderRadius: 18, height: 58,
-    alignItems: 'center', justifyContent: 'center', marginBottom: 16,
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.42, shadowRadius: 16, elevation: 10,
-  },
-  upgradeBtnText: { color: COLORS.primaryText, fontSize: 17, fontWeight: '700' },
-  btnDisabled: { opacity: 0.6 },
+  upgradeBtn: { marginBottom: 16 },
   restoreText: {
-    color: COLORS.textMuted, fontSize: 14, textAlign: 'center', fontWeight: '600',
+    color: COLORS.textMuted, fontSize: 14, textAlign: 'center', fontFamily: FONTS.bodySemiBold,
   },
 });
