@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
     fontSize: 28, color: COLORS.textPrimary,
     letterSpacing: 5, textAlign: 'center',
   },
-  sub:           { fontFamily: FONTS.body, fontSize: 13, color: COLORS.gold, marginTop: 6, marginBottom: 8 },
+  sub:           { fontFamily: FONTS.body, fontSize: 13, color: COLORS.goldText, marginTop: 6, marginBottom: 8 },
   remainingText: { fontFamily: FONTS.mono, fontSize: 11, color: COLORS.textMuted, marginBottom: 16 },
 
   // Category pills
@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
   resultName:    { fontFamily: FONTS.displayHeavy, flex: 1, fontSize: 15, color: COLORS.textPrimary },
   resultReason:  { fontFamily: FONTS.body, fontSize: 13, color: COLORS.textSecondary, lineHeight: 18, fontStyle: 'italic' },
   resultAddress: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.textSecondary },
-  resultRating:  { fontFamily: FONTS.body, fontSize: 13, color: COLORS.gold },
+  resultRating:  { fontFamily: FONTS.body, fontSize: 13, color: COLORS.goldText },
 
   resultActions: { flexDirection: 'row', gap: 10, marginTop: 4 },
   againBtn: {

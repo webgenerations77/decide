@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
     alignItems: 'center', justifyContent: 'center',
   },
-  backArrow:    { color: COLORS.amber, fontSize: 20, lineHeight: 22 },
+  backArrow:    { color: COLORS.primary, fontSize: 20, lineHeight: 22 },
   headerCenter: { flex: 1, alignItems: 'center' },
   title:        { fontSize: 28, color: COLORS.textPrimary, fontFamily: FONTS.displayHeavy },
   subtitle:     { fontSize: 13, color: COLORS.textMuted, marginTop: 3, fontFamily: FONTS.body },
@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 7, paddingVertical: 2,
     borderWidth: 1, borderColor: COLORS.amber + '44',
   },
-  exciteText:   { color: COLORS.amber, fontSize: 10, fontFamily: FONTS.bodyBold },
+  exciteText:   { color: COLORS.goldText, fontSize: 10, fontFamily: FONTS.bodyBold },
 
   vicinity:     { fontSize: 13, color: COLORS.textMuted, lineHeight: 18, fontStyle: 'italic', fontFamily: FONTS.body },
   metaRow:      { flexDirection: 'row', alignItems: 'center', gap: 5 },

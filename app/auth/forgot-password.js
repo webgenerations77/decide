@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   content: { flex: 1, justifyContent: 'center', paddingHorizontal: 24 },
   backBtn: { marginBottom: 24 },
-  backTxt: { color: COLORS.amber, fontSize: 14, fontFamily: FONTS.bodySemiBold },
+  backTxt: { color: COLORS.primary, fontSize: 14, fontFamily: FONTS.bodySemiBold },
   hero: { alignItems: 'center', marginBottom: 32 },
   heroTitle: {
     fontSize: 26, color: COLORS.textPrimary,

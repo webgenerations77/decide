@@ -23,7 +23,8 @@ export const COLORS = {
   accent:     '#FF8A3D',   // the decisive action — one per screen
   accentDark: '#E0662A',   // darker orange gradient stop (CTAButton go-gradient end)
   accentSoft: '#FFD9B8',   // orange 200
-  gold:       '#F4B63A',   // retro-travel warmth
+  gold:       '#F4B63A',   // retro-travel warmth — fills/borders/badges only (too light for text on paper)
+  goldText:   '#8C6010',   // deep ochre — AA warm TEXT token: ~5.3:1 on paper, ~4.9:1 on gold-tint badges (gold+'22')
 
   // ── Sky tints ─────────────────────────────────────────────────────────────
   sky100: '#E6EDFB',
