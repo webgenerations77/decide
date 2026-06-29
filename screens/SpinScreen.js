@@ -261,7 +261,7 @@ export default function SpinScreen() {
                 ) : null}
 
                 <View style={styles.resultActions}>
-                  <CTAButton variant="go" title="LET'S GO →" onPress={handleGo} style={{ flex: 1 }} />
+                  <CTAButton variant="cobalt" title="LET'S GO →" onPress={handleGo} style={{ flex: 1 }} />
                   <TouchableOpacity style={styles.againBtn} onPress={spin} activeOpacity={0.7}>
                     <Text style={styles.againBtnTxt}>🎲 Spin Again</Text>
                   </TouchableOpacity>

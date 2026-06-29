@@ -1130,7 +1130,7 @@ export default function PlanScreen() {
         <View style={styles.stickyNavContainer}>
           <Animated.View style={{ opacity: loading ? pulseAnim : 1 }}>
             <CTAButton
-              variant="go"
+              variant="cobalt"
               title="Build my day →"
               onPress={generate}
               disabled={!isValidTimeWindow}
@@ -1149,7 +1149,7 @@ export default function PlanScreen() {
         <View style={styles.stickyNavContainer}>
           <TouchableOpacity onPress={handleNavigateFullDay} activeOpacity={0.88}>
             <LinearGradient
-              colors={[COLORS.accent, COLORS.gold]}
+              colors={[COLORS.primary, COLORS.primaryDark]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.stickyNavBtn}

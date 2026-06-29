@@ -356,7 +356,7 @@ export default function HistoryScreen() {
               <CTAButton
                 title="Go to DECIDE"
                 onPress={() => router.replace('/(tabs)/plan')}
-                variant="go"
+                variant="cobalt"
                 style={{ marginTop: 8, alignSelf: 'stretch' }}
               />
             </View>

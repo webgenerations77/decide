@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView,
-  Switch, ActivityIndicator, Modal, PanResponder, Platform, Animated,
+  Switch, ActivityIndicator, Modal, PanResponder, Platform, Animated, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -435,34 +435,6 @@ export default function SettingsScreen() {
         >
           <Text style={styles.screenTitle}>Settings</Text>
 
-          {/* ── Demo Mode ──────────────────────────────────────────────────── */}
-          <Card style={styles.demoCard}>
-            <View style={styles.demoToggleRow}>
-              <View style={styles.demoLabelGroup}>
-                <View style={styles.demoLabelRow}>
-                  {demoMode && (
-                    <Animated.View style={[styles.demoDot, { opacity: pulseAnim }]} />
-                  )}
-                  <Text style={styles.demoLabel}>Demo Mode</Text>
-                </View>
-                <Text style={styles.demoSub}>Simulates a full day in Berlin, MD — no API calls</Text>
-              </View>
-              <Switch
-                value={demoMode}
-                onValueChange={handleDemoToggle}
-                trackColor={{ false: COLORS.border, true: COLORS.primary }}
-                thumbColor={demoMode ? COLORS.primary : COLORS.textMuted}
-              />
-            </View>
-            {demoMode && (
-              <View style={styles.demoInfoCard}>
-                <Text style={styles.demoInfoText}>
-                  🎭 All results are hardcoded sample data from the Eastern Shore of Maryland. Spin, plan, and explore the full app experience without spending any API credits.
-                </Text>
-              </View>
-            )}
-          </Card>
-
           {/* ── Profile ─────────────────────────────────────────────────────── */}
           <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>PROFILE</SectionLabel>
           <Card style={styles.card}>
@@ -491,12 +463,12 @@ export default function SettingsScreen() {
             </View>
           </Card>
 
-          {/* ── Subscription ─────────────────────────────────────────────── */}
+          {/* ── Subscription ─────────────────────────────────────────── */}
           <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>SUBSCRIPTION</SectionLabel>
           <Card style={styles.card}>
             <View style={styles.appRow}>
               <Text style={styles.appRowLabel}>Plan</Text>
-              <Text style={[styles.appRowValue, proStatus && { color: COLORS.goldText }]}>
+              <Text style={[styles.appRowValue, proStatus && { color: COLORS.primary }]}>
                 {proStatus ? '👑 Decide Pro' : 'Free'}
               </Text>
             </View>
@@ -521,22 +493,6 @@ export default function SettingsScreen() {
               </>
             )}
           </Card>
-
-          {isBetaTester && (
-            <>
-              <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>BETA</SectionLabel>
-              <Card style={styles.card}>
-                <TouchableOpacity
-                  style={styles.appRow}
-                  activeOpacity={0.7}
-                  onPress={() => router.push('/beta-guide')}
-                >
-                  <Text style={styles.appRowLabel}>📖 Beta Tester Guide</Text>
-                  <Text style={styles.appRowChevron}>›</Text>
-                </TouchableOpacity>
-              </Card>
-            </>
-          )}
 
           {/* ── Location ───────────────────────────────────────────────────── */}
           <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>LOCATION</SectionLabel>
@@ -606,20 +562,18 @@ export default function SettingsScreen() {
             )}
           </Card>
 
-          {/* ── Food Preferences ──────────────────────────────────────────── */}
-          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>FOOD PREFERENCES</SectionLabel>
+          {/* ── Preferences ───────────────────────────────────────────────── */}
+          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>PREFERENCES</SectionLabel>
           <Card style={styles.card}>
+            {/* CUISINES & DIETARY */}
             <Text style={styles.fieldLabel}>CUISINES</Text>
             <ChipGrid options={CUISINES} selected={cuisines} onToggle={toggleCuisine} />
 
             <Text style={[styles.fieldLabel, { marginTop: 16 }]}>DIETARY RESTRICTIONS</Text>
             <ChipGrid options={DIETARY} selected={dietary} onToggle={toggleDietary} />
-          </Card>
 
-          {/* ── Sensitivities & Allergies ─────────────────────────────────── */}
-          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>SENSITIVITIES &amp; ALLERGIES</SectionLabel>
-          <Card style={styles.card}>
-            <Text style={styles.sensitivityNote}>
+            {/* SENSITIVITIES & ALLERGIES */}
+            <Text style={[styles.sensitivityNote, { marginTop: 20 }]}>
               Cheddar will flag relevant risks on cards — food allergens at restaurants, environmental triggers at outdoor spots.
             </Text>
             <Text style={styles.fieldLabel}>FOOD ALLERGENS</Text>
@@ -631,12 +585,9 @@ export default function SettingsScreen() {
             <Text style={styles.sensitivityDisclaimer}>
               ⚠ These alerts are informational only. Always verify allergen information directly with the venue.
             </Text>
-          </Card>
 
-          {/* ── Activity Preferences ──────────────────────────────────────── */}
-          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>ACTIVITY PREFERENCES</SectionLabel>
-          <Card style={styles.card}>
-            <Text style={styles.fieldLabel}>ACTIVITY STYLE</Text>
+            {/* ACTIVITY STYLE & DISTANCE */}
+            <Text style={[styles.fieldLabel, { marginTop: 20 }]}>ACTIVITY STYLE</Text>
             <ChipGrid options={ACTIVITY_STYLES} selected={activityStyles} onToggle={toggleActivity} />
 
             <View style={styles.distanceHeader}>
@@ -649,12 +600,9 @@ export default function SettingsScreen() {
               <Text style={styles.distanceTick}>25 mi</Text>
               <Text style={styles.distanceTick}>50 mi</Text>
             </View>
-          </Card>
 
-          {/* ── Default Plan Preferences ───────────────────────────────────── */}
-          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>DEFAULT PLAN PREFERENCES</SectionLabel>
-          <Card style={styles.card}>
-            <Text style={styles.fieldLabel}>PACE</Text>
+            {/* DEFAULT PLAN */}
+            <Text style={[styles.fieldLabel, { marginTop: 14 }]}>PACE</Text>
             <PillRow options={PACE_OPTIONS} selected={pace} onSelect={handlePace} />
 
             <Text style={[styles.fieldLabel, { marginTop: 14 }]}>BUDGET</Text>
@@ -674,8 +622,8 @@ export default function SettingsScreen() {
             )}
           </Card>
 
-          {/* ── App ───────────────────────────────────────────────────────── */}
-          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>APP</SectionLabel>
+          {/* ── Notifications ─────────────────────────────────────────────── */}
+          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>NOTIFICATIONS</SectionLabel>
           <Card style={styles.card}>
             <View style={styles.appRow}>
               <Text style={styles.appRowLabel}>Notifications</Text>
@@ -717,9 +665,30 @@ export default function SettingsScreen() {
                 </View>
               </View>
             )}
+          </Card>
 
+          {/* ── Beta ───────────────────────────────────────────────────────── */}
+          {isBetaTester && (
+            <>
+              <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>BETA</SectionLabel>
+              <Card style={styles.card}>
+                <TouchableOpacity
+                  style={styles.appRow}
+                  activeOpacity={0.7}
+                  onPress={() => router.push('/beta-guide')}
+                >
+                  <Text style={styles.appRowLabel}>📖 Beta Tester Guide</Text>
+                  <Text style={styles.appRowChevron}>›</Text>
+                </TouchableOpacity>
+              </Card>
+            </>
+          )}
+
+          {/* ── About & Data ──────────────────────────────────────────────── */}
+          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>ABOUT & DATA</SectionLabel>
+          <Card style={styles.card}>
             <TouchableOpacity
-              style={[styles.appRow, styles.appRowBorder]}
+              style={styles.appRow}
               activeOpacity={0.7}
               onPress={() => setShowClearHistModal(true)}
             >
@@ -752,6 +721,34 @@ export default function SettingsScreen() {
               <Text style={styles.appRowLabel}>Version</Text>
               <Text style={styles.appRowValue}>Decide v1.0.0</Text>
             </View>
+          </Card>
+
+          {/* ── Demo Mode ──────────────────────────────────────────────────── */}
+          <Card style={styles.card}>
+            <View style={styles.demoToggleRow}>
+              <View style={styles.demoLabelGroup}>
+                <View style={styles.demoLabelRow}>
+                  {demoMode && (
+                    <Animated.View style={[styles.demoDot, { opacity: pulseAnim }]} />
+                  )}
+                  <Text style={styles.demoLabel}>Demo Mode</Text>
+                </View>
+                <Text style={styles.demoSub}>Simulates a full day in Berlin, MD — no API calls</Text>
+              </View>
+              <Switch
+                value={demoMode}
+                onValueChange={handleDemoToggle}
+                trackColor={{ false: COLORS.border, true: COLORS.primary }}
+                thumbColor={demoMode ? COLORS.primary : COLORS.textMuted}
+              />
+            </View>
+            {demoMode && (
+              <View style={styles.demoInfoCard}>
+                <Text style={styles.demoInfoText}>
+                  🎭 All results are hardcoded sample data from the Eastern Shore of Maryland. Spin, plan, and explore the full app experience without spending any API credits.
+                </Text>
+              </View>
+            )}
           </Card>
 
           {/* ── Account ─────────────────────────────────────────── */}
@@ -860,7 +857,7 @@ const styles = StyleSheet.create({
   card:         { borderRadius: 18, borderWidth: 0.5, borderColor: COLORS.border, padding: 18, overflow: 'hidden' },
   locationCard: { borderRadius: 18, borderWidth: 0.5, borderColor: COLORS.border, padding: 18, zIndex: 10 },
 
-  fieldLabel: { fontSize: 11, fontFamily: FONTS.monoBold, color: COLORS.goldText, letterSpacing: 0.8, marginBottom: 10, textTransform: 'uppercase' },
+  fieldLabel: { fontSize: 11, fontFamily: FONTS.monoBold, color: COLORS.textMuted, letterSpacing: 0.8, marginBottom: 10, textTransform: 'uppercase' },
 
   textInput: {
     backgroundColor: COLORS.surfaceAlt, borderRadius: 12,
@@ -888,7 +885,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modePillActive:     { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  modePillText:       { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: COLORS.goldText },
+  modePillText:       { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: COLORS.textSecondary },
   modePillTextActive: { color: COLORS.primaryText },
   manualBlock:        { marginTop: 14, gap: 10, position: 'relative', zIndex: 10 },
   inputRow:           { flexDirection: 'row', alignItems: 'center', gap: 8 },
@@ -896,7 +893,7 @@ const styles = StyleSheet.create({
   clearBtnTxt:        { color: COLORS.textSecondary, fontSize: 14, fontFamily: FONTS.bodyBold },
   geocodeRow:         { flexDirection: 'row', alignItems: 'center', gap: 8 },
   geocodeStatus:      { fontSize: 13, color: COLORS.textMuted },
-  geocodeSuccess:     { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: COLORS.goldText },
+  geocodeSuccess:     { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: COLORS.success },
   geocodeError:       { fontSize: 13, color: COLORS.error },
   suggestionsOverlay: {
     position: 'absolute', top: 54, left: 0, right: 0,
@@ -906,7 +903,7 @@ const styles = StyleSheet.create({
   },
   suggestionRow:      { height: 48, justifyContent: 'center', paddingHorizontal: 14 },
   suggestionRowBorder:{ borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  suggestionText:     { fontSize: 13, fontFamily: FONTS.bodyMedium, color: COLORS.goldText },
+  suggestionText:     { fontSize: 13, fontFamily: FONTS.bodyMedium, color: COLORS.textSecondary },
 
   // Chips
   chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
@@ -937,7 +934,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surfaceAlt, borderColor: COLORS.border,
   },
   prefPillActive:     { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  prefPillText:       { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: COLORS.goldText },
+  prefPillText:       { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: COLORS.textSecondary },
   prefPillTextActive: { color: COLORS.primaryText },
 
   // Time picker
@@ -948,9 +945,9 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: COLORS.border,
     paddingHorizontal: 12, paddingVertical: 9, gap: 3,
   },
-  timePillLabel:      { fontSize: 9, fontFamily: FONTS.monoBold, color: COLORS.goldText, letterSpacing: 1.5 },
+  timePillLabel:      { fontSize: 9, fontFamily: FONTS.monoBold, color: COLORS.textMuted, letterSpacing: 1.5 },
   timePillInner:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  timePillValue:      { fontSize: 14, fontFamily: FONTS.bodyBold, color: COLORS.goldText },
+  timePillValue:      { fontSize: 14, fontFamily: FONTS.bodyBold, color: COLORS.textPrimary },
   timePillChevron:    { fontSize: 11, color: COLORS.textMuted },
   timeValidationHint: { fontSize: 11, color: COLORS.error, marginTop: 8, letterSpacing: 0.2 },
 
@@ -965,18 +962,18 @@ const styles = StyleSheet.create({
     width: 240, overflow: 'hidden',
   },
   modalTitle: {
-    fontSize: 10, fontFamily: FONTS.monoBold, color: COLORS.goldText, letterSpacing: 2,
+    fontSize: 10, fontFamily: FONTS.monoBold, color: COLORS.textMuted, letterSpacing: 2,
     textAlign: 'center', paddingVertical: 14,
     borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
   modalOption:           { paddingVertical: 13, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: COLORS.surfaceAlt },
   modalOptionActive:     { backgroundColor: COLORS.surfaceAlt },
   modalOptionText:       { fontSize: 15, fontFamily: FONTS.bodyMedium, color: COLORS.textMuted, textAlign: 'center' },
-  modalOptionTextActive: { color: COLORS.goldText, fontFamily: FONTS.bodyBold },
+  modalOptionTextActive: { color: COLORS.primary, fontFamily: FONTS.bodyBold },
 
   // Distance slider — 50 mile max
   distanceHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 },
-  distanceValue:  { fontSize: 13, fontFamily: FONTS.bodyBold, color: COLORS.goldText },
+  distanceValue:  { fontSize: 13, fontFamily: FONTS.bodyBold, color: COLORS.textPrimary },
   sliderTrack: {
     height: 4, borderRadius: 2, backgroundColor: COLORS.border,
     marginVertical: 20, position: 'relative',
@@ -994,15 +991,10 @@ const styles = StyleSheet.create({
   distanceTick:  { fontSize: 10, color: COLORS.textMuted },
 
   // Demo mode
-  demoCard: {
-    backgroundColor: COLORS.surfaceAlt, borderRadius: 18,
-    borderWidth: 1.5, borderColor: COLORS.primary + '44',
-    padding: 18, marginBottom: 8,
-  },
   demoToggleRow:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   demoLabelGroup: { flex: 1, marginRight: 12 },
   demoLabelRow:   { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
-  demoLabel:      { fontSize: 15, fontFamily: FONTS.bodyBold, color: COLORS.goldText },
+  demoLabel:      { fontSize: 15, fontFamily: FONTS.bodyBold, color: COLORS.textPrimary },
   demoDot: {
     width: 8, height: 8, borderRadius: 4,
     backgroundColor: COLORS.primary,
@@ -1012,7 +1004,7 @@ const styles = StyleSheet.create({
     marginTop: 14, backgroundColor: COLORS.surface, borderRadius: 12,
     borderWidth: 1, borderColor: COLORS.primary + '33', padding: 12,
   },
-  demoInfoText: { fontSize: 13, color: COLORS.goldText, lineHeight: 18 },
+  demoInfoText: { fontSize: 13, color: COLORS.textSecondary, lineHeight: 18 },
 
   // Toast
   toast: {
@@ -1024,9 +1016,9 @@ const styles = StyleSheet.create({
     shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.3, shadowRadius: 12, elevation: 10,
   },
-  toastText: { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: COLORS.goldText },
+  toastText: { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: COLORS.textSecondary },
 
-  // App section
+  // App section rows
   appRow:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 13 },
   appRowBorder:  { borderTopWidth: 0.5, borderTopColor: COLORS.border },
   appRowLabel:   { fontSize: 15, color: COLORS.textSecondary, fontFamily: FONTS.bodyMedium },

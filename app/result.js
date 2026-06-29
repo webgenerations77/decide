@@ -119,7 +119,7 @@ function PlaceCard({ place, rank }) {
 
         <TouchableOpacity onPress={handleGo} onPressIn={handlePressIn} onPressOut={handlePressOut} activeOpacity={0.88}>
           <LinearGradient
-            colors={[COLORS.accent, COLORS.accent]}
+            colors={[COLORS.primary, COLORS.primaryDark]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.goBtn}
@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
   goBtn: {
     marginTop: 4, borderRadius: 16, height: 52,
     alignItems: 'center', justifyContent: 'center',
-    shadowColor: COLORS.accent, shadowOffset: { width: 0, height: 4 },
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.38, shadowRadius: 12, elevation: 8,
   },
   goBtnText: { color: COLORS.primaryText, fontSize: 15, fontFamily: FONTS.bodyBold },
