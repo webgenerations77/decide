@@ -7,6 +7,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { DEMO_HISTORY } from '../../services/demoData';
 import { COLORS, CATEGORY_COLORS, CATEGORY_EMOJIS, FONTS } from '../../constants/theme';
+import ScreenBackground from '../../components/brand/ScreenBackground';
+import Card from '../../components/brand/Card';
+import CTAButton from '../../components/brand/CTAButton';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const FEEDBACK_REASONS = ['Closed', 'Too crowded', 'Not my style', 'Too far', 'Too expensive', 'Other'];
@@ -60,7 +63,7 @@ function DecisionCard({ item, onFeedbackUp, onFeedbackDown }) {
   const score    = item.excitementScore ?? item.excitement_score ?? 0;
 
   return (
-    <View style={[styles.decisionCard, { borderLeftColor: color }]}>
+    <Card style={[styles.decisionCard, { borderLeftColor: color }]}>
       <View style={styles.decisionTop}>
         <View style={styles.decisionNameRow}>
           <Text style={styles.decisionCatEmoji}>{catEmoji}</Text>
@@ -106,7 +109,7 @@ function DecisionCard({ item, onFeedbackUp, onFeedbackDown }) {
           <Text style={styles.thumbTxt}>👎</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </Card>
   );
 }
 
@@ -121,7 +124,7 @@ function ItineraryEntry({ item, onFeedbackUp, onFeedbackDown }) {
   const stopCount = item.stops?.length ?? 0;
 
   return (
-    <View style={styles.itinCard}>
+    <Card style={styles.itinCard}>
       <View style={styles.itinHeader}>
         <Text style={styles.itinDate}>{dayLine}</Text>
         {item.meta?.city ? <Text style={styles.itinCity}>📍 {item.meta.city}</Text> : null}
@@ -183,7 +186,7 @@ function ItineraryEntry({ item, onFeedbackUp, onFeedbackDown }) {
           <Text style={styles.thumbTxt}>👎</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </Card>
   );
 }
 
@@ -304,97 +307,97 @@ export default function HistoryScreen() {
     : `${itineraries.length} itinerar${itineraries.length !== 1 ? 'ies' : 'y'}`;
 
   return (
-    <SafeAreaView style={styles.screen} edges={['top']}>
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Header */}
-        <Text style={styles.title}>History</Text>
+    <ScreenBackground variant="paper">
+      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Header */}
+          <Text style={styles.title}>History</Text>
 
-        {/* Filter pills */}
-        <View style={styles.filterRow}>
-          {['decisions', 'itineraries'].map((f) => (
-            <TouchableOpacity
-              key={f}
-              style={[styles.filterPill, activeFilter === f && styles.filterPillActive]}
-              onPress={() => setActiveFilter(f)}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.filterPillTxt, activeFilter === f && styles.filterPillTxtActive]}>
-                {f.charAt(0).toUpperCase() + f.slice(1)}
+          {/* Filter pills */}
+          <View style={styles.filterRow}>
+            {['decisions', 'itineraries'].map((f) => (
+              <TouchableOpacity
+                key={f}
+                style={[styles.filterPill, activeFilter === f && styles.filterPillActive]}
+                onPress={() => setActiveFilter(f)}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.filterPillTxt, activeFilter === f && styles.filterPillTxtActive]}>
+                  {f.charAt(0).toUpperCase() + f.slice(1)}
+                </Text>
+              </TouchableOpacity>
+            ))}
+            <Text style={styles.countTxt}>{countLabel}</Text>
+          </View>
+
+          {/* Learning banner */}
+          {showLearningBanner && (
+            <View style={styles.learningBanner}>
+              <Text style={styles.learningTxt}>⚡ Decide is learning your taste — keep rating to improve suggestions</Text>
+            </View>
+          )}
+
+          {/* Empty state */}
+          {isEmpty ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyEmoji}>🎯</Text>
+              <Text style={styles.emptyTitle}>
+                {activeFilter === 'decisions' ? 'No decisions yet' : 'No itineraries yet'}
               </Text>
-            </TouchableOpacity>
+              <Text style={styles.emptySub}>
+                {activeFilter === 'decisions'
+                  ? 'Tap DECIDE on the home screen to get started'
+                  : 'Generate your first day plan from the DECIDE tab'}
+              </Text>
+              <CTAButton
+                title="Go to DECIDE"
+                onPress={() => router.replace('/(tabs)/plan')}
+                variant="go"
+                style={{ marginTop: 8, alignSelf: 'stretch' }}
+              />
+            </View>
+          ) : null}
+
+          {/* Decisions list */}
+          {!isEmpty && activeFilter === 'decisions' && decisions.map((item) => (
+            <DecisionCard
+              key={item.id}
+              item={item}
+              onFeedbackUp={() => handleThumbsUp(item, 'decision')}
+              onFeedbackDown={() => handleThumbsDown(item, 'decision')}
+            />
           ))}
-          <Text style={styles.countTxt}>{countLabel}</Text>
-        </View>
 
-        {/* Learning banner */}
-        {showLearningBanner && (
-          <View style={styles.learningBanner}>
-            <Text style={styles.learningTxt}>⚡ Decide is learning your taste — keep rating to improve suggestions</Text>
-          </View>
-        )}
+          {/* Itineraries list */}
+          {!isEmpty && activeFilter === 'itineraries' && itineraries.map((item) => (
+            <ItineraryEntry
+              key={item.id}
+              item={item}
+              onFeedbackUp={() => handleThumbsUp(item, 'itinerary')}
+              onFeedbackDown={() => handleThumbsDown(item, 'itinerary')}
+            />
+          ))}
 
-        {/* Empty state */}
-        {isEmpty ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyEmoji}>🎯</Text>
-            <Text style={styles.emptyTitle}>
-              {activeFilter === 'decisions' ? 'No decisions yet' : 'No itineraries yet'}
-            </Text>
-            <Text style={styles.emptySub}>
-              {activeFilter === 'decisions'
-                ? 'Tap DECIDE on the home screen to get started'
-                : 'Generate your first day plan from the DECIDE tab'}
-            </Text>
-            <TouchableOpacity
-              style={styles.emptyBtn}
-              onPress={() => router.replace('/(tabs)/plan')}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.emptyBtnTxt}>Go to DECIDE</Text>
-            </TouchableOpacity>
-          </View>
-        ) : null}
+          <View style={{ height: 40 }} />
+        </ScrollView>
 
-        {/* Decisions list */}
-        {!isEmpty && activeFilter === 'decisions' && decisions.map((item) => (
-          <DecisionCard
-            key={item.id}
-            item={item}
-            onFeedbackUp={() => handleThumbsUp(item, 'decision')}
-            onFeedbackDown={() => handleThumbsDown(item, 'decision')}
-          />
-        ))}
-
-        {/* Itineraries list */}
-        {!isEmpty && activeFilter === 'itineraries' && itineraries.map((item) => (
-          <ItineraryEntry
-            key={item.id}
-            item={item}
-            onFeedbackUp={() => handleThumbsUp(item, 'itinerary')}
-            onFeedbackDown={() => handleThumbsDown(item, 'itinerary')}
-          />
-        ))}
-
-        <View style={{ height: 40 }} />
-      </ScrollView>
-
-      <FeedbackModal
-        visible={feedbackModal}
-        itemName={pendingItem?.name ?? pendingItem?.meta?.day_of_week ?? ''}
-        onClose={() => { setFeedbackModal(false); setPendingItem(null); setPendingType(null); }}
-        onSelect={(reason) => applyFeedback('down', reason)}
-      />
-    </SafeAreaView>
+        <FeedbackModal
+          visible={feedbackModal}
+          itemName={pendingItem?.name ?? pendingItem?.meta?.day_of_week ?? ''}
+          onClose={() => { setFeedbackModal(false); setPendingItem(null); setPendingType(null); }}
+          onSelect={(reason) => applyFeedback('down', reason)}
+        />
+      </SafeAreaView>
+    </ScreenBackground>
   );
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  screen:        { flex: 1, backgroundColor: COLORS.bg },
   scroll:        { flex: 1 },
   scrollContent: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 24 },
 
@@ -413,7 +416,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
   },
   filterPillActive:    { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  filterPillTxt:       { fontSize: 13, fontWeight: '600', color: COLORS.amber },
+  filterPillTxt:       { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: COLORS.amber },
   filterPillTxtActive: { color: COLORS.primaryText },
   countTxt:            { fontSize: 12, color: COLORS.textMuted, marginLeft: 4 },
 
@@ -427,20 +430,20 @@ const styles = StyleSheet.create({
 
   // Decision card
   decisionCard: {
-    backgroundColor: COLORS.surface, borderRadius: 16,
+    borderRadius: 16,
     borderWidth: 0.5, borderColor: COLORS.border, borderLeftWidth: 3,
-    marginBottom: 12, overflow: 'hidden',
+    marginBottom: 12, overflow: 'hidden', padding: 0,
   },
   decisionTop:      { padding: 14, gap: 5 },
   decisionNameRow:  { flexDirection: 'row', alignItems: 'center', gap: 8 },
   decisionCatEmoji: { fontSize: 16 },
-  decisionName:     { flex: 1, fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
+  decisionName:     { flex: 1, fontSize: 15, fontFamily: FONTS.bodyBold, color: COLORS.textPrimary },
   exciteBadge: {
     backgroundColor: COLORS.primary + '33', borderRadius: 10,
     paddingHorizontal: 7, paddingVertical: 2,
     borderWidth: 1, borderColor: COLORS.primary + '55',
   },
-  exciteText: { color: COLORS.amber, fontSize: 10, fontWeight: '700' },
+  exciteText: { color: COLORS.amber, fontSize: 10, fontFamily: FONTS.bodyBold },
 
   decisionReason:  { fontSize: 13, color: COLORS.textSecondary, fontStyle: 'italic', lineHeight: 17 },
   decisionMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 2 },
@@ -452,7 +455,7 @@ const styles = StyleSheet.create({
     borderRadius: 8, borderWidth: 1, borderColor: COLORS.error + '44',
     paddingHorizontal: 8, paddingVertical: 3, marginTop: 2,
   },
-  feedbackTagTxt: { fontSize: 11, color: COLORS.error, fontWeight: '600' },
+  feedbackTagTxt: { fontSize: 11, fontFamily: FONTS.bodySemiBold, color: COLORS.error },
 
   // Thumbs row (shared) — right-aligned
   thumbsRow: {
@@ -467,12 +470,12 @@ const styles = StyleSheet.create({
 
   // Itinerary card
   itinCard: {
-    backgroundColor: COLORS.surface, borderRadius: 16,
+    borderRadius: 16,
     borderWidth: 0.5, borderColor: COLORS.border,
     marginBottom: 12, padding: 14, gap: 6, overflow: 'hidden',
   },
   itinHeader:  { gap: 2 },
-  itinDate:    { fontSize: 17, fontWeight: '800', color: COLORS.textPrimary },
+  itinDate:    { fontSize: 17, fontFamily: FONTS.displayHeavy, color: COLORS.textPrimary },
   itinCity:    { fontSize: 11, color: COLORS.amber },
   itinMetaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   prefPill: {
@@ -480,7 +483,7 @@ const styles = StyleSheet.create({
     borderRadius: 999, backgroundColor: COLORS.surfaceAlt,
     borderWidth: 1, borderColor: COLORS.border,
   },
-  prefPillTxt:  { fontSize: 11, color: COLORS.amber, fontWeight: '600' },
+  prefPillTxt:  { fontSize: 11, fontFamily: FONTS.bodySemiBold, color: COLORS.amber },
   itinStatsRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
   itinStats:    { fontSize: 11, color: COLORS.textSecondary },
   chipsScroll:  { paddingVertical: 4, gap: 6, flexDirection: 'row' },
@@ -497,16 +500,8 @@ const styles = StyleSheet.create({
     gap: 12, paddingTop: 80, paddingHorizontal: 32,
   },
   emptyEmoji: { fontSize: 52 },
-  emptyTitle: { fontSize: 20, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'center' },
+  emptyTitle: { fontSize: 20, fontFamily: FONTS.bodyBold, color: COLORS.textPrimary, textAlign: 'center' },
   emptySub:   { fontSize: 15, color: COLORS.textMuted, textAlign: 'center', lineHeight: 20 },
-  emptyBtn: {
-    marginTop: 8, backgroundColor: COLORS.primary, borderRadius: 16,
-    height: 56, paddingHorizontal: 32,
-    alignItems: 'center', justifyContent: 'center',
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5, shadowRadius: 12, elevation: 12,
-  },
-  emptyBtnTxt: { color: COLORS.primaryText, fontSize: 15, fontWeight: '700' },
 
   // Feedback modal
   fbOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'flex-end' },
@@ -517,22 +512,22 @@ const styles = StyleSheet.create({
     paddingBottom: 34, overflow: 'hidden',
   },
   fbTitle: {
-    fontSize: 16, fontWeight: '700', color: COLORS.textPrimary,
+    fontSize: 16, color: COLORS.textPrimary,
     fontFamily: FONTS.display,
     textAlign: 'center', paddingVertical: 18,
     borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
   fbPlace: {
-    fontSize: 14, fontWeight: '600', color: COLORS.textPrimary,
+    fontSize: 14, fontFamily: FONTS.bodySemiBold, color: COLORS.textPrimary,
     paddingHorizontal: 24, paddingVertical: 10,
     borderBottomWidth: 1, borderBottomColor: COLORS.surfaceAlt,
   },
   fbOption:    { paddingHorizontal: 24, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: COLORS.surfaceAlt },
-  fbOptionTxt: { fontSize: 15, fontWeight: '500', color: COLORS.textSecondary },
+  fbOptionTxt: { fontSize: 15, fontFamily: FONTS.bodyMedium, color: COLORS.textSecondary },
   fbCancel: {
     marginHorizontal: 20, marginTop: 14, borderRadius: 16,
     height: 56, alignItems: 'center', justifyContent: 'center',
     backgroundColor: COLORS.surfaceAlt, borderWidth: 1, borderColor: COLORS.border,
   },
-  fbCancelTxt: { color: COLORS.textMuted, fontSize: 14, fontWeight: '600' },
+  fbCancelTxt: { color: COLORS.textMuted, fontSize: 14, fontFamily: FONTS.bodySemiBold },
 });
