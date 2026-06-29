@@ -435,34 +435,6 @@ export default function SettingsScreen() {
         >
           <Text style={styles.screenTitle}>Settings</Text>
 
-          {/* ── Demo Mode ──────────────────────────────────────────────────── */}
-          <Card style={styles.demoCard}>
-            <View style={styles.demoToggleRow}>
-              <View style={styles.demoLabelGroup}>
-                <View style={styles.demoLabelRow}>
-                  {demoMode && (
-                    <Animated.View style={[styles.demoDot, { opacity: pulseAnim }]} />
-                  )}
-                  <Text style={styles.demoLabel}>Demo Mode</Text>
-                </View>
-                <Text style={styles.demoSub}>Simulates a full day in Berlin, MD — no API calls</Text>
-              </View>
-              <Switch
-                value={demoMode}
-                onValueChange={handleDemoToggle}
-                trackColor={{ false: COLORS.border, true: COLORS.primary }}
-                thumbColor={demoMode ? COLORS.primary : COLORS.textMuted}
-              />
-            </View>
-            {demoMode && (
-              <View style={styles.demoInfoCard}>
-                <Text style={styles.demoInfoText}>
-                  🎭 All results are hardcoded sample data from the Eastern Shore of Maryland. Spin, plan, and explore the full app experience without spending any API credits.
-                </Text>
-              </View>
-            )}
-          </Card>
-
           {/* ── Profile ─────────────────────────────────────────────────────── */}
           <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>PROFILE</SectionLabel>
           <Card style={styles.card}>
@@ -491,7 +463,7 @@ export default function SettingsScreen() {
             </View>
           </Card>
 
-          {/* ── Subscription ─────────────────────────────────────────────── */}
+          {/* ── Subscription ─────────────────────────────────────────── */}
           <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>SUBSCRIPTION</SectionLabel>
           <Card style={styles.card}>
             <View style={styles.appRow}>
@@ -521,22 +493,6 @@ export default function SettingsScreen() {
               </>
             )}
           </Card>
-
-          {isBetaTester && (
-            <>
-              <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>BETA</SectionLabel>
-              <Card style={styles.card}>
-                <TouchableOpacity
-                  style={styles.appRow}
-                  activeOpacity={0.7}
-                  onPress={() => router.push('/beta-guide')}
-                >
-                  <Text style={styles.appRowLabel}>📖 Beta Tester Guide</Text>
-                  <Text style={styles.appRowChevron}>›</Text>
-                </TouchableOpacity>
-              </Card>
-            </>
-          )}
 
           {/* ── Location ───────────────────────────────────────────────────── */}
           <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>LOCATION</SectionLabel>
@@ -606,20 +562,18 @@ export default function SettingsScreen() {
             )}
           </Card>
 
-          {/* ── Food Preferences ──────────────────────────────────────────── */}
-          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>FOOD PREFERENCES</SectionLabel>
+          {/* ── Preferences ───────────────────────────────────────────────── */}
+          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>PREFERENCES</SectionLabel>
           <Card style={styles.card}>
+            {/* CUISINES & DIETARY */}
             <Text style={styles.fieldLabel}>CUISINES</Text>
             <ChipGrid options={CUISINES} selected={cuisines} onToggle={toggleCuisine} />
 
             <Text style={[styles.fieldLabel, { marginTop: 16 }]}>DIETARY RESTRICTIONS</Text>
             <ChipGrid options={DIETARY} selected={dietary} onToggle={toggleDietary} />
-          </Card>
 
-          {/* ── Sensitivities & Allergies ─────────────────────────────────── */}
-          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>SENSITIVITIES &amp; ALLERGIES</SectionLabel>
-          <Card style={styles.card}>
-            <Text style={styles.sensitivityNote}>
+            {/* SENSITIVITIES & ALLERGIES */}
+            <Text style={[styles.sensitivityNote, { marginTop: 20 }]}>
               Cheddar will flag relevant risks on cards — food allergens at restaurants, environmental triggers at outdoor spots.
             </Text>
             <Text style={styles.fieldLabel}>FOOD ALLERGENS</Text>
@@ -631,12 +585,9 @@ export default function SettingsScreen() {
             <Text style={styles.sensitivityDisclaimer}>
               ⚠ These alerts are informational only. Always verify allergen information directly with the venue.
             </Text>
-          </Card>
 
-          {/* ── Activity Preferences ──────────────────────────────────────── */}
-          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>ACTIVITY PREFERENCES</SectionLabel>
-          <Card style={styles.card}>
-            <Text style={styles.fieldLabel}>ACTIVITY STYLE</Text>
+            {/* ACTIVITY STYLE & DISTANCE */}
+            <Text style={[styles.fieldLabel, { marginTop: 20 }]}>ACTIVITY STYLE</Text>
             <ChipGrid options={ACTIVITY_STYLES} selected={activityStyles} onToggle={toggleActivity} />
 
             <View style={styles.distanceHeader}>
@@ -649,12 +600,9 @@ export default function SettingsScreen() {
               <Text style={styles.distanceTick}>25 mi</Text>
               <Text style={styles.distanceTick}>50 mi</Text>
             </View>
-          </Card>
 
-          {/* ── Default Plan Preferences ───────────────────────────────────── */}
-          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>DEFAULT PLAN PREFERENCES</SectionLabel>
-          <Card style={styles.card}>
-            <Text style={styles.fieldLabel}>PACE</Text>
+            {/* DEFAULT PLAN */}
+            <Text style={[styles.fieldLabel, { marginTop: 14 }]}>PACE</Text>
             <PillRow options={PACE_OPTIONS} selected={pace} onSelect={handlePace} />
 
             <Text style={[styles.fieldLabel, { marginTop: 14 }]}>BUDGET</Text>
@@ -674,8 +622,8 @@ export default function SettingsScreen() {
             )}
           </Card>
 
-          {/* ── App ───────────────────────────────────────────────────────── */}
-          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>APP</SectionLabel>
+          {/* ── Notifications ─────────────────────────────────────────────── */}
+          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>NOTIFICATIONS</SectionLabel>
           <Card style={styles.card}>
             <View style={styles.appRow}>
               <Text style={styles.appRowLabel}>Notifications</Text>
@@ -717,9 +665,30 @@ export default function SettingsScreen() {
                 </View>
               </View>
             )}
+          </Card>
 
+          {/* ── Beta ───────────────────────────────────────────────────────── */}
+          {isBetaTester && (
+            <>
+              <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>BETA</SectionLabel>
+              <Card style={styles.card}>
+                <TouchableOpacity
+                  style={styles.appRow}
+                  activeOpacity={0.7}
+                  onPress={() => router.push('/beta-guide')}
+                >
+                  <Text style={styles.appRowLabel}>📖 Beta Tester Guide</Text>
+                  <Text style={styles.appRowChevron}>›</Text>
+                </TouchableOpacity>
+              </Card>
+            </>
+          )}
+
+          {/* ── About & Data ──────────────────────────────────────────────── */}
+          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>ABOUT & DATA</SectionLabel>
+          <Card style={styles.card}>
             <TouchableOpacity
-              style={[styles.appRow, styles.appRowBorder]}
+              style={styles.appRow}
               activeOpacity={0.7}
               onPress={() => setShowClearHistModal(true)}
             >
@@ -752,6 +721,34 @@ export default function SettingsScreen() {
               <Text style={styles.appRowLabel}>Version</Text>
               <Text style={styles.appRowValue}>Decide v1.0.0</Text>
             </View>
+          </Card>
+
+          {/* ── Demo Mode ──────────────────────────────────────────────────── */}
+          <Card style={styles.card}>
+            <View style={styles.demoToggleRow}>
+              <View style={styles.demoLabelGroup}>
+                <View style={styles.demoLabelRow}>
+                  {demoMode && (
+                    <Animated.View style={[styles.demoDot, { opacity: pulseAnim }]} />
+                  )}
+                  <Text style={styles.demoLabel}>Demo Mode</Text>
+                </View>
+                <Text style={styles.demoSub}>Simulates a full day in Berlin, MD — no API calls</Text>
+              </View>
+              <Switch
+                value={demoMode}
+                onValueChange={handleDemoToggle}
+                trackColor={{ false: COLORS.border, true: COLORS.primary }}
+                thumbColor={demoMode ? COLORS.primary : COLORS.textMuted}
+              />
+            </View>
+            {demoMode && (
+              <View style={styles.demoInfoCard}>
+                <Text style={styles.demoInfoText}>
+                  🎭 All results are hardcoded sample data from the Eastern Shore of Maryland. Spin, plan, and explore the full app experience without spending any API credits.
+                </Text>
+              </View>
+            )}
           </Card>
 
           {/* ── Account ─────────────────────────────────────────── */}
@@ -994,11 +991,6 @@ const styles = StyleSheet.create({
   distanceTick:  { fontSize: 10, color: COLORS.textMuted },
 
   // Demo mode
-  demoCard: {
-    backgroundColor: COLORS.surfaceAlt, borderRadius: 18,
-    borderWidth: 1.5, borderColor: COLORS.primary + '44',
-    padding: 18, marginBottom: 8,
-  },
   demoToggleRow:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   demoLabelGroup: { flex: 1, marginRight: 12 },
   demoLabelRow:   { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
@@ -1026,7 +1018,7 @@ const styles = StyleSheet.create({
   },
   toastText: { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: COLORS.textSecondary },
 
-  // App section
+  // App section rows
   appRow:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 13 },
   appRowBorder:  { borderTopWidth: 0.5, borderTopColor: COLORS.border },
   appRowLabel:   { fontSize: 15, color: COLORS.textSecondary, fontFamily: FONTS.bodyMedium },
