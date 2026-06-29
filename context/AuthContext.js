@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { onAuthChange, signUp, signIn, signOut, resetPassword } from '../services/authService';
+import { getRole, isBetaTester } from '../utils/betaTester';
 
 const AuthContext = createContext(null);
 
@@ -15,7 +16,16 @@ export function AuthProvider({ children }) {
     return unsubscribe;
   }, []);
 
-  const value = { user, loading, signUp, signIn, signOut, resetPassword };
+  const value = {
+    user,
+    loading,
+    signUp,
+    signIn,
+    signOut,
+    resetPassword,
+    role: getRole(user),
+    isBetaTester: isBetaTester(user),
+  };
 
   return (
     <AuthContext.Provider value={value}>

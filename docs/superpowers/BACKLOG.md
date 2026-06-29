@@ -113,7 +113,28 @@ before implementing.
 
 ---
 
-## Not-yet-started sibling sub-projects (from the original decomposition)
+## 5b. Beta feedback — production hardening  (before exposing `/api/feedback` beyond beta)
+The beta-tester feature is built (branch `feat/beta-tester-feedback`, final review clean). Two
+production-only gaps the review flagged, deliberately out of beta scope:
+- `/api/feedback` has **no auth/rate-limiting** — anyone can POST and trigger an email, and
+  `userEmail`/`userName` are client-supplied (spoofable). Fine for a single-tester beta; add a
+  shared-secret header or rate-limit before public exposure.
+- Resend sender is the **sandbox `onboarding@resend.dev`** (only delivers to the account owner).
+  Switch to a verified-domain sender (`feedback@<domain>`) to email anyone.
+- Optional cosmetic: `BetaBanner` still shows on `/beta-guide` (spec said this is fine; the feedback
+  button is already hidden there). Hide the banner too if the overlap on the guide header bothers you.
+
+## 6. Full brand-consistency audit  (do AFTER the beta-tester feature merges — user-requested 2026-06-29)
+Sweep every screen for off-brand logos/colors/headers and fix. The brand reskin already landed on
+auth/onboarding/splash (they use `components/brand/BrandLogo`), but gaps remain. Known findings so far:
+- **Home screen wrong logo:** `app/(tabs)/plan.js:944` renders the raster `assets/logo-small.png`
+  (148×148) instead of `BrandLogo`. Swap to `<BrandLogo variant="stacked" size={148} />`, add the
+  import, drop the now-unused `landingLogo` style. (This is the specific "home page has the wrong logo.")
+- **Native/OS assets off-brand (pre-reskin leftovers):** `app.json` splash uses `logo-small.png` on
+  dark `#1A1826` (not brand paper `#FCF9F4`); Android adaptive icon same; notification color `#8B5CF6`
+  purple is off-brand (→ a brand token, e.g. cobalt). Needs regenerated brand image assets (compass mark).
+- **Sweep the tab screens** (spin, history, settings) + result/fallback/paywall for any remaining raw
+  hex, old logos, or non-brand headers. Verify with `npx expo export --platform web`; own branch off `main`.
 - **#2 Taste Profile** — onboarding additions + an always-editable "teach Cheddar" interests
   screen + storage, to give the engine's scout richer fuel than the current saved prefs + per-trip note.
 - **#3 Discovery transparency** — surface *what* the engine found and *why* in the itinerary UI.

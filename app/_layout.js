@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, AppState } from 'react-native';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useRouter, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -24,6 +24,9 @@ import {
 } from '@expo-google-fonts/space-mono';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import OfflineBanner from '../components/OfflineBanner';
+import BetaBanner from '../components/BetaBanner';
+import BetaFeedback from '../components/BetaFeedback';
+import { isPublicRoute } from '../utils/betaRoutes';
 import { COLORS, FONTS } from '../constants/theme';
 import ScreenBackground from '../components/brand/ScreenBackground';
 import BrandLogo from '../components/brand/BrandLogo';
@@ -61,9 +64,12 @@ function SplashScreen() {
 
 function RootLayoutInner() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, isBetaTester } = useAuth();
+  const pathname = usePathname();
+  const [betaBannerDismissed, setBetaBannerDismissed] = useState(false);
   const [demoMode, setDemoMode] = useState(false);
   const [ready, setReady] = useState(false);
+  const guideCheckedRef = useRef(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -79,6 +85,17 @@ function RootLayoutInner() {
         setReady(true);
       });
   }, [authLoading, user]);
+
+  useEffect(() => {
+    if (!ready || !isBetaTester || guideCheckedRef.current) return;
+    guideCheckedRef.current = true;
+    (async () => {
+      const seen = await AsyncStorage.getItem('@decide/beta_guide_seen').catch(() => null);
+      if (seen === 'true') return;
+      const onboarded = await AsyncStorage.getItem('@decide/onboardingComplete').catch(() => null);
+      if (onboarded === 'true') router.push('/beta-guide');
+    })();
+  }, [ready, isBetaTester]);
 
   useEffect(() => {
     const sub = Notifications.addNotificationResponseReceivedListener(response => {
@@ -109,11 +126,17 @@ function RootLayoutInner() {
     return <SplashScreen />;
   }
 
+  const showBeta = isBetaTester && !isPublicRoute(pathname);
+
   return (
     <>
       <StatusBar style="dark" />
       <Stack screenOptions={{ headerShown: false }} />
       {demoMode && <DemoBanner onDismiss={disableDemo} />}
+      {showBeta && !betaBannerDismissed && (
+        <BetaBanner onDismiss={() => setBetaBannerDismissed(true)} topOffset={demoMode ? 32 : 0} />
+      )}
+      {showBeta && pathname !== '/beta-guide' && <BetaFeedback />}
       <OfflineBanner />
     </>
   );

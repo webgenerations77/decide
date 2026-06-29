@@ -216,7 +216,7 @@ function DistanceSlider({ value, onChange }) {
 // ─── SettingsScreen ───────────────────────────────────────────────────────────
 export default function SettingsScreen() {
   const router = useRouter();
-  const { user, signOut } = useAuth();
+  const { user, signOut, isBetaTester } = useAuth();
   const [loaded,         setLoaded]         = useState(false);
   const [displayName,    setDisplayName]    = useState('');
   const [avatar,         setAvatar]         = useState('🎯');
@@ -521,6 +521,22 @@ export default function SettingsScreen() {
               </>
             )}
           </Card>
+
+          {isBetaTester && (
+            <>
+              <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>BETA</SectionLabel>
+              <Card style={styles.card}>
+                <TouchableOpacity
+                  style={styles.appRow}
+                  activeOpacity={0.7}
+                  onPress={() => router.push('/beta-guide')}
+                >
+                  <Text style={styles.appRowLabel}>📖 Beta Tester Guide</Text>
+                  <Text style={styles.appRowChevron}>›</Text>
+                </TouchableOpacity>
+              </Card>
+            </>
+          )}
 
           {/* ── Location ───────────────────────────────────────────────────── */}
           <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>LOCATION</SectionLabel>
