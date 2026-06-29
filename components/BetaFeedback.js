@@ -51,6 +51,15 @@ export default function BetaFeedback() {
     setTimeout(() => setToast(null), 3500);
   };
 
+  const toastNode = toast ? (
+    <View
+      style={[styles.toast, { bottom: 92 + insets.bottom }, toast.kind === 'error' && styles.toastError]}
+      pointerEvents="none"
+    >
+      <Text style={styles.toastText}>{toast.text}</Text>
+    </View>
+  ) : null;
+
   return (
     <>
       <TouchableOpacity
@@ -61,14 +70,7 @@ export default function BetaFeedback() {
         <Text style={styles.fabText}>💬 Give Feedback</Text>
       </TouchableOpacity>
 
-      {toast && (
-        <View
-          style={[styles.toast, { bottom: 92 + insets.bottom }, toast.kind === 'error' && styles.toastError]}
-          pointerEvents="none"
-        >
-          <Text style={styles.toastText}>{toast.text}</Text>
-        </View>
-      )}
+      {toastNode}
 
       <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
         <View style={styles.overlay}>
@@ -124,6 +126,7 @@ export default function BetaFeedback() {
               />
             </ScrollView>
           </View>
+          {toastNode}
         </View>
       </Modal>
     </>
