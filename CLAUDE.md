@@ -11,19 +11,33 @@
 - RIDB / Recreation.gov API (campgrounds/facilities)
 - RevenueCat (subscriptions — Phase 4, not yet wired)
 
-## Color Theme (source of truth: constants/theme.js)
-- Background:      #0C1A2E  (COLORS.bg)
-- Surface:         #142540  (COLORS.surface)
-- Surface alt:     #0A1423  (COLORS.surfaceAlt)
-- Border:          #1E3A5A  (COLORS.border)
-- Primary (orange):#FF6B35  (COLORS.primary)
-- Teal accent:     #00BFB3  (COLORS.teal)
-- Gold:            #C9964E  (COLORS.gold)
-- Text primary:    #FFFFFF
-- Text secondary:  #8AACBF
-- Text muted:      #4A7090
-- Tab bar:         #0A1423  (COLORS.tabBar)
-- Category colors: food=#FF6B35, activity=#00BFB3, shopping=#C9964E, outdoor=#5BBFDC
+## Brand & Theme (source of truth: constants/theme.js — no hardcoded hex in components)
+Light, editorial travel system. Cobalt leads; orange is the one "go" accent per screen;
+gold warms; warm cream/paper grounds. Brand kit reference: `docs/brand/`.
+
+Color (COLORS):
+- Background:  #FCF9F4 (bg, paper) · Surface: #FFFFFF · Surface alt: #F6F0E6 (cream)
+- Border:      #ECE2CF (border) · #E6EDFB (borderLight)
+- Primary:     #2563C9 (cobalt) · #1B3F86 (primaryDark) · primaryText #FFFFFF
+- Accent (go): #FF8A3D (accent) · #E0662A (accentDark) · #FFD9B8 (accentSoft)
+- Gold:        #F4B63A (gold) · Navy/Ink: #102A4C (navy) / #16243B (ink)
+- Text:        #16243B (textPrimary) · #2C3E5C (textSecondary) · #7E8BA3 (textMuted)
+- Status:      #2E9E7B (success) · #D6453C / #A8362E (error / errorDark) · #F4B63A (warning)
+- Sky tints:   #E6EDFB / #C9D8F4 / #9DB8E8 (sky100/200/300) · white #FFFFFF · tabBar #FFFFFF
+- Category:    food=#FF8A3D, activity=#2563C9, shopping=#F4B63A, outdoor=#2E9E7B
+- Back-compat aliases: amber→gold, teal→cobalt
+
+Fonts (FONTS): display = Bricolage Grotesque (700/800), body = Hanken Grotesk
+(400/500/600/700), mono = Space Mono (400/700). Loaded via `useFonts` in `app/_layout.js`.
+⚠ @expo-google-fonts bakes the weight into the family name — never set `fontWeight`
+alongside `fontFamily: FONTS.*` (the weight won't apply). Pick the matching FONTS.* variant.
+Also: `RADII {sm6,md10,lg24,pill999,icon42}`, `SHADOWS.card`.
+
+Brand primitives (`components/brand/`) — compose tokens; use these instead of ad-hoc styles:
+- `BrandLogo` (SVG compass; variant full/reversed/stacked/mark)
+- `ScreenBackground` (variant paper/cream/sky/brand) · `Card` · `GradientHeader`
+- `CTAButton` (variant go/cobalt/secondary, optional `leftIcon`, loading, disabled)
+- `SectionLabel` (Space Mono eyebrow; tone muted/cobalt)
 
 ## App Structure
 - app/_layout.js               — root layout, auth guard, demo banner, offline banner
@@ -41,7 +55,8 @@
 - app/api/itinerary-swap+api.js— POST: swap a single stop
 - app/api/geocode+api.js       — GET: reverse geocode (?lat=&lng=) and forward search (?q=)
 - screens/SettingsScreen.js    — full settings UI
-- constants/theme.js           — all color values + PRICE_LEGEND + CATEGORY_COLORS/EMOJIS
+- components/brand/            — brand primitives (BrandLogo, ScreenBackground, Card, CTAButton, SectionLabel, GradientHeader)
+- constants/theme.js           — COLORS + FONTS + RADII + SHADOWS + PRICE_LEGEND + CATEGORY_COLORS/EMOJIS
 - constants/localKnowledge.js  — Cheddar local tips (Delmarva/DE/MD beach region)
 - services/settingsService.js  — AsyncStorage keys + load/save helpers
 - services/itineraryService.js — client-side POST to /api/itinerary
