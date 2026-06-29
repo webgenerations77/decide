@@ -13,6 +13,13 @@ export async function runSmartEngine({ ctx, places }, deps = {}) {
     const hunts = await runScout(ctx);
     const finds = hunts.length ? await runDiscovery(hunts, ctx) : [];
     const anchors = finds.length ? await pickAnchors(finds, ctx) : [];
+
+    // Nothing real to build from (no live finds AND no Google places) — skip the Sonnet
+    // synthesis call (it could only invent venues with bogus place_ids) and let the caller
+    // fall back to buildFallbackItinerary. Also covers a transient scout failure (hunts=0).
+    const hasPlaces = Object.values(places || {}).some((arr) => Array.isArray(arr) && arr.length > 0);
+    if (finds.length === 0 && !hasPlaces) return empty;
+
     const stops = await runSynthesis({ places, finds, anchors, ctx });
     if (!stops.length) return { ...empty, finds, anchors, hadLiveData: finds.length > 0 };
     return { itinerary: stops, anchors, finds, hadLiveData: finds.length > 0 };

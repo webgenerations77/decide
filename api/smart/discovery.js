@@ -1,7 +1,16 @@
 import { selectSources } from './sourceRegistry.js';
 
 const CACHE_TTL = 4 * 60 * 60 * 1000;
+const CACHE_MAX = 200; // hard cap so a long-running process can't grow this Map unbounded
 const discoveryCache = new Map();
+
+// Map preserves insertion order, so the first key is the oldest — evict it when at capacity.
+function cacheSet(key, value) {
+  if (discoveryCache.size >= CACHE_MAX && !discoveryCache.has(key)) {
+    discoveryCache.delete(discoveryCache.keys().next().value);
+  }
+  discoveryCache.set(key, value);
+}
 
 export function normalizeFind(p) {
   return {
@@ -23,7 +32,7 @@ export function dedupeFinds(finds) {
 }
 
 export function discoveryCacheKey(location, interests) {
-  const hash = [...interests].map((i) => i.toLowerCase().trim()).sort().join('|');
+  const hash = [...new Set(interests.map((i) => i.toLowerCase().trim()))].sort().join('|');
   return `${(location || '').toLowerCase().trim()}::${hash}`;
 }
 
@@ -33,6 +42,7 @@ export async function runDiscovery(hunts, ctx) {
     const cacheKey = discoveryCacheKey(ctx.location, interests);
     const cached = discoveryCache.get(cacheKey);
     if (cached && Date.now() - cached.ts < CACHE_TTL) return cached.finds;
+    if (cached) discoveryCache.delete(cacheKey); // expired — drop so it doesn't linger
 
     // Cap paid web-search hunts to the top 4 by priority; API/registry sources are free.
     const ranked = [...hunts].sort((a, b) => (b.priority || 0) - (a.priority || 0));
@@ -51,7 +61,7 @@ export async function runDiscovery(hunts, ctx) {
     }
     const results = await Promise.all(tasks);
     const finds = dedupeFinds(results.flat());
-    discoveryCache.set(cacheKey, { finds, ts: Date.now() });
+    cacheSet(cacheKey, { finds, ts: Date.now() });
     return finds;
   } catch (e) {
     console.error('[discovery] unexpected:', e.message);
