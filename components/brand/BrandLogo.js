@@ -24,10 +24,10 @@ function Mark({ size, ring, needleHi, needleLo, hub }) {
 
 export default function BrandLogo({ variant = 'full', size = 80 }) {
   const reversed = variant === 'reversed';
-  const ring = reversed ? '#FFFFFF' : COLORS.navy;
-  const needleLo = reversed ? '#FFFFFF' : COLORS.primary;
-  const hub = reversed ? '#FFFFFF' : COLORS.navy;
-  const wordColor = reversed ? '#FFFFFF' : COLORS.navy;
+  const ring = reversed ? COLORS.white : COLORS.navy;
+  const needleLo = reversed ? COLORS.white : COLORS.primary;
+  const hub = reversed ? COLORS.white : COLORS.navy;
+  const wordColor = reversed ? COLORS.white : COLORS.navy;
   const wordSize = size * 0.82;
 
   const mark = <Mark size={size} ring={ring} needleLo={needleLo} hub={hub} />;

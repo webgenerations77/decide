@@ -139,7 +139,7 @@ export default function LoginScreen() {
                   title="Continue with Google"
                   onPress={handleGoogleSignIn}
                   disabled={loading || !request}
-                  leftIcon={<Ionicons name="logo-google" size={18} color={COLORS.primary} />}
+                  leftIcon={<Ionicons name="logo-google" size={18} color={COLORS.textPrimary} />}
                 />
               </View>
             </Card>

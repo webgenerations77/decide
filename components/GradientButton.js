@@ -37,7 +37,7 @@ export default function GradientButton({
   };
 
   const gradientColors = danger
-    ? [COLORS.error, COLORS.error]
+    ? [COLORS.error, COLORS.errorDark]
     : secondary
     ? [COLORS.surface, COLORS.surfaceAlt]
     : colors

@@ -7,8 +7,8 @@ export default function CTAButton({ title, onPress, variant = 'go', disabled = f
   const isSecondary = variant === 'secondary';
   const colors = variant === 'cobalt'
     ? [COLORS.primary, COLORS.primaryDark]
-    : [COLORS.accent, '#E0662A'];            // orange "go"
-  const labelColor = isSecondary ? COLORS.primary : '#FFFFFF';
+    : [COLORS.accent, COLORS.accentDark];    // orange "go"
+  const labelColor = isSecondary ? COLORS.primary : COLORS.white;
 
   const inner = loading
     ? <ActivityIndicator color={labelColor} size="small" />

@@ -21,6 +21,7 @@ export const COLORS = {
 
   // ── Accent — orange "go" + gold warmth ────────────────────────────────────
   accent:     '#FF8A3D',   // the decisive action — one per screen
+  accentDark: '#E0662A',   // darker orange gradient stop (CTAButton go-gradient end)
   accentSoft: '#FFD9B8',   // orange 200
   gold:       '#F4B63A',   // retro-travel warmth
 
@@ -39,15 +40,19 @@ export const COLORS = {
   textMuted:     '#7E8BA3',  // muted
 
   // ── Status ────────────────────────────────────────────────────────────────
-  success: '#2E9E7B',  // brand-adjacent green
-  error:   '#D6453C',  // alert
-  warning: '#F4B63A',  // gold
+  success:   '#2E9E7B',  // brand-adjacent green
+  error:     '#D6453C',  // alert
+  errorDark: '#A8362E',  // danger-button gradient stop (darker error)
+  warning:   '#F4B63A',  // gold
 
   // ── Category colors ───────────────────────────────────────────────────────
   food:     '#FF8A3D',  // orange
   activity: '#2563C9',  // cobalt
   shopping: '#F4B63A',  // gold
   outdoor:  '#2E9E7B',  // brand-adjacent green
+
+  // ── Utility ───────────────────────────────────────────────────────────────
+  white: '#FFFFFF',   // pure white — use for reversed/on-dark text and icons
 
   // ── Tab bar ───────────────────────────────────────────────────────────────
   tabBar: '#FFFFFF',
