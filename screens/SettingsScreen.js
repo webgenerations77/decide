@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView,
-  Switch, ActivityIndicator, Modal, PanResponder, Platform, Animated, Alert,
+  Switch, ActivityIndicator, Modal, PanResponder, Animated, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { loadAllSettings, save, KEYS } from '../services/settingsService';
+import { searchTextPlaces } from '../services/placesService';
 import { useAuth } from '../context/AuthContext';
 import { isPro, getDecisionCount, getSpinCount, LIMITS } from '../services/subscriptionService';
 import { scheduleDailyReminder, cancelDailyReminder, loadReminderTime } from '../services/notificationService';
@@ -16,7 +17,6 @@ import ScreenBackground from '../components/brand/ScreenBackground';
 import Card from '../components/brand/Card';
 import SectionLabel from '../components/brand/SectionLabel';
 
-const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const AVATARS         = ['🧭', '🎯', '🎲', '🌮', '🎭', '🏄', '🎸', '🌟'];
@@ -60,22 +60,12 @@ function timeToMinutes(str) {
 
 async function searchLocation(text) {
   if (!text || text.length < 3) return null;
-  if (!GOOGLE_KEY) return { error: 'api_key' };
-  const endpoint = `https://places.googleapis.com/v1/places:searchText?key=${GOOGLE_KEY}`;
-  const fetchUrl = Platform.OS === 'web'
-    ? `https://corsproxy.io/?${encodeURIComponent(endpoint)}`
-    : endpoint;
   try {
-    const res  = await fetch(fetchUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type':    'application/json',
-        'X-Goog-FieldMask': 'places.id,places.displayName,places.location,places.addressComponents,places.formattedAddress',
-      },
-      body: JSON.stringify({ textQuery: text, languageCode: 'en', pageSize: 5 }),
-    });
-    const data = await res.json();
-    if (data.error?.status === 'PERMISSION_DENIED') return { error: 'api_key' };
+    const data = await searchTextPlaces(
+      { textQuery: text, languageCode: 'en', pageSize: 5 },
+      'places.id,places.displayName,places.location,places.addressComponents,places.formattedAddress',
+    );
+    if (data.error === 'api_key_missing' || data.error?.status === 'PERMISSION_DENIED') return { error: 'api_key' };
     if (!data.places?.length) return { error: 'not_found' };
     const results = data.places.map((p) => {
       const parts = p.addressComponents ?? [];
