@@ -208,6 +208,25 @@ async function enrichWithDrivingTimes(itinerary) {
   return updated;
 }
 
+async function fetchStopDetails(placeId) {
+  if (!GOOGLE_KEY || !placeId || /^(demo_|nps_|ridb_|fallback_|find_|stop_)/.test(placeId)) return null;
+  try {
+    const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=website,formatted_phone_number&key=${GOOGLE_KEY}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    return { website: data.result?.website ?? null, phone: data.result?.formatted_phone_number ?? null };
+  } catch { return null; }
+}
+
+async function enrichWithContactLinks(itinerary) {
+  const out = await Promise.all(itinerary.map(async (stop) => {
+    if (stop.website || stop.phone) return stop;
+    const d = await fetchStopDetails(stop.place_id);
+    return d ? { ...stop, website: d.website, phone: d.phone } : stop;
+  }));
+  return out;
+}
+
 function extractJSON(text) {
   const match = text.match(/```(?:json)?\s*([\s\S]*?)```/);
   if (match) return match[1].trim();
@@ -377,7 +396,8 @@ export async function POST(request) {
         drive_mins: driveMins,
       };
     });
-    const enriched = await enrichWithDrivingTimes(withDistance);
+    const withLinks = await enrichWithContactLinks(withDistance);
+    const enriched = await enrichWithDrivingTimes(withLinks);
     const costSummary = computeCostSummary(enriched);
 
     return Response.json({

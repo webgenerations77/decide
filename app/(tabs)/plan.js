@@ -497,6 +497,23 @@ function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, 
             </TouchableOpacity>
           ) : null}
 
+          {(stop.website || stop.phone) ? (
+            <View style={styles.contactRow}>
+              {stop.phone ? (
+                <TouchableOpacity style={styles.contactBtn} onPress={() => Linking.openURL(`tel:${stop.phone}`)} activeOpacity={0.7}>
+                  <Ionicons name="call-outline" size={13} color={COLORS.primary} style={{ marginRight: 4 }} />
+                  <Text style={styles.contactBtnTxt}>Call</Text>
+                </TouchableOpacity>
+              ) : null}
+              {stop.website ? (
+                <TouchableOpacity style={styles.contactBtn} onPress={() => Linking.openURL(stop.website)} activeOpacity={0.7}>
+                  <Ionicons name="globe-outline" size={13} color={COLORS.primary} style={{ marginRight: 4 }} />
+                  <Text style={styles.contactBtnTxt}>Website</Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
+          ) : null}
+
           {stop.reason ? (
             <View style={styles.reasonRow}>
               <Text style={styles.stopReason}>{stop.reason}</Text>
@@ -1461,6 +1478,11 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: COLORS.gold + '44',
   },
   pricePillTxt: { fontSize: 12, color: COLORS.goldText, fontFamily: FONTS.bodyBold },
+
+  // Contact links (website / call)
+  contactRow:    { flexDirection: 'row', gap: 8, marginTop: 8 },
+  contactBtn:    { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 5, borderRadius: RADII.sm, borderWidth: 1, borderColor: COLORS.borderLight, backgroundColor: COLORS.surface },
+  contactBtnTxt: { fontFamily: FONTS.bodySemiBold, fontSize: 12, color: COLORS.primary },
 
   // Reason row
   reasonRow: {

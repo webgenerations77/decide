@@ -165,6 +165,25 @@ async function enrichWithDrivingTimes(itinerary) {
   return updated;
 }
 
+async function fetchStopDetails(placeId) {
+  if (!GOOGLE_KEY || !placeId || /^(demo_|nps_|ridb_|fallback_|find_|stop_)/.test(placeId)) return null;
+  try {
+    const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=website,formatted_phone_number&key=${GOOGLE_KEY}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    return { website: data.result?.website ?? null, phone: data.result?.formatted_phone_number ?? null };
+  } catch { return null; }
+}
+
+async function enrichWithContactLinks(itinerary) {
+  const out = await Promise.all(itinerary.map(async (stop) => {
+    if (stop.website || stop.phone) return stop;
+    const d = await fetchStopDetails(stop.place_id);
+    return d ? { ...stop, website: d.website, phone: d.phone } : stop;
+  }));
+  return out;
+}
+
 function extractJSON(text) { const m = text.match(/```(?:json)?\s*([\s\S]*?)```/); return m ? m[1].trim() : text.trim(); }
 function timeToMinutes(t) { const [time,period]=t.split(' '); const [h,m='0']=time.split(':'); let hour=parseInt(h,10); if(period==='PM'&&hour!==12)hour+=12; if(period==='AM'&&hour===12)hour=0; return hour*60+parseInt(m,10); }
 function minutesToTime(total) { const h=Math.floor(total/60)%24,m=total%60,ampm=h>=12?'PM':'AM',h12=h===0?12:h>12?h-12:h; return `${h12}:${String(m).padStart(2,'0')} ${ampm}`; }
@@ -240,7 +259,8 @@ export default async function handler(req, res) {
       itinerary = buildFallbackItinerary({ food, activity, shopping, outdoor: allOutdoor, startTime, endTime, pace, lat: latitude, lng: longitude });
       isFallback = true;
     }
-    const enriched=await enrichWithDrivingTimes(itinerary);
+    const withLinks = await enrichWithContactLinks(itinerary);
+    const enriched=await enrichWithDrivingTimes(withLinks);
     const costSummary = computeCostSummary(enriched);
     return res.json({itinerary:enriched,weather,meta:{date:formattedDate,day_of_week:dayOfWeek,time_window:`${startTime} – ${endTime}`,preferences:{pace,budget,group_type},city:cityStr,cost_summary:costSummary?.label??null},discovery:{hadLiveData:smart.hadLiveData,findCount:smart.finds.length,anchorCount:smart.anchors.length,anchors:smart.anchors.map((a)=>({title:a.find?.title,interest:a.find?.interest,why:a.rationale}))},generated_at:new Date().toISOString(),isFallback});
   } catch(err) {
