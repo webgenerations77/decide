@@ -17,7 +17,6 @@ import ScreenBackground from '../components/brand/ScreenBackground';
 import Card from '../components/brand/Card';
 import SectionLabel from '../components/brand/SectionLabel';
 
-
 // ─── Constants ────────────────────────────────────────────────────────────────
 const AVATARS         = ['🧭', '🎯', '🎲', '🌮', '🎭', '🏄', '🎸', '🌟'];
 const CUISINES        = ['Italian', 'Mexican', 'Japanese', 'American', 'Thai', 'Indian', 'Mediterranean', 'Korean', 'Vietnamese', 'BBQ', 'Seafood', 'Pizza'];
