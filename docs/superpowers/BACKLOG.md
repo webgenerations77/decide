@@ -53,6 +53,60 @@ were left as gold.
 
 ---
 
+## 5. Beta tester access + feedback system  (NEW — full feature, needs RN adaptation + brainstorm before build)
+Add one authorized beta tester (`dwaynephil@gmail.com`, role `beta_tester`) and a feedback
+loop around them. Spec below is faithful to the request; **⚠ flags mark where the web-centric
+spec must be adapted to this Expo/Firebase/expo-router app** — resolve these in a brainstorm
+before implementing.
+
+**⚠ Architecture reality check (do first):**
+- No RBAC / authorized-user allowlist / user-profile DB exists today. Auth is Firebase
+  (email + Google); "free vs pro" is the only tier and lives in AsyncStorage + `subscriptionService`.
+- ⚠ Decide where `beta_tester` lives: simplest = a small allowlist map (email → role) in a new
+  `constants/betaTesters.js` or `services/`, resolved against `firebase.auth().currentUser.email`.
+  Centralize in ONE helper `isBetaTester(user)` / `useIsBetaTester()` hook. **Role check, never
+  hardcode the email in UI logic.**
+- ⚠ Two API-route locations: `api/*.js` (Vercel, prod) and `app/api/*+api.js` (Expo, inactive in
+  dev due to `web.output: 'single'`). `/api/feedback` likely needs BOTH, like itinerary handlers.
+- ⚠ No email provider currently in the project — Resend would be net-new. (Confirm: nothing else
+  like SendGrid is wired. If found, ask before adding Resend.)
+
+**Task 1 — Authorized beta tester user** → `feat: add dwaynephil@gmail.com as authorized beta tester`
+- Add `dwaynephil@gmail.com` → role `beta_tester` to the (new) allowlist. Recognize `beta_tester`
+  as a role; passes all normal auth checks (no restrictions). Expose role at session/context level.
+
+**Task 2 — Persistent beta banner, all authenticated routes** → `feat: add beta tester banner to app shell`
+- Implement in the shell (`app/_layout.js`, alongside existing demo + offline banners), NOT per-page.
+- Visible only to `beta_tester`. Text: **"🧪 You're a Cheddar Beta Tester — thanks for helping us build something great!"**
+- ⚠ Color: spec suggests amber `#F59E0B`, but **defer to `theme.js` tokens** — we have `gold`/`warning`
+  (#F4B63A). Use a token; no raw hex (token discipline). Body font, medium/semibold.
+- Dismissible **per session** (returns on next login/reload) via `×` on the right.
+
+**Task 3 — Floating feedback button (beta only)** → `feat: add floating beta feedback button and modal`
+- Fixed bottom-right (24/24). Pill, **"💬 Give Feedback"**, primary button style (`CTAButton` cobalt).
+- Opens modal/drawer: Page/Feature (auto-filled w/ current route, editable) · Feedback Type dropdown
+  (Bug Report · Feature Suggestion · General Impression · Something Felt Off) · Your feedback
+  (textarea, required, placeholder "Tell us what you're thinking...") · Rating (optional 1–5 stars) ·
+  submit **"Send to Cheddar HQ"**. POST to `/api/feedback`.
+
+**Task 4 — `/api/feedback` + Resend email** → `feat: add /api/feedback endpoint with Resend email notification`
+- Accept `{ page, feedbackType, message, rating, userEmail, timestamp }`; 400 if `message` empty.
+- `npm install resend --legacy-peer-deps`. Add to `.env` + `.env.example`:
+  `RESEND_API_KEY=` (`# Resend API key for beta feedback emails — get yours at resend.com`) and
+  `FEEDBACK_RECIPIENT_EMAIL=` (`# Your email address to receive beta tester feedback`).
+- From `cheddar-feedback@resend.dev` (sandbox) until a custom domain is set. ⚠ Server-side key only.
+- Email subject `🧪 Beta Feedback — [feedbackType] on [page]`; body: from Dwayne, page/type/rating/
+  timestamp + `---` + message.
+- Success → `{ success: true }` + toast **"Feedback sent! Thanks Dwayne 🙌"**.
+  Failure → `{ success: false, error }` + toast **"Hmm, that didn't go through. Try again?"**
+
+**Task 5 — Audit & cleanup** → `chore: beta tester feature audit and cleanup`
+- Verify banner + button are hidden for non-beta users and on unauthenticated/public routes
+  (login, splash, ToS). Add the two env vars to `.env.example` / `decide.env.txt` reference + README.
+- Scan new user-facing strings for any "AI" references (must say "Cheddar", never "AI").
+
+---
+
 ## Not-yet-started sibling sub-projects (from the original decomposition)
 - **#2 Taste Profile** — onboarding additions + an always-editable "teach Cheddar" interests
   screen + storage, to give the engine's scout richer fuel than the current saved prefs + per-trip note.
