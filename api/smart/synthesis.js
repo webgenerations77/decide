@@ -17,6 +17,8 @@ export function buildSynthesisPrompt({ places, finds, anchors, ctx }) {
   const user = `City: ${ctx.location}
 Window: ${ctx.startTime} to ${ctx.endTime}. Group: ${p.group_type || 'couple'}. Pace: ${p.pace || 'moderate'}. Budget: ${p.budget || '$$'}.
 Dietary: ${(p.dietary || []).join(', ') || 'none'}.
+Requested activity styles: ${(p.activityStyles || []).join(', ') || 'none'}.
+What they said for this trip: "${ctx.tripNote || ''}".
 
 ## Anchors — build the day around these (they are the point)
 ${anchorBlock}
@@ -34,6 +36,8 @@ Rules:
 - Include lunch if midday is in the window and dinner if evening is. Match budget. Don't repeat a place.
 - Do not include bars, breweries, or alcohol-serving venues as stops unless the user explicitly requested them OR the venue is hosting live music on this date (a stop whose provenance interest is "live music").
 - ${p.pace === 'relaxed' ? '4–5' : p.pace === 'packed' ? '7–8' : '5–6'} stops.
+- Balance activity types: include at most 1–2 stops of any single activity type, no matter how strongly it was requested. If the traveler asked for multiple activity types, represent each of them across the day rather than over-filling one.
+- If a requested activity type cannot be sourced from the anchors, finds, or places, add a short note stop or call it out in a stop's reason rather than silently dropping it.
 
 Return a JSON array. Each stop: time, duration_mins, category, name, place_id, address, lat, lng, reason, excitement_score, admission_cost ("Free" | "$15/adult" | "Prices vary — check website" | null for food/shopping), and provenance (only for anchor/find stops).`;
 

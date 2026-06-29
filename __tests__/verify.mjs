@@ -2,6 +2,8 @@
 // Run with: node __tests__/verify.mjs
 
 import { wantsAlcohol } from '../api/smart/sourceRegistry.js';
+import { buildScoutPrompt } from '../api/smart/scout.js';
+import { buildSynthesisPrompt } from '../api/smart/synthesis.js';
 
 let passed = 0;
 let failed = 0;
@@ -165,6 +167,17 @@ assert('tripNote mentions beer → true',  wantsAlcohol({}, 'want to grab a beer
 assert('tripNote mentions brewery → true', wantsAlcohol({}, 'a brewery tour') === true);
 assert('No drink signal → false',        wantsAlcohol({ activityStyles: ['Arcades'] }, 'pinball and parks') === false);
 assert('Empty → false',                  wantsAlcohol({}, '') === false);
+
+// ─── SESSION 2 — Activity-type balance guards ─────────────────────────────────
+console.log('\nSESSION 2 — Activity-type balance:');
+const scoutP = buildScoutPrompt({ location: 'X', tripNote: 'pinball and live music', prefs: {} });
+assert('Scout asks for equal weight', /equal|do not let repetition|distinct/i.test(scoutP));
+const synthP = buildSynthesisPrompt({
+  places: {}, finds: [], anchors: [],
+  ctx: { location: 'X', startTime: '11:00 AM', endTime: '8:00 PM', tripNote: 'pinball and live music', prefs: { activityStyles: ['Live Music'] } },
+}).user;
+assert('Synthesis caps a single type',  /at most 1.?2 stops|cap any single|no more than (1|2)/i.test(synthP));
+assert('Synthesis sees the trip note',  synthP.includes('pinball and live music'));
 
 // ─── Summary ──────────────────────────────────────────────────────────────────
 console.log(`\n${'─'.repeat(50)}`);
