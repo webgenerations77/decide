@@ -133,7 +133,7 @@ function RootLayoutInner() {
       <StatusBar style="dark" />
       <Stack screenOptions={{ headerShown: false }} />
       {demoMode && <DemoBanner onDismiss={disableDemo} />}
-      {showBeta && !betaBannerDismissed && (
+      {showBeta && pathname !== '/beta-guide' && !betaBannerDismissed && (
         <BetaBanner onDismiss={() => setBetaBannerDismissed(true)} topOffset={demoMode ? 32 : 0} />
       )}
       {showBeta && pathname !== '/beta-guide' && <BetaFeedback />}
