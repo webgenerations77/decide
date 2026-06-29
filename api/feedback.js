@@ -1,8 +1,17 @@
-import { validateFeedback, sendFeedbackEmail } from './feedbackEmail.js';
+import {
+  validateFeedback, sendFeedbackEmail, gateFeedbackRequest, checkFeedbackRate,
+} from './feedbackEmail.js';
 
 export default async function handler(req, res) {
   if (req.method === 'GET') return res.json({ status: 'ok', message: 'Feedback API is running' });
   if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method not allowed' });
+
+  const secret = req.headers['x-feedback-secret'];
+  if (!gateFeedbackRequest(secret).ok) return res.status(401).json({ success: false, error: 'unauthorized' });
+
+  const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'anon';
+  const rateKey = process.env.FEEDBACK_SHARED_SECRET ? `s:${secret}` : `ip:${ip}`;
+  if (!checkFeedbackRate(rateKey).ok) return res.status(429).json({ success: false, error: 'rate limited' });
 
   const { ok, data, error } = validateFeedback(req.body);
   if (!ok) return res.status(400).json({ success: false, error });
