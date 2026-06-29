@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, Animated, Easing,
-  Linking, Platform, ActivityIndicator, ScrollView,
+  Linking, ActivityIndicator, ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -13,9 +13,7 @@ import { COLORS, FONTS, RADII } from '../constants/theme';
 import ScreenBackground from '../components/brand/ScreenBackground';
 import Card from '../components/brand/Card';
 import CTAButton from '../components/brand/CTAButton';
-
-const GOOGLE_KEY  = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
-const NEARBY_URL  = 'https://places.googleapis.com/v1/places:searchNearby';
+import { searchNearbyPlaces } from '../services/placesService';
 
 const CATEGORIES = [
   { id: 'surprise',  label: 'Surprise Me', emoji: '🎲', color: COLORS.primary,
@@ -30,31 +28,15 @@ const CATEGORIES = [
     types: ['shopping_mall','market','book_store','gift_shop'] },
 ];
 
-function googleFetchUrl() {
-  const endpoint = `${NEARBY_URL}?key=${GOOGLE_KEY}`;
-  return Platform.OS === 'web'
-    ? `https://corsproxy.io/?${encodeURIComponent(endpoint)}`
-    : endpoint;
-}
-
 async function fetchNearbyPlaces(lat, lng, types) {
-  const res = await fetch(googleFetchUrl(), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Goog-FieldMask':
-        'places.id,places.displayName,places.formattedAddress,' +
-        'places.rating,places.editorialSummary,places.location',
-    },
-    body: JSON.stringify({
-      locationRestriction: {
-        circle: { center: { latitude: lat, longitude: lng }, radius: 20000 },
-      },
+  const data = await searchNearbyPlaces(
+    {
+      locationRestriction: { circle: { center: { latitude: lat, longitude: lng }, radius: 20000 } },
       maxResultCount: 20,
       includedTypes: types,
-    }),
-  });
-  const data = await res.json();
+    },
+    'places.id,places.displayName,places.formattedAddress,places.rating,places.editorialSummary,places.location',
+  );
   return (data.places ?? []).map((p) => ({
     name:     p.displayName?.text ?? '',
     place_id: p.id ?? '',
