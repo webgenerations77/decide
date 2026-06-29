@@ -46,3 +46,7 @@ yarn-error.*
 # Claude Code local settings (may contain API keys)
 .claude/settings.local.json
 .mcp.json
+
+# Per-user Claude artifacts (not shared)
+.claude/user-preferences.md
+.claude/sessions/
