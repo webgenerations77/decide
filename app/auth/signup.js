@@ -227,8 +227,8 @@ const styles = StyleSheet.create({
   checkboxActive: { backgroundColor: COLORS.amber, borderColor: COLORS.amber },
   checkmark: { fontSize: 13, color: COLORS.bg, fontFamily: FONTS.displayHeavy },
   tosText: { flex: 1, fontSize: 14, color: COLORS.textSecondary, lineHeight: 20 },
-  tosLink: { color: COLORS.amber, fontFamily: FONTS.bodySemiBold, textDecorationLine: 'underline' },
+  tosLink: { color: COLORS.primary, fontFamily: FONTS.bodySemiBold, textDecorationLine: 'underline' },
 
   footer: { alignItems: 'center', marginTop: 28 },
-  linkText: { color: COLORS.amber, fontSize: 14, fontFamily: FONTS.bodySemiBold },
+  linkText: { color: COLORS.primary, fontSize: 14, fontFamily: FONTS.bodySemiBold },
 });

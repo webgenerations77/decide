@@ -193,5 +193,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-between',
     marginTop: 28, paddingHorizontal: 4,
   },
-  linkText: { color: COLORS.amber, fontSize: 14, fontFamily: FONTS.bodySemiBold },
+  linkText: { color: COLORS.primary, fontSize: 14, fontFamily: FONTS.bodySemiBold },
 });

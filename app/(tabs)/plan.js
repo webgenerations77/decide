@@ -284,7 +284,7 @@ function PlaceDetailModal({ visible, stop, onClose }) {
                     <>
                       <Text style={styles.detailInfoDot}>·</Text>
                       <TouchableOpacity onPress={() => setShowLegend(true)} activeOpacity={0.7}>
-                        <Text style={[styles.detailInfoTxt, { color: COLORS.amber }]}>{priceStr} ⓘ</Text>
+                        <Text style={[styles.detailInfoTxt, { color: COLORS.goldText }]}>{priceStr} ⓘ</Text>
                       </TouchableOpacity>
                     </>
                   )}
@@ -1454,7 +1454,7 @@ const styles = StyleSheet.create({
     borderRadius: 999, backgroundColor: COLORS.gold + '22',
     borderWidth: 1, borderColor: COLORS.gold + '44',
   },
-  admissionBadgeTxt: { fontSize: 12, color: COLORS.gold, fontFamily: FONTS.bodySemiBold },
+  admissionBadgeTxt: { fontSize: 12, color: COLORS.goldText, fontFamily: FONTS.bodySemiBold },
 
   // Price tier pill
   pricePill: {
@@ -1463,7 +1463,7 @@ const styles = StyleSheet.create({
     borderRadius: 999, backgroundColor: COLORS.gold + '22',
     borderWidth: 1, borderColor: COLORS.gold + '44',
   },
-  pricePillTxt: { fontSize: 12, color: COLORS.gold, fontFamily: FONTS.bodyBold },
+  pricePillTxt: { fontSize: 12, color: COLORS.goldText, fontFamily: FONTS.bodyBold },
 
   // Reason row
   reasonRow: {
@@ -1495,7 +1495,7 @@ const styles = StyleSheet.create({
 
   cardActionsRow:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
   exciteBadge:      { backgroundColor: COLORS.gold + '22', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1, borderColor: COLORS.gold + '44' },
-  exciteText:       { color: COLORS.gold, fontSize: 10, fontFamily: FONTS.bodyBold },
+  exciteText:       { color: COLORS.goldText, fontSize: 10, fontFamily: FONTS.bodyBold },
   swapBtn:          { paddingVertical: 4, paddingHorizontal: 6 },
   swapBtnText:      { color: COLORS.textMuted, fontSize: 12, fontFamily: FONTS.bodyMedium },
   swapLoadingRow:   { flexDirection: 'row', alignItems: 'center' },
@@ -1629,7 +1629,7 @@ const styles = StyleSheet.create({
   detailAddr:       { fontSize: 13, color: COLORS.textMuted, marginBottom: 14, lineHeight: 18 },
 
   detailInfoRow:  { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 18 },
-  detailInfoTxt:  { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: COLORS.gold },
+  detailInfoTxt:  { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: COLORS.goldText },
   detailInfoDot:  { fontSize: 13, color: COLORS.textMuted },
 
   admissionRow: {
@@ -1656,7 +1656,7 @@ const styles = StyleSheet.create({
   distanceLink:    { flexDirection: 'row', alignItems: 'center' },
   distanceLinkTxt: { fontSize: 13, color: COLORS.primary, fontFamily: FONTS.bodySemiBold },
   detailExciteBadge: { backgroundColor: COLORS.gold + '22', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: COLORS.gold + '44' },
-  detailExciteTxt:   { color: COLORS.gold, fontSize: 12, fontFamily: FONTS.bodyBold },
+  detailExciteTxt:   { color: COLORS.goldText, fontSize: 12, fontFamily: FONTS.bodyBold },
 
   detailNavBtn: {
     backgroundColor: COLORS.primary, borderRadius: 16,
@@ -1691,7 +1691,7 @@ const styles = StyleSheet.create({
     textAlign: 'center', marginBottom: 16,
   },
   legendRow:   { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  legendSymbol:{ fontSize: 15, fontFamily: FONTS.bodyBold, color: COLORS.gold, width: 40 },
+  legendSymbol:{ fontSize: 15, fontFamily: FONTS.bodyBold, color: COLORS.goldText, width: 40 },
   legendLabel: { fontSize: 14, color: COLORS.textSecondary, flex: 1, fontFamily: FONTS.body },
   legendSub:   { fontSize: 11, color: COLORS.textMuted, marginTop: 14, lineHeight: 15, textAlign: 'center', fontFamily: FONTS.body },
 });

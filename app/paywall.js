@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
     textAlign: 'center', marginBottom: 2,
   },
   planLabelPro: {
-    fontSize: 15, fontFamily: FONTS.bodyBold, color: COLORS.amber,
+    fontSize: 15, fontFamily: FONTS.bodyBold, color: COLORS.goldText,
     textAlign: 'center', marginBottom: 2,
   },
   featureRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
