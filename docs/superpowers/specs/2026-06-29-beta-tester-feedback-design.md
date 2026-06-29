@@ -148,6 +148,11 @@ special access and restricts nothing; it only shows extra UI to beta testers.
   excludes only `/auth/*`, `/onboarding`, `/terms`; the guide may show the banner (fine) but to
   keep first-read clean we suppress the floating feedback button on `/beta-guide`
   (add it to the feedback-button's hidden-routes set).
+- **Screenshots:** none bundled for v1 — the UI is actively changing during beta, so static
+  screenshots would go stale and mislead, and the tester is in the live app while reading. Use
+  non-staling visual cues instead (BrandLogo/`GradientHeader`, emoji + tab-name callouts, small
+  on-brand mock cards). Real screenshots remain an easy later add (`assets/beta-guide/*.png` +
+  `<Image>`). Final copy: **Appendix A**.
 
 ### 6. Audit & cleanup (Task 6)
 - Confirm banner + button are **hidden** for a non-beta user and on public routes
@@ -218,6 +223,56 @@ No unit-test harness for RN styling/UI in this repo (per project convention). Ve
 - A general feature-flag / RBAC system (one boolean from auth is enough today).
 - Verified custom email domain (sandbox suffices for one tester; upgrade path noted).
 - Multi-tester management UI (allowlist edit is a code change).
+
+## Appendix A — Beta guide copy (draft, final)
+
+Cheddar's voice: warm, opinionated local friend. Never "AI". `[name]` = tester's first name
+(fallback "friend"). Section headers map to `SectionLabel`/`Card` blocks on the screen.
+
+> **Welcome to Cheddar 🧀**
+>
+> You're one of the very first people inside Decide — thanks for that. Here's the deal: tell me
+> roughly what you're in the mood for, and I'll plan the whole day — where to eat, what to do, in
+> what order, drive times sorted. No more standing around asking "so what do you want to do?"
+> **We'll decide. You just go.**
+>
+> This takes two minutes to read. Then go break things.
+
+> **Three ways to decide**
+>
+> - **🗺️ Plan** — the main event. Set your vibe — pace, budget, who's with you, a quick note like
+>   "anniversary, we love seafood" — and I build a full day, stop by stop, with a reason for each
+>   pick. Don't like one? Swap it and I'll find another.
+> - **🎯 Quick Spin** — can't even commit to planning? Hit Spin and I'll throw you one solid pick
+>   on the spot. Perfect for "just tell me where to eat."
+> - **📜 History** — every day I've planned and every spin lands here, so you can pull up that
+>   great taco place from last week.
+
+> **Set yourself up first (2 min in Settings)**
+>
+> The more I know, the better the day. In **Settings**, set your **location**, your **default pace
+> and budget**, and — this one matters — your **dietary needs and sensitivities**. Tell me you're
+> vegetarian or allergic to shellfish and I'll plan around it every single time.
+
+> **What I'd love you to test**
+>
+> - Plan a day in a few different places and dates — your hometown, then somewhere you're visiting.
+> - Try a weird combo on purpose (packed pace + tight budget + a picky note) and see if I hold up.
+> - Swap a stop or two — does the replacement actually make sense?
+> - Watch for the **"what's happening right now"** picks — events and specials tied to your real
+>   dates. Tell me when they land and when they're off.
+> - Push the edges. The stuff that breaks is exactly what I need to hear about.
+
+> **Found something? Tell me.**
+>
+> See the **💬 Give Feedback** button floating in the corner? Tap it anytime — it's on every
+> screen. The most useful reports tell me three things: what screen you were on, what you expected,
+> and what actually happened. Even "this just felt off" is genuinely useful — don't hold back.
+>
+> Thanks for helping shape this, **[name]**. Now go plan something.
+> — Cheddar
+>
+> **[ Got it — let's go ]**
 
 ## Commits (one per task)
 
