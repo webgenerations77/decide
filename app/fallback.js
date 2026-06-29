@@ -1,8 +1,10 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, Linking, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { COLORS } from '../constants/theme';
+import { COLORS, FONTS } from '../constants/theme';
+import ScreenBackground from '../components/brand/ScreenBackground';
+import Card from '../components/brand/Card';
 
 // Same confirmed Table A types as HomeScreen
 const CATEGORY_TYPES = {
@@ -82,7 +84,7 @@ function PlaceCard({ place }) {
   };
 
   return (
-    <View style={styles.card}>
+    <Card style={styles.card}>
       <View style={styles.cardBody}>
         <View style={styles.cardTitleRow}>
           <Text style={styles.cardEmoji}>{emoji}</Text>
@@ -118,7 +120,7 @@ function PlaceCard({ place }) {
           <Text style={styles.goBtnText}>LET'S GO →</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </Card>
   );
 }
 
@@ -229,45 +231,47 @@ export default function FallbackScreen() {
 
   return (
     <SafeAreaView style={styles.screen}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()} activeOpacity={0.7}>
-          <Text style={styles.backArrow}>←</Text>
-        </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <Text style={styles.title}>More Options</Text>
-          {!loading && places.length > 0 && (
-            <Text style={styles.subtitle}>Wider search — {places.length} found</Text>
-          )}
-        </View>
-        <View style={{ width: 40 }} />
-      </View>
-
-      {loading ? (
-        <View style={styles.loadingState}>
-          <ActivityIndicator color={COLORS.amber} size="large" />
-          <Text style={styles.loadingText}>Searching wider area...</Text>
-        </View>
-      ) : error ? (
-        <View style={styles.errorState}>
-          <Text style={styles.errorEmoji}>😕</Text>
-          <Text style={styles.errorTitle}>{error}</Text>
-          <TouchableOpacity style={styles.retryBtn} onPress={fetchAlternatives} activeOpacity={0.7}>
-            <Text style={styles.retryText}>Try again</Text>
+      <ScreenBackground variant="paper">
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()} activeOpacity={0.7}>
+            <Text style={styles.backArrow}>←</Text>
           </TouchableOpacity>
+          <View style={styles.headerCenter}>
+            <Text style={styles.title}>More Options</Text>
+            {!loading && places.length > 0 && (
+              <Text style={styles.subtitle}>Wider search — {places.length} found</Text>
+            )}
+          </View>
+          <View style={{ width: 40 }} />
         </View>
-      ) : (
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.listContent}>
-          {places.map((place, i) => (
-            <PlaceCard key={i} place={place} />
-          ))}
-        </ScrollView>
-      )}
+
+        {loading ? (
+          <View style={styles.loadingState}>
+            <ActivityIndicator color={COLORS.primary} size="large" />
+            <Text style={styles.loadingText}>Searching wider area...</Text>
+          </View>
+        ) : error ? (
+          <View style={styles.errorState}>
+            <Text style={styles.errorEmoji}>😕</Text>
+            <Text style={styles.errorTitle}>{error}</Text>
+            <TouchableOpacity style={styles.retryBtn} onPress={fetchAlternatives} activeOpacity={0.7}>
+              <Text style={styles.retryText}>Try again</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.listContent}>
+            {places.map((place, i) => (
+              <PlaceCard key={i} place={place} />
+            ))}
+          </ScrollView>
+        )}
+      </ScreenBackground>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.bg },
+  screen: { flex: 1 },
 
   header: {
     flexDirection: 'row', alignItems: 'center',
@@ -280,57 +284,53 @@ const styles = StyleSheet.create({
   },
   backArrow:    { color: COLORS.amber, fontSize: 20, lineHeight: 22 },
   headerCenter: { flex: 1, alignItems: 'center' },
-  title:        { fontSize: 28, color: COLORS.textPrimary, fontFamily: 'PlayfairDisplay_800ExtraBold' },
-  subtitle:     { fontSize: 13, color: COLORS.amber, marginTop: 3 },
+  title:        { fontSize: 28, color: COLORS.textPrimary, fontFamily: FONTS.displayHeavy },
+  subtitle:     { fontSize: 13, color: COLORS.textMuted, marginTop: 3, fontFamily: FONTS.body },
 
   listContent: { paddingHorizontal: 20, paddingBottom: 40 },
 
-  card: {
-    backgroundColor: COLORS.surface, borderRadius: 20,
-    borderWidth: 1, borderColor: COLORS.border, marginBottom: 14,
-    overflow: 'hidden',
-  },
+  card: { padding: 0, marginBottom: 14, overflow: 'hidden' },
   cardBody:     { padding: 16, gap: 6 },
   cardTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   cardEmoji:    { fontSize: 18 },
-  cardName:     { flex: 1, fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
+  cardName:     { flex: 1, fontSize: 15, fontFamily: FONTS.display, color: COLORS.textPrimary },
   exciteBadge: {
     backgroundColor: COLORS.amber + '22', borderRadius: 10,
     paddingHorizontal: 7, paddingVertical: 2,
     borderWidth: 1, borderColor: COLORS.amber + '44',
   },
-  exciteText:   { color: COLORS.amber, fontSize: 10, fontWeight: '700' },
+  exciteText:   { color: COLORS.amber, fontSize: 10, fontFamily: FONTS.bodyBold },
 
-  vicinity:     { fontSize: 13, color: COLORS.textMuted, lineHeight: 18, fontStyle: 'italic' },
+  vicinity:     { fontSize: 13, color: COLORS.textMuted, lineHeight: 18, fontStyle: 'italic', fontFamily: FONTS.body },
   metaRow:      { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  metaText:     { fontSize: 13, color: COLORS.textMuted },
-  metaDot:      { fontSize: 13, color: COLORS.border },
-  openText:     { fontSize: 13, color: COLORS.success, fontWeight: '600' },
-  closedText:   { fontSize: 13, color: COLORS.textMuted },
+  metaText:     { fontSize: 13, color: COLORS.textMuted, fontFamily: FONTS.body },
+  metaDot:      { fontSize: 13, color: COLORS.border, fontFamily: FONTS.body },
+  openText:     { fontSize: 13, color: COLORS.success, fontFamily: FONTS.bodySemiBold },
+  closedText:   { fontSize: 13, color: COLORS.textMuted, fontFamily: FONTS.body },
 
   prosConsBlock: { gap: 3 },
-  proLine:  { fontSize: 13, color: COLORS.success, letterSpacing: 0.2 },
-  conLine:  { fontSize: 13, color: COLORS.warning, letterSpacing: 0.2 },
+  proLine:  { fontSize: 13, color: COLORS.success, letterSpacing: 0.2, fontFamily: FONTS.body },
+  conLine:  { fontSize: 13, color: COLORS.warning, letterSpacing: 0.2, fontFamily: FONTS.body },
 
   goBtn: {
-    marginTop: 4, backgroundColor: COLORS.primary, borderRadius: 16,
+    marginTop: 4, backgroundColor: COLORS.accent, borderRadius: 16,
     height: 56, alignItems: 'center', justifyContent: 'center',
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
+    shadowColor: COLORS.accent, shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4, shadowRadius: 12, elevation: 8,
   },
-  goBtnText: { color: COLORS.primaryText, fontSize: 15, fontWeight: '700' },
+  goBtnText: { color: COLORS.primaryText, fontSize: 15, fontFamily: FONTS.bodyBold },
 
   loadingState: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 },
-  loadingText:  { color: COLORS.textMuted, fontSize: 15 },
+  loadingText:  { color: COLORS.textMuted, fontSize: 15, fontFamily: FONTS.body },
 
   errorState: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, paddingHorizontal: 32 },
   errorEmoji: { fontSize: 48 },
-  errorTitle: { fontSize: 15, color: COLORS.textMuted, textAlign: 'center', lineHeight: 22 },
+  errorTitle: { fontSize: 15, color: COLORS.textMuted, textAlign: 'center', lineHeight: 22, fontFamily: FONTS.body },
   retryBtn: {
     marginTop: 8, backgroundColor: COLORS.surface, borderRadius: 16,
     height: 56, paddingHorizontal: 32,
     alignItems: 'center', justifyContent: 'center',
     borderWidth: 1, borderColor: COLORS.border,
   },
-  retryText: { color: COLORS.amber, fontSize: 15, fontWeight: '600' },
+  retryText: { color: COLORS.primary, fontSize: 15, fontFamily: FONTS.bodySemiBold },
 });

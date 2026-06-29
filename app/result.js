@@ -1,10 +1,13 @@
-﻿import { useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Linking, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { COLORS } from '../constants/theme';
+import { COLORS, FONTS, RADII, SHADOWS } from '../constants/theme';
+import ScreenBackground from '../components/brand/ScreenBackground';
+import SectionLabel from '../components/brand/SectionLabel';
+import CTAButton from '../components/brand/CTAButton';
 
 function deriveProsAndCons(rating, userRatingsTotal, isOpenNow) {
   const pros = [];
@@ -14,11 +17,11 @@ function deriveProsAndCons(rating, userRatingsTotal, isOpenNow) {
 
   if (r >= 4.5)                           pros.push('Exceptional rating');
   else if (r >= 4.0)                      pros.push('Highly rated');
-  else if (r > 0 && r < 3.5)              cons.push('Mixed reviews');
+  else if (r > 0 && r < 3.5)             cons.push('Mixed reviews');
 
   if (reviews > 500)                      pros.push('Very popular');
   else if (reviews > 100)                 pros.push('Well established');
-  else if (reviews > 0 && reviews < 20)   cons.push('Few reviews');
+  else if (reviews > 0 && reviews < 20)  cons.push('Few reviews');
 
   if (isOpenNow)                          pros.push('Open right now');
   else                                    cons.push('Check hours');
@@ -116,7 +119,7 @@ function PlaceCard({ place, rank }) {
 
         <TouchableOpacity onPress={handleGo} onPressIn={handlePressIn} onPressOut={handlePressOut} activeOpacity={0.88}>
           <LinearGradient
-            colors={[COLORS.primary, COLORS.primaryDark]}
+            colors={[COLORS.accent, COLORS.accent]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.goBtn}
@@ -150,55 +153,56 @@ export default function ResultScreen() {
 
   return (
     <SafeAreaView style={styles.screen}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()} activeOpacity={0.7}>
-          <Text style={styles.backArrow}>←</Text>
-        </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <Text style={styles.title}>Top Picks</Text>
-          <View style={styles.timeframeBadge}>
-            <Text style={styles.timeframeText}>{timeframeLabel}</Text>
-          </View>
-        </View>
-        <View style={{ width: 40 }} />
-      </View>
-
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.listContent}>
-        {hasResults ? (
-          places.map((place, i) => (
-            <PlaceCard key={i} place={place} rank={i + 1} />
-          ))
-        ) : (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyEmoji}>🔍</Text>
-            <Text style={styles.emptyTitle}>Nothing found nearby</Text>
-            <Text style={styles.emptySubtitle}>
-              Try a different category or check your connection
-            </Text>
-          </View>
-        )}
-
-        {hasResults && (
-          <TouchableOpacity
-            style={styles.differentBtn}
-            activeOpacity={0.7}
-            onPress={() =>
-              router.push({
-                pathname: '/fallback',
-                params: {
-                  knownNames: JSON.stringify(places.map((p) => p.name)),
-                  lat:        params.lat      ?? '',
-                  lng:        params.lng      ?? '',
-                  category:   params.category ?? 'anything',
-                  timeframe,
-                },
-              })
-            }
-          >
-            <Text style={styles.differentBtnText}>🎲  Find something different</Text>
+      <ScreenBackground variant="paper">
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()} activeOpacity={0.7}>
+            <Text style={styles.backArrow}>←</Text>
           </TouchableOpacity>
-        )}
-      </ScrollView>
+          <View style={styles.headerCenter}>
+            <Text style={styles.title}>Top Picks</Text>
+            <View style={styles.timeframeBadge}>
+              <SectionLabel tone="cobalt" style={styles.timeframeText}>{timeframeLabel}</SectionLabel>
+            </View>
+          </View>
+          <View style={{ width: 40 }} />
+        </View>
+
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.listContent}>
+          {hasResults ? (
+            places.map((place, i) => (
+              <PlaceCard key={i} place={place} rank={i + 1} />
+            ))
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyEmoji}>🔍</Text>
+              <Text style={styles.emptyTitle}>Nothing found nearby</Text>
+              <Text style={styles.emptySubtitle}>
+                Try a different category or check your connection
+              </Text>
+            </View>
+          )}
+
+          {hasResults && (
+            <CTAButton
+              title="🎲  Find something different"
+              variant="secondary"
+              style={styles.differentBtn}
+              onPress={() =>
+                router.push({
+                  pathname: '/fallback',
+                  params: {
+                    knownNames: JSON.stringify(places.map((p) => p.name)),
+                    lat:        params.lat      ?? '',
+                    lng:        params.lng      ?? '',
+                    category:   params.category ?? 'anything',
+                    timeframe,
+                  },
+                })
+              }
+            />
+          )}
+        </ScrollView>
+      </ScreenBackground>
     </SafeAreaView>
   );
 }
@@ -220,25 +224,23 @@ const styles = StyleSheet.create({
   },
   backArrow:    { color: COLORS.amber, fontSize: 20, lineHeight: 22 },
   headerCenter: { flex: 1, alignItems: 'center' },
-  title:        { fontSize: 28, color: COLORS.textPrimary, fontFamily: 'PlayfairDisplay_800ExtraBold' },
+  title:        { fontSize: 28, color: COLORS.textPrimary, fontFamily: FONTS.displayHeavy },
   timeframeBadge: {
     marginTop: 4, paddingHorizontal: 10, paddingVertical: 3,
-    borderRadius: 12, backgroundColor: COLORS.amberFaint, borderWidth: 1, borderColor: COLORS.amber + '44',
+    borderRadius: 12, backgroundColor: COLORS.gold + '22', borderWidth: 1, borderColor: COLORS.amber + '44',
   },
-  timeframeText: { color: COLORS.amber, fontSize: 11, fontWeight: '600' },
+  timeframeText: { color: COLORS.primary },
 
   listContent: { paddingHorizontal: 20, paddingBottom: 40 },
 
-  // Place card
+  // Place card — Animated.View requires direct style; uses SHADOWS.card for brand shadow
   card: {
     flexDirection: 'row',
     backgroundColor: COLORS.surface,
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: COLORS.border,
     marginBottom: 14,
-    marginHorizontal: 0,
     overflow: 'hidden',
+    ...SHADOWS.card,
   },
   cardLeft: {
     width: 40,
@@ -250,12 +252,12 @@ const styles = StyleSheet.create({
     width: 26, height: 26, borderRadius: 13,
     backgroundColor: COLORS.amber, alignItems: 'center', justifyContent: 'center',
   },
-  rankText: { color: COLORS.bg, fontSize: 12, fontWeight: '800' },
+  rankText: { color: COLORS.bg, fontSize: 12, fontFamily: FONTS.displayHeavy },
 
   cardBody:     { flex: 1, padding: 14, gap: 6 },
   cardTitleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, paddingRight: 40 },
   cardEmoji:    { fontSize: 18 },
-  cardName:     { flex: 1, fontSize: 24, fontWeight: '700', color: COLORS.textPrimary, lineHeight: 28 },
+  cardName:     { flex: 1, fontSize: 24, fontFamily: FONTS.display, color: COLORS.textPrimary, lineHeight: 28 },
 
   exciteBadge: {
     position: 'absolute', top: 12, right: 12,
@@ -263,39 +265,34 @@ const styles = StyleSheet.create({
     paddingHorizontal: 7, paddingVertical: 2,
     borderWidth: 1, borderColor: COLORS.amber + '44',
   },
-  exciteText: { color: COLORS.amber, fontSize: 10, fontWeight: '700' },
+  exciteText: { color: COLORS.amber, fontSize: 10, fontFamily: FONTS.bodyBold },
 
-  vicinity: { fontSize: 14, color: COLORS.textMuted, lineHeight: 19, fontStyle: 'italic' },
+  vicinity:   { fontSize: 14, color: COLORS.textMuted, lineHeight: 19, fontStyle: 'italic', fontFamily: FONTS.body },
 
   metaRow:    { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  metaText:   { fontSize: 13, color: COLORS.textMuted },
-  metaDot:    { fontSize: 13, color: COLORS.border },
-  openText:   { fontSize: 13, color: COLORS.success, fontWeight: '600' },
-  closedText: { fontSize: 13, color: COLORS.textMuted },
+  metaText:   { fontSize: 13, color: COLORS.textMuted, fontFamily: FONTS.body },
+  metaDot:    { fontSize: 13, color: COLORS.border, fontFamily: FONTS.body },
+  openText:   { fontSize: 13, color: COLORS.success, fontFamily: FONTS.bodySemiBold },
+  closedText: { fontSize: 13, color: COLORS.textMuted, fontFamily: FONTS.body },
 
   prosConsBlock: { gap: 3 },
-  proLine: { fontSize: 13, color: COLORS.success, letterSpacing: 0.2 },
-  conLine: { fontSize: 13, color: COLORS.warning, letterSpacing: 0.2 },
+  proLine: { fontSize: 13, color: COLORS.success, letterSpacing: 0.2, fontFamily: FONTS.body },
+  conLine: { fontSize: 13, color: COLORS.warning, letterSpacing: 0.2, fontFamily: FONTS.body },
 
   goBtn: {
     marginTop: 4, borderRadius: 16, height: 52,
     alignItems: 'center', justifyContent: 'center',
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
+    shadowColor: COLORS.accent, shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.38, shadowRadius: 12, elevation: 8,
   },
-  goBtnText: { color: COLORS.primaryText, fontSize: 15, fontWeight: '700' },
+  goBtnText: { color: COLORS.primaryText, fontSize: 15, fontFamily: FONTS.bodyBold },
 
   // Empty state
   emptyState:    { paddingTop: 80, alignItems: 'center', gap: 12 },
   emptyEmoji:    { fontSize: 48 },
-  emptyTitle:    { fontSize: 20, fontWeight: '700', color: COLORS.textPrimary },
-  emptySubtitle: { fontSize: 15, color: COLORS.textMuted, textAlign: 'center', lineHeight: 20 },
+  emptyTitle:    { fontSize: 20, fontFamily: FONTS.display, color: COLORS.textPrimary },
+  emptySubtitle: { fontSize: 15, color: COLORS.textMuted, textAlign: 'center', lineHeight: 20, fontFamily: FONTS.body },
 
   // "Find something different" button
-  differentBtn: {
-    marginTop: 6,
-    borderRadius: 16, height: 56, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
-  },
-  differentBtnText: { color: COLORS.amber, fontSize: 15, fontWeight: '700' },
+  differentBtn: { marginTop: 6 },
 });
