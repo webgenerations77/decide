@@ -45,21 +45,31 @@ export function gateFeedbackRequest(secretHeader) {
 // Best-effort in-memory rate limit: 5 sends / 10 min per key. State lives only within a warm
 // serverless instance (resets on cold start) — it stops obvious tight-loop spam, not a
 // distributed attacker. When the shared secret is set, all clients share one key/bucket.
+// `hits` is bounded: once it exceeds SWEEP_AT keys, a sweep evicts every fully-expired key.
 const RATE = { max: 5, windowMs: 10 * 60 * 1000 };
+const SWEEP_AT = 1000;
 const hits = new Map();
-function save(key, arr) {
-  if (arr.length) hits.set(key, arr); else hits.delete(key);
+
+function freshTimestamps(arr, now) {
+  return arr.filter((t) => now - t < RATE.windowMs);
 }
 
 export function checkFeedbackRate(key = 'anon') {
   const now = Date.now();
-  const fresh = (hits.get(key) || []).filter((t) => now - t < RATE.windowMs);
+  // Opportunistic eviction: only when the map has grown large, drop keys whose window expired.
+  if (hits.size > SWEEP_AT) {
+    for (const [k, arr] of hits) {
+      const live = freshTimestamps(arr, now);
+      if (live.length) hits.set(k, live); else hits.delete(k);
+    }
+  }
+  const fresh = freshTimestamps(hits.get(key) || [], now);
   if (fresh.length >= RATE.max) {
-    save(key, fresh);
+    hits.set(key, fresh);
     return { ok: false, limited: true };
   }
   fresh.push(now);
-  save(key, fresh);
+  hits.set(key, fresh);
   return { ok: true };
 }
 
