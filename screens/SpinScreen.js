@@ -9,7 +9,10 @@ import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { getDemoSpinResult } from '../services/demoData';
 import { isAtSpinLimit, incrementSpinCount, getRemainingSpins, LIMITS } from '../services/subscriptionService';
-import { COLORS } from '../constants/theme';
+import { COLORS, FONTS, RADII } from '../constants/theme';
+import ScreenBackground from '../components/brand/ScreenBackground';
+import Card from '../components/brand/Card';
+import CTAButton from '../components/brand/CTAButton';
 
 const GOOGLE_KEY  = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 const NEARBY_URL  = 'https://places.googleapis.com/v1/places:searchNearby';
@@ -188,121 +191,123 @@ export default function SpinScreen() {
   const activeCat = CATEGORIES.find((c) => c.id === category);
 
   return (
-    <SafeAreaView style={styles.screen} edges={['top']}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Header */}
-        <Text style={styles.title}>QUICK SPIN</Text>
-        <Text style={styles.sub}>Instant pick, no overthinking</Text>
-        {remainingSpins != null && remainingSpins !== Infinity && (
-          <Text style={styles.remainingText}>{remainingSpins}/{LIMITS.FREE_SPINS_PER_DAY} spins remaining today</Text>
-        )}
-
-        {/* Category pills */}
-        <View style={styles.catRow}>
-          {CATEGORIES.map((cat) => (
-            <TouchableOpacity
-              key={cat.id}
-              style={[styles.catPill, category === cat.id && { backgroundColor: cat.color, borderColor: cat.color }]}
-              onPress={() => { setCategory(cat.id); setResult(null); setError(null); }}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.catPillTxt, category === cat.id && styles.catPillTxtActive]}>
-                {cat.emoji} {cat.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Spin button */}
-        <View style={styles.spinWrap}>
-          {locLoading ? (
-            <ActivityIndicator color={COLORS.amber} size="large" />
-          ) : (
-            <TouchableOpacity
-              style={[styles.spinBtn, { borderColor: activeCat.color + '88', shadowColor: activeCat.color }]}
-              onPress={spin}
-              disabled={spinning || !coords}
-              activeOpacity={0.7}
-            >
-              <Animated.Text style={[styles.spinEmoji, { transform: [{ rotate: spinRotation }] }]}>
-                {spinning ? '🎲' : activeCat.emoji}
-              </Animated.Text>
-              <Text style={[styles.spinLabel, spinning && styles.spinLabelActive]}>
-                {spinning ? 'SPINNING...' : 'SPIN'}
-              </Text>
-            </TouchableOpacity>
+    <ScreenBackground variant="paper">
+      <SafeAreaView style={styles.screen} edges={['top']}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Header */}
+          <Text style={styles.title}>QUICK SPIN</Text>
+          <Text style={styles.sub}>Instant pick, no overthinking</Text>
+          {remainingSpins != null && remainingSpins !== Infinity && (
+            <Text style={styles.remainingText}>{remainingSpins}/{LIMITS.FREE_SPINS_PER_DAY} spins remaining today</Text>
           )}
-        </View>
 
-        {/* Result card */}
-        {result && !spinning && (
-          <Animated.View style={[styles.resultCard, { borderLeftColor: result.categoryColor, transform: [{ scale: cardScale }] }]}>
-            <View style={styles.resultHeader}>
-              <Text style={styles.resultEmoji}>{result.categoryEmoji}</Text>
-              <Text style={styles.resultName} numberOfLines={2}>{result.name}</Text>
-            </View>
-            {result.summary ? (
-              <Text style={styles.resultReason} numberOfLines={3}>{result.summary}</Text>
-            ) : null}
-            {result.address ? (
-              <Text style={styles.resultAddress} numberOfLines={1}>📍 {result.address}</Text>
-            ) : null}
-            {result.rating > 0 ? (
-              <Text style={styles.resultRating}>⭐ {result.rating.toFixed(1)}</Text>
-            ) : null}
-
-            <View style={styles.resultActions}>
-              <TouchableOpacity style={styles.goBtn} onPress={handleGo} activeOpacity={0.7}>
-                <Text style={styles.goBtnTxt}>LET'S GO →</Text>
+          {/* Category pills */}
+          <View style={styles.catRow}>
+            {CATEGORIES.map((cat) => (
+              <TouchableOpacity
+                key={cat.id}
+                style={[styles.catPill, category === cat.id && { backgroundColor: cat.color, borderColor: cat.color }]}
+                onPress={() => { setCategory(cat.id); setResult(null); setError(null); }}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.catPillTxt, category === cat.id && styles.catPillTxtActive]}>
+                  {cat.emoji} {cat.label}
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.againBtn} onPress={spin} activeOpacity={0.7}>
-                <Text style={styles.againBtnTxt}>🎲 Spin Again</Text>
-              </TouchableOpacity>
-            </View>
-          </Animated.View>
-        )}
-
-        {/* Error */}
-        {error && !spinning && (
-          <View style={styles.errorBox}>
-            <Text style={styles.errorTxt}>{error}</Text>
-            <TouchableOpacity style={styles.retryBtn} onPress={spin} activeOpacity={0.7}>
-              <Text style={styles.retryBtnTxt}>Try Again</Text>
-            </TouchableOpacity>
+            ))}
           </View>
-        )}
-      </ScrollView>
-    </SafeAreaView>
+
+          {/* Spin button */}
+          <View style={styles.spinWrap}>
+            {locLoading ? (
+              <ActivityIndicator color={COLORS.primary} size="large" />
+            ) : (
+              <TouchableOpacity
+                style={[styles.spinBtn, { borderColor: activeCat.color + '88', shadowColor: activeCat.color }]}
+                onPress={spin}
+                disabled={spinning || !coords}
+                activeOpacity={0.7}
+              >
+                <Animated.Text style={[styles.spinEmoji, { transform: [{ rotate: spinRotation }] }]}>
+                  {spinning ? '🎲' : activeCat.emoji}
+                </Animated.Text>
+                <Text style={[styles.spinLabel, spinning && styles.spinLabelActive]}>
+                  {spinning ? 'SPINNING...' : 'SPIN'}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* Result card */}
+          {result && !spinning && (
+            <Animated.View style={{ transform: [{ scale: cardScale }], width: '100%' }}>
+              <Card style={{ borderLeftWidth: 3, borderLeftColor: result.categoryColor, gap: 8, overflow: 'hidden', borderWidth: 0.5, borderColor: COLORS.border }}>
+                <View style={styles.resultHeader}>
+                  <Text style={styles.resultEmoji}>{result.categoryEmoji}</Text>
+                  <Text style={styles.resultName} numberOfLines={2}>{result.name}</Text>
+                </View>
+                {result.summary ? (
+                  <Text style={styles.resultReason} numberOfLines={3}>{result.summary}</Text>
+                ) : null}
+                {result.address ? (
+                  <Text style={styles.resultAddress} numberOfLines={1}>📍 {result.address}</Text>
+                ) : null}
+                {result.rating > 0 ? (
+                  <Text style={styles.resultRating}>⭐ {result.rating.toFixed(1)}</Text>
+                ) : null}
+
+                <View style={styles.resultActions}>
+                  <CTAButton variant="go" title="LET'S GO →" onPress={handleGo} style={{ flex: 1 }} />
+                  <TouchableOpacity style={styles.againBtn} onPress={spin} activeOpacity={0.7}>
+                    <Text style={styles.againBtnTxt}>🎲 Spin Again</Text>
+                  </TouchableOpacity>
+                </View>
+              </Card>
+            </Animated.View>
+          )}
+
+          {/* Error */}
+          {error && !spinning && (
+            <View style={styles.errorBox}>
+              <Text style={styles.errorTxt}>{error}</Text>
+              <TouchableOpacity style={styles.retryBtn} onPress={spin} activeOpacity={0.7}>
+                <Text style={styles.retryBtnTxt}>Try Again</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </ScrollView>
+      </SafeAreaView>
+    </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.bg },
+  screen: { flex: 1 },
   scrollContent: {
     paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40,
     alignItems: 'center',
   },
 
   title: {
-    fontSize: 28, fontWeight: '800', color: COLORS.textPrimary,
+    fontFamily: FONTS.displayHeavy,
+    fontSize: 28, color: COLORS.textPrimary,
     letterSpacing: 5, textAlign: 'center',
-    textShadowColor: COLORS.primaryDark, textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 14,
   },
-  sub:           { fontSize: 13, color: COLORS.amber, marginTop: 6, marginBottom: 8 },
-  remainingText: { fontSize: 11, color: COLORS.textMuted, marginBottom: 16 },
+  sub:           { fontFamily: FONTS.body, fontSize: 13, color: COLORS.gold, marginTop: 6, marginBottom: 8 },
+  remainingText: { fontFamily: FONTS.mono, fontSize: 11, color: COLORS.textMuted, marginBottom: 16 },
 
   // Category pills
   catRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginBottom: 32 },
   catPill: {
-    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 16,
+    paddingHorizontal: 14, paddingVertical: 8, borderRadius: RADII.lg,
     backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
   },
-  catPillTxt:       { fontSize: 13, fontWeight: '600', color: COLORS.amber },
-  catPillTxtActive: { color: COLORS.bg },
+  catPillTxt:       { fontFamily: FONTS.bodySemiBold, fontSize: 13, color: COLORS.textSecondary },
+  catPillTxtActive: { color: COLORS.surface },
 
   // Spin button
   spinWrap: { marginBottom: 32, alignItems: 'center' },
@@ -313,48 +318,36 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.5, shadowRadius: 20, elevation: 12,
   },
   spinEmoji:       { fontSize: 52 },
-  spinLabel:       { fontSize: 12, fontWeight: '800', color: COLORS.amber, letterSpacing: 3 },
-  spinLabelActive: { color: COLORS.primary },
+  spinLabel:       { fontFamily: FONTS.bodyBold, fontSize: 12, color: COLORS.primary, letterSpacing: 3 },
+  spinLabelActive: { color: COLORS.accent },
 
-  // Result card
-  resultCard: {
-    width: '100%', backgroundColor: COLORS.surface,
-    borderRadius: 16, borderWidth: 0.5, borderColor: COLORS.border, borderLeftWidth: 3,
-    padding: 16, gap: 8, overflow: 'hidden',
-  },
+  // Result card styles (Card primitive handles bg/radius/shadow/padding)
   resultHeader:  { flexDirection: 'row', alignItems: 'center', gap: 10 },
   resultEmoji:   { fontSize: 24 },
-  resultName:    { flex: 1, fontSize: 15, fontWeight: '800', color: COLORS.textPrimary },
-  resultReason:  { fontSize: 13, color: COLORS.textSecondary, lineHeight: 18, fontStyle: 'italic' },
-  resultAddress: { fontSize: 13, color: COLORS.textSecondary },
-  resultRating:  { fontSize: 13, color: COLORS.amber },
+  resultName:    { fontFamily: FONTS.displayHeavy, flex: 1, fontSize: 15, color: COLORS.textPrimary },
+  resultReason:  { fontFamily: FONTS.body, fontSize: 13, color: COLORS.textSecondary, lineHeight: 18, fontStyle: 'italic' },
+  resultAddress: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.textSecondary },
+  resultRating:  { fontFamily: FONTS.body, fontSize: 13, color: COLORS.gold },
 
   resultActions: { flexDirection: 'row', gap: 10, marginTop: 4 },
-  goBtn: {
-    flex: 1, backgroundColor: COLORS.primary, borderRadius: 16,
-    height: 56, alignItems: 'center', justifyContent: 'center',
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4, shadowRadius: 10, elevation: 8,
-  },
-  goBtnTxt: { color: COLORS.primaryText, fontSize: 14, fontWeight: '800', letterSpacing: 1 },
   againBtn: {
-    paddingHorizontal: 16, borderRadius: 16,
+    paddingHorizontal: 16, borderRadius: RADII.lg,
     height: 56, justifyContent: 'center',
     backgroundColor: COLORS.surfaceAlt, borderWidth: 1, borderColor: COLORS.border,
     alignItems: 'center',
   },
-  againBtnTxt: { fontSize: 13, color: COLORS.amber, fontWeight: '600' },
+  againBtnTxt: { fontFamily: FONTS.bodySemiBold, fontSize: 13, color: COLORS.textSecondary },
 
   // Error
   errorBox: {
-    marginTop: 16, backgroundColor: COLORS.surfaceAlt, borderRadius: 12,
+    marginTop: 16, backgroundColor: COLORS.surfaceAlt, borderRadius: RADII.md,
     borderWidth: 1, borderColor: COLORS.error + '44', padding: 14,
   },
-  errorTxt: { fontSize: 13, color: COLORS.error, textAlign: 'center', marginBottom: 8 },
+  errorTxt: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.error, textAlign: 'center', marginBottom: 8 },
   retryBtn: {
     backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
-    borderRadius: 16, paddingHorizontal: 24, height: 40,
+    borderRadius: RADII.lg, paddingHorizontal: 24, height: 40,
     alignItems: 'center', justifyContent: 'center', alignSelf: 'center',
   },
-  retryBtnTxt: { color: COLORS.amber, fontSize: 13, fontWeight: '700' },
+  retryBtnTxt: { fontFamily: FONTS.bodyBold, fontSize: 13, color: COLORS.primary },
 });
