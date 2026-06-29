@@ -113,6 +113,17 @@ before implementing.
 
 ---
 
+## 5b. Beta feedback — production hardening  (before exposing `/api/feedback` beyond beta)
+The beta-tester feature is built (branch `feat/beta-tester-feedback`, final review clean). Two
+production-only gaps the review flagged, deliberately out of beta scope:
+- `/api/feedback` has **no auth/rate-limiting** — anyone can POST and trigger an email, and
+  `userEmail`/`userName` are client-supplied (spoofable). Fine for a single-tester beta; add a
+  shared-secret header or rate-limit before public exposure.
+- Resend sender is the **sandbox `onboarding@resend.dev`** (only delivers to the account owner).
+  Switch to a verified-domain sender (`feedback@<domain>`) to email anyone.
+- Optional cosmetic: `BetaBanner` still shows on `/beta-guide` (spec said this is fine; the feedback
+  button is already hidden there). Hide the banner too if the overlap on the guide header bothers you.
+
 ## 6. Full brand-consistency audit  (do AFTER the beta-tester feature merges — user-requested 2026-06-29)
 Sweep every screen for off-brand logos/colors/headers and fix. The brand reskin already landed on
 auth/onboarding/splash (they use `components/brand/BrandLogo`), but gaps remain. Known findings so far:
