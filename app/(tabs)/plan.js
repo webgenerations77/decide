@@ -941,7 +941,7 @@ export default function PlanScreen() {
             <Animated.View style={[styles.landingHero, { opacity: logoAnim, transform: [{ scale: logoScale }] }]}>
               <BrandLogo variant="stacked" size={80} />
               <Text style={styles.landingHeroTag}>
-                {displayName ? `Hey ${displayName} — your day, decided.` : 'Your day, decided by Cheddar.'}
+                {displayName ? `Hey ${displayName} — your day, decided.` : 'Your day, decided.'}
               </Text>
             </Animated.View>
 
