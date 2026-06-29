@@ -6,12 +6,12 @@
 
 export const COLORS = {
   // ── Backgrounds — warm paper/cream ────────────────────────────────────────
-  bg:         '#FCF9F4',   // paper — default screen background
+  bg:         '#F6EEDF',   // paper — default screen background (subtly darker so white cards pop)
   surface:    '#FFFFFF',   // white card surface
-  surfaceAlt: '#F6F0E6',   // cream — secondary surface / grouped sections
+  surfaceAlt: '#ECE3D1',   // cream — secondary surface / grouped sections (stepped below the darker paper)
 
   // ── Borders ───────────────────────────────────────────────────────────────
-  border:      '#ECE2CF',  // warm hairline
+  border:      '#E4D9C4',  // warm hairline (harmonized for darker paper)
   borderLight: '#E6EDFB',  // cool/sky hairline
 
   // ── Primary — cobalt (the confident lead) ─────────────────────────────────
