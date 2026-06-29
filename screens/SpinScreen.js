@@ -15,6 +15,11 @@ import Card from '../components/brand/Card';
 import CTAButton from '../components/brand/CTAButton';
 import { searchNearbyPlaces } from '../services/placesService';
 
+const PRICE_ENUM_TO_NUM = {
+  PRICE_LEVEL_INEXPENSIVE: 1, PRICE_LEVEL_MODERATE: 2,
+  PRICE_LEVEL_EXPENSIVE: 3, PRICE_LEVEL_VERY_EXPENSIVE: 4,
+};
+
 const CATEGORIES = [
   { id: 'surprise',  label: 'Surprise Me', emoji: '🎲', color: COLORS.primary,
     types: ['restaurant','cafe','art_gallery','park','museum','movie_theater','bowling_alley'] },
@@ -35,16 +40,17 @@ async function fetchNearbyPlaces(lat, lng, types) {
       maxResultCount: 20,
       includedTypes: types,
     },
-    'places.id,places.displayName,places.formattedAddress,places.rating,places.editorialSummary,places.location',
+    'places.id,places.displayName,places.formattedAddress,places.rating,places.editorialSummary,places.location,places.priceLevel',
   );
   return (data.places ?? []).map((p) => ({
-    name:     p.displayName?.text ?? '',
-    place_id: p.id ?? '',
-    address:  p.formattedAddress ?? '',
-    rating:   p.rating ?? 0,
-    summary:  p.editorialSummary?.text ?? null,
-    lat:      p.location?.latitude ?? lat,
-    lng:      p.location?.longitude ?? lng,
+    name:        p.displayName?.text ?? '',
+    place_id:    p.id ?? '',
+    address:     p.formattedAddress ?? '',
+    rating:      p.rating ?? 0,
+    summary:     p.editorialSummary?.text ?? null,
+    lat:         p.location?.latitude ?? lat,
+    lng:         p.location?.longitude ?? lng,
+    price_level: PRICE_ENUM_TO_NUM[p.priceLevel] ?? null,
   }));
 }
 
@@ -241,6 +247,9 @@ export default function SpinScreen() {
                 {result.rating > 0 ? (
                   <Text style={styles.resultRating}>⭐ {result.rating.toFixed(1)}</Text>
                 ) : null}
+                {result.price_level ? (
+                  <Text style={styles.resultPrice}>{['', '$', '$$', '$$$', '$$$$'][result.price_level] ?? ''}</Text>
+                ) : null}
 
                 <View style={styles.resultActions}>
                   <CTAButton variant="cobalt" title="LET'S GO →" onPress={handleGo} style={{ flex: 1 }} />
@@ -310,6 +319,7 @@ const styles = StyleSheet.create({
   resultReason:  { fontFamily: FONTS.body, fontSize: 13, color: COLORS.textSecondary, lineHeight: 18, fontStyle: 'italic' },
   resultAddress: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.textSecondary },
   resultRating:  { fontFamily: FONTS.body, fontSize: 13, color: COLORS.goldText },
+  resultPrice:   { fontFamily: FONTS.bodySemiBold, fontSize: 14, color: COLORS.primary },
 
   resultActions: { flexDirection: 'row', gap: 10, marginTop: 4 },
   againBtn: {

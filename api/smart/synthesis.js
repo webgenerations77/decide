@@ -17,6 +17,8 @@ export function buildSynthesisPrompt({ places, finds, anchors, ctx }) {
   const user = `City: ${ctx.location}
 Window: ${ctx.startTime} to ${ctx.endTime}. Group: ${p.group_type || 'couple'}. Pace: ${p.pace || 'moderate'}. Budget: ${p.budget || '$$'}.
 Dietary: ${(p.dietary || []).join(', ') || 'none'}.
+Requested activity styles: ${(p.activityStyles || []).join(', ') || 'none'}.
+What they said for this trip: "${ctx.tripNote || ''}".
 
 ## Anchors — build the day around these (they are the point)
 ${anchorBlock}
@@ -32,7 +34,11 @@ Rules:
 - For an anchor or find used as a stop: set place_id to "find_" + a slug of its name, use its lat/lng, set category to its category, and add "provenance": {"interest","sourceLabel","why"}.
 - Fill remaining stops from the Google places (use their exact place_id/lat/lng).
 - Include lunch if midday is in the window and dinner if evening is. Match budget. Don't repeat a place.
+- Do not include bars, breweries, or alcohol-serving venues as stops unless the user explicitly requested them OR the venue is hosting live music on this date (a stop whose provenance interest is "live music").
 - ${p.pace === 'relaxed' ? '4–5' : p.pace === 'packed' ? '7–8' : '5–6'} stops.
+- Balance activity types: include at most 1–2 stops of any single activity type, no matter how strongly it was requested. If the traveler asked for multiple activity types, represent each of them across the day rather than over-filling one.
+- If a requested activity type cannot be sourced from the anchors, finds, or places, add a short note stop or call it out in a stop's reason rather than silently dropping it.
+- If a stop is a live-music venue (provenance interest "live music"), copy its show info into a "live_music" field on the stop: {"note": the find's snippet}.
 
 Return a JSON array. Each stop: time, duration_mins, category, name, place_id, address, lat, lng, reason, excitement_score, admission_cost ("Free" | "$15/adult" | "Prices vary — check website" | null for food/shopping), and provenance (only for anchor/find stops).`;
 
@@ -41,16 +47,20 @@ Return a JSON array. Each stop: time, duration_mins, category, name, place_id, a
 
 export function validateStops(raw) {
   const arr = Array.isArray(raw) ? raw : [];
+  const isMusic = (s) => !!s.live_music || s.provenance?.interest === 'live music';
   return arr.filter((s) =>
     s && s.time && s.name && s.category &&
-    (s.lat === 0 || typeof s.lat === 'number') && (s.lng === 0 || typeof s.lng === 'number')
+    (((s.lat === 0 || typeof s.lat === 'number') && (s.lng === 0 || typeof s.lng === 'number')) || isMusic(s))
   ).map((s) => ({
     time: s.time, duration_mins: Number(s.duration_mins) || 60, category: s.category,
     name: s.name, place_id: s.place_id || `stop_${Math.round((s.lat || 0) * 1000)}`,
-    address: s.address || '', lat: s.lat, lng: s.lng,
+    address: s.address || '',
+    lat: typeof s.lat === 'number' ? s.lat : null,
+    lng: typeof s.lng === 'number' ? s.lng : null,
     reason: s.reason || '', excitement_score: Number(s.excitement_score) || 70,
     admission_cost: s.admission_cost ?? null,
     ...(s.provenance ? { provenance: s.provenance } : {}),
+    ...(s.live_music ? { live_music: s.live_music } : {}),
   }));
 }
 

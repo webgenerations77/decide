@@ -308,6 +308,14 @@ function PlaceDetailModal({ visible, stop, onClose }) {
                 </View>
               )}
 
+              {stop.live_music?.note ? (
+                <View style={styles.admissionRow}>
+                  <Ionicons name="musical-notes-outline" size={14} color={COLORS.primary} />
+                  <Text style={styles.admissionLabel}>Live music</Text>
+                  <Text style={styles.admissionValue}>{stop.live_music.note}</Text>
+                </View>
+              ) : null}
+
               {detailLoading && <ActivityIndicator color={COLORS.primary} style={{ marginVertical: 20 }} />}
 
               {stop.place_id?.startsWith('nps_')  && <View style={styles.detailSourceBadge}><Text style={styles.detailSourceTxt}>🌲 National Park Service</Text></View>}
@@ -476,10 +484,34 @@ function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, 
             </View>
           )}
 
+          {stop.live_music?.note ? (
+            <View style={styles.liveMusicBadge}>
+              <Ionicons name="musical-notes-outline" size={12} color={COLORS.primary} style={{ marginRight: 4 }} />
+              <Text style={styles.liveMusicTxt} numberOfLines={1}>{stop.live_music.note}</Text>
+            </View>
+          ) : null}
+
           {isFood && stop.price_level ? (
             <TouchableOpacity onPress={() => setShowLegend(true)} activeOpacity={0.7} style={styles.pricePill}>
               <Text style={styles.pricePillTxt}>{['', '$', '$$', '$$$', '$$$$'][stop.price_level] ?? ''} ⓘ</Text>
             </TouchableOpacity>
+          ) : null}
+
+          {(stop.website || stop.phone) ? (
+            <View style={styles.contactRow}>
+              {stop.phone ? (
+                <TouchableOpacity style={styles.contactBtn} onPress={() => Linking.openURL(`tel:${stop.phone}`)} activeOpacity={0.7}>
+                  <Ionicons name="call-outline" size={13} color={COLORS.primary} style={{ marginRight: 4 }} />
+                  <Text style={styles.contactBtnTxt}>Call</Text>
+                </TouchableOpacity>
+              ) : null}
+              {stop.website ? (
+                <TouchableOpacity style={styles.contactBtn} onPress={() => Linking.openURL(stop.website)} activeOpacity={0.7}>
+                  <Ionicons name="globe-outline" size={13} color={COLORS.primary} style={{ marginRight: 4 }} />
+                  <Text style={styles.contactBtnTxt}>Website</Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
           ) : null}
 
           {stop.reason ? (
@@ -898,9 +930,12 @@ export default function PlanScreen() {
     const encode = (s) => s.lat && s.lng
       ? `${s.lat},${s.lng}`
       : encodeURIComponent(s.address || s.name);
-    const stops = itinerary.map(encode);
-    let url = `https://www.google.com/maps/dir/?api=1&origin=${stops[0]}&destination=${stops[stops.length - 1]}&travelmode=driving`;
-    if (stops.length > 2) url += `&waypoints=${stops.slice(1, -1).join('|')}`;
+    const stopStrs = itinerary.map(encode);
+    const originStr = coords?.latitude && coords?.longitude
+      ? `${coords.latitude},${coords.longitude}` : null;
+    const points = originStr ? [originStr, ...stopStrs] : stopStrs;
+    let url = `https://www.google.com/maps/dir/?api=1&origin=${points[0]}&destination=${points[points.length - 1]}&travelmode=driving`;
+    if (points.length > 2) url += `&waypoints=${points.slice(1, -1).join('|')}`;
     Linking.openURL(url);
   };
 
@@ -912,7 +947,9 @@ export default function PlanScreen() {
 
   const locationPillText = `${isManual ? '📌 ' : '📍 '}${locationLabel}`;
   const hasItinerary     = Array.isArray(itinerary) && itinerary.length > 0;
-  const weatherPillText  = weather
+  const weatherPillText  = weather?.beyondForecast
+    ? `🗓 Extended forecast not available — check back closer to your trip · ${meta?.time_window ?? `${startTime} – ${endTime}`}`
+    : weather
     ? `${weather.emoji ?? ''} ${weather.condition} · ${weather.temp_f}°F${weather.wind_speed_mph ? ` · 💨 ${weather.wind_speed_mph}mph` : ''} · ${meta?.time_window ?? `${startTime} – ${endTime}`}`
     : `${startTime} – ${endTime}`;
 
@@ -1075,6 +1112,12 @@ export default function PlanScreen() {
                         </View>
                       ))}
                   </View>
+                  {meta.cost_summary ? (
+                    <View style={styles.costSummaryRow}>
+                      <Ionicons name="wallet-outline" size={14} color={COLORS.primary} style={{ marginRight: 5 }} />
+                      <Text style={styles.costSummaryTxt}>{meta.cost_summary}</Text>
+                    </View>
+                  ) : null}
                   {research?.hadLiveData && (
                     <Text style={styles.liveDataNote}>
                       ✨ Cheddar checked what's happening this week
@@ -1384,6 +1427,8 @@ const styles = StyleSheet.create({
   metaChipText:     { color: COLORS.textSecondary, fontSize: 11, fontFamily: FONTS.bodySemiBold },
   metaChipTimeText: { color: COLORS.textSecondary },
   liveDataNote:     { color: COLORS.teal, fontSize: 11, fontStyle: 'italic', marginTop: 10, textAlign: 'center' },
+  costSummaryRow:   { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
+  costSummaryTxt:   { fontFamily: FONTS.bodySemiBold, fontSize: 13, color: COLORS.primary },
 
   // Stop card + timeline
   stopRow:     { flexDirection: 'row', marginBottom: 14 },
@@ -1425,6 +1470,8 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: COLORS.gold + '44',
   },
   admissionBadgeTxt: { fontSize: 12, color: COLORS.goldText, fontFamily: FONTS.bodySemiBold },
+  liveMusicBadge: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', marginTop: 6, paddingHorizontal: 8, paddingVertical: 4, borderRadius: RADII.sm, backgroundColor: COLORS.sky100 },
+  liveMusicTxt:   { fontFamily: FONTS.bodyMedium, fontSize: 12, color: COLORS.primary },
 
   // Price tier pill
   pricePill: {
@@ -1434,6 +1481,11 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: COLORS.gold + '44',
   },
   pricePillTxt: { fontSize: 12, color: COLORS.goldText, fontFamily: FONTS.bodyBold },
+
+  // Contact links (website / call)
+  contactRow:    { flexDirection: 'row', gap: 8, marginTop: 8 },
+  contactBtn:    { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 5, borderRadius: RADII.sm, borderWidth: 1, borderColor: COLORS.borderLight, backgroundColor: COLORS.surface },
+  contactBtnTxt: { fontFamily: FONTS.bodySemiBold, fontSize: 12, color: COLORS.primary },
 
   // Reason row
   reasonRow: {

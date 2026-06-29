@@ -1,4 +1,5 @@
 import { runSmartEngine } from './smart/index.js';
+import { computeCostSummary, pickForecastForDate, attachPriceLevels } from './itineraryHelpers.js';
 
 const GOOGLE_KEY    = process.env.GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 const NPS_KEY       = process.env.EXPO_PUBLIC_NPS_API_KEY;
@@ -94,16 +95,21 @@ function getWeatherEmoji(c) {
   return '🌤';
 }
 
-async function fetchWeather(lat, lng) {
-  const key = cacheKey(lat, lng);
+async function fetchWeather(lat, lng, dateISO) {
+  const key = `${cacheKey(lat, lng)}@${dateISO}`;
   const cached = cacheGet(weatherCache, key);
   if (cached) return cached;
   try {
     const res = await fetch(`https://wttr.in/${lat},${lng}?format=j1`);
     const data = await res.json();
-    const c = data.current_condition?.[0]; if (!c) return null;
-    const condition = c.weatherDesc?.[0]?.value ?? 'Clear';
-    const result = { condition, emoji: getWeatherEmoji(condition), temp_f: c.temp_F, feels_like_f: c.FeelsLikeF, wind_speed_mph: c.windspeedMiles ?? null, wind_dir: c.winddir16Point ?? null };
+    const f = pickForecastForDate(data, dateISO);
+    if (!f) return null;
+    if (f.beyondForecast) {
+      const result = { beyondForecast: true, condition: null, emoji: '🗓', temp_f: null, feels_like_f: null, wind_speed_mph: null, wind_dir: null };
+      cacheSet(weatherCache, key, result);
+      return result;
+    }
+    const result = { condition: f.condition, emoji: getWeatherEmoji(f.condition), temp_f: f.temp_f, feels_like_f: f.feels_like_f, wind_speed_mph: f.wind_speed_mph, wind_dir: f.wind_dir, beyondForecast: false };
     cacheSet(weatherCache, key, result);
     return result;
   } catch { return null; }
@@ -159,6 +165,25 @@ async function enrichWithDrivingTimes(itinerary) {
   return updated;
 }
 
+async function fetchStopDetails(placeId) {
+  if (!GOOGLE_KEY || !placeId || /^(demo_|nps_|ridb_|fallback_|find_|stop_)/.test(placeId)) return null;
+  try {
+    const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=website,formatted_phone_number&key=${GOOGLE_KEY}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    return { website: data.result?.website ?? null, phone: data.result?.formatted_phone_number ?? null };
+  } catch { return null; }
+}
+
+async function enrichWithContactLinks(itinerary) {
+  const out = await Promise.all(itinerary.map(async (stop) => {
+    if (stop.website || stop.phone) return stop;
+    const d = await fetchStopDetails(stop.place_id);
+    return d ? { ...stop, website: d.website, phone: d.phone } : stop;
+  }));
+  return out;
+}
+
 function extractJSON(text) { const m = text.match(/```(?:json)?\s*([\s\S]*?)```/); return m ? m[1].trim() : text.trim(); }
 function timeToMinutes(t) { const [time,period]=t.split(' '); const [h,m='0']=time.split(':'); let hour=parseInt(h,10); if(period==='PM'&&hour!==12)hour+=12; if(period==='AM'&&hour===12)hour=0; return hour*60+parseInt(m,10); }
 function minutesToTime(total) { const h=Math.floor(total/60)%24,m=total%60,ampm=h>=12?'PM':'AM',h12=h===0?12:h>12?h-12:h; return `${h12}:${String(m).padStart(2,'0')} ${ampm}`; }
@@ -187,21 +212,20 @@ export default async function handler(req, res) {
     const { pace='moderate', budget='$$', group_type='couple', cuisines=[], activityStyles=[], dietary=[] } = preferences;
     const { dislikedPlaces=[], likedPlaces=[], dislikedReasons=[] } = feedback;
 
+    const dateObj=date?new Date(date):new Date();
+    const dayOfWeek=dateObj.toLocaleDateString('en-US',{weekday:'long'});
+    const formattedDate=dateObj.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+    const travelDateISO=dateObj.toISOString().slice(0,10);
+
     const [places, weather, geoInfo] = await Promise.all([
       fetchAllPlaces(latitude, longitude),
-      fetchWeather(latitude, longitude),
+      fetchWeather(latitude, longitude, travelDateISO),
       reverseGeocode(latitude, longitude),
     ]);
     const { food, activity, shopping, outdoor } = places;
     const { city, state } = geoInfo;
 
-    const dateObj=date?new Date(date):new Date();
-    const dayOfWeek=dateObj.toLocaleDateString('en-US',{weekday:'long'});
-    const formattedDate=dateObj.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
-    const windStr=weather?.wind_speed_mph?` · Wind ${weather.wind_speed_mph}mph${weather.wind_dir?` ${weather.wind_dir}`:''}`:'';
-    const weatherStr=weather?`${weather.emoji} ${weather.condition}, ${weather.temp_f}°F (feels like ${weather.feels_like_f}°F)${windStr}`:'Weather data unavailable';
     const cityStr=city?`${city}${state?`, ${state}`:''}`:'the local area';
-    const travelDateISO=dateObj.toISOString().slice(0,10);
 
     const [npsParks, ridbFacilities] = await Promise.all([
       fetchNPSParks(city, state),
@@ -233,8 +257,12 @@ export default async function handler(req, res) {
       itinerary = buildFallbackItinerary({ food, activity, shopping, outdoor: allOutdoor, startTime, endTime, pace, lat: latitude, lng: longitude });
       isFallback = true;
     }
-    const enriched=await enrichWithDrivingTimes(itinerary);
-    return res.json({itinerary:enriched,weather,meta:{date:formattedDate,day_of_week:dayOfWeek,time_window:`${startTime} – ${endTime}`,preferences:{pace,budget,group_type},city:cityStr},discovery:{hadLiveData:smart.hadLiveData,findCount:smart.finds.length,anchorCount:smart.anchors.length,anchors:smart.anchors.map((a)=>({title:a.find?.title,interest:a.find?.interest,why:a.rationale}))},generated_at:new Date().toISOString(),isFallback});
+    const withLinks = await enrichWithContactLinks(itinerary);
+    const enriched=await enrichWithDrivingTimes(withLinks);
+    const allPlaces = [...food, ...activity, ...shopping, ...allOutdoor];
+    const priced = attachPriceLevels(enriched, allPlaces);
+    const costSummary = computeCostSummary(priced);
+    return res.json({itinerary:priced,weather,meta:{date:formattedDate,day_of_week:dayOfWeek,time_window:`${startTime} – ${endTime}`,preferences:{pace,budget,group_type},city:cityStr,cost_summary:costSummary?.label??null},discovery:{hadLiveData:smart.hadLiveData,findCount:smart.finds.length,anchorCount:smart.anchors.length,anchors:smart.anchors.map((a)=>({title:a.find?.title,interest:a.find?.interest,why:a.rationale}))},generated_at:new Date().toISOString(),isFallback});
   } catch(err) {
     console.error('[itinerary] error:',err);
     return res.status(500).json({error:err.message});

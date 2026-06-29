@@ -1,4 +1,5 @@
 import { firecrawlSearch } from './firecrawl.js';
+import { runLiveMusic, wantsLiveMusic } from './liveMusic.js';
 
 // Interest tag → OSM tag the Overpass backbone queries. Add new rows here.
 export const INTEREST_OSM_TAGS = {
@@ -15,6 +16,16 @@ export const INTEREST_OSM_TAGS = {
 };
 
 const norm = (s) => (s || '').toLowerCase().trim();
+
+const ALCOHOL_STYLE_RE = /bar|brewer|beer|wine|cocktail|drink|pub|distiller/i;
+
+// True only when the user explicitly asked for drinking venues — via an activity
+// style or a mention in their trip note. Used to gate the brewery data source so
+// breweries are not injected as default filler.
+export function wantsAlcohol(prefs = {}, tripNote = '') {
+  const styles = (prefs.activityStyles || []).join(' ');
+  return ALCOHOL_STYLE_RE.test(styles) || ALCOHOL_STYLE_RE.test(tripNote || '');
+}
 
 export function matchesInterest(source, interest) {
   const n = norm(interest);
@@ -55,6 +66,7 @@ async function runPinball(ctx, interest) {
 }
 
 async function runBrewery(ctx, interest) {
+  if (!wantsAlcohol(ctx.prefs, ctx.tripNote)) return [];
   const { latitude, longitude } = ctx.coords;
   const res = await fetch(`https://api.openbrewerydb.org/v1/breweries?by_dist=${latitude},${longitude}&per_page=8`);
   if (!res.ok) throw new Error(`brewery ${res.status}`);
@@ -120,6 +132,8 @@ export const SOURCES = [
   { key: 'surf',       match: ['surf', 'surfing', 'waves'], run: runSurf },
   { key: 'tides',      match: ['tides', 'tide', 'beach walk', 'tide pools'], run: runTides },
   { key: 'goldenhour', match: ['sunset', 'sunrise', 'golden hour', 'stargazing'], run: runGoldenHour },
+  { key: 'livemusic', match: ['live music', 'concert', 'show', 'band', 'gig', 'dj'],
+    run: async (ctx, interest) => (wantsLiveMusic(ctx.prefs, ctx.tripNote) ? runLiveMusic(ctx, interest) : []) },
   SEARCH_FALLBACK,
 ];
 

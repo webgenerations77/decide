@@ -5,7 +5,7 @@
 - Expo SDK 56, expo-router (file-based routing)
 - Firebase Auth (email + Google Sign-In)
 - Google Places API v1 (Nearby Search) + Places Details + Places Autocomplete
-- Anthropic API — claude-haiku-4-5-20251001 (itinerary + swap, server-side only)
+- Anthropic API — haiku-4-5 (scout/anchors/swap) + sonnet-4-6 (itinerary synthesis), server-side only
 - wttr.in (weather, no key required)
 - NPS API (national parks)
 - RIDB / Recreation.gov API (campgrounds/facilities)
@@ -104,7 +104,8 @@ Requires `FIRECRAWL_API_KEY`. Supersedes the old researchPhase module.
 
 ## Anthropic Key — Server-Side Only
 ANTHROPIC_API_KEY used by app/api/itinerary+api.js and app/api/itinerary-swap+api.js.
-Model: claude-haiku-4-5-20251001 (cost-efficient, fast).
+Model: scout + anchors use claude-haiku-4-5-20251001; the itinerary synthesis
+(api/smart/synthesis.js) uses claude-sonnet-4-6. Swap (itinerary-swap) uses haiku.
 Client never calls Anthropic directly.
 
 ## Monetization

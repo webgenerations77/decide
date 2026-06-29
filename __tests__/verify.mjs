@@ -1,6 +1,12 @@
 // Quick verification script for the new feature logic
 // Run with: node __tests__/verify.mjs
 
+import { wantsAlcohol } from '../api/smart/sourceRegistry.js';
+import { wantsLiveMusic, summarizeShow } from '../api/smart/liveMusic.js';
+import { buildScoutPrompt } from '../api/smart/scout.js';
+import { buildSynthesisPrompt, validateStops } from '../api/smart/synthesis.js';
+import { computeCostSummary, pickForecastForDate, priceEnumToNum, attachPriceLevels } from '../api/itineraryHelpers.js';
+
 let passed = 0;
 let failed = 0;
 
@@ -37,14 +43,17 @@ function extractJSON(text) {
   return text.trim();
 }
 
-function buildNavURL(itinerary) {
+function buildNavURL(itinerary, origin) {
   if (!itinerary?.length) return null;
   const encode = (s) => s.lat && s.lng
     ? `${s.lat},${s.lng}`
     : encodeURIComponent(s.address || s.name);
-  const stops = itinerary.map(encode);
-  let url = `https://www.google.com/maps/dir/?api=1&origin=${stops[0]}&destination=${stops[stops.length - 1]}&travelmode=driving`;
-  if (stops.length > 2) url += `&waypoints=${stops.slice(1, -1).join('|')}`;
+  const stopStrs = itinerary.map(encode);
+  const originStr = origin?.latitude && origin?.longitude
+    ? `${origin.latitude},${origin.longitude}` : null;
+  const points = originStr ? [originStr, ...stopStrs] : stopStrs;
+  let url = `https://www.google.com/maps/dir/?api=1&origin=${points[0]}&destination=${points[points.length - 1]}&travelmode=driving`;
+  if (points.length > 2) url += `&waypoints=${points.slice(1, -1).join('|')}`;
   return url;
 }
 
@@ -140,6 +149,22 @@ assert('Falls back to address when lat/lng=0', (() => {
 assert('Empty itinerary → null', buildNavURL([]) === null);
 assert('Null itinerary → null',  buildNavURL(null) === null);
 
+// ─── SESSION 2 — Nav origin ───────────────────────────────────────────────────
+console.log('\nSESSION 2 — Nav origin:');
+const origin = { latitude: 38.0, longitude: -75.0 };
+assert('Origin becomes route origin', (() => {
+  const url = buildNavURL(stops2, origin);
+  return url.includes('origin=38,-75') && url.includes('destination=37.78,-122.42');
+})());
+assert('First stop moves to waypoints', (() => {
+  const url = buildNavURL(stops2, origin);
+  return url.includes('waypoints=37.77,-122.41');
+})());
+assert('Null origin → unchanged', (() => {
+  const url = buildNavURL(stops2);
+  return url.includes('origin=37.77,-122.41') && !url.includes('waypoints');
+})());
+
 // ─── PRIORITY 2: NPS/RIDB place_id detection (detail modal logic) ─────────────
 console.log('\nPRIORITY 2+4 — External place_id detection:');
 const isExternal = (pid) => pid?.startsWith('nps_') || pid?.startsWith('ridb_');
@@ -155,6 +180,106 @@ const feedbackKey = (placeId) => `@decide/feedback_${placeId}`;
 assert('Google place key',  feedbackKey('ChIJabc') === '@decide/feedback_ChIJabc');
 assert('NPS place key',     feedbackKey('nps_123') === '@decide/feedback_nps_123');
 assert('RIDB place key',    feedbackKey('ridb_456') === '@decide/feedback_ridb_456');
+
+// ─── SESSION 2 — Alcohol gating ───────────────────────────────────────────────
+console.log('\nSESSION 2 — wantsAlcohol gating:');
+assert('Bars & Breweries style → true',  wantsAlcohol({ activityStyles: ['Bars & Breweries'] }, '') === true);
+assert('tripNote mentions beer → true',  wantsAlcohol({}, 'want to grab a beer') === true);
+assert('tripNote mentions brewery → true', wantsAlcohol({}, 'a brewery tour') === true);
+assert('No drink signal → false',        wantsAlcohol({ activityStyles: ['Arcades'] }, 'pinball and parks') === false);
+assert('Empty → false',                  wantsAlcohol({}, '') === false);
+
+// ─── SESSION 2 — Activity-type balance guards ─────────────────────────────────
+console.log('\nSESSION 2 — Activity-type balance:');
+const scoutP = buildScoutPrompt({ location: 'X', tripNote: 'pinball and live music', prefs: {} });
+assert('Scout asks for equal weight', /equal|do not let repetition|distinct/i.test(scoutP));
+const synthP = buildSynthesisPrompt({
+  places: {}, finds: [], anchors: [],
+  ctx: { location: 'X', startTime: '11:00 AM', endTime: '8:00 PM', tripNote: 'pinball and live music', prefs: { activityStyles: ['Live Music'] } },
+}).user;
+assert('Synthesis caps a single type',  /at most 1.?2 stops|cap any single|no more than (1|2)/i.test(synthP));
+assert('Synthesis sees the trip note',  synthP.includes('pinball and live music'));
+
+// ─── SESSION 2 — Live music ───────────────────────────────────────────────────
+console.log('\nSESSION 2 — Live music:');
+assert('Live Music style → true',     wantsLiveMusic({ activityStyles: ['Live Music'] }, '') === true);
+assert('tripNote concert → true',      wantsLiveMusic({}, 'see a concert tonight') === true);
+assert('tripNote band → true',         wantsLiveMusic({}, 'catch a band') === true);
+assert('No music signal → false',      wantsLiveMusic({ activityStyles: ['Arcades'] }, 'pinball') === false);
+assert('Confirmed show snippet',       summarizeShow({ artist: 'The Beths', showtime: '8 PM', confirmed: true }) === '🎵 The Beths · 8 PM');
+assert('Unconfirmed → likely note',    /Live music likely/i.test(summarizeShow({ confirmed: false, url: 'https://v.com' })));
+
+// ─── SESSION 2 — Cost summary ─────────────────────────────────────────────────
+console.log('\nSESSION 2 — Cost summary:');
+const cs = computeCostSummary([
+  { category: 'activity', admission_cost: '$15/adult' },
+  { category: 'food', price_level: 2 },
+  { category: 'outdoor', admission_cost: 'Free' },
+  { category: 'food', price_level: 3 },
+]);
+assert('Returns a label', typeof cs?.label === 'string' && cs.label.includes('for the day'));
+assert('Low ≤ high',       cs.low <= cs.high);
+assert('Free contributes 0 low', cs.low >= 15); // 15 admission + food mins
+assert('No priced stops → null', computeCostSummary([{ category: 'outdoor' }]) === null);
+assert('Empty → null',           computeCostSummary([]) === null);
+
+// ─── SESSION 2 — Weather by date ──────────────────────────────────────────────
+console.log('\nSESSION 2 — Weather by date:');
+const j1 = {
+  current_condition: [{ weatherDesc: [{ value: 'Sunny' }], temp_F: '70', FeelsLikeF: '69', windspeedMiles: '5', winddir16Point: 'N' }],
+  weather: [
+    { date: '2026-07-01', hourly: [{ weatherDesc: [{ value: 'Cloudy' }], tempF: '66', FeelsLikeF: '64', windspeedMiles: '10', winddir16Point: 'E', time: '1200' }] },
+    { date: '2026-07-02', hourly: [{ weatherDesc: [{ value: 'Rain' }],   tempF: '60', FeelsLikeF: '58', windspeedMiles: '14', winddir16Point: 'S', time: '1200' }] },
+  ],
+};
+const day1 = pickForecastForDate(j1, '2026-07-02');
+assert('Matches the requested date', day1?.condition === 'Rain');
+assert('Not flagged beyond',         day1?.beyondForecast === false);
+const far = pickForecastForDate(j1, '2026-09-01');
+assert('Beyond window flagged',      far?.beyondForecast === true);
+assert('Null data → null',           pickForecastForDate(null, '2026-07-02') === null);
+
+// ─── SESSION 2 — Price normalization ─────────────────────────────────────────
+console.log('\nSESSION 2 — Price normalization:');
+assert('Enum MODERATE → 2', priceEnumToNum('PRICE_LEVEL_MODERATE') === 2);
+assert('Integer passes through', priceEnumToNum(3) === 3);
+assert('Unknown enum → null', priceEnumToNum('PRICE_LEVEL_FREE') === null);
+assert('Null → null', priceEnumToNum(null) === null);
+assert('attachPriceLevels fills from place_id by match', (() => {
+  const out = attachPriceLevels(
+    [{ place_id: 'a', category: 'food' }, { place_id: 'b', category: 'activity' }],
+    [{ place_id: 'a', price_level: 'PRICE_LEVEL_EXPENSIVE' }]
+  );
+  return out[0].price_level === 3 && out[1].price_level == null;
+})());
+assert('attachPriceLevels keeps existing price_level', (() => {
+  const out = attachPriceLevels([{ place_id: 'a', price_level: 'PRICE_LEVEL_MODERATE' }], []);
+  return out[0].price_level === 2;
+})());
+// Realistic synthesis-shaped cost case (the bug the old test masked):
+assert('computeCostSummary counts food after attach', (() => {
+  const stops = attachPriceLevels(
+    [{ place_id: 'f', category: 'food' }, { place_id: 'x', category: 'activity', admission_cost: '$20' }],
+    [{ place_id: 'f', price_level: 'PRICE_LEVEL_MODERATE' }]
+  );
+  const cs = computeCostSummary(stops);
+  return cs && cs.high > 20; // food ($15–30) added on top of the $20 admission
+})());
+
+// ─── SESSION 2 — validateStops live-music coords ──────────────────────────────
+console.log('\nSESSION 2 — validateStops live-music coords:');
+assert('Keeps live-music stop with null coords', (() => {
+  const out = validateStops([{ time: '8:00 PM', name: 'Burley Oak', category: 'activity', lat: null, lng: null, live_music: { note: '🎵 The Beths · 8 PM' } }]);
+  return out.length === 1 && out[0].lat === null && out[0].live_music;
+})());
+assert('Still drops ordinary stop with null coords', (() => {
+  const out = validateStops([{ time: '1:00 PM', name: 'X', category: 'food', lat: null, lng: null }]);
+  return out.length === 0;
+})());
+assert('Keeps ordinary stop with real coords', (() => {
+  const out = validateStops([{ time: '1:00 PM', name: 'X', category: 'food', lat: 38.3, lng: -75.1 }]);
+  return out.length === 1;
+})());
 
 // ─── Summary ──────────────────────────────────────────────────────────────────
 console.log(`\n${'─'.repeat(50)}`);

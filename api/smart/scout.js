@@ -14,7 +14,7 @@ Cuisines: ${(p.cuisines || []).join(', ') || 'none given'}.
 Liked before: ${(ctx.feedback?.likedPlaces || []).join(', ') || 'none'}.
 This trip they said: "${ctx.tripNote || ''}".
 
-List up to 8 specific, hunt-able interests this person would light up about — niche and concrete (e.g. "pinball", "arcades", "record stores", "breweries", "surf", "tides", "sunset"), not generic ("food"). Rank by how strongly the signals point to each.
+List up to 8 specific, hunt-able interests this person would light up about — niche and concrete (e.g. "pinball", "arcades", "record stores", "live music", "surf", "tides", "sunset"), not generic ("food"). Treat each distinct interest with equal weight: do not let repetition or emphasis of one interest inflate it — collapse repeated mentions of the same thing into a single interest. If several different interests appear, surface all of them.
 
 Return ONLY JSON: {"hunts":[{"interest":"","why":"one short reason","priority":1-10,"suggestedQuery":"a web search query for this interest near the location"}]}`;
 }
