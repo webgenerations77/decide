@@ -25,6 +25,7 @@ import {
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import OfflineBanner from '../components/OfflineBanner';
 import BetaBanner from '../components/BetaBanner';
+import BetaFeedback from '../components/BetaFeedback';
 import { isPublicRoute } from '../utils/betaRoutes';
 import { COLORS, FONTS } from '../constants/theme';
 import ScreenBackground from '../components/brand/ScreenBackground';
@@ -123,6 +124,7 @@ function RootLayoutInner() {
       {showBeta && !betaBannerDismissed && (
         <BetaBanner onDismiss={() => setBetaBannerDismissed(true)} topOffset={demoMode ? 32 : 0} />
       )}
+      {showBeta && pathname !== '/beta-guide' && <BetaFeedback />}
       <OfflineBanner />
     </>
   );
