@@ -3,7 +3,7 @@ import Svg, { Circle, Line, G, Path } from 'react-native-svg';
 import { COLORS, FONTS } from '../../constants/theme';
 
 // The compass mark from the brand kit, drawn on a 120x120 viewBox.
-function Mark({ size, ring, needleHi, needleLo, hub }) {
+function Mark({ size, ring, needleLo, hub }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 120 120" fill="none">
       <Circle cx="60" cy="60" r="46" stroke={ring} strokeWidth="3.5" />
