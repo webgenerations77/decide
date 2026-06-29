@@ -1045,7 +1045,6 @@ export default function PlanScreen() {
               </View>
             ) : null}
 
-            {loading && <LoadingAnimation />}
           </View>
         )}
 
@@ -1158,6 +1157,13 @@ export default function PlanScreen() {
               <Text style={styles.stickyNavTxt}>Navigate full day</Text>
             </LinearGradient>
           </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Loading overlay — centered, covers the form/buttons while Cheddar builds the day */}
+      {loading && (
+        <View style={styles.loadingOverlay}>
+          <LoadingAnimation />
         </View>
       )}
 
@@ -1498,6 +1504,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20, paddingBottom: 28, paddingTop: 14,
     backgroundColor: COLORS.bg,
     borderTopWidth: 1, borderTopColor: COLORS.border,
+  },
+  loadingOverlay: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: COLORS.bg,
+    alignItems: 'center', justifyContent: 'center',
+    zIndex: 50, elevation: 50,
   },
   stickyNavBtn: {
     borderRadius: 18, height: 58,
