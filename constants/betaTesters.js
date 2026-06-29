@@ -3,4 +3,5 @@
 // never compare against an email literal anywhere else in the app.
 export const BETA_TESTERS = {
   'dwaynephil@gmail.com': 'beta_tester',
+  'test@frank.com': 'beta_tester',  // internal QA test account (creds in .env: TEST_ACCOUNT_*)
 };
