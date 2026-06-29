@@ -1,4 +1,4 @@
-const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
+const GOOGLE_KEY = process.env.GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 const NEARBY_URL = 'https://places.googleapis.com/v1/places:searchNearby';
 
 const PLACE_TYPES = {

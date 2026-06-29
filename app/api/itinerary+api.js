@@ -1,6 +1,6 @@
 import { runSmartEngine } from '../../api/smart/index.js';
 
-const GOOGLE_KEY    = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
+const GOOGLE_KEY    = process.env.GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 const NPS_KEY       = process.env.EXPO_PUBLIC_NPS_API_KEY;
 const RIDB_KEY      = process.env.EXPO_PUBLIC_RIDB_API_KEY;
 const OPENROUTE_KEY = process.env.EXPO_PUBLIC_OPENROUTE_API_KEY;
