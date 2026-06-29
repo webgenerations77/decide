@@ -38,7 +38,8 @@
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "^4.25.2",
     "react-native-svg": "^15.15.5",
-    "react-native-web": "^0.21.2"
+    "react-native-web": "^0.21.2",
+    "resend": "^6.16.0"
   },
   "scripts": {
     "start": "expo start",
