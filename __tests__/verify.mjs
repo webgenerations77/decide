@@ -5,7 +5,7 @@ import { wantsAlcohol } from '../lib/smart/sourceRegistry.js';
 import { wantsLiveMusic, summarizeShow } from '../lib/smart/liveMusic.js';
 import { buildScoutPrompt } from '../lib/smart/scout.js';
 import { buildSynthesisPrompt, validateStops } from '../lib/smart/synthesis.js';
-import { computeCostSummary, pickForecastForDate, priceEnumToNum, attachPriceLevels } from '../lib/itineraryHelpers.js';
+import { computeCostSummary, pickForecastFromOpenMeteo, wmoToCondition, degToCompass, priceEnumToNum, attachPriceLevels } from '../lib/itineraryHelpers.js';
 
 let passed = 0;
 let failed = 0;
@@ -223,21 +223,27 @@ assert('Free contributes 0 low', cs.low >= 15); // 15 admission + food mins
 assert('No priced stops → null', computeCostSummary([{ category: 'outdoor' }]) === null);
 assert('Empty → null',           computeCostSummary([]) === null);
 
-// ─── SESSION 2 — Weather by date ──────────────────────────────────────────────
-console.log('\nSESSION 2 — Weather by date:');
-const j1 = {
-  current_condition: [{ weatherDesc: [{ value: 'Sunny' }], temp_F: '70', FeelsLikeF: '69', windspeedMiles: '5', winddir16Point: 'N' }],
-  weather: [
-    { date: '2026-07-01', hourly: [{ weatherDesc: [{ value: 'Cloudy' }], tempF: '66', FeelsLikeF: '64', windspeedMiles: '10', winddir16Point: 'E', time: '1200' }] },
-    { date: '2026-07-02', hourly: [{ weatherDesc: [{ value: 'Rain' }],   tempF: '60', FeelsLikeF: '58', windspeedMiles: '14', winddir16Point: 'S', time: '1200' }] },
-  ],
-};
-const day1 = pickForecastForDate(j1, '2026-07-02');
-assert('Matches the requested date', day1?.condition === 'Rain');
-assert('Not flagged beyond',         day1?.beyondForecast === false);
-const far = pickForecastForDate(j1, '2026-09-01');
-assert('Beyond window flagged',      far?.beyondForecast === true);
-assert('Null data → null',           pickForecastForDate(null, '2026-07-02') === null);
+// ─── Open-Meteo weather helpers ───────────────────────────────────────────────
+console.log('\nOpen-Meteo weather helpers:');
+assert('wmoToCondition(0) → Clear',          wmoToCondition(0) === 'Clear');
+assert('wmoToCondition(95) → Thunderstorm',  wmoToCondition(95) === 'Thunderstorm');
+assert('wmoToCondition(unknown) → fallback', wmoToCondition(999) === 'Partly cloudy');
+assert('degToCompass(0) → N',     degToCompass(0) === 'N');
+assert('degToCompass(180) → S',   degToCompass(180) === 'S');
+assert('degToCompass(null) → null', degToCompass(null) === null);
+
+const om = { daily: { time: ['2026-07-01','2026-07-02','2026-07-03'], weather_code: [2,63,0],
+  temperature_2m_max:[80,70,85], apparent_temperature_max:[78,68,83],
+  wind_speed_10m_max:[10,15,5], wind_direction_10m_dominant:[270,180,90] }};
+const omHit = pickForecastFromOpenMeteo(om, '2026-07-02');
+assert('In-window: beyondForecast false', omHit?.beyondForecast === false);
+assert('In-window: correct condition',    omHit?.condition === 'Rain');
+assert('In-window: temp_f rounded',       omHit?.temp_f === 70);
+assert('In-window: wind_dir compass',     omHit?.wind_dir === 'S');
+const omBeyond = pickForecastFromOpenMeteo(om, '2026-07-15');
+assert('Beyond window: beyondForecast true', omBeyond?.beyondForecast === true);
+assert('Beyond window: condition null',      omBeyond?.condition === null);
+assert('Empty payload → null',               pickForecastFromOpenMeteo({}, '2026-07-02') === null);
 
 // ─── SESSION 2 — Price normalization ─────────────────────────────────────────
 console.log('\nSESSION 2 — Price normalization:');
