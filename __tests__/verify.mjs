@@ -281,6 +281,37 @@ assert('Keeps ordinary stop with real coords', (() => {
   return out.length === 1;
 })());
 
+// ─── SESSION 3 — Refresh policy ───────────────────────────────────────────────
+import {
+  timeToMinutes as rpToMinutes, isValidWindow, windowChanged, canRefresh,
+  FREE_REFRESHES_PER_ITINERARY,
+} from '../lib/refreshPolicy.js';
+
+console.log('\nSESSION 3 — refreshPolicy.timeToMinutes:');
+assert("'8:00 AM' → 480",  rpToMinutes('8:00 AM') === 480);
+assert("'12:00 PM' → 720", rpToMinutes('12:00 PM') === 720);
+assert("'12:00 AM' → 0",   rpToMinutes('12:00 AM') === 0);
+assert("'10:00 PM' → 1320", rpToMinutes('10:00 PM') === 1320);
+
+console.log('\nSESSION 3 — refreshPolicy.isValidWindow:');
+assert('Exactly 180 min → true', isValidWindow('11:00 AM', '2:00 PM') === true);
+assert('179 min → false',        isValidWindow('11:00 AM', '1:59 PM') === false);
+assert('11a–8p → true',          isValidWindow('11:00 AM', '8:00 PM') === true);
+assert('Custom min honored',     isValidWindow('11:00 AM', '12:00 PM', 120) === false);
+
+console.log('\nSESSION 3 — refreshPolicy.windowChanged:');
+assert('Same/same → false',      windowChanged('11:00 AM', '8:00 PM', '11:00 AM', '8:00 PM') === false);
+assert('Start differs → true',   windowChanged('11:00 AM', '8:00 PM', '10:00 AM', '8:00 PM') === true);
+assert('End differs → true',     windowChanged('11:00 AM', '8:00 PM', '11:00 AM', '9:00 PM') === true);
+
+console.log('\nSESSION 3 — refreshPolicy.canRefresh:');
+assert('Cap is 3',               FREE_REFRESHES_PER_ITINERARY === 3);
+assert('Pro → true at high count', canRefresh({ isPro: true, isDemo: false, refreshCount: 99 }) === true);
+assert('Demo → true at high count', canRefresh({ isPro: false, isDemo: true, refreshCount: 99 }) === true);
+assert('Free under cap → true',  canRefresh({ isPro: false, isDemo: false, refreshCount: 2 }) === true);
+assert('Free at cap → false',    canRefresh({ isPro: false, isDemo: false, refreshCount: 3 }) === false);
+assert('Custom cap honored',     canRefresh({ isPro: false, isDemo: false, refreshCount: 1, cap: 1 }) === false);
+
 // ─── Summary ──────────────────────────────────────────────────────────────────
 console.log(`\n${'─'.repeat(50)}`);
 console.log(`Results: ${passed} passed, ${failed} failed`);
