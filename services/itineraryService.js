@@ -19,7 +19,7 @@ export async function generateItinerary({
   date = null,
   feedback = {},
   maxDistanceMiles = 25,
-  tripNote = '', activityStyles = [], dietary = [],
+  tripNote = '', activityStyles = [], dietary = [], neurodivergent = false,
 }) {
   try {
     const demoRaw = await AsyncStorage.getItem('@decide/demo_mode');
@@ -33,7 +33,7 @@ export async function generateItinerary({
   const res  = await fetch(`${base}/api/itinerary`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ latitude, longitude, date, preferences: { ...preferences, activityStyles, dietary }, startTime, endTime, feedback, maxDistanceMiles, tripNote }),
+    body: JSON.stringify({ latitude, longitude, date, preferences: { ...preferences, activityStyles, dietary, neurodivergent }, startTime, endTime, feedback, maxDistanceMiles, tripNote }),
   });
 
   if (!res.ok) {

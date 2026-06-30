@@ -322,7 +322,7 @@ export async function POST(request) {
       return Response.json({ error: 'latitude and longitude are required' }, { status: 400 });
     }
 
-    const { pace = 'moderate', budget = '$$', group_type = 'couple', cuisines = [], sensitivities = [], activityStyles = [], dietary = [] } = preferences;
+    const { pace = 'moderate', budget = '$$', group_type = 'couple', cuisines = [], sensitivities = [], activityStyles = [], dietary = [], neurodivergent = false } = preferences;
     const searchRadiusMeters = Math.round(Math.min(maxDistanceMiles, 50) * 1609.34);
     const { dislikedPlaces = [], likedPlaces = [], dislikedReasons = [] } = feedback;
 
@@ -359,7 +359,7 @@ export async function POST(request) {
       coords: { latitude, longitude },
       maxMiles: Math.min(maxDistanceMiles, 50),
       weather,
-      prefs: { pace, budget, group_type, cuisines, activityStyles, dietary },
+      prefs: { pace, budget, group_type, cuisines, activityStyles, dietary, neurodivergent },
       feedback: { likedPlaces, dislikedPlaces, dislikedReasons },
       tripNote,
       startTime, endTime,

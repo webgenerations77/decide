@@ -414,12 +414,14 @@ export default function PlanScreen() {
       const maxDistRaw = await AsyncStorage.getItem('@decide/max_distance').catch(() => null);
       const maxDistanceMiles = maxDistRaw ? parseInt(maxDistRaw, 10) : 25;
 
-      const [stylesRaw, dietRaw] = await Promise.all([
+      const [stylesRaw, dietRaw, ndRaw] = await Promise.all([
         AsyncStorage.getItem('@decide/activity_styles'),
         AsyncStorage.getItem('@decide/dietary'),
+        AsyncStorage.getItem('@decide/neurodivergent'),
       ]);
       const activityStyles = stylesRaw ? JSON.parse(stylesRaw) : [];
       const dietary = dietRaw ? JSON.parse(dietRaw) : [];
+      const neurodivergent = ndRaw === 'true';
 
       const data = await generateItinerary({
         latitude:  coords.latitude,
@@ -428,7 +430,7 @@ export default function PlanScreen() {
         startTime, endTime, date: planDate,
         feedback: feedbackCtx,
         maxDistanceMiles,
-        tripNote, activityStyles, dietary,
+        tripNote, activityStyles, dietary, neurodivergent,
       });
       setItinerary(data.itinerary);
       setWeather(data.weather);

@@ -211,7 +211,7 @@ export default async function handler(req, res) {
     const { latitude, longitude, date, preferences = {}, startTime = '11:00 AM', endTime = '8:00 PM', feedback = {}, tripNote = '' } = req.body;
     if (!latitude || !longitude) return res.status(400).json({ error: 'latitude and longitude are required' });
 
-    const { pace='moderate', budget='$$', group_type='couple', cuisines=[], activityStyles=[], dietary=[] } = preferences;
+    const { pace='moderate', budget='$$', group_type='couple', cuisines=[], activityStyles=[], dietary=[], neurodivergent=false } = preferences;
     const { dislikedPlaces=[], likedPlaces=[], dislikedReasons=[] } = feedback;
 
     const dateObj=date?new Date(date):new Date();
@@ -242,7 +242,7 @@ export default async function handler(req, res) {
       coords: { latitude, longitude },
       maxMiles: 25,
       weather,
-      prefs: { pace, budget, group_type, cuisines, activityStyles, dietary },
+      prefs: { pace, budget, group_type, cuisines, activityStyles, dietary, neurodivergent },
       feedback: { likedPlaces, dislikedPlaces, dislikedReasons },
       tripNote,
       startTime, endTime,
