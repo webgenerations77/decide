@@ -1,6 +1,7 @@
 import { logUsage } from '../../lib/usageLog.js';
 import { runSmartEngine } from '../../lib/smart/index.js';
-import { computeCostSummary, pickForecastForDate, attachPriceLevels } from '../../lib/itineraryHelpers.js';
+import { computeCostSummary, pickForecastFromOpenMeteo, attachPriceLevels, fillFoodPriceLevels, shouldResolveContact } from '../../lib/itineraryHelpers.js';
+import { getUSHoliday } from '../../lib/smart/holidays.js';
 
 const GOOGLE_KEY    = process.env.GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 const NPS_KEY       = process.env.EXPO_PUBLIC_NPS_API_KEY;
@@ -101,9 +102,12 @@ function getWeatherEmoji(condition) {
 
 async function fetchWeather(lat, lng, dateISO) {
   try {
-    const res  = await fetch(`https://wttr.in/${lat},${lng}?format=j1`);
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}`
+      + `&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,wind_speed_10m_max,wind_direction_10m_dominant`
+      + `&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=7`;
+    const res  = await fetch(url);
     const data = await res.json();
-    const f = pickForecastForDate(data, dateISO);
+    const f = pickForecastFromOpenMeteo(data, dateISO);
     if (!f) return null;
     if (f.beyondForecast) return { beyondForecast: true, condition: null, emoji: '🗓', temp_f: null, feels_like_f: null, wind_speed_mph: null, wind_dir: null };
     return { condition: f.condition, emoji: getWeatherEmoji(f.condition), temp_f: f.temp_f, feels_like_f: f.feels_like_f, wind_speed_mph: f.wind_speed_mph, wind_dir: f.wind_dir, beyondForecast: false };
@@ -220,10 +224,29 @@ async function fetchStopDetails(placeId) {
   } catch { return null; }
 }
 
+// Resolve a real Google place_id for a live-research stop from its name + location,
+// so its contact links can be fetched. Returns null on any miss/failure.
+async function resolvePlaceId(name, lat, lng) {
+  if (!GOOGLE_KEY || !name) return null;
+  try {
+    const url = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json`
+      + `?input=${encodeURIComponent(name)}&inputtype=textquery&fields=place_id`
+      + `&locationbias=point:${lat},${lng}&key=${GOOGLE_KEY}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    logUsage({ route: 'places-findplace', model: 'google-places', requests: 1 });
+    return data.candidates?.[0]?.place_id ?? null;
+  } catch { return null; }
+}
+
 async function enrichWithContactLinks(itinerary) {
   const out = await Promise.all(itinerary.map(async (stop) => {
     if (stop.website || stop.phone) return stop;
-    const d = await fetchStopDetails(stop.place_id);
+    let d = await fetchStopDetails(stop.place_id);
+    if (!d && shouldResolveContact(stop)) {
+      const realId = await resolvePlaceId(stop.name, stop.lat, stop.lng);
+      if (realId) d = await fetchStopDetails(realId); // realId is a real Google id → passes the guard
+    }
     return d ? { ...stop, website: d.website, phone: d.phone } : stop;
   }));
   return out;
@@ -363,6 +386,9 @@ export async function POST(request) {
       feedback: { likedPlaces, dislikedPlaces, dislikedReasons },
       tripNote,
       startTime, endTime,
+      dayOfWeek,
+      formattedDate,
+      holiday: getUSHoliday(travelDateISO),
     };
     const smart = await runSmartEngine({ ctx, places: { food, activity, shopping, outdoor: allOutdoor } });
 
@@ -394,7 +420,7 @@ export async function POST(request) {
     const withLinks = await enrichWithContactLinks(withDistance);
     const enriched = await enrichWithDrivingTimes(withLinks);
     const allPlaces = [...food, ...activity, ...shopping, ...allOutdoor];
-    const priced = attachPriceLevels(enriched, allPlaces);
+    const priced = fillFoodPriceLevels(attachPriceLevels(enriched, allPlaces), budget);
     const costSummary = computeCostSummary(priced);
 
     return Response.json({
@@ -413,6 +439,7 @@ export async function POST(request) {
         findCount: smart.finds.length,
         anchorCount: smart.anchors.length,
         anchors: smart.anchors.map((a) => ({ title: a.find?.title, interest: a.find?.interest, why: a.rationale, url: a.find?.url || null })),
+        localHappenings: smart.localHappenings ?? null,
       },
       generated_at: new Date().toISOString(),
       isFallback,

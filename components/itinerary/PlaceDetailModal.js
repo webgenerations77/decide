@@ -118,6 +118,14 @@ function PlaceDetailModal({ visible, stop, onClose }) {
                 </View>
               )}
 
+              {stop.parking ? (
+                <View style={styles.parkingRow}>
+                  <Ionicons name="car-outline" size={14} color={colors.textSecondary} />
+                  <Text style={styles.parkingLabel}>Parking</Text>
+                  <Text style={styles.admissionValue}>{stop.parking}</Text>
+                </View>
+              ) : null}
+
               {stop.live_music?.note ? (
                 <View style={styles.admissionRow}>
                   <Ionicons name="musical-notes-outline" size={14} color={colors.primary} />
@@ -260,6 +268,13 @@ const makeStyles = (c) => StyleSheet.create({
   },
   admissionLabel: { fontSize: 12, fontFamily: FONTS.bodyBold, color: c.primary, letterSpacing: 0.5 },
   admissionValue: { fontSize: 13, color: c.textPrimary, fontFamily: FONTS.bodyMedium, flex: 1 },
+  parkingRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: c.surfaceAlt, borderRadius: 10,
+    paddingHorizontal: 12, paddingVertical: 8, marginBottom: 14,
+    borderWidth: 1, borderColor: c.border,
+  },
+  parkingLabel: { fontSize: 12, fontFamily: FONTS.bodyBold, color: c.textSecondary, letterSpacing: 0.5 },
 
   detailSection:    { marginBottom: 18 },
   detailReasonText: { fontSize: 15, color: c.textPrimary, lineHeight: 23, fontStyle: 'italic', fontFamily: FONTS.body },

@@ -58,6 +58,8 @@ export default async function handler(req, res) {
       lng: pick.lng,
       reason: pick.summary ?? `A well-rated ${stop.category} spot nearby.`,
       excitement_score: Math.min(Math.round((pick.rating || 4) * 18), 95),
+      admission_cost: null,
+      parking: null,
     };
 
     const updated = [...itinerary];

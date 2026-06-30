@@ -132,6 +132,13 @@ function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, 
             </View>
           )}
 
+          {stop.parking ? (
+            <View style={styles.parkingBadge}>
+              <Ionicons name="car-outline" size={12} color={colors.textSecondary} style={{ marginRight: 4 }} />
+              <Text style={styles.parkingBadgeTxt} numberOfLines={1}>{stop.parking}</Text>
+            </View>
+          ) : null}
+
           {stop.live_music?.note ? (
             <View style={styles.liveMusicBadge}>
               <Ionicons name="musical-notes-outline" size={12} color={colors.primary} style={{ marginRight: 4 }} />
@@ -283,6 +290,12 @@ const makeStyles = (c) => StyleSheet.create({
     borderWidth: 1, borderColor: c.gold + '44',
   },
   admissionBadgeTxt: { fontSize: 12, color: c.goldText, fontFamily: FONTS.bodySemiBold },
+  parkingBadge: {
+    flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start',
+    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999,
+    backgroundColor: c.surfaceAlt, borderWidth: 1, borderColor: c.border,
+  },
+  parkingBadgeTxt: { fontSize: 12, color: c.textSecondary, fontFamily: FONTS.bodyMedium },
   liveMusicBadge: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', marginTop: 6, paddingHorizontal: 8, paddingVertical: 4, borderRadius: RADII.sm, backgroundColor: c.sky100 },
   liveMusicTxt:   { fontFamily: FONTS.bodyMedium, fontSize: 12, color: c.primary },
   provenanceBadge: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', marginTop: 6, paddingHorizontal: 8, paddingVertical: 4, borderRadius: RADII.sm, backgroundColor: c.sky100 },
