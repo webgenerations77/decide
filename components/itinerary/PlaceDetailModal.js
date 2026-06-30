@@ -138,6 +138,16 @@ function PlaceDetailModal({ visible, stop, onClose }) {
                 </View>
               ) : null}
 
+              {stop.provenance?.why ? (
+                <View style={styles.detailSection}>
+                  <SectionLabel tone="cobalt" style={{ marginBottom: 10 }}>📰 Why it's here</SectionLabel>
+                  <Text style={styles.detailReasonText}>{stop.provenance.why}</Text>
+                  {stop.provenance.sourceLabel ? (
+                    <Text style={styles.provenanceSource}>Source: {stop.provenance.sourceLabel}</Text>
+                  ) : null}
+                </View>
+              ) : null}
+
               {stop.highlights?.length > 0 && (
                 <View style={styles.detailSection}>
                   <SectionLabel tone="cobalt" style={{ marginBottom: 10 }}>Highlights</SectionLabel>
@@ -253,6 +263,7 @@ const makeStyles = (c) => StyleSheet.create({
 
   detailSection:    { marginBottom: 18 },
   detailReasonText: { fontSize: 15, color: c.textPrimary, lineHeight: 23, fontStyle: 'italic', fontFamily: FONTS.body },
+  provenanceSource: { fontSize: 11, color: c.textMuted, fontFamily: FONTS.body, marginTop: 6, fontStyle: 'italic' },
 
   highlightRow: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 10,

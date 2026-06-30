@@ -139,6 +139,12 @@ function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, 
             </View>
           ) : null}
 
+          {stop.provenance?.why && !stop.live_music?.note ? (
+            <View style={styles.provenanceBadge}>
+              <Text style={styles.provenanceTxt} numberOfLines={1}>📰 Live find</Text>
+            </View>
+          ) : null}
+
           {isFood && stop.price_level ? (
             <TouchableOpacity onPress={() => setShowLegend(true)} activeOpacity={0.7} style={styles.pricePill}>
               <Text style={styles.pricePillTxt}>{['', '$', '$$', '$$$', '$$$$'][stop.price_level] ?? ''} ⓘ</Text>
@@ -279,6 +285,8 @@ const makeStyles = (c) => StyleSheet.create({
   admissionBadgeTxt: { fontSize: 12, color: c.goldText, fontFamily: FONTS.bodySemiBold },
   liveMusicBadge: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', marginTop: 6, paddingHorizontal: 8, paddingVertical: 4, borderRadius: RADII.sm, backgroundColor: c.sky100 },
   liveMusicTxt:   { fontFamily: FONTS.bodyMedium, fontSize: 12, color: c.primary },
+  provenanceBadge: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', marginTop: 6, paddingHorizontal: 8, paddingVertical: 4, borderRadius: RADII.sm, backgroundColor: c.sky100 },
+  provenanceTxt:   { fontFamily: FONTS.bodyMedium, fontSize: 12, color: c.primary },
 
   // Price tier pill
   pricePill: {

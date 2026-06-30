@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { FONTS } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
+import DiscoveryAnchors from './DiscoveryAnchors';
 
 export default function ItineraryMeta({ meta, stopCount, research, timeEditor = null }) {
   const { colors } = useTheme();
@@ -34,9 +35,7 @@ export default function ItineraryMeta({ meta, stopCount, research, timeEditor = 
           <Text style={styles.costSummaryTxt}>{meta.cost_summary}</Text>
         </View>
       ) : null}
-      {research?.hadLiveData && (
-        <Text style={styles.liveDataNote}>✨ Cheddar checked what's happening this week</Text>
-      )}
+      <DiscoveryAnchors research={research} />
     </View>
   );
 }
@@ -61,7 +60,6 @@ const makeStyles = (c) => StyleSheet.create({
   metaChipTime:     { borderColor: c.border, backgroundColor: c.surfaceAlt },
   metaChipText:     { color: c.textSecondary, fontSize: 11, fontFamily: FONTS.bodySemiBold },
   metaChipTimeText: { color: c.textSecondary },
-  liveDataNote:     { color: c.teal, fontSize: 11, fontStyle: 'italic', marginTop: 10, textAlign: 'center' },
   costSummaryRow:   { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
   costSummaryTxt:   { fontFamily: FONTS.bodySemiBold, fontSize: 13, color: c.primary },
 });
