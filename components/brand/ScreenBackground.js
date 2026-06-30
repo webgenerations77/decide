@@ -2,20 +2,22 @@ import { View, Image, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../context/ThemeContext';
 
-// Whisper-faint vintage-map texture behind the app. Light mode only — a warm map over
-// the dark navy background reads as smudge, so it's skipped in dark. Not shown on the
-// cobalt 'brand' variant either (it would muddy the gradient).
+// Whisper-faint vintage-map texture behind the app. Rendered in both schemes, but much
+// fainter in dark — a warm map over dark navy turns to smudge above ~6%, so dark gets a
+// low opacity that reads as subtle texture, not grime. Not shown on the cobalt 'brand'
+// variant either (it would muddy the gradient).
 const MAP_TEXTURE = require('../../assets/backgrounds/vintage-map.jpg');
-const TEXTURE_OPACITY = 0.08;
+const TEXTURE_OPACITY_LIGHT = 0.12;
+const TEXTURE_OPACITY_DARK = 0.05;
 
 function MapTexture({ scheme }) {
-  if (scheme === 'dark') return null;
+  const opacity = scheme === 'dark' ? TEXTURE_OPACITY_DARK : TEXTURE_OPACITY_LIGHT;
   return (
     <Image
       source={MAP_TEXTURE}
       resizeMode="cover"
       pointerEvents="none"
-      style={[StyleSheet.absoluteFillObject, { opacity: TEXTURE_OPACITY }]}
+      style={[StyleSheet.absoluteFillObject, { opacity }]}
     />
   );
 }
