@@ -318,6 +318,15 @@ assert('Free under cap → true',  canRefresh({ isPro: false, isDemo: false, ref
 assert('Free at cap → false',    canRefresh({ isPro: false, isDemo: false, refreshCount: 3 }) === false);
 assert('Custom cap honored',     canRefresh({ isPro: false, isDemo: false, refreshCount: 1, cap: 1 }) === false);
 
+// ─── SESSION 3 (Task 3) — Holiday detection ───────────────────────────────────
+import { getUSHoliday } from '../lib/smart/holidays.js';
+
+console.log('\nTask 3 — Holiday detection:');
+assert('July 4 → Independence Day', getUSHoliday('2026-07-04') === 'Independence Day (July 4th)');
+assert('Juneteenth', getUSHoliday('2026-06-19') === 'Juneteenth');
+assert('non-holiday → null', getUSHoliday('2026-06-30') === null);
+assert('bad input → null', getUSHoliday('') === null);
+
 // ─── Summary ──────────────────────────────────────────────────────────────────
 console.log(`\n${'─'.repeat(50)}`);
 console.log(`Results: ${passed} passed, ${failed} failed`);

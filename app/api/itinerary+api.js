@@ -1,6 +1,7 @@
 import { logUsage } from '../../lib/usageLog.js';
 import { runSmartEngine } from '../../lib/smart/index.js';
 import { computeCostSummary, pickForecastFromOpenMeteo, attachPriceLevels } from '../../lib/itineraryHelpers.js';
+import { getUSHoliday } from '../../lib/smart/holidays.js';
 
 const GOOGLE_KEY    = process.env.GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 const NPS_KEY       = process.env.EXPO_PUBLIC_NPS_API_KEY;
@@ -366,6 +367,9 @@ export async function POST(request) {
       feedback: { likedPlaces, dislikedPlaces, dislikedReasons },
       tripNote,
       startTime, endTime,
+      dayOfWeek,
+      formattedDate,
+      holiday: getUSHoliday(travelDateISO),
     };
     const smart = await runSmartEngine({ ctx, places: { food, activity, shopping, outdoor: allOutdoor } });
 
@@ -416,6 +420,7 @@ export async function POST(request) {
         findCount: smart.finds.length,
         anchorCount: smart.anchors.length,
         anchors: smart.anchors.map((a) => ({ title: a.find?.title, interest: a.find?.interest, why: a.rationale, url: a.find?.url || null })),
+        localHappenings: smart.localHappenings ?? null,
       },
       generated_at: new Date().toISOString(),
       isFallback,
