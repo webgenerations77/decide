@@ -1,12 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import NetInfo from '@react-native-community/netinfo';
-import { COLORS, FONTS } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
+import { FONTS } from '../constants/theme';
 
 export default function OfflineBanner() {
   const insets = useSafeAreaInsets();
   const [isOffline, setIsOffline] = useState(false);
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {
@@ -24,12 +27,12 @@ export default function OfflineBanner() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   banner: {
     position: 'absolute', left: 0, right: 0,
     height: 32, zIndex: 9998, elevation: 19,
-    backgroundColor: COLORS.error,
+    backgroundColor: c.error,
     alignItems: 'center', justifyContent: 'center',
   },
-  text: { fontSize: 12, fontFamily: FONTS.bodyBold, color: COLORS.primaryText },
+  text: { fontSize: 12, fontFamily: FONTS.bodyBold, color: c.primaryText },
 });

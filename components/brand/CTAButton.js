@@ -1,8 +1,10 @@
 import { TouchableOpacity, Text, ActivityIndicator, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { COLORS, RADII, FONTS } from '../../constants/theme';
+import { RADII, FONTS } from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function CTAButton({ title, onPress, variant = 'go', disabled = false, loading = false, style, leftIcon = null }) {
+  const { colors: COLORS } = useTheme();
   const isDisabled = disabled || loading;
   const isSecondary = variant === 'secondary';
   const colors = variant === 'cobalt'

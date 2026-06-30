@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   KeyboardAvoidingView, Platform, ScrollView, Animated,
@@ -10,7 +10,8 @@ import { signInWithGoogleCredential } from '../../services/authService';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, FONTS } from '../../constants/theme';
+import { FONTS } from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 import BrandLogo from '../../components/brand/BrandLogo';
 import ScreenBackground from '../../components/brand/ScreenBackground';
 import CTAButton from '../../components/brand/CTAButton';
@@ -27,6 +28,8 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
     clientId: GOOGLE_WEB_CLIENT_ID,
@@ -103,7 +106,7 @@ export default function LoginScreen() {
                     value={email}
                     onChangeText={setEmail}
                     placeholder="you@example.com"
-                    placeholderTextColor={COLORS.textMuted}
+                    placeholderTextColor={colors.textMuted}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoComplete="email"
@@ -118,7 +121,7 @@ export default function LoginScreen() {
                     value={password}
                     onChangeText={setPassword}
                     placeholder="Your password"
-                    placeholderTextColor={COLORS.textMuted}
+                    placeholderTextColor={colors.textMuted}
                     secureTextEntry
                     autoComplete="password"
                     returnKeyType="done"
@@ -139,7 +142,7 @@ export default function LoginScreen() {
                   title="Continue with Google"
                   onPress={handleGoogleSignIn}
                   disabled={loading || !request}
-                  leftIcon={<Ionicons name="logo-google" size={18} color={COLORS.textPrimary} />}
+                  leftIcon={<Ionicons name="logo-google" size={18} color={colors.textPrimary} />}
                 />
               </View>
             </Card>
@@ -159,39 +162,39 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   flex: { flex: 1 },
   scroll: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingBottom: 48 },
 
   hero: { alignItems: 'center', marginBottom: 40 },
   heroTag: {
-    fontSize: 16, color: COLORS.textSecondary,
+    fontSize: 16, color: c.textSecondary,
     fontFamily: FONTS.display,
     letterSpacing: 0.2,
     marginTop: 12,
   },
 
   errorBox: {
-    backgroundColor: COLORS.error + '18',
+    backgroundColor: c.error + '18',
     borderRadius: 12, padding: 14,
     marginBottom: 20,
-    borderWidth: 1, borderColor: COLORS.error + '44',
+    borderWidth: 1, borderColor: c.error + '44',
   },
-  errorText: { color: COLORS.error, fontSize: 14, textAlign: 'center', lineHeight: 20 },
+  errorText: { color: c.error, fontSize: 14, textAlign: 'center', lineHeight: 20 },
 
   form: { gap: 16 },
   fieldBlock: { gap: 6 },
   label: {
-    color: COLORS.textSecondary, fontSize: 13, fontFamily: FONTS.bodySemiBold,
+    color: c.textSecondary, fontSize: 13, fontFamily: FONTS.bodySemiBold,
   },
   input: {
-    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: c.surface, borderWidth: 1, borderColor: c.border,
     borderRadius: 14, paddingHorizontal: 16, height: 52,
-    fontSize: 16, color: COLORS.textPrimary,
+    fontSize: 16, color: c.textPrimary,
   },
   links: {
     flexDirection: 'row', justifyContent: 'space-between',
     marginTop: 28, paddingHorizontal: 4,
   },
-  linkText: { color: COLORS.primary, fontSize: 14, fontFamily: FONTS.bodySemiBold },
+  linkText: { color: c.primary, fontSize: 14, fontFamily: FONTS.bodySemiBold },
 });

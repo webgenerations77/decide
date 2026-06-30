@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity, TextInput, Modal, ScrollView, StyleSheet } from 'react-native';
 import { usePathname } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { submitFeedback } from '../services/feedbackService';
 import CTAButton from './brand/CTAButton';
-import { COLORS, FONTS, RADII } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
+import { FONTS, RADII } from '../constants/theme';
 
 const TYPES = ['Bug Report', 'Feature Suggestion', 'General Impression', 'Something Felt Off'];
 
@@ -20,6 +21,8 @@ export default function BetaFeedback({ topOffset = 0 }) {
   const pathname = usePathname();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const [open, setOpen] = useState(false);
   const [page, setPage] = useState(pathname);
@@ -88,7 +91,7 @@ export default function BetaFeedback({ topOffset = 0 }) {
               <Text style={styles.label}>PAGE / FEATURE</Text>
               <TextInput
                 style={styles.input} value={page} onChangeText={setPage}
-                placeholder="Which screen?" placeholderTextColor={COLORS.textMuted}
+                placeholder="Which screen?" placeholderTextColor={colors.textMuted}
               />
 
               <Text style={styles.label}>FEEDBACK TYPE</Text>
@@ -106,7 +109,7 @@ export default function BetaFeedback({ topOffset = 0 }) {
               <Text style={styles.label}>YOUR FEEDBACK</Text>
               <TextInput
                 style={[styles.input, styles.textarea]} value={message} onChangeText={setMessage}
-                placeholder="Tell us what you're thinking..." placeholderTextColor={COLORS.textMuted}
+                placeholder="Tell us what you're thinking..." placeholderTextColor={colors.textMuted}
                 multiline numberOfLines={4} textAlignVertical="top"
               />
 
@@ -135,49 +138,49 @@ export default function BetaFeedback({ topOffset = 0 }) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   fab: {
     position: 'absolute', right: 24, zIndex: 9997, elevation: 18,
-    backgroundColor: COLORS.primary, borderRadius: RADII.pill,
+    backgroundColor: c.primary, borderRadius: RADII.pill,
     paddingHorizontal: 18, paddingVertical: 12,
-    ...({ shadowColor: COLORS.navy, shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 4 } }),
+    ...({ shadowColor: c.navy, shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 4 } }),
   },
-  fabText: { color: COLORS.white, fontFamily: FONTS.bodyBold, fontSize: 14 },
+  fabText: { color: c.white, fontFamily: FONTS.bodyBold, fontSize: 14 },
 
   toast: {
     position: 'absolute', left: 20, right: 20, zIndex: 9999, elevation: 22,
-    backgroundColor: COLORS.navy, borderRadius: RADII.md, paddingVertical: 12, paddingHorizontal: 16,
+    backgroundColor: c.navy, borderRadius: RADII.md, paddingVertical: 12, paddingHorizontal: 16,
     alignItems: 'center',
   },
-  toastError: { backgroundColor: COLORS.error },
-  toastText: { color: COLORS.white, fontFamily: FONTS.bodySemiBold, fontSize: 13, textAlign: 'center' },
+  toastError: { backgroundColor: c.error },
+  toastText: { color: c.white, fontFamily: FONTS.bodySemiBold, fontSize: 13, textAlign: 'center' },
 
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
   sheet: {
-    backgroundColor: COLORS.bg, borderTopLeftRadius: RADII.lg, borderTopRightRadius: RADII.lg,
+    backgroundColor: c.bg, borderTopLeftRadius: RADII.lg, borderTopRightRadius: RADII.lg,
     maxHeight: '88%',
   },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
-  title: { fontSize: 20, fontFamily: FONTS.displayHeavy, color: COLORS.textPrimary },
-  close: { fontSize: 18, fontFamily: FONTS.bodyBold, color: COLORS.textMuted },
+  title: { fontSize: 20, fontFamily: FONTS.displayHeavy, color: c.textPrimary },
+  close: { fontSize: 18, fontFamily: FONTS.bodyBold, color: c.textMuted },
 
-  label: { fontSize: 10, fontFamily: FONTS.monoBold, color: COLORS.goldText, letterSpacing: 1.5, textTransform: 'uppercase' },
+  label: { fontSize: 10, fontFamily: FONTS.monoBold, color: c.goldText, letterSpacing: 1.5, textTransform: 'uppercase' },
   input: {
-    backgroundColor: COLORS.surface, borderRadius: RADII.md,
-    borderWidth: 1, borderColor: COLORS.border,
-    paddingHorizontal: 14, height: 48, fontSize: 15, color: COLORS.textPrimary, fontFamily: FONTS.body,
+    backgroundColor: c.surface, borderRadius: RADII.md,
+    borderWidth: 1, borderColor: c.border,
+    paddingHorizontal: 14, height: 48, fontSize: 15, color: c.textPrimary, fontFamily: FONTS.body,
   },
   textarea: { height: 110, paddingTop: 12 },
 
   pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   pill: {
     paddingHorizontal: 12, paddingVertical: 8, borderRadius: RADII.pill,
-    backgroundColor: COLORS.surfaceAlt, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: c.surfaceAlt, borderWidth: 1, borderColor: c.border,
   },
-  pillActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  pillText: { fontSize: 12, fontFamily: FONTS.bodySemiBold, color: COLORS.textSecondary },
-  pillTextActive: { color: COLORS.primaryText },
+  pillActive: { backgroundColor: c.primary, borderColor: c.primary },
+  pillText: { fontSize: 12, fontFamily: FONTS.bodySemiBold, color: c.textSecondary },
+  pillTextActive: { color: c.primaryText },
 
   starRow: { flexDirection: 'row', gap: 6 },
-  star: { fontSize: 28, color: COLORS.gold },
+  star: { fontSize: 28, color: c.gold },
 });

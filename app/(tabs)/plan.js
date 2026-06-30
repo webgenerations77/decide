@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView,
   Linking, Animated, Modal,
@@ -13,7 +13,8 @@ import { generateItinerary, swapStop } from '../../services/itineraryService';
 import { loadPlanDefaults, KEYS } from '../../services/settingsService';
 import { isAtDecisionLimit, incrementDecisionCount, getRemainingDecisions, isPro, LIMITS } from '../../services/subscriptionService';
 import { scheduleItineraryAlerts, cancelItineraryAlerts } from '../../services/notificationService';
-import { COLORS, FONTS, RADII } from '../../constants/theme';
+import { FONTS, RADII } from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 import ScreenBackground from '../../components/brand/ScreenBackground';
 import Card from '../../components/brand/Card';
 import CTAButton from '../../components/brand/CTAButton';
@@ -82,6 +83,8 @@ const GROUP_OPTIONS = [
 
 // ─── TimePickerPill ───────────────────────────────────────────────────────────
 function TimePickerPill({ label, value, options, onChange, disabled }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -93,7 +96,7 @@ function TimePickerPill({ label, value, options, onChange, disabled }) {
         <Text style={styles.timePillLabel}>{label}</Text>
         <View style={styles.timePillInner}>
           <Text style={styles.timePillValue}>{value}</Text>
-          <Ionicons name="chevron-down" size={13} color={COLORS.textMuted} />
+          <Ionicons name="chevron-down" size={13} color={colors.textMuted} />
         </View>
       </TouchableOpacity>
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
@@ -125,6 +128,8 @@ function TimePickerPill({ label, value, options, onChange, disabled }) {
 
 // ─── PillRow ──────────────────────────────────────────────────────────────────
 function PillRow({ options, selected, onSelect, disabled }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <View style={styles.pillsRow}>
       {options.map((o) => (
@@ -146,6 +151,8 @@ function PillRow({ options, selected, onSelect, disabled }) {
 
 // ─── PlanScreen ───────────────────────────────────────────────────────────────
 export default function PlanScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const router = useRouter();
   const [view, setView] = useState('landing');
   const [remainingDecisions, setRemainingDecisions] = useState(null);
@@ -559,7 +566,7 @@ export default function PlanScreen() {
             <Card style={styles.landingCard}>
               <Animated.View style={[styles.locationPillRow, { opacity: locAnim }]}>
                 <View style={styles.locationPill}>
-                  <Ionicons name={isManual ? 'pin' : 'location'} size={13} color={COLORS.primary} />
+                  <Ionicons name={isManual ? 'pin' : 'location'} size={13} color={colors.primary} />
                   <Text style={styles.locationText}>{locationLabel}</Text>
                 </View>
               </Animated.View>
@@ -567,7 +574,7 @@ export default function PlanScreen() {
               <Animated.View style={{ opacity: btn1Anim, transform: [{ translateY: btn1Slide }], width: '100%' }}>
                 <TouchableOpacity style={styles.landingBtnTouch} onPress={handleToday} activeOpacity={0.88}>
                   <LinearGradient
-                    colors={[COLORS.primary, COLORS.primaryDark]}
+                    colors={[colors.primary, colors.primaryDark]}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     style={[styles.decideBtn, styles.decideBtnPrimary]}
@@ -581,8 +588,8 @@ export default function PlanScreen() {
               <Animated.View style={{ opacity: btn2Anim, transform: [{ translateY: btn2Slide }], width: '100%' }}>
                 <TouchableOpacity style={styles.landingBtnTouch} onPress={() => setShowWeekPicker(true)} activeOpacity={0.75}>
                   <View style={[styles.decideBtn, styles.decideBtnSecondary]}>
-                    <Text style={[styles.decideBtnTitle, { color: COLORS.primary }]}>Plan another day</Text>
-                    <Text style={[styles.decideBtnSub, { color: COLORS.textMuted }]}>Choose a day this week</Text>
+                    <Text style={[styles.decideBtnTitle, { color: colors.primary }]}>Plan another day</Text>
+                    <Text style={[styles.decideBtnSub, { color: colors.textMuted }]}>Choose a day this week</Text>
                   </View>
                 </TouchableOpacity>
               </Animated.View>
@@ -614,7 +621,7 @@ export default function PlanScreen() {
                 disabled={loading}
               >
                 <Text style={styles.datePillValue}>📅  {datePillLabel(planDate)}</Text>
-                <Ionicons name="chevron-down" size={13} color={COLORS.textMuted} />
+                <Ionicons name="chevron-down" size={13} color={colors.textMuted} />
               </TouchableOpacity>
 
               <SectionLabel tone="cobalt">Pace</SectionLabel>
@@ -640,7 +647,7 @@ export default function PlanScreen() {
               <TextInput
                 style={styles.tripNoteInput}
                 placeholder="e.g. pinball, vinyl, breweries, surf"
-                placeholderTextColor={COLORS.textMuted}
+                placeholderTextColor={colors.textMuted}
                 value={tripNote}
                 onChangeText={setTripNote}
               />
@@ -669,7 +676,7 @@ export default function PlanScreen() {
             <View style={styles.itineraryContainer}>
               {isFallback && (
                 <View style={styles.fallbackBanner}>
-                  <Ionicons name="cloud-offline-outline" size={14} color={COLORS.gold} style={{ marginRight: 6 }} />
+                  <Ionicons name="cloud-offline-outline" size={14} color={colors.gold} style={{ marginRight: 6 }} />
                   <Text style={styles.fallbackBannerTxt}>
                     Offline mode — showing top-rated nearby places.
                   </Text>
@@ -731,12 +738,12 @@ export default function PlanScreen() {
         <View style={styles.stickyNavContainer}>
           <TouchableOpacity onPress={handleNavigateFullDay} activeOpacity={0.88}>
             <LinearGradient
-              colors={[COLORS.primary, COLORS.primaryDark]}
+              colors={[colors.primary, colors.primaryDark]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.stickyNavBtn}
             >
-              <Ionicons name="navigate" size={18} color={COLORS.primaryText} style={{ marginRight: 8 }} />
+              <Ionicons name="navigate" size={18} color={colors.primaryText} style={{ marginRight: 8 }} />
               <Text style={styles.stickyNavTxt}>Navigate full day</Text>
             </LinearGradient>
           </TouchableOpacity>
@@ -758,7 +765,7 @@ export default function PlanScreen() {
               <View style={styles.weekPickerHeader}>
                 <Text style={styles.weekPickerTitle}>Choose a day</Text>
                 <TouchableOpacity style={styles.weekPickerClose} onPress={() => setShowWeekPicker(false)} activeOpacity={0.7}>
-                  <Ionicons name="close" size={18} color={COLORS.textMuted} />
+                  <Ionicons name="close" size={18} color={colors.textMuted} />
                 </TouchableOpacity>
               </View>
               {getNextSevenDays().map((day, i) => (
@@ -785,7 +792,7 @@ export default function PlanScreen() {
               <View style={styles.weekPickerHeader}>
                 <Text style={styles.weekPickerTitle}>Choose a day</Text>
                 <TouchableOpacity style={styles.weekPickerClose} onPress={() => setShowDatePicker(false)} activeOpacity={0.7}>
-                  <Ionicons name="close" size={18} color={COLORS.textMuted} />
+                  <Ionicons name="close" size={18} color={colors.textMuted} />
                 </TouchableOpacity>
               </View>
               {getNextSevenDays().map((day, i) => (
@@ -816,8 +823,8 @@ export default function PlanScreen() {
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
-const styles = StyleSheet.create({
-  screen:        { flex: 1, backgroundColor: COLORS.bg },
+const makeStyles = (c) => StyleSheet.create({
+  screen:        { flex: 1, backgroundColor: c.bg },
   scroll:        { flex: 1 },
   scrollContent: { flexGrow: 1 },
 
@@ -829,7 +836,7 @@ const styles = StyleSheet.create({
   },
   landingHero: { alignItems: 'center', marginBottom: 32 },
   landingHeroTag: {
-    fontSize: 16, color: COLORS.textSecondary, textAlign: 'center',
+    fontSize: 16, color: c.textSecondary, textAlign: 'center',
     fontFamily: FONTS.display, letterSpacing: 0.2, marginTop: 12,
   },
   landingCard: { width: '100%', gap: 14 },
@@ -837,23 +844,23 @@ const styles = StyleSheet.create({
   locationPill: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingHorizontal: 16, paddingVertical: 9,
-    borderRadius: 20, backgroundColor: COLORS.surface,
-    borderWidth: 1, borderColor: COLORS.border,
+    borderRadius: 20, backgroundColor: c.surface,
+    borderWidth: 1, borderColor: c.border,
   },
-  locationText: { fontSize: 13, color: COLORS.textSecondary, letterSpacing: 0.2 },
+  locationText: { fontSize: 13, color: c.textSecondary, letterSpacing: 0.2 },
   landingBtnTouch: { width: '100%' },
   decideBtn: {
     width: '100%', paddingVertical: 20, paddingHorizontal: 24,
     borderRadius: 20, alignItems: 'center', gap: 5,
   },
   decideBtnPrimary: {
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 8 },
+    shadowColor: c.primary, shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.45, shadowRadius: 20, elevation: 18,
   },
-  decideBtnSecondary: { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border },
-  decideBtnTitle: { color: COLORS.primaryText, fontSize: 18, fontFamily: FONTS.displayHeavy },
-  decideBtnSub:   { color: COLORS.sky200, fontSize: 12, letterSpacing: 0.2 },
-  landingSubtext: { fontSize: 12, color: COLORS.textMuted, letterSpacing: 0.2, textAlign: 'center', marginTop: 20 },
+  decideBtnSecondary: { backgroundColor: c.surface, borderWidth: 1, borderColor: c.border },
+  decideBtnTitle: { color: c.primaryText, fontSize: 18, fontFamily: FONTS.displayHeavy },
+  decideBtnSub:   { color: c.sky200, fontSize: 12, letterSpacing: 0.2 },
+  landingSubtext: { fontSize: 12, color: c.textMuted, letterSpacing: 0.2, textAlign: 'center', marginTop: 20 },
 
   // ── Plan / Itinerary container ────────────────────────────────────────────
   planContainer: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 8 },
@@ -861,53 +868,53 @@ const styles = StyleSheet.create({
   // Header
   header:         { alignItems: 'center', marginBottom: 24 },
   backRow:        { marginBottom: 10 },
-  backText:       { fontSize: 13, color: COLORS.primary, fontFamily: FONTS.bodySemiBold },
+  backText:       { fontSize: 13, color: c.primary, fontFamily: FONTS.bodySemiBold },
   appName: {
-    fontSize: 26, color: COLORS.textPrimary,
+    fontSize: 26, color: c.textPrimary,
     fontFamily: FONTS.displayHeavy,
   },
   headerPill: {
     marginTop: 10, paddingHorizontal: 12, paddingVertical: 6,
-    borderRadius: 20, backgroundColor: COLORS.surface,
-    borderWidth: 1, borderColor: COLORS.border,
+    borderRadius: 20, backgroundColor: c.surface,
+    borderWidth: 1, borderColor: c.border,
   },
-  headerPillText: { fontSize: 12, color: COLORS.textSecondary, letterSpacing: 0.2 },
+  headerPillText: { fontSize: 12, color: c.textSecondary, letterSpacing: 0.2 },
 
   // Preferences card
   prefsCard: {
-    backgroundColor: COLORS.surface, borderRadius: 20,
-    borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: c.surface, borderRadius: 20,
+    borderWidth: 1, borderColor: c.border,
     padding: 20, marginBottom: 16, gap: 12,
   },
   datePill: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: COLORS.surfaceAlt, borderRadius: 12,
-    borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: c.surfaceAlt, borderRadius: 12,
+    borderWidth: 1, borderColor: c.border,
     paddingHorizontal: 14, paddingVertical: 12,
   },
-  datePillValue:   { fontSize: 14, fontFamily: FONTS.bodyBold, color: COLORS.primary },
+  datePillValue:   { fontSize: 14, fontFamily: FONTS.bodyBold, color: c.primary },
   pillsRow:        { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   prefPill: {
     paddingHorizontal: 14, paddingVertical: 9,
     borderRadius: 16, borderWidth: 1,
-    backgroundColor: COLORS.surfaceAlt, borderColor: COLORS.border,
+    backgroundColor: c.surfaceAlt, borderColor: c.border,
   },
-  prefPillActive:     { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  prefPillText:       { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: COLORS.textSecondary },
-  prefPillTextActive: { color: COLORS.primaryText },
+  prefPillActive:     { backgroundColor: c.primary, borderColor: c.primary },
+  prefPillText:       { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: c.textSecondary },
+  prefPillTextActive: { color: c.primaryText },
   timePickerRow:      { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  timeArrow:          { color: COLORS.textMuted, fontSize: 16, fontFamily: FONTS.body },
+  timeArrow:          { color: c.textMuted, fontSize: 16, fontFamily: FONTS.body },
   timePill: {
-    flex: 1, backgroundColor: COLORS.surfaceAlt, borderRadius: 12,
-    borderWidth: 1, borderColor: COLORS.border,
+    flex: 1, backgroundColor: c.surfaceAlt, borderRadius: 12,
+    borderWidth: 1, borderColor: c.border,
     paddingHorizontal: 12, paddingVertical: 10, gap: 3,
   },
-  timePillLabel:   { fontSize: 10, fontFamily: FONTS.bodyBold, color: COLORS.textMuted, letterSpacing: 0.5 },
+  timePillLabel:   { fontSize: 10, fontFamily: FONTS.bodyBold, color: c.textMuted, letterSpacing: 0.5 },
   timePillInner:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  timePillValue:   { fontSize: 14, fontFamily: FONTS.bodyBold, color: COLORS.primary },
-  timeValidationHint: { fontSize: 11, color: COLORS.error, marginTop: 2 },
+  timePillValue:   { fontSize: 14, fontFamily: FONTS.bodyBold, color: c.primary },
+  timeValidationHint: { fontSize: 11, color: c.error, marginTop: 2 },
   resultsTimeEditor: { marginTop: 4, marginBottom: 12 },
-  tripNoteInput: { backgroundColor: COLORS.surface, borderColor: COLORS.border, borderWidth: 1, borderRadius: RADII.md, color: COLORS.textPrimary, paddingHorizontal: 14, paddingVertical: 10, fontSize: 15, fontFamily: FONTS.body },
+  tripNoteInput: { backgroundColor: c.surface, borderColor: c.border, borderWidth: 1, borderRadius: RADII.md, color: c.textPrimary, paddingHorizontal: 14, paddingVertical: 10, fontSize: 15, fontFamily: FONTS.body },
 
   // Time picker modal
   modalOverlay: {
@@ -915,67 +922,67 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center', padding: 40,
   },
   modalCard: {
-    backgroundColor: COLORS.surface, borderRadius: 18,
-    borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: c.surface, borderRadius: 18,
+    borderWidth: 1, borderColor: c.border,
     width: 240, overflow: 'hidden',
   },
   modalTitle: {
-    fontSize: 11, fontFamily: FONTS.monoBold, color: COLORS.primary, letterSpacing: 1,
+    fontSize: 11, fontFamily: FONTS.monoBold, color: c.primary, letterSpacing: 1,
     textAlign: 'center', paddingVertical: 14,
-    borderBottomWidth: 1, borderBottomColor: COLORS.border,
+    borderBottomWidth: 1, borderBottomColor: c.border,
     textTransform: 'capitalize',
   },
-  modalOption:           { paddingVertical: 13, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: COLORS.surfaceAlt },
-  modalOptionActive:     { backgroundColor: COLORS.surfaceAlt },
-  modalOptionText:       { fontSize: 15, fontFamily: FONTS.bodyMedium, color: COLORS.textMuted, textAlign: 'center' },
-  modalOptionTextActive: { color: COLORS.primary, fontFamily: FONTS.bodyBold },
+  modalOption:           { paddingVertical: 13, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: c.surfaceAlt },
+  modalOptionActive:     { backgroundColor: c.surfaceAlt },
+  modalOptionText:       { fontSize: 15, fontFamily: FONTS.bodyMedium, color: c.textMuted, textAlign: 'center' },
+  modalOptionTextActive: { color: c.primary, fontFamily: FONTS.bodyBold },
 
   // Error block
   errorBlock: { alignItems: 'center', gap: 12, marginTop: 4 },
   errorText: {
-    color: COLORS.error, fontSize: 14, textAlign: 'center',
-    backgroundColor: COLORS.error + '12', borderRadius: 12,
+    color: c.error, fontSize: 14, textAlign: 'center',
+    backgroundColor: c.error + '12', borderRadius: 12,
     paddingVertical: 12, paddingHorizontal: 16,
-    borderWidth: 1, borderColor: COLORS.error + '33',
+    borderWidth: 1, borderColor: c.error + '33',
     lineHeight: 20,
   },
 
   // Generate button
-  generateSubtext: { textAlign: 'center', fontSize: 12, color: COLORS.textMuted, marginTop: 10 },
-  remainingText:   { textAlign: 'center', fontSize: 11, color: COLORS.textMuted, marginTop: 4 },
+  generateSubtext: { textAlign: 'center', fontSize: 12, color: c.textMuted, marginTop: 10 },
+  remainingText:   { textAlign: 'center', fontSize: 11, color: c.textMuted, marginTop: 4 },
   retryBtn: {
-    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: c.surface, borderWidth: 1, borderColor: c.border,
     borderRadius: 16, paddingHorizontal: 24, height: 44,
     alignItems: 'center', justifyContent: 'center',
   },
-  retryBtnText: { color: COLORS.primary, fontSize: 14, fontFamily: FONTS.bodyBold },
+  retryBtnText: { color: c.primary, fontSize: 14, fontFamily: FONTS.bodyBold },
 
   // Itinerary
   fallbackBanner: {
     flexDirection: 'row', alignItems: 'center',
     marginBottom: 16, borderRadius: 12,
-    backgroundColor: COLORS.warning + '12', borderWidth: 1, borderColor: COLORS.warning + '44',
+    backgroundColor: c.warning + '12', borderWidth: 1, borderColor: c.warning + '44',
     paddingHorizontal: 14, paddingVertical: 10,
   },
-  fallbackBannerTxt: { fontSize: 13, color: COLORS.warning, lineHeight: 18, flex: 1 },
+  fallbackBannerTxt: { fontSize: 13, color: c.warning, lineHeight: 18, flex: 1 },
   itineraryContainer: { gap: 0 },
   resetBtn: {
     marginTop: 12, borderRadius: 16, height: 52,
     alignItems: 'center', justifyContent: 'center',
-    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: c.surface, borderWidth: 1, borderColor: c.border,
   },
-  resetBtnText: { color: COLORS.textSecondary, fontSize: 14, fontFamily: FONTS.bodySemiBold },
+  resetBtnText: { color: c.textSecondary, fontSize: 14, fontFamily: FONTS.bodySemiBold },
 
   // Sticky footer
   stickyNavContainer: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     paddingHorizontal: 20, paddingBottom: 28, paddingTop: 14,
-    backgroundColor: COLORS.bg,
-    borderTopWidth: 1, borderTopColor: COLORS.border,
+    backgroundColor: c.bg,
+    borderTopWidth: 1, borderTopColor: c.border,
   },
   loadingOverlay: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: COLORS.bg,
+    backgroundColor: c.bg,
     alignItems: 'center', justifyContent: 'center',
     zIndex: 50, elevation: 50,
   },
@@ -983,42 +990,42 @@ const styles = StyleSheet.create({
     borderRadius: 18, height: 58,
     alignItems: 'center', justifyContent: 'center',
     flexDirection: 'row',
-    shadowColor: COLORS.gold, shadowOffset: { width: 0, height: 6 },
+    shadowColor: c.gold, shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35, shadowRadius: 16, elevation: 12,
   },
-  stickyNavTxt: { color: COLORS.primaryText, fontSize: 17, fontFamily: FONTS.bodyBold },
+  stickyNavTxt: { color: c.primaryText, fontSize: 17, fontFamily: FONTS.bodyBold },
 
   // Week / Date picker
   weekPickerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'flex-end' },
   weekPickerCard: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: c.surface,
     borderTopLeftRadius: 28, borderTopRightRadius: 28,
-    borderWidth: 1, borderColor: COLORS.border,
+    borderWidth: 1, borderColor: c.border,
     paddingBottom: 34, overflow: 'hidden',
   },
   weekPickerHeader: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 24, paddingVertical: 20,
-    borderBottomWidth: 1, borderBottomColor: COLORS.border,
+    borderBottomWidth: 1, borderBottomColor: c.border,
   },
   weekPickerTitle: {
-    fontSize: 16, color: COLORS.textPrimary,
+    fontSize: 16, color: c.textPrimary,
     fontFamily: FONTS.display,
   },
   weekPickerClose: {
     width: 32, height: 32, borderRadius: 16,
-    backgroundColor: COLORS.surfaceAlt,
-    borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: c.surfaceAlt,
+    borderWidth: 1, borderColor: c.border,
     alignItems: 'center', justifyContent: 'center',
   },
   dayRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 24, paddingVertical: 18,
-    borderBottomWidth: 1, borderBottomColor: COLORS.surfaceAlt,
+    borderBottomWidth: 1, borderBottomColor: c.surfaceAlt,
   },
   dayRowLast:    { borderBottomWidth: 0 },
-  dayLabel:      { fontSize: 16, fontFamily: FONTS.bodySemiBold, color: COLORS.textPrimary },
-  dayLabelToday: { color: COLORS.primary },
-  daySub:        { fontSize: 13, color: COLORS.textMuted, fontFamily: FONTS.body },
+  dayLabel:      { fontSize: 16, fontFamily: FONTS.bodySemiBold, color: c.textPrimary },
+  dayLabelToday: { color: c.primary },
+  daySub:        { fontSize: 13, color: c.textMuted, fontFamily: FONTS.body },
 
 });

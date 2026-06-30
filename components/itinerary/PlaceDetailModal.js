@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   View, Text, Modal, ScrollView, TouchableOpacity, ActivityIndicator,
   Linking, Dimensions, StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, CATEGORY_COLORS, CATEGORY_EMOJIS, FONTS } from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 import { placeDetails as fetchPlaceDetails } from '../../services/placesService';
 import SectionLabel from '../brand/SectionLabel';
 import { openMaps, highlightConfig } from './helpers';
@@ -15,6 +16,8 @@ function PlaceDetailModal({ visible, stop, onClose }) {
   const [placeDetails,  setPlaceDetails]  = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [showLegend,    setShowLegend]    = useState(false);
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const screenHeight = Dimensions.get('window').height;
 
   useEffect(() => {
@@ -37,7 +40,7 @@ function PlaceDetailModal({ visible, stop, onClose }) {
 
   if (!stop) return null;
 
-  const color    = CATEGORY_COLORS[stop.category] ?? COLORS.amber;
+  const color    = CATEGORY_COLORS[stop.category] ?? COLORS.amber;  // data-layer
   const catEmoji = CATEGORY_EMOJIS[stop.category] ?? '⚡';
   const priceLvl = [null, '$', '$$', '$$$', '$$$$'];
 
@@ -65,7 +68,7 @@ function PlaceDetailModal({ visible, stop, onClose }) {
                 <Text style={[styles.detailCatPillTxt, { color }]}>{catEmoji} {(stop.category ?? '').toUpperCase()}</Text>
               </View>
               <TouchableOpacity style={styles.detailCloseBtn} onPress={onClose} activeOpacity={0.7}>
-                <Ionicons name="close" size={16} color={COLORS.textSecondary} />
+                <Ionicons name="close" size={16} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
@@ -88,14 +91,14 @@ function PlaceDetailModal({ visible, stop, onClose }) {
                     <>
                       <Text style={styles.detailInfoDot}>·</Text>
                       <TouchableOpacity onPress={() => setShowLegend(true)} activeOpacity={0.7}>
-                        <Text style={[styles.detailInfoTxt, { color: COLORS.goldText }]}>{priceStr} ⓘ</Text>
+                        <Text style={[styles.detailInfoTxt, { color: colors.goldText }]}>{priceStr} ⓘ</Text>
                       </TouchableOpacity>
                     </>
                   )}
                   {openNow != null && (
                     <>
                       <Text style={styles.detailInfoDot}>·</Text>
-                      <Text style={[styles.detailInfoTxt, { color: openNow ? COLORS.success : COLORS.error }]}>
+                      <Text style={[styles.detailInfoTxt, { color: openNow ? colors.success : colors.error }]}>
                         {openNow ? '● Open' : '● Closed'}
                       </Text>
                     </>
@@ -108,7 +111,7 @@ function PlaceDetailModal({ visible, stop, onClose }) {
 
               {stop.admission_cost && (
                 <View style={styles.admissionRow}>
-                  <Ionicons name="ticket-outline" size={14} color={COLORS.gold} />
+                  <Ionicons name="ticket-outline" size={14} color={colors.gold} />
                   <Text style={styles.admissionLabel}>Admission</Text>
                   <Text style={styles.admissionValue}>{stop.admission_cost}</Text>
                 </View>
@@ -116,13 +119,13 @@ function PlaceDetailModal({ visible, stop, onClose }) {
 
               {stop.live_music?.note ? (
                 <View style={styles.admissionRow}>
-                  <Ionicons name="musical-notes-outline" size={14} color={COLORS.primary} />
+                  <Ionicons name="musical-notes-outline" size={14} color={colors.primary} />
                   <Text style={styles.admissionLabel}>Live music</Text>
                   <Text style={styles.admissionValue}>{stop.live_music.note}</Text>
                 </View>
               ) : null}
 
-              {detailLoading && <ActivityIndicator color={COLORS.primary} style={{ marginVertical: 20 }} />}
+              {detailLoading && <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />}
 
               {stop.place_id?.startsWith('nps_')  && <View style={styles.detailSourceBadge}><Text style={styles.detailSourceTxt}>🌲 National Park Service</Text></View>}
               {stop.place_id?.startsWith('ridb_') && <View style={styles.detailSourceBadge}><Text style={styles.detailSourceTxt}>🏕️ Recreation.gov</Text></View>}
@@ -153,7 +156,7 @@ function PlaceDetailModal({ visible, stop, onClose }) {
                 <View style={styles.detailStatsRow}>
                   {stop.distance ? (
                     <TouchableOpacity onPress={() => openMaps(stop)} activeOpacity={0.7} style={styles.distanceLink}>
-                      <Ionicons name="location-outline" size={14} color={COLORS.primary} style={{ marginRight: 4 }} />
+                      <Ionicons name="location-outline" size={14} color={colors.primary} style={{ marginRight: 4 }} />
                       <Text style={styles.distanceLinkTxt}>{stop.distance}</Text>
                     </TouchableOpacity>
                   ) : <View />}
@@ -166,7 +169,7 @@ function PlaceDetailModal({ visible, stop, onClose }) {
               )}
 
               <TouchableOpacity style={styles.detailNavBtn} onPress={() => openMaps(stop)} activeOpacity={0.7}>
-                <Ionicons name="navigate" size={18} color={COLORS.primaryText} style={{ marginRight: 8 }} />
+                <Ionicons name="navigate" size={18} color={colors.primaryText} style={{ marginRight: 8 }} />
                 <Text style={styles.detailNavBtnTxt}>Navigate here</Text>
               </TouchableOpacity>
 
@@ -178,7 +181,7 @@ function PlaceDetailModal({ visible, stop, onClose }) {
                       onPress={() => Linking.openURL(`tel:${phone}`)}
                       activeOpacity={0.7}
                     >
-                      <Ionicons name="call-outline" size={16} color={COLORS.primary} style={{ marginRight: 6 }} />
+                      <Ionicons name="call-outline" size={16} color={colors.primary} style={{ marginRight: 6 }} />
                       <Text style={styles.detailSecBtnTxt}>Call</Text>
                     </TouchableOpacity>
                   ) : null}
@@ -188,7 +191,7 @@ function PlaceDetailModal({ visible, stop, onClose }) {
                       onPress={() => Linking.openURL(website)}
                       activeOpacity={0.7}
                     >
-                      <Ionicons name="globe-outline" size={16} color={COLORS.primary} style={{ marginRight: 6 }} />
+                      <Ionicons name="globe-outline" size={16} color={colors.primary} style={{ marginRight: 6 }} />
                       <Text style={styles.detailSecBtnTxt}>Website</Text>
                     </TouchableOpacity>
                   ) : null}
@@ -204,86 +207,86 @@ function PlaceDetailModal({ visible, stop, onClose }) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   // Place detail modal
   detailOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.72)', justifyContent: 'flex-end' },
   detailSheet: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: c.surface,
     borderTopLeftRadius: 28, borderTopRightRadius: 28,
-    borderWidth: 1, borderColor: COLORS.border,
+    borderWidth: 1, borderColor: c.border,
     overflow: 'hidden',
   },
   dragHandle: {
     width: 36, height: 4, borderRadius: 2,
-    backgroundColor: COLORS.border,
+    backgroundColor: c.border,
     alignSelf: 'center', marginTop: 12, marginBottom: 2,
   },
   detailHeader: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 20, paddingVertical: 14,
-    borderBottomWidth: 1, borderBottomColor: COLORS.border,
+    borderBottomWidth: 1, borderBottomColor: c.border,
   },
   detailCatPill:    { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999 },
   detailCatPillTxt: { fontSize: 11, fontFamily: FONTS.bodyBold, letterSpacing: 1 },
-  detailCloseBtn:   { width: 32, height: 32, borderRadius: 16, backgroundColor: COLORS.surfaceAlt, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', justifyContent: 'center' },
+  detailCloseBtn:   { width: 32, height: 32, borderRadius: 16, backgroundColor: c.surfaceAlt, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center' },
   detailScroll:     { paddingHorizontal: 20, paddingTop: 18 },
   detailName:       {
-    fontSize: 22, color: COLORS.textPrimary,
+    fontSize: 22, color: c.textPrimary,
     fontFamily: FONTS.display,
     marginBottom: 4,
   },
-  detailAddr:       { fontSize: 13, color: COLORS.textMuted, marginBottom: 14, lineHeight: 18 },
+  detailAddr: { fontSize: 13, color: c.textMuted, marginBottom: 14, lineHeight: 18 },
 
-  detailInfoRow:  { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 18 },
-  detailInfoTxt:  { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: COLORS.goldText },
-  detailInfoDot:  { fontSize: 13, color: COLORS.textMuted },
+  detailInfoRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 18 },
+  detailInfoTxt: { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: c.goldText },
+  detailInfoDot: { fontSize: 13, color: c.textMuted },
 
   admissionRow: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: COLORS.gold + '22', borderRadius: 10,
+    backgroundColor: c.gold + '22', borderRadius: 10,
     paddingHorizontal: 12, paddingVertical: 8, marginBottom: 14,
-    borderWidth: 1, borderColor: COLORS.gold + '33',
+    borderWidth: 1, borderColor: c.gold + '33',
   },
-  admissionLabel: { fontSize: 12, fontFamily: FONTS.bodyBold, color: COLORS.primary, letterSpacing: 0.5 },
-  admissionValue: { fontSize: 13, color: COLORS.textPrimary, fontFamily: FONTS.bodyMedium, flex: 1 },
+  admissionLabel: { fontSize: 12, fontFamily: FONTS.bodyBold, color: c.primary, letterSpacing: 0.5 },
+  admissionValue: { fontSize: 13, color: c.textPrimary, fontFamily: FONTS.bodyMedium, flex: 1 },
 
-  detailSection:      { marginBottom: 18 },
-  detailReasonText:   { fontSize: 15, color: COLORS.textPrimary, lineHeight: 23, fontStyle: 'italic', fontFamily: FONTS.body },
+  detailSection:    { marginBottom: 18 },
+  detailReasonText: { fontSize: 15, color: c.textPrimary, lineHeight: 23, fontStyle: 'italic', fontFamily: FONTS.body },
 
   highlightRow: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 10,
-    backgroundColor: COLORS.surfaceAlt, borderRadius: 8, padding: 10,
+    backgroundColor: c.surfaceAlt, borderRadius: 8, padding: 10,
     borderLeftWidth: 3, marginBottom: 6,
   },
   highlightIcon: { fontSize: 16, lineHeight: 20 },
-  highlightText: { flex: 1, fontSize: 14, color: COLORS.textPrimary, lineHeight: 20, fontFamily: FONTS.body },
+  highlightText: { flex: 1, fontSize: 14, color: c.textPrimary, lineHeight: 20, fontFamily: FONTS.body },
 
   detailStatsRow:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
   distanceLink:    { flexDirection: 'row', alignItems: 'center' },
-  distanceLinkTxt: { fontSize: 13, color: COLORS.primary, fontFamily: FONTS.bodySemiBold },
-  detailExciteBadge: { backgroundColor: COLORS.gold + '22', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: COLORS.gold + '44' },
-  detailExciteTxt:   { color: COLORS.goldText, fontSize: 12, fontFamily: FONTS.bodyBold },
+  distanceLinkTxt: { fontSize: 13, color: c.primary, fontFamily: FONTS.bodySemiBold },
+  detailExciteBadge: { backgroundColor: c.gold + '22', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: c.gold + '44' },
+  detailExciteTxt:   { color: c.goldText, fontSize: 12, fontFamily: FONTS.bodyBold },
 
   detailNavBtn: {
-    backgroundColor: COLORS.primary, borderRadius: 16,
+    backgroundColor: c.primary, borderRadius: 16,
     height: 56, alignItems: 'center', justifyContent: 'center',
     flexDirection: 'row',
     marginBottom: 10,
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
+    shadowColor: c.primary, shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35, shadowRadius: 12, elevation: 8,
   },
-  detailNavBtnTxt: { color: COLORS.primaryText, fontSize: 16, fontFamily: FONTS.bodyBold },
+  detailNavBtnTxt: { color: c.primaryText, fontSize: 16, fontFamily: FONTS.bodyBold },
 
   detailSecondaryBtns: { flexDirection: 'row', gap: 10 },
   detailSecBtn: {
     flex: 1, height: 48, borderRadius: 14, flexDirection: 'row',
-    backgroundColor: COLORS.surfaceAlt, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: c.surfaceAlt, borderWidth: 1, borderColor: c.border,
     alignItems: 'center', justifyContent: 'center',
   },
-  detailSecBtnTxt: { fontSize: 14, fontFamily: FONTS.bodySemiBold, color: COLORS.primary },
+  detailSecBtnTxt: { fontSize: 14, fontFamily: FONTS.bodySemiBold, color: c.primary },
 
-  detailSourceBadge: { backgroundColor: COLORS.surfaceAlt, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, marginBottom: 14, alignSelf: 'flex-start', borderWidth: 1, borderColor: COLORS.border },
-  detailSourceTxt:   { color: COLORS.textSecondary, fontSize: 12, fontFamily: FONTS.bodySemiBold },
+  detailSourceBadge: { backgroundColor: c.surfaceAlt, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, marginBottom: 14, alignSelf: 'flex-start', borderWidth: 1, borderColor: c.border },
+  detailSourceTxt:   { color: c.textSecondary, fontSize: 12, fontFamily: FONTS.bodySemiBold },
 });
 
 export default PlaceDetailModal;

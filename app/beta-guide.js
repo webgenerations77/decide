@@ -1,14 +1,16 @@
+import { useMemo } from 'react';
 import { ScrollView, Text, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import ScreenBackground from '../components/brand/ScreenBackground';
 import GradientHeader from '../components/brand/GradientHeader';
 import Card from '../components/brand/Card';
 import SectionLabel from '../components/brand/SectionLabel';
 import CTAButton from '../components/brand/CTAButton';
-import { COLORS, FONTS } from '../constants/theme';
+import { FONTS } from '../constants/theme';
 
 function firstName(user) {
   const n = user?.displayName?.trim().split(/\s+/)[0];
@@ -16,6 +18,9 @@ function firstName(user) {
 }
 
 export default function BetaGuide() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const router = useRouter();
   const { user } = useAuth();
 
@@ -99,15 +104,15 @@ export default function BetaGuide() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   content: { padding: 20, paddingBottom: 40, gap: 8 },
   header: { borderRadius: 18, marginBottom: 8 },
-  eyebrow: { fontFamily: FONTS.monoBold, fontSize: 11, letterSpacing: 1.6, color: COLORS.sky200 },
-  headerTitle: { fontFamily: FONTS.displayHeavy, fontSize: 26, color: COLORS.white, marginTop: 4 },
-  lead: { fontFamily: FONTS.body, fontSize: 15, lineHeight: 22, color: COLORS.textSecondary, marginBottom: 8 },
+  eyebrow: { fontFamily: FONTS.monoBold, fontSize: 11, letterSpacing: 1.6, color: c.sky200 },
+  headerTitle: { fontFamily: FONTS.displayHeavy, fontSize: 26, color: c.white, marginTop: 4 },
+  lead: { fontFamily: FONTS.body, fontSize: 15, lineHeight: 22, color: c.textSecondary, marginBottom: 8 },
   section: { marginTop: 16, marginBottom: 8 },
   card: { gap: 6 },
-  h: { fontFamily: FONTS.bodyBold, fontSize: 15, color: COLORS.textPrimary, marginTop: 4 },
-  p: { fontFamily: FONTS.body, fontSize: 14, lineHeight: 20, color: COLORS.textSecondary },
-  signoff: { marginTop: 10, fontStyle: 'italic', color: COLORS.textPrimary },
+  h: { fontFamily: FONTS.bodyBold, fontSize: 15, color: c.textPrimary, marginTop: 4 },
+  p: { fontFamily: FONTS.body, fontSize: 14, lineHeight: 20, color: c.textSecondary },
+  signoff: { marginTop: 10, fontStyle: 'italic', color: c.textPrimary },
 });

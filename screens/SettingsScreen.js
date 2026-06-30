@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, Pressable, StyleSheet, ScrollView,
   Switch, ActivityIndicator, Modal, PanResponder, Animated, Alert,
@@ -10,12 +10,15 @@ import * as Notifications from 'expo-notifications';
 import { loadAllSettings, save, KEYS } from '../services/settingsService';
 import { searchTextPlaces } from '../services/placesService';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { isPro, getDecisionCount, getSpinCount, LIMITS } from '../services/subscriptionService';
 import { scheduleDailyReminder, cancelDailyReminder, loadReminderTime } from '../services/notificationService';
-import { COLORS, FONTS } from '../constants/theme';
+import { FONTS } from '../constants/theme';
 import ScreenBackground from '../components/brand/ScreenBackground';
 import Card from '../components/brand/Card';
 import SectionLabel from '../components/brand/SectionLabel';
+import Badge from '../components/brand/Badge';
+import CollapsibleCard from '../components/brand/CollapsibleCard';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const AVATARS         = ['🧭', '🎯', '🎲', '🌮', '🎭', '🏄', '🎸', '🌟'];
@@ -42,6 +45,11 @@ const GROUP_OPTIONS  = [
   { id: 'couple',  label: 'Couple',  emoji: '👫' },
   { id: 'family',  label: 'Family',  emoji: '👨‍👩‍👧' },
   { id: 'friends', label: 'Friends', emoji: '👥' },
+];
+const APPEARANCE_OPTIONS = [
+  { id: 'auto',  label: 'Auto'  },
+  { id: 'light', label: 'Light' },
+  { id: 'dark',  label: 'Dark'  },
 ];
 const START_TIMES = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM'];
 const END_TIMES   = ['4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM', '8:00 PM', '9:00 PM', '10:00 PM'];
@@ -83,6 +91,8 @@ async function searchLocation(text) {
 
 // ─── ChipGrid ─────────────────────────────────────────────────────────────────
 function ChipGrid({ options, selected, onToggle }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <View style={styles.chipGrid}>
       {options.map((opt) => {
@@ -104,6 +114,8 @@ function ChipGrid({ options, selected, onToggle }) {
 
 // ─── PillRow ──────────────────────────────────────────────────────────────────
 function PillRow({ options, selected, onSelect }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <View style={styles.pillsRow}>
       {options.map((o) => (
@@ -125,6 +137,8 @@ function PillRow({ options, selected, onSelect }) {
 // ─── TimePickerPill ───────────────────────────────────────────────────────────
 function TimePickerPill({ label, value, options, onChange }) {
   const [open, setOpen] = useState(false);
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <>
       <TouchableOpacity style={styles.timePill} onPress={() => setOpen(true)} activeOpacity={0.7}>
@@ -166,6 +180,8 @@ function TimePickerPill({ label, value, options, onChange }) {
 
 // ─── DistanceSlider — range 1–50 mi ──────────────────────────────────────────
 function DistanceSlider({ value, onChange }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const widthRef = useRef(1);
   const cbRef    = useRef(onChange);
   cbRef.current  = onChange;
@@ -206,6 +222,8 @@ function DistanceSlider({ value, onChange }) {
 export default function SettingsScreen() {
   const router = useRouter();
   const { user, signOut, isBetaTester, isAdmin } = useAuth();
+  const { colors, mode, setMode } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [loaded,         setLoaded]         = useState(false);
   const [displayName,    setDisplayName]    = useState('');
   const [avatar,         setAvatar]         = useState('🎯');
@@ -408,7 +426,7 @@ export default function SettingsScreen() {
     return (
       <ScreenBackground variant="paper">
         <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} edges={['top']}>
-          <ActivityIndicator color={COLORS.primary} size="large" />
+          <ActivityIndicator color={colors.primary} size="large" />
         </SafeAreaView>
       </ScreenBackground>
     );
@@ -433,7 +451,7 @@ export default function SettingsScreen() {
               value={displayName}
               onChangeText={handleDisplayName}
               placeholder="Your name"
-              placeholderTextColor={COLORS.textMuted}
+              placeholderTextColor={colors.textMuted}
               returnKeyType="done"
             />
 
@@ -452,35 +470,23 @@ export default function SettingsScreen() {
             </View>
           </Card>
 
-          {/* ── Subscription ─────────────────────────────────────────── */}
-          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>SUBSCRIPTION</SectionLabel>
+          {/* ── Appearance ──────────────────────────────────────────────────── */}
+          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>APPEARANCE</SectionLabel>
           <Card style={styles.card}>
-            <View style={styles.appRow}>
-              <Text style={styles.appRowLabel}>Plan</Text>
-              <Text style={[styles.appRowValue, proStatus && { color: COLORS.primary }]}>
-                {proStatus ? '👑 Decide Pro' : 'Free'}
-              </Text>
-            </View>
-            {!proStatus && (
-              <>
-                <View style={[styles.appRow, styles.appRowBorder]}>
-                  <Text style={styles.appRowLabel}>Decisions today</Text>
-                  <Text style={styles.appRowValue}>{usageDecisions}/{LIMITS.FREE_DECISIONS_PER_DAY}</Text>
-                </View>
-                <View style={[styles.appRow, styles.appRowBorder]}>
-                  <Text style={styles.appRowLabel}>Spins today</Text>
-                  <Text style={styles.appRowValue}>{usageSpins}/{LIMITS.FREE_SPINS_PER_DAY}</Text>
-                </View>
+            <Text style={styles.fieldLabel}>THEME</Text>
+            <View style={styles.modeRow}>
+              {APPEARANCE_OPTIONS.map((o) => (
                 <TouchableOpacity
-                  style={[styles.appRow, styles.appRowBorder]}
+                  key={o.id}
+                  style={[styles.modePill, mode === o.id && styles.modePillActive]}
+                  onPress={() => setMode(o.id)}
                   activeOpacity={0.7}
-                  onPress={() => router.push('/paywall')}
                 >
-                  <Text style={[styles.appRowLabel, { color: COLORS.primary }]}>Upgrade to Pro</Text>
-                  <Text style={styles.appRowChevron}>›</Text>
+                  <Text style={[styles.modePillText, mode === o.id && styles.modePillTextActive]}>{o.label}</Text>
                 </TouchableOpacity>
-              </>
-            )}
+              ))}
+            </View>
+            <Text style={[styles.demoSub, { marginTop: 10 }]}>Auto follows your device's appearance.</Text>
           </Card>
 
           {/* ── Admin (admin-only) ─────────────────────────────────────────── */}
@@ -499,77 +505,8 @@ export default function SettingsScreen() {
             </>
           )}
 
-          {/* ── Location ───────────────────────────────────────────────────── */}
-          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>LOCATION</SectionLabel>
-          <Card style={styles.locationCard}>
-            <View style={styles.modeRow}>
-              {[
-                { id: 'auto',   label: '📍 Auto-Detect' },
-                { id: 'manual', label: '📌 Manual' },
-              ].map((m) => (
-                <TouchableOpacity
-                  key={m.id}
-                  style={[styles.modePill, locationMode === m.id && styles.modePillActive]}
-                  onPress={() => handleLocationMode(m.id)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.modePillText, locationMode === m.id && styles.modePillTextActive]}>
-                    {m.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {locationMode === 'manual' && (
-              <View style={styles.manualBlock}>
-                <View style={styles.inputRow}>
-                  <TextInput
-                    style={[styles.textInput, { flex: 1 }]}
-                    value={manualText}
-                    onChangeText={handleManualText}
-                    placeholder="City, address, or zip code"
-                    placeholderTextColor={COLORS.textMuted}
-                    returnKeyType="search"
-                  />
-                  {(manualText.length > 0 || geocodedLoc) && (
-                    <TouchableOpacity style={styles.clearBtn} onPress={handleClearManualLocation} activeOpacity={0.7}>
-                      <Text style={styles.clearBtnTxt}>✕</Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-                {geocoding && (
-                  <View style={styles.geocodeRow}>
-                    <ActivityIndicator size="small" color={COLORS.textMuted} />
-                    <Text style={styles.geocodeStatus}>Finding location…</Text>
-                  </View>
-                )}
-                {!geocoding && geocodeSuggestions.length > 0 && (
-                  <View style={styles.suggestionsOverlay}>
-                    {geocodeSuggestions.map((s, i) => (
-                      <TouchableOpacity
-                        key={i}
-                        style={[styles.suggestionRow, i < geocodeSuggestions.length - 1 && styles.suggestionRowBorder]}
-                        onPress={() => handleSelectSuggestion(s)}
-                        activeOpacity={0.7}
-                      >
-                        <Text style={styles.suggestionText}>{s.label}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                )}
-                {!geocoding && geocodeSuggestions.length === 0 && geocodedLoc && (
-                  <Text style={styles.geocodeSuccess}>📍 {geocodedLoc.short ?? geocodedLoc.label}</Text>
-                )}
-                {!geocoding && geocodeErr && (
-                  <Text style={styles.geocodeError}>⚠ {geocodeErr}</Text>
-                )}
-              </View>
-            )}
-          </Card>
-
           {/* ── Preferences ───────────────────────────────────────────────── */}
-          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>PREFERENCES</SectionLabel>
-          <Card style={styles.card}>
+          <CollapsibleCard title="PREFERENCES" sectionKey="preferences" style={styles.collapsibleSpacing}>
             {/* CUISINES & DIETARY */}
             <Text style={styles.fieldLabel}>CUISINES</Text>
             <ChipGrid options={CUISINES} selected={cuisines} onToggle={toggleCuisine} />
@@ -625,52 +562,124 @@ export default function SettingsScreen() {
             {!validWindow && (
               <Text style={styles.timeValidationHint}>⚠ Please allow at least 3 hours</Text>
             )}
+          </CollapsibleCard>
+
+          {/* ── Location ───────────────────────────────────────────────────── */}
+          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>LOCATION</SectionLabel>
+          <Card style={styles.locationCard}>
+            <View style={styles.modeRow}>
+              {[
+                { id: 'auto',   label: '📍 Auto-Detect' },
+                { id: 'manual', label: '📌 Manual' },
+              ].map((m) => (
+                <TouchableOpacity
+                  key={m.id}
+                  style={[styles.modePill, locationMode === m.id && styles.modePillActive]}
+                  onPress={() => handleLocationMode(m.id)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.modePillText, locationMode === m.id && styles.modePillTextActive]}>
+                    {m.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {locationMode === 'manual' && (
+              <View style={styles.manualBlock}>
+                <View style={styles.inputRow}>
+                  <TextInput
+                    style={[styles.textInput, { flex: 1 }]}
+                    value={manualText}
+                    onChangeText={handleManualText}
+                    placeholder="City, address, or zip code"
+                    placeholderTextColor={colors.textMuted}
+                    returnKeyType="search"
+                  />
+                  {(manualText.length > 0 || geocodedLoc) && (
+                    <TouchableOpacity style={styles.clearBtn} onPress={handleClearManualLocation} activeOpacity={0.7}>
+                      <Text style={styles.clearBtnTxt}>✕</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+                {geocoding && (
+                  <View style={styles.geocodeRow}>
+                    <ActivityIndicator size="small" color={colors.textMuted} />
+                    <Text style={styles.geocodeStatus}>Finding location…</Text>
+                  </View>
+                )}
+                {!geocoding && geocodeSuggestions.length > 0 && (
+                  <View style={styles.suggestionsOverlay}>
+                    {geocodeSuggestions.map((s, i) => (
+                      <TouchableOpacity
+                        key={i}
+                        style={[styles.suggestionRow, i < geocodeSuggestions.length - 1 && styles.suggestionRowBorder]}
+                        onPress={() => handleSelectSuggestion(s)}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={styles.suggestionText}>{s.label}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+                {!geocoding && geocodeSuggestions.length === 0 && geocodedLoc && (
+                  <Text style={styles.geocodeSuccess}>📍 {geocodedLoc.short ?? geocodedLoc.label}</Text>
+                )}
+                {!geocoding && geocodeErr && (
+                  <Text style={styles.geocodeError}>⚠ {geocodeErr}</Text>
+                )}
+              </View>
+            )}
           </Card>
 
           {/* ── Notifications ─────────────────────────────────────────────── */}
           <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>NOTIFICATIONS</SectionLabel>
           <Card style={styles.card}>
             <View style={styles.appRow}>
-              <Text style={styles.appRowLabel}>Notifications</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Text style={styles.appRowLabel}>Notifications</Text>
+                <Badge label="Coming Soon" tone="muted" />
+              </View>
               <Switch
-                value={notifications}
-                onValueChange={handleNotif}
-                trackColor={{ false: COLORS.border, true: COLORS.primary }}
-                thumbColor={notifications ? COLORS.primary : COLORS.textMuted}
+                value={false}
+                disabled
+                onValueChange={() => {}}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                thumbColor={colors.textMuted}
+                style={{ opacity: 0.5 }}
               />
             </View>
-            {notifications && (
-              <View style={[styles.appRow, styles.appRowBorder]}>
-                <Text style={styles.appRowLabel}>Daily reminder</Text>
-                <View style={{ flexDirection: 'row', gap: 6 }}>
-                  {[
-                    { h: 7, m: 0, label: '7 AM' },
-                    { h: 8, m: 0, label: '8 AM' },
-                    { h: 9, m: 0, label: '9 AM' },
-                    { h: 10, m: 0, label: '10 AM' },
-                    { h: 12, m: 0, label: '12 PM' },
-                  ].map((t) => (
-                    <TouchableOpacity
-                      key={t.label}
-                      style={[
-                        styles.modePill,
-                        { flex: 0, paddingHorizontal: 10, paddingVertical: 6 },
-                        reminderHour === t.h && reminderMinute === t.m && styles.modePillActive,
-                      ]}
-                      onPress={() => handleReminderTime(t.h, t.m)}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={[
-                        styles.modePillText,
-                        { fontSize: 11 },
-                        reminderHour === t.h && reminderMinute === t.m && styles.modePillTextActive,
-                      ]}>{t.label}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-            )}
           </Card>
+
+          {/* ── Subscription ─────────────────────────────────────────── */}
+          <CollapsibleCard title="SUBSCRIPTION" sectionKey="subscription" style={styles.collapsibleSpacing}>
+            <View style={styles.appRow}>
+              <Text style={styles.appRowLabel}>Plan</Text>
+              <Text style={[styles.appRowValue, proStatus && { color: colors.primary }]}>
+                {proStatus ? '👑 Decide Pro' : 'Free'}
+              </Text>
+            </View>
+            {!proStatus && (
+              <>
+                <View style={[styles.appRow, styles.appRowBorder]}>
+                  <Text style={styles.appRowLabel}>Decisions today</Text>
+                  <Text style={styles.appRowValue}>{usageDecisions}/{LIMITS.FREE_DECISIONS_PER_DAY}</Text>
+                </View>
+                <View style={[styles.appRow, styles.appRowBorder]}>
+                  <Text style={styles.appRowLabel}>Spins today</Text>
+                  <Text style={styles.appRowValue}>{usageSpins}/{LIMITS.FREE_SPINS_PER_DAY}</Text>
+                </View>
+                <TouchableOpacity
+                  style={[styles.appRow, styles.appRowBorder]}
+                  activeOpacity={0.7}
+                  onPress={() => router.push('/paywall')}
+                >
+                  <Text style={[styles.appRowLabel, { color: colors.primary }]}>Upgrade to Pro</Text>
+                  <Text style={styles.appRowChevron}>›</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </CollapsibleCard>
 
           {/* ── Beta ───────────────────────────────────────────────────────── */}
           {isBetaTester && (
@@ -690,14 +699,13 @@ export default function SettingsScreen() {
           )}
 
           {/* ── About & Data ──────────────────────────────────────────────── */}
-          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>ABOUT & DATA</SectionLabel>
-          <Card style={styles.card}>
+          <CollapsibleCard title="ABOUT & DATA" sectionKey="about" style={styles.collapsibleSpacing}>
             <TouchableOpacity
               style={styles.appRow}
               activeOpacity={0.7}
               onPress={() => setShowClearHistModal(true)}
             >
-              <Text style={[styles.appRowLabel, { color: COLORS.error }]}>Clear History</Text>
+              <Text style={[styles.appRowLabel, { color: colors.error }]}>Clear History</Text>
               <Text style={styles.appRowChevron}>›</Text>
             </TouchableOpacity>
 
@@ -709,7 +717,7 @@ export default function SettingsScreen() {
                 router.replace('/onboarding');
               }}
             >
-              <Text style={[styles.appRowLabel, { color: COLORS.primary }]}>Reset Onboarding</Text>
+              <Text style={[styles.appRowLabel, { color: colors.primary }]}>Reset Onboarding</Text>
               <Text style={styles.appRowChevron}>›</Text>
             </TouchableOpacity>
 
@@ -726,9 +734,10 @@ export default function SettingsScreen() {
               <Text style={styles.appRowLabel}>Version</Text>
               <Text style={styles.appRowValue}>Decide v1.0.0</Text>
             </View>
-          </Card>
+          </CollapsibleCard>
 
           {/* ── Demo Mode ──────────────────────────────────────────────────── */}
+          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>DEVELOPER</SectionLabel>
           <Card style={styles.card}>
             <View style={styles.demoToggleRow}>
               <View style={styles.demoLabelGroup}>
@@ -743,8 +752,8 @@ export default function SettingsScreen() {
               <Switch
                 value={demoMode}
                 onValueChange={handleDemoToggle}
-                trackColor={{ false: COLORS.border, true: COLORS.primary }}
-                thumbColor={demoMode ? COLORS.primary : COLORS.textMuted}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                thumbColor={demoMode ? colors.primary : colors.textMuted}
               />
             </View>
             {demoMode && (
@@ -770,7 +779,7 @@ export default function SettingsScreen() {
               activeOpacity={0.7}
               onPress={() => setShowSignOutModal(true)}
             >
-              <Text style={[styles.appRowLabel, { color: COLORS.error }]}>Sign Out</Text>
+              <Text style={[styles.appRowLabel, { color: colors.error }]}>Sign Out</Text>
               <Text style={styles.appRowChevron}>›</Text>
             </TouchableOpacity>
           </Card>
@@ -851,84 +860,86 @@ export default function SettingsScreen() {
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   scrollContent: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 24 },
-  screenTitle:   { fontSize: 28, color: COLORS.textPrimary, fontFamily: FONTS.displayHeavy, textAlign: 'center', marginBottom: 28 },
+  screenTitle:   { fontSize: 28, color: c.textPrimary, fontFamily: FONTS.displayHeavy, textAlign: 'center', marginBottom: 28 },
 
   sectionHeaderSpacing: {
     marginTop: 24, marginBottom: 10, paddingHorizontal: 4,
   },
 
-  card:         { borderRadius: 18, borderWidth: 0.5, borderColor: COLORS.border, padding: 18, overflow: 'hidden' },
-  locationCard: { borderRadius: 18, borderWidth: 0.5, borderColor: COLORS.border, padding: 18, zIndex: 10 },
+  collapsibleSpacing: { marginTop: 24 },
 
-  fieldLabel: { fontSize: 11, fontFamily: FONTS.monoBold, color: COLORS.textMuted, letterSpacing: 0.8, marginBottom: 10, textTransform: 'uppercase' },
+  card:         { borderRadius: 18, borderWidth: 0.5, borderColor: c.border, padding: 18, overflow: 'hidden' },
+  locationCard: { borderRadius: 18, borderWidth: 0.5, borderColor: c.border, padding: 18, zIndex: 10 },
+
+  fieldLabel: { fontSize: 11, fontFamily: FONTS.monoBold, color: c.textMuted, letterSpacing: 0.8, marginBottom: 10, textTransform: 'uppercase' },
 
   textInput: {
-    backgroundColor: COLORS.surfaceAlt, borderRadius: 12,
-    borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: c.surfaceAlt, borderRadius: 12,
+    borderWidth: 1, borderColor: c.border,
     paddingHorizontal: 14,
     height: 48,
-    fontSize: 15, color: COLORS.textPrimary,
+    fontSize: 15, color: c.textPrimary,
   },
 
   // Profile
   avatarRow:        { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   avatarPill: {
     width: 44, height: 44, borderRadius: 12,
-    backgroundColor: COLORS.surfaceAlt, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: c.surfaceAlt, borderWidth: 1, borderColor: c.border,
     alignItems: 'center', justifyContent: 'center',
   },
-  avatarPillActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  avatarPillActive: { backgroundColor: c.primary, borderColor: c.primary },
   avatarEmoji:      { fontSize: 22 },
 
   // Location
   modeRow:            { flexDirection: 'row', gap: 10 },
   modePill: {
     flex: 1, paddingVertical: 12, borderRadius: 12,
-    backgroundColor: COLORS.surfaceAlt, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: c.surfaceAlt, borderWidth: 1, borderColor: c.border,
     alignItems: 'center',
   },
-  modePillActive:     { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  modePillText:       { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: COLORS.textSecondary },
-  modePillTextActive: { color: COLORS.primaryText },
+  modePillActive:     { backgroundColor: c.primary, borderColor: c.primary },
+  modePillText:       { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: c.textSecondary },
+  modePillTextActive: { color: c.primaryText },
   manualBlock:        { marginTop: 14, gap: 10, position: 'relative', zIndex: 10 },
   inputRow:           { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  clearBtn:           { width: 36, height: 36, borderRadius: 18, backgroundColor: COLORS.border, alignItems: 'center', justifyContent: 'center' },
-  clearBtnTxt:        { color: COLORS.textSecondary, fontSize: 14, fontFamily: FONTS.bodyBold },
+  clearBtn:           { width: 36, height: 36, borderRadius: 18, backgroundColor: c.border, alignItems: 'center', justifyContent: 'center' },
+  clearBtnTxt:        { color: c.textSecondary, fontSize: 14, fontFamily: FONTS.bodyBold },
   geocodeRow:         { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  geocodeStatus:      { fontSize: 13, color: COLORS.textMuted },
-  geocodeSuccess:     { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: COLORS.success },
-  geocodeError:       { fontSize: 13, color: COLORS.error },
+  geocodeStatus:      { fontSize: 13, color: c.textMuted },
+  geocodeSuccess:     { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: c.success },
+  geocodeError:       { fontSize: 13, color: c.error },
   suggestionsOverlay: {
     position: 'absolute', top: 54, left: 0, right: 0,
     zIndex: 999, elevation: 10,
-    backgroundColor: COLORS.surfaceAlt, borderRadius: 12,
-    borderWidth: 1, borderColor: COLORS.border, overflow: 'hidden',
+    backgroundColor: c.surfaceAlt, borderRadius: 12,
+    borderWidth: 1, borderColor: c.border, overflow: 'hidden',
   },
   suggestionRow:      { height: 48, justifyContent: 'center', paddingHorizontal: 14 },
-  suggestionRowBorder:{ borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  suggestionText:     { fontSize: 13, fontFamily: FONTS.bodyMedium, color: COLORS.textSecondary },
+  suggestionRowBorder:{ borderBottomWidth: 1, borderBottomColor: c.border },
+  suggestionText:     { fontSize: 13, fontFamily: FONTS.bodyMedium, color: c.textSecondary },
 
   // Chips
   chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     paddingHorizontal: 14, paddingVertical: 8,
     borderRadius: 20, borderWidth: 1,
-    backgroundColor: COLORS.surfaceAlt, borderColor: COLORS.border,
+    backgroundColor: c.surfaceAlt, borderColor: c.border,
   },
-  chipActive:     { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  chipText:       { fontSize: 13, fontFamily: FONTS.bodyMedium, color: COLORS.textMuted },
-  chipTextActive: { color: COLORS.primaryText, fontFamily: FONTS.bodySemiBold },
+  chipActive:     { backgroundColor: c.primary, borderColor: c.primary },
+  chipText:       { fontSize: 13, fontFamily: FONTS.bodyMedium, color: c.textMuted },
+  chipTextActive: { color: c.primaryText, fontFamily: FONTS.bodySemiBold },
 
   // Sensitivity notes
   sensitivityNote: {
-    fontSize: 13, color: COLORS.textSecondary, lineHeight: 18,
+    fontSize: 13, color: c.textSecondary, lineHeight: 18,
     marginBottom: 14, fontStyle: 'italic',
   },
   sensitivityDisclaimer: {
-    fontSize: 11, color: COLORS.textMuted, lineHeight: 15,
-    marginTop: 14, borderTopWidth: 0.5, borderTopColor: COLORS.border, paddingTop: 10,
+    fontSize: 11, color: c.textMuted, lineHeight: 15,
+    marginTop: 14, borderTopWidth: 0.5, borderTopColor: c.border, paddingTop: 10,
   },
 
   // Preference pills
@@ -936,25 +947,25 @@ const styles = StyleSheet.create({
   prefPill: {
     paddingHorizontal: 14, paddingVertical: 9,
     borderRadius: 16, borderWidth: 1,
-    backgroundColor: COLORS.surfaceAlt, borderColor: COLORS.border,
+    backgroundColor: c.surfaceAlt, borderColor: c.border,
   },
-  prefPillActive:     { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  prefPillText:       { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: COLORS.textSecondary },
-  prefPillTextActive: { color: COLORS.primaryText },
+  prefPillActive:     { backgroundColor: c.primary, borderColor: c.primary },
+  prefPillText:       { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: c.textSecondary },
+  prefPillTextActive: { color: c.primaryText },
 
   // Time picker
   timePickerRow:      { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  timeArrow:          { color: COLORS.textMuted, fontSize: 16 },
+  timeArrow:          { color: c.textMuted, fontSize: 16 },
   timePill: {
-    flex: 1, backgroundColor: COLORS.surfaceAlt, borderRadius: 12,
-    borderWidth: 1, borderColor: COLORS.border,
+    flex: 1, backgroundColor: c.surfaceAlt, borderRadius: 12,
+    borderWidth: 1, borderColor: c.border,
     paddingHorizontal: 12, paddingVertical: 9, gap: 3,
   },
-  timePillLabel:      { fontSize: 9, fontFamily: FONTS.monoBold, color: COLORS.textMuted, letterSpacing: 1.5 },
+  timePillLabel:      { fontSize: 9, fontFamily: FONTS.monoBold, color: c.textMuted, letterSpacing: 1.5 },
   timePillInner:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  timePillValue:      { fontSize: 14, fontFamily: FONTS.bodyBold, color: COLORS.textPrimary },
-  timePillChevron:    { fontSize: 11, color: COLORS.textMuted },
-  timeValidationHint: { fontSize: 11, color: COLORS.error, marginTop: 8, letterSpacing: 0.2 },
+  timePillValue:      { fontSize: 14, fontFamily: FONTS.bodyBold, color: c.textPrimary },
+  timePillChevron:    { fontSize: 11, color: c.textMuted },
+  timeValidationHint: { fontSize: 11, color: c.error, marginTop: 8, letterSpacing: 0.2 },
 
   // Time picker modal
   modalOverlay: {
@@ -962,73 +973,73 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center', padding: 40,
   },
   modalCard: {
-    backgroundColor: COLORS.surface, borderRadius: 18,
-    borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: c.surface, borderRadius: 18,
+    borderWidth: 1, borderColor: c.border,
     width: 240, overflow: 'hidden',
   },
   modalTitle: {
-    fontSize: 10, fontFamily: FONTS.monoBold, color: COLORS.textMuted, letterSpacing: 2,
+    fontSize: 10, fontFamily: FONTS.monoBold, color: c.textMuted, letterSpacing: 2,
     textAlign: 'center', paddingVertical: 14,
-    borderBottomWidth: 1, borderBottomColor: COLORS.border,
+    borderBottomWidth: 1, borderBottomColor: c.border,
   },
-  modalOption:           { paddingVertical: 13, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: COLORS.surfaceAlt },
-  modalOptionActive:     { backgroundColor: COLORS.surfaceAlt },
-  modalOptionText:       { fontSize: 15, fontFamily: FONTS.bodyMedium, color: COLORS.textMuted, textAlign: 'center' },
-  modalOptionTextActive: { color: COLORS.primary, fontFamily: FONTS.bodyBold },
+  modalOption:           { paddingVertical: 13, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: c.surfaceAlt },
+  modalOptionActive:     { backgroundColor: c.surfaceAlt },
+  modalOptionText:       { fontSize: 15, fontFamily: FONTS.bodyMedium, color: c.textMuted, textAlign: 'center' },
+  modalOptionTextActive: { color: c.primary, fontFamily: FONTS.bodyBold },
 
   // Distance slider — 50 mile max
   distanceHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 },
-  distanceValue:  { fontSize: 13, fontFamily: FONTS.bodyBold, color: COLORS.textPrimary },
+  distanceValue:  { fontSize: 13, fontFamily: FONTS.bodyBold, color: c.textPrimary },
   sliderTrack: {
-    height: 4, borderRadius: 2, backgroundColor: COLORS.border,
+    height: 4, borderRadius: 2, backgroundColor: c.border,
     marginVertical: 20, position: 'relative',
   },
   sliderFill: {
     position: 'absolute', top: 0, left: 0, bottom: 0,
-    backgroundColor: COLORS.primary, borderRadius: 2,
+    backgroundColor: c.primary, borderRadius: 2,
   },
   sliderThumb: {
     position: 'absolute', top: -12,
     width: 28, height: 28, borderRadius: 14,
-    backgroundColor: COLORS.primary, borderWidth: 2, borderColor: COLORS.surface,
+    backgroundColor: c.primary, borderWidth: 2, borderColor: c.surface,
   },
   distanceTicks: { flexDirection: 'row', justifyContent: 'space-between' },
-  distanceTick:  { fontSize: 10, color: COLORS.textMuted },
+  distanceTick:  { fontSize: 10, color: c.textMuted },
 
   // Demo mode
   demoToggleRow:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   demoLabelGroup: { flex: 1, marginRight: 12 },
   demoLabelRow:   { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
-  demoLabel:      { fontSize: 15, fontFamily: FONTS.bodyBold, color: COLORS.textPrimary },
+  demoLabel:      { fontSize: 15, fontFamily: FONTS.bodyBold, color: c.textPrimary },
   demoDot: {
     width: 8, height: 8, borderRadius: 4,
-    backgroundColor: COLORS.primary,
+    backgroundColor: c.primary,
   },
-  demoSub:        { fontSize: 12, color: COLORS.textMuted, lineHeight: 16 },
+  demoSub:        { fontSize: 12, color: c.textMuted, lineHeight: 16 },
   demoInfoCard: {
-    marginTop: 14, backgroundColor: COLORS.surface, borderRadius: 12,
-    borderWidth: 1, borderColor: COLORS.primary + '33', padding: 12,
+    marginTop: 14, backgroundColor: c.surface, borderRadius: 12,
+    borderWidth: 1, borderColor: c.primary + '33', padding: 12,
   },
-  demoInfoText: { fontSize: 13, color: COLORS.textSecondary, lineHeight: 18 },
+  demoInfoText: { fontSize: 13, color: c.textSecondary, lineHeight: 18 },
 
   // Toast
   toast: {
     position: 'absolute', bottom: 32, left: 20, right: 20,
-    backgroundColor: COLORS.surfaceAlt, borderRadius: 14,
-    borderWidth: 1, borderColor: COLORS.primary + '55',
+    backgroundColor: c.surfaceAlt, borderRadius: 14,
+    borderWidth: 1, borderColor: c.primary + '55',
     paddingVertical: 12, paddingHorizontal: 18,
     alignItems: 'center',
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 0 },
+    shadowColor: c.primary, shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.3, shadowRadius: 12, elevation: 10,
   },
-  toastText: { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: COLORS.textSecondary },
+  toastText: { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: c.textSecondary },
 
   // App section rows
   appRow:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 13 },
-  appRowBorder:  { borderTopWidth: 0.5, borderTopColor: COLORS.border },
-  appRowLabel:   { fontSize: 15, color: COLORS.textSecondary, fontFamily: FONTS.bodyMedium },
-  appRowChevron: { fontSize: 20, color: COLORS.textMuted },
-  appRowValue:   { fontSize: 13, color: COLORS.textMuted },
+  appRowBorder:  { borderTopWidth: 0.5, borderTopColor: c.border },
+  appRowLabel:   { fontSize: 15, color: c.textSecondary, fontFamily: FONTS.bodyMedium },
+  appRowChevron: { fontSize: 20, color: c.textMuted },
+  appRowValue:   { fontSize: 13, color: c.textMuted },
 
   // Confirmation modals
   confirmOverlay: {
@@ -1037,21 +1048,21 @@ const styles = StyleSheet.create({
   },
   confirmCard: {
     width: '100%', borderRadius: 20,
-    borderWidth: 1, borderColor: COLORS.border,
+    borderWidth: 1, borderColor: c.border,
     padding: 24, gap: 12,
   },
-  confirmTitle:         { fontSize: 18, fontFamily: FONTS.displayHeavy, color: COLORS.textPrimary, textAlign: 'center' },
-  confirmBody:          { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 20 },
+  confirmTitle:         { fontSize: 18, fontFamily: FONTS.displayHeavy, color: c.textPrimary, textAlign: 'center' },
+  confirmBody:          { fontSize: 14, color: c.textSecondary, textAlign: 'center', lineHeight: 20 },
   confirmDestructive: {
-    backgroundColor: COLORS.error + '22', borderRadius: 14, height: 52,
+    backgroundColor: c.error + '22', borderRadius: 14, height: 52,
     alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: COLORS.error + '55', marginTop: 4,
+    borderWidth: 1, borderColor: c.error + '55', marginTop: 4,
   },
-  confirmDestructiveTxt: { fontSize: 15, fontFamily: FONTS.bodyBold, color: COLORS.error },
+  confirmDestructiveTxt: { fontSize: 15, fontFamily: FONTS.bodyBold, color: c.error },
   confirmCancel: {
-    backgroundColor: COLORS.surfaceAlt, borderRadius: 14, height: 52,
+    backgroundColor: c.surfaceAlt, borderRadius: 14, height: 52,
     alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: COLORS.border,
+    borderWidth: 1, borderColor: c.border,
   },
-  confirmCancelTxt: { fontSize: 15, fontFamily: FONTS.bodySemiBold, color: COLORS.textMuted },
+  confirmCancelTxt: { fontSize: 15, fontFamily: FONTS.bodySemiBold, color: c.textMuted },
 });

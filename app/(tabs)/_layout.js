@@ -1,9 +1,13 @@
+import { useMemo } from 'react';
 import { Tabs } from 'expo-router';
 import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, FONTS } from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
+import { FONTS } from '../../constants/theme';
 
 function TabIcon({ active, inactive, focused, color }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <View style={styles.iconWrap}>
       <View style={[styles.indicator, focused && styles.indicatorActive]} />
@@ -13,13 +17,15 @@ function TabIcon({ active, inactive, focused, color }) {
 }
 
 export default function TabLayout() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarStyle: styles.tabBar,
-        tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: COLORS.textMuted,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textMuted,
         tabBarLabelStyle: styles.tabLabel,
         tabBarItemStyle: styles.tabItem,
       }}
@@ -68,12 +74,12 @@ export default function TabLayout() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   tabBar: {
     height: 65,
-    backgroundColor: COLORS.tabBar,
+    backgroundColor: c.tabBar,
     borderTopWidth: 1,
-    borderTopColor: COLORS.border,
+    borderTopColor: c.border,
     paddingBottom: 8,
     paddingTop: 0,
     elevation: 0,
@@ -102,6 +108,6 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   indicatorActive: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: c.primary,
   },
 });

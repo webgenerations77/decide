@@ -1,9 +1,10 @@
 import { View, Text } from 'react-native';
 import Svg, { Circle, Line, G, Path } from 'react-native-svg';
-import { COLORS, FONTS } from '../../constants/theme';
+import { FONTS } from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 
 // The compass mark from the brand kit, drawn on a 120x120 viewBox.
-function Mark({ size, ring, needleLo, hub }) {
+function Mark({ size, ring, needleLo, hub, accent }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 120 120" fill="none">
       <Circle cx="60" cy="60" r="46" stroke={ring} strokeWidth="3.5" />
@@ -14,7 +15,7 @@ function Mark({ size, ring, needleLo, hub }) {
         <Line x1="101" y1="60" x2="111" y2="60" />
       </G>
       <G transform="rotate(20 60 60)">
-        <Path d="M60 18 L50 62 L70 62 Z" fill={COLORS.accent} />
+        <Path d="M60 18 L50 62 L70 62 Z" fill={accent} />
         <Path d="M60 102 L50 62 L70 62 Z" fill={needleLo} />
         <Circle cx="60" cy="62" r="5" fill={hub} />
       </G>
@@ -23,19 +24,22 @@ function Mark({ size, ring, needleLo, hub }) {
 }
 
 export default function BrandLogo({ variant = 'full', size = 80 }) {
+  const { colors, scheme } = useTheme();
+  const onDark = scheme === 'dark';
   const reversed = variant === 'reversed';
-  const ring = reversed ? COLORS.white : COLORS.navy;
-  const needleLo = reversed ? COLORS.white : COLORS.primary;
-  const hub = reversed ? COLORS.white : COLORS.navy;
-  const wordColor = reversed ? COLORS.white : COLORS.navy;
+  const light = reversed || onDark;          // use light ink on dark surfaces
+  const ring = light ? colors.white : colors.navy;
+  const needleLo = light ? colors.white : colors.primary;
+  const hub = light ? colors.white : colors.navy;
+  const wordColor = light ? colors.white : colors.navy;
   const wordSize = size * 0.82;
 
-  const mark = <Mark size={size} ring={ring} needleLo={needleLo} hub={hub} />;
+  const mark = <Mark size={size} ring={ring} needleLo={needleLo} hub={hub} accent={colors.accent} />;
   if (variant === 'mark') return mark;
 
   const Wordmark = (
     <Text style={{ fontFamily: FONTS.displayHeavy, fontSize: wordSize, color: wordColor, letterSpacing: -0.5, lineHeight: wordSize * 1.05 }}>
-      Decide<Text style={{ color: COLORS.accent }}>.</Text>
+      Decide<Text style={{ color: colors.accent }}>.</Text>
     </Text>
   );
 
