@@ -24,6 +24,8 @@ import LoadingAnimation from '../../components/LoadingAnimation';
 import { placeDetails as fetchPlaceDetails } from '../../services/placesService';
 import { getApiBase } from '../../services/apiBase';
 import { timeToMinutes, isValidWindow } from '../../lib/refreshPolicy';
+import PriceLegendModal from '../../components/itinerary/PriceLegendModal';
+import { openMaps, highlightConfig } from '../../components/itinerary/helpers';
 
 // ─── Date helpers ─────────────────────────────────────────────────────────────
 function getNextSevenDays() {
@@ -80,49 +82,6 @@ const GROUP_OPTIONS = [
 
 // ─── Feedback reasons ─────────────────────────────────────────────────────────
 const FEEDBACK_REASONS = ['Closed', 'Too crowded', 'Not my style', 'Too far', 'Too expensive', 'Other'];
-
-// ─── Highlight config ─────────────────────────────────────────────────────────
-const highlightConfig = {
-  entertainment: { icon: '🎵', borderColor: COLORS.amber },
-  special:       { icon: '🏷️', borderColor: COLORS.primary },
-  feature:       { icon: '✨', borderColor: COLORS.amber },
-  buzz:          { icon: '📰', borderColor: COLORS.textMuted },
-};
-
-// ─── Open maps ────────────────────────────────────────────────────────────────
-function openMaps(stop) {
-  const target = stop.lat && stop.lng
-    ? `${stop.lat},${stop.lng}`
-    : encodeURIComponent(stop.address || stop.name);
-  const url = Platform.OS === 'ios'
-    ? `maps://?daddr=${target}`
-    : `https://maps.google.com/?daddr=${target}`;
-  Linking.openURL(url).catch(() => {
-    Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${target}`);
-  });
-}
-
-// ─── Price legend modal ───────────────────────────────────────────────────────
-function PriceLegendModal({ visible, onClose }) {
-  return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={onClose}>
-        <TouchableOpacity activeOpacity={1} onPress={() => {}}>
-          <View style={styles.legendCard}>
-            <Text style={styles.legendTitle}>Price guide</Text>
-            {PRICE_LEGEND.map((row) => (
-              <View key={row.symbol} style={styles.legendRow}>
-                <Text style={styles.legendSymbol}>{row.symbol}</Text>
-                <Text style={styles.legendLabel}>{row.label}</Text>
-              </View>
-            ))}
-            <Text style={styles.legendSub}>Estimated per-person cost including a typical meal or entry</Text>
-          </View>
-        </TouchableOpacity>
-      </TouchableOpacity>
-    </Modal>
-  );
-}
 
 // ─── TimePickerPill ───────────────────────────────────────────────────────────
 function TimePickerPill({ label, value, options, onChange, disabled }) {
@@ -1701,18 +1660,4 @@ const styles = StyleSheet.create({
   detailSourceTxt:   { color: COLORS.textSecondary, fontSize: 12, fontFamily: FONTS.bodySemiBold },
 
   // Price legend modal
-  legendCard: {
-    backgroundColor: COLORS.surface, borderRadius: 20,
-    borderWidth: 1, borderColor: COLORS.border,
-    width: 280, padding: 22,
-  },
-  legendTitle: {
-    fontSize: 15, color: COLORS.textPrimary,
-    fontFamily: FONTS.display,
-    textAlign: 'center', marginBottom: 16,
-  },
-  legendRow:   { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  legendSymbol:{ fontSize: 15, fontFamily: FONTS.bodyBold, color: COLORS.goldText, width: 40 },
-  legendLabel: { fontSize: 14, color: COLORS.textSecondary, flex: 1, fontFamily: FONTS.body },
-  legendSub:   { fontSize: 11, color: COLORS.textMuted, marginTop: 14, lineHeight: 15, textAlign: 'center', fontFamily: FONTS.body },
 });
