@@ -116,7 +116,7 @@ Rules:
 - Keep "category" exactly as: "${stop.category}"
 - Pick a DIFFERENT place from the available list
 - Write a fresh "reason" for the new pick
-- Return a single JSON object with fields: time, duration_mins, category, name, place_id, address, lat, lng, reason, excitement_score, admission_cost`,
+- Return a single JSON object with fields: time, duration_mins, category, name, place_id, address, lat, lng, reason, excitement_score, admission_cost, parking (a short caveat string for free/low-cost outdoor or public attractions where paid parking is likely — e.g. "Metered/paid lots nearby"; otherwise null)`,
         }],
       });
       logUsage({
@@ -145,6 +145,8 @@ Rules:
         lng:             pick.lng,
         reason:          pick.summary ?? `A solid alternative ${stop.category} choice nearby.`,
         excitement_score: Math.min(Math.round((pick.rating || 4) * 18), 95),
+        admission_cost:  null,
+        parking:         null,
       };
     }
 
