@@ -1,6 +1,6 @@
 import { logUsage } from '../lib/usageLog.js';
 import { runSmartEngine } from '../lib/smart/index.js';
-import { computeCostSummary, pickForecastFromOpenMeteo, attachPriceLevels, fillFoodPriceLevels } from '../lib/itineraryHelpers.js';
+import { computeCostSummary, pickForecastFromOpenMeteo, attachPriceLevels, fillFoodPriceLevels, shouldResolveContact } from '../lib/itineraryHelpers.js';
 import { getUSHoliday } from '../lib/smart/holidays.js';
 
 const GOOGLE_KEY    = process.env.GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
@@ -181,10 +181,29 @@ async function fetchStopDetails(placeId) {
   } catch { return null; }
 }
 
+// Resolve a real Google place_id for a live-research stop from its name + location,
+// so its contact links can be fetched. Returns null on any miss/failure.
+async function resolvePlaceId(name, lat, lng) {
+  if (!GOOGLE_KEY || !name) return null;
+  try {
+    const url = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json`
+      + `?input=${encodeURIComponent(name)}&inputtype=textquery&fields=place_id`
+      + `&locationbias=point:${lat},${lng}&key=${GOOGLE_KEY}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    logUsage({ route: 'places-findplace', model: 'google-places', requests: 1 });
+    return data.candidates?.[0]?.place_id ?? null;
+  } catch { return null; }
+}
+
 async function enrichWithContactLinks(itinerary) {
   const out = await Promise.all(itinerary.map(async (stop) => {
     if (stop.website || stop.phone) return stop;
-    const d = await fetchStopDetails(stop.place_id);
+    let d = await fetchStopDetails(stop.place_id);
+    if (!d && shouldResolveContact(stop)) {
+      const realId = await resolvePlaceId(stop.name, stop.lat, stop.lng);
+      if (realId) d = await fetchStopDetails(realId); // realId is a real Google id → passes the guard
+    }
     return d ? { ...stop, website: d.website, phone: d.phone } : stop;
   }));
   return out;

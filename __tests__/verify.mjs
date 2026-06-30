@@ -5,7 +5,7 @@ import { wantsAlcohol } from '../lib/smart/sourceRegistry.js';
 import { wantsLiveMusic, summarizeShow } from '../lib/smart/liveMusic.js';
 import { buildScoutPrompt } from '../lib/smart/scout.js';
 import { buildSynthesisPrompt, validateStops } from '../lib/smart/synthesis.js';
-import { computeCostSummary, pickForecastFromOpenMeteo, wmoToCondition, degToCompass, priceEnumToNum, attachPriceLevels, budgetToPriceLevel, fillFoodPriceLevels } from '../lib/itineraryHelpers.js';
+import { computeCostSummary, pickForecastFromOpenMeteo, wmoToCondition, degToCompass, priceEnumToNum, attachPriceLevels, budgetToPriceLevel, fillFoodPriceLevels, shouldResolveContact } from '../lib/itineraryHelpers.js';
 
 let passed = 0;
 let failed = 0;
@@ -340,6 +340,15 @@ assert('July 4 → Independence Day', getUSHoliday('2026-07-04') === 'Independen
 assert('Juneteenth', getUSHoliday('2026-06-19') === 'Juneteenth');
 assert('non-holiday → null', getUSHoliday('2026-06-30') === null);
 assert('bad input → null', getUSHoliday('') === null);
+
+// ─── Contact-link resolution predicate ───────────────────────────────────────
+console.log('\nContact-link resolution predicate:');
+assert('find_ stop with name+coords → resolve', shouldResolveContact({ place_id:'find_x', name:'Joe Pizza', lat:38, lng:-75 }) === true);
+assert('stop_ stop with name+coords → resolve', shouldResolveContact({ place_id:'stop_1', name:'X', lat:1, lng:2 }) === true);
+assert('already has website → skip',            shouldResolveContact({ place_id:'find_x', name:'X', lat:1, lng:2, website:'http://x' }) === false);
+assert('real google id → skip (already handled)', shouldResolveContact({ place_id:'ChIJabc', name:'X', lat:1, lng:2 }) === false);
+assert('nps_ id → skip',                        shouldResolveContact({ place_id:'nps_x', name:'X', lat:1, lng:2 }) === false);
+assert('missing coords → skip',                 shouldResolveContact({ place_id:'find_x', name:'X' }) === false);
 
 // ─── Summary ──────────────────────────────────────────────────────────────────
 console.log(`\n${'─'.repeat(50)}`);
