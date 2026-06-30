@@ -6,7 +6,7 @@
 - Firebase Auth (email + Google Sign-In)
 - Google Places API v1 (Nearby Search) + Places Details + Places Autocomplete
 - Anthropic API — haiku-4-5 (scout/anchors/swap) + sonnet-4-6 (itinerary synthesis), server-side only
-- wttr.in (weather, no key required)
+- Open-Meteo (weather, no key required; 7-day daily forecast)
 - NPS API (national parks)
 - RIDB / Recreation.gov API (campgrounds/facilities)
 - RevenueCat (subscriptions — Phase 4, not yet wired)
@@ -80,7 +80,7 @@ Brand primitives (`components/brand/`) — compose tokens; use these instead of 
 - Each stop: time, duration_mins, category, name, place_id, address, lat, lng,
   reason, excitement_score, admission_cost, distance, distance_miles, drive_mins
 - Distance/drive time calculated server-side via haversine + 30mph estimate
-- Weather-aware: wttr.in provides conditions; wind >20mph or Jun–Aug adds traffic note
+- Weather-aware: Open-Meteo provides up-to-7-day daily conditions; wind >20mph or Jun–Aug adds traffic note
 - Fallback itinerary runs locally if Cheddar (Claude) is unavailable
 
 ## Live Research Phase
