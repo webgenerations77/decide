@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, Animated, Easing,
   Linking, ActivityIndicator, ScrollView,
@@ -10,6 +10,7 @@ import { useRouter } from 'expo-router';
 import { getDemoSpinResult } from '../services/demoData';
 import { isAtSpinLimit, incrementSpinCount, getRemainingSpins, LIMITS } from '../services/subscriptionService';
 import { COLORS, FONTS, RADII } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 import ScreenBackground from '../components/brand/ScreenBackground';
 import Card from '../components/brand/Card';
 import CTAButton from '../components/brand/CTAButton';
@@ -55,6 +56,8 @@ async function fetchNearbyPlaces(lat, lng, types) {
 }
 
 export default function SpinScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const router = useRouter();
   const [category,    setCategory]    = useState('surprise');
   const [spinning,    setSpinning]    = useState(false);
@@ -212,7 +215,7 @@ export default function SpinScreen() {
           {/* Spin button */}
           <View style={styles.spinWrap}>
             {locLoading ? (
-              <ActivityIndicator color={COLORS.primary} size="large" />
+              <ActivityIndicator color={colors.primary} size="large" />
             ) : (
               <TouchableOpacity
                 style={[styles.spinBtn, { borderColor: activeCat.color + '88', shadowColor: activeCat.color }]}
@@ -233,7 +236,7 @@ export default function SpinScreen() {
           {/* Result card */}
           {result && !spinning && (
             <Animated.View style={{ transform: [{ scale: cardScale }], width: '100%' }}>
-              <Card style={{ borderLeftWidth: 3, borderLeftColor: result.categoryColor, gap: 8, overflow: 'hidden', borderWidth: 0.5, borderColor: COLORS.border }}>
+              <Card style={{ borderLeftWidth: 3, borderLeftColor: result.categoryColor, gap: 8, overflow: 'hidden', borderWidth: 0.5, borderColor: colors.border }}>
                 <View style={styles.resultHeader}>
                   <Text style={styles.resultEmoji}>{result.categoryEmoji}</Text>
                   <Text style={styles.resultName} numberOfLines={2}>{result.name}</Text>
@@ -276,7 +279,7 @@ export default function SpinScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   screen: { flex: 1 },
   scrollContent: {
     paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40,
@@ -285,61 +288,61 @@ const styles = StyleSheet.create({
 
   title: {
     fontFamily: FONTS.displayHeavy,
-    fontSize: 28, color: COLORS.textPrimary,
+    fontSize: 28, color: c.textPrimary,
     letterSpacing: 5, textAlign: 'center',
   },
-  sub:           { fontFamily: FONTS.body, fontSize: 13, color: COLORS.goldText, marginTop: 6, marginBottom: 8 },
-  remainingText: { fontFamily: FONTS.mono, fontSize: 11, color: COLORS.textMuted, marginBottom: 16 },
+  sub:           { fontFamily: FONTS.body, fontSize: 13, color: c.goldText, marginTop: 6, marginBottom: 8 },
+  remainingText: { fontFamily: FONTS.mono, fontSize: 11, color: c.textMuted, marginBottom: 16 },
 
   // Category pills
   catRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginBottom: 32 },
   catPill: {
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: RADII.lg,
-    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: c.surface, borderWidth: 1, borderColor: c.border,
   },
-  catPillTxt:       { fontFamily: FONTS.bodySemiBold, fontSize: 13, color: COLORS.textSecondary },
-  catPillTxtActive: { color: COLORS.surface },
+  catPillTxt:       { fontFamily: FONTS.bodySemiBold, fontSize: 13, color: c.textSecondary },
+  catPillTxtActive: { color: c.surface },
 
   // Spin button
   spinWrap: { marginBottom: 32, alignItems: 'center' },
   spinBtn: {
     width: 140, height: 140, borderRadius: 70,
-    backgroundColor: COLORS.surface, borderWidth: 2,
+    backgroundColor: c.surface, borderWidth: 2,
     alignItems: 'center', justifyContent: 'center', gap: 4,
     shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.5, shadowRadius: 20, elevation: 12,
   },
   spinEmoji:       { fontSize: 52 },
-  spinLabel:       { fontFamily: FONTS.bodyBold, fontSize: 12, color: COLORS.primary, letterSpacing: 3 },
-  spinLabelActive: { color: COLORS.accent },
+  spinLabel:       { fontFamily: FONTS.bodyBold, fontSize: 12, color: c.primary, letterSpacing: 3 },
+  spinLabelActive: { color: c.accent },
 
   // Result card styles (Card primitive handles bg/radius/shadow/padding)
   resultHeader:  { flexDirection: 'row', alignItems: 'center', gap: 10 },
   resultEmoji:   { fontSize: 24 },
-  resultName:    { fontFamily: FONTS.displayHeavy, flex: 1, fontSize: 15, color: COLORS.textPrimary },
-  resultReason:  { fontFamily: FONTS.body, fontSize: 13, color: COLORS.textSecondary, lineHeight: 18, fontStyle: 'italic' },
-  resultAddress: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.textSecondary },
-  resultRating:  { fontFamily: FONTS.body, fontSize: 13, color: COLORS.goldText },
-  resultPrice:   { fontFamily: FONTS.bodySemiBold, fontSize: 14, color: COLORS.primary },
+  resultName:    { fontFamily: FONTS.displayHeavy, flex: 1, fontSize: 15, color: c.textPrimary },
+  resultReason:  { fontFamily: FONTS.body, fontSize: 13, color: c.textSecondary, lineHeight: 18, fontStyle: 'italic' },
+  resultAddress: { fontFamily: FONTS.body, fontSize: 13, color: c.textSecondary },
+  resultRating:  { fontFamily: FONTS.body, fontSize: 13, color: c.goldText },
+  resultPrice:   { fontFamily: FONTS.bodySemiBold, fontSize: 14, color: c.primary },
 
   resultActions: { flexDirection: 'row', gap: 10, marginTop: 4 },
   againBtn: {
     paddingHorizontal: 16, borderRadius: RADII.lg,
     height: 56, justifyContent: 'center',
-    backgroundColor: COLORS.surfaceAlt, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: c.surfaceAlt, borderWidth: 1, borderColor: c.border,
     alignItems: 'center',
   },
-  againBtnTxt: { fontFamily: FONTS.bodySemiBold, fontSize: 13, color: COLORS.textSecondary },
+  againBtnTxt: { fontFamily: FONTS.bodySemiBold, fontSize: 13, color: c.textSecondary },
 
   // Error
   errorBox: {
-    marginTop: 16, backgroundColor: COLORS.surfaceAlt, borderRadius: RADII.md,
-    borderWidth: 1, borderColor: COLORS.error + '44', padding: 14,
+    marginTop: 16, backgroundColor: c.surfaceAlt, borderRadius: RADII.md,
+    borderWidth: 1, borderColor: c.error + '44', padding: 14,
   },
-  errorTxt: { fontFamily: FONTS.body, fontSize: 13, color: COLORS.error, textAlign: 'center', marginBottom: 8 },
+  errorTxt: { fontFamily: FONTS.body, fontSize: 13, color: c.error, textAlign: 'center', marginBottom: 8 },
   retryBtn: {
-    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: c.surface, borderWidth: 1, borderColor: c.border,
     borderRadius: RADII.lg, paddingHorizontal: 24, height: 40,
     alignItems: 'center', justifyContent: 'center', alignSelf: 'center',
   },
-  retryBtnTxt: { fontFamily: FONTS.bodyBold, fontSize: 13, color: COLORS.primary },
+  retryBtnTxt: { fontFamily: FONTS.bodyBold, fontSize: 13, color: c.primary },
 });

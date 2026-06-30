@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView, Modal,
 } from 'react-native';
@@ -7,6 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { DEMO_HISTORY } from '../../services/demoData';
 import { COLORS, CATEGORY_COLORS, CATEGORY_EMOJIS, FONTS } from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 import ScreenBackground from '../../components/brand/ScreenBackground';
 import Card from '../../components/brand/Card';
 import CTAButton from '../../components/brand/CTAButton';
@@ -29,6 +30,8 @@ function formatTimestamp(ts) {
 
 // ─── FeedbackModal ────────────────────────────────────────────────────────────
 function FeedbackModal({ visible, itemName, onClose, onSelect }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <TouchableOpacity style={styles.fbOverlay} activeOpacity={1} onPress={onClose}>
@@ -58,6 +61,8 @@ function FeedbackModal({ visible, itemName, onClose, onSelect }) {
 
 // ─── DecisionCard ─────────────────────────────────────────────────────────────
 function DecisionCard({ item, onFeedbackUp, onFeedbackDown }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const color    = CATEGORY_COLORS[item.category] ?? COLORS.primary;
   const catEmoji = CATEGORY_EMOJIS[item.category] ?? '⚡';
   const score    = item.excitementScore ?? item.excitement_score ?? 0;
@@ -115,6 +120,8 @@ function DecisionCard({ item, onFeedbackUp, onFeedbackDown }) {
 
 // ─── ItineraryEntry ───────────────────────────────────────────────────────────
 function ItineraryEntry({ item, onFeedbackUp, onFeedbackDown, onOpen }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const prefs   = item.meta?.preferences ?? {};
   const pills   = [prefs.pace, prefs.budget, prefs.group_type].filter(Boolean);
   const dayLine = `${item.meta?.day_of_week ?? ''}, ${item.meta?.date ?? ''}`.trim().replace(/^,\s*/, '');
@@ -180,7 +187,7 @@ function ItineraryEntry({ item, onFeedbackUp, onFeedbackDown, onOpen }) {
         </View>
       ) : null}
 
-      <View style={[styles.thumbsRow, { borderTopWidth: 0.5, borderTopColor: COLORS.border, paddingTop: 10, marginTop: 8 }]}>
+      <View style={[styles.thumbsRow, { borderTopWidth: 0.5, borderTopColor: colors.border, paddingTop: 10, marginTop: 8 }]}>
         <TouchableOpacity
           style={[styles.thumbBtn, item.feedback === 'up' && styles.thumbBtnUp]}
           onPress={onFeedbackUp}
@@ -225,6 +232,8 @@ function normalizeDemoItinerary(itin) {
 
 // ─── HistoryScreen ────────────────────────────────────────────────────────────
 export default function HistoryScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const router = useRouter();
 
   const [activeFilter,    setActiveFilter]    = useState('decisions');
@@ -409,12 +418,12 @@ export default function HistoryScreen() {
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   scroll:        { flex: 1 },
   scrollContent: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 24 },
 
   title: {
-    fontSize: 28, color: COLORS.textPrimary,
+    fontSize: 28, color: c.textPrimary,
     fontFamily: FONTS.displayHeavy,
     textAlign: 'center', marginBottom: 20,
   },
@@ -425,49 +434,49 @@ const styles = StyleSheet.create({
   },
   filterPill: {
     paddingHorizontal: 16, paddingVertical: 8, borderRadius: 16,
-    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: c.surface, borderWidth: 1, borderColor: c.border,
   },
-  filterPillActive:    { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  filterPillTxt:       { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: COLORS.textSecondary },
-  filterPillTxtActive: { color: COLORS.primaryText },
-  countTxt:            { fontSize: 12, color: COLORS.textMuted, marginLeft: 4 },
+  filterPillActive:    { backgroundColor: c.primary, borderColor: c.primary },
+  filterPillTxt:       { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: c.textSecondary },
+  filterPillTxtActive: { color: c.primaryText },
+  countTxt:            { fontSize: 12, color: c.textMuted, marginLeft: 4 },
 
   // Learning banner
   learningBanner: {
     marginBottom: 16, borderRadius: 12,
-    backgroundColor: COLORS.surfaceAlt, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: c.surfaceAlt, borderWidth: 1, borderColor: c.border,
     paddingHorizontal: 14, paddingVertical: 10,
   },
-  learningTxt: { fontSize: 12, color: COLORS.primary, lineHeight: 17 },
+  learningTxt: { fontSize: 12, color: c.primary, lineHeight: 17 },
 
   // Decision card
   decisionCard: {
     borderRadius: 16,
-    borderWidth: 0.5, borderColor: COLORS.border, borderLeftWidth: 3,
+    borderWidth: 0.5, borderColor: c.border, borderLeftWidth: 3,
     marginBottom: 12, overflow: 'hidden', padding: 0,
   },
   decisionTop:      { padding: 14, gap: 5 },
   decisionNameRow:  { flexDirection: 'row', alignItems: 'center', gap: 8 },
   decisionCatEmoji: { fontSize: 16 },
-  decisionName:     { flex: 1, fontSize: 15, fontFamily: FONTS.bodyBold, color: COLORS.textPrimary },
+  decisionName:     { flex: 1, fontSize: 15, fontFamily: FONTS.bodyBold, color: c.textPrimary },
   exciteBadge: {
-    backgroundColor: COLORS.primary + '33', borderRadius: 10,
+    backgroundColor: c.primary + '33', borderRadius: 10,
     paddingHorizontal: 7, paddingVertical: 2,
-    borderWidth: 1, borderColor: COLORS.primary + '55',
+    borderWidth: 1, borderColor: c.primary + '55',
   },
-  exciteText: { color: COLORS.primaryDark, fontSize: 10, fontFamily: FONTS.bodyBold },
+  exciteText: { color: c.primaryDark, fontSize: 10, fontFamily: FONTS.bodyBold },
 
-  decisionReason:  { fontSize: 13, color: COLORS.textSecondary, fontStyle: 'italic', lineHeight: 17 },
+  decisionReason:  { fontSize: 13, color: c.textSecondary, fontStyle: 'italic', lineHeight: 17 },
   decisionMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 2 },
-  decisionTime:    { fontSize: 11, color: COLORS.textMuted },
-  decisionMeta:    { fontSize: 11, color: COLORS.textMuted },
+  decisionTime:    { fontSize: 11, color: c.textMuted },
+  decisionMeta:    { fontSize: 11, color: c.textMuted },
 
   feedbackTag: {
-    alignSelf: 'flex-start', backgroundColor: COLORS.error + '22',
-    borderRadius: 8, borderWidth: 1, borderColor: COLORS.error + '44',
+    alignSelf: 'flex-start', backgroundColor: c.error + '22',
+    borderRadius: 8, borderWidth: 1, borderColor: c.error + '44',
     paddingHorizontal: 8, paddingVertical: 3, marginTop: 2,
   },
-  feedbackTagTxt: { fontSize: 11, fontFamily: FONTS.bodySemiBold, color: COLORS.error },
+  feedbackTagTxt: { fontSize: 11, fontFamily: FONTS.bodySemiBold, color: c.error },
 
   // Thumbs row (shared) — right-aligned
   thumbsRow: {
@@ -475,37 +484,37 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 8,
   },
   thumbBtn:     { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 8 },
-  thumbBtnUp:   { backgroundColor: COLORS.success + '33' },
-  thumbBtnDown: { backgroundColor: COLORS.error + '22' },
+  thumbBtnUp:   { backgroundColor: c.success + '33' },
+  thumbBtnDown: { backgroundColor: c.error + '22' },
   thumbTxt:     { fontSize: 15 },
-  thumbDivider: { width: 1, height: 18, backgroundColor: COLORS.border, marginHorizontal: 6 },
+  thumbDivider: { width: 1, height: 18, backgroundColor: c.border, marginHorizontal: 6 },
 
   // Itinerary card
   itinCard: {
     borderRadius: 16,
-    borderWidth: 0.5, borderColor: COLORS.border,
+    borderWidth: 0.5, borderColor: c.border,
     marginBottom: 12, padding: 14, gap: 6, overflow: 'hidden',
   },
   itinHeader:  { gap: 2 },
-  itinDate:    { fontSize: 17, fontFamily: FONTS.displayHeavy, color: COLORS.textPrimary },
-  itinCity:    { fontSize: 11, color: COLORS.goldText },
+  itinDate:    { fontSize: 17, fontFamily: FONTS.displayHeavy, color: c.textPrimary },
+  itinCity:    { fontSize: 11, color: c.goldText },
   itinMetaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   prefPill: {
     paddingHorizontal: 10, paddingVertical: 4,
-    borderRadius: 999, backgroundColor: COLORS.surfaceAlt,
-    borderWidth: 1, borderColor: COLORS.border,
+    borderRadius: 999, backgroundColor: c.surfaceAlt,
+    borderWidth: 1, borderColor: c.border,
   },
-  prefPillTxt:  { fontSize: 11, fontFamily: FONTS.bodySemiBold, color: COLORS.goldText },
+  prefPillTxt:  { fontSize: 11, fontFamily: FONTS.bodySemiBold, color: c.goldText },
   itinStatsRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
-  itinStats:    { fontSize: 11, color: COLORS.textSecondary },
-  tapDetailHint: { fontFamily: FONTS.bodySemiBold, fontSize: 12, color: COLORS.primary, marginTop: 8 },
+  itinStats:    { fontSize: 11, color: c.textSecondary },
+  tapDetailHint: { fontFamily: FONTS.bodySemiBold, fontSize: 12, color: c.primary, marginTop: 8 },
   chipsScroll:  { paddingVertical: 4, gap: 6, flexDirection: 'row' },
   stopChip: {
     paddingHorizontal: 10, paddingVertical: 5,
-    borderRadius: 999, backgroundColor: COLORS.surfaceAlt,
+    borderRadius: 999, backgroundColor: c.surfaceAlt,
     borderWidth: 1,
   },
-  stopChipTxt: { fontSize: 12, color: COLORS.textSecondary, maxWidth: 130 },
+  stopChipTxt: { fontSize: 12, color: c.textSecondary, maxWidth: 130 },
 
   // Empty state
   emptyState: {
@@ -513,34 +522,34 @@ const styles = StyleSheet.create({
     gap: 12, paddingTop: 80, paddingHorizontal: 32,
   },
   emptyEmoji: { fontSize: 52 },
-  emptyTitle: { fontSize: 20, fontFamily: FONTS.bodyBold, color: COLORS.textPrimary, textAlign: 'center' },
-  emptySub:   { fontSize: 15, color: COLORS.textMuted, textAlign: 'center', lineHeight: 20 },
+  emptyTitle: { fontSize: 20, fontFamily: FONTS.bodyBold, color: c.textPrimary, textAlign: 'center' },
+  emptySub:   { fontSize: 15, color: c.textMuted, textAlign: 'center', lineHeight: 20 },
 
   // Feedback modal
   fbOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'flex-end' },
   fbCard: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: c.surface,
     borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    borderWidth: 1, borderColor: COLORS.border,
+    borderWidth: 1, borderColor: c.border,
     paddingBottom: 34, overflow: 'hidden',
   },
   fbTitle: {
-    fontSize: 16, color: COLORS.textPrimary,
+    fontSize: 16, color: c.textPrimary,
     fontFamily: FONTS.display,
     textAlign: 'center', paddingVertical: 18,
-    borderBottomWidth: 1, borderBottomColor: COLORS.border,
+    borderBottomWidth: 1, borderBottomColor: c.border,
   },
   fbPlace: {
-    fontSize: 14, fontFamily: FONTS.bodySemiBold, color: COLORS.textPrimary,
+    fontSize: 14, fontFamily: FONTS.bodySemiBold, color: c.textPrimary,
     paddingHorizontal: 24, paddingVertical: 10,
-    borderBottomWidth: 1, borderBottomColor: COLORS.surfaceAlt,
+    borderBottomWidth: 1, borderBottomColor: c.surfaceAlt,
   },
-  fbOption:    { paddingHorizontal: 24, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: COLORS.surfaceAlt },
-  fbOptionTxt: { fontSize: 15, fontFamily: FONTS.bodyMedium, color: COLORS.textSecondary },
+  fbOption:    { paddingHorizontal: 24, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: c.surfaceAlt },
+  fbOptionTxt: { fontSize: 15, fontFamily: FONTS.bodyMedium, color: c.textSecondary },
   fbCancel: {
     marginHorizontal: 20, marginTop: 14, borderRadius: 16,
     height: 56, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: COLORS.surfaceAlt, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: c.surfaceAlt, borderWidth: 1, borderColor: c.border,
   },
-  fbCancelTxt: { color: COLORS.textMuted, fontSize: 14, fontFamily: FONTS.bodySemiBold },
+  fbCancelTxt: { color: c.textMuted, fontSize: 14, fontFamily: FONTS.bodySemiBold },
 });
