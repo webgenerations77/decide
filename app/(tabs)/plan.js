@@ -25,6 +25,7 @@ import { isValidWindow } from '../../lib/refreshPolicy';
 import PlaceDetailModal from '../../components/itinerary/PlaceDetailModal';
 import WeatherPill from '../../components/itinerary/WeatherPill';
 import StopCard from '../../components/itinerary/StopCard';
+import ItineraryMeta from '../../components/itinerary/ItineraryMeta';
 
 // ─── Date helpers ─────────────────────────────────────────────────────────────
 function getNextSevenDays() {
@@ -624,38 +625,7 @@ export default function PlanScreen() {
                   </Text>
                 </View>
               )}
-              {meta && (
-                <View style={styles.itineraryMeta}>
-                  <Text style={styles.itineraryDay}>{meta.day_of_week}</Text>
-                  <Text style={styles.itineraryDate}>{meta.date} · {itinerary.length} stops</Text>
-                  {meta.city ? <Text style={styles.itineraryCity}>📍 {meta.city}</Text> : null}
-                  <View style={styles.metaChips}>
-                    {meta.time_window && (
-                      <View style={[styles.metaChip, styles.metaChipTime]}>
-                        <Text style={[styles.metaChipText, styles.metaChipTimeText]}>🕐 {meta.time_window}</Text>
-                      </View>
-                    )}
-                    {[meta.preferences?.pace, meta.preferences?.budget, meta.preferences?.group_type]
-                      .filter(Boolean)
-                      .map((v) => (
-                        <View key={v} style={styles.metaChip}>
-                          <Text style={styles.metaChipText}>{v}</Text>
-                        </View>
-                      ))}
-                  </View>
-                  {meta.cost_summary ? (
-                    <View style={styles.costSummaryRow}>
-                      <Ionicons name="wallet-outline" size={14} color={COLORS.primary} style={{ marginRight: 5 }} />
-                      <Text style={styles.costSummaryTxt}>{meta.cost_summary}</Text>
-                    </View>
-                  ) : null}
-                  {research?.hadLiveData && (
-                    <Text style={styles.liveDataNote}>
-                      ✨ Cheddar checked what's happening this week
-                    </Text>
-                  )}
-                </View>
-              )}
+              <ItineraryMeta meta={meta} stopCount={itinerary.length} research={research} />
 
               {itinerary.map((stop, i) => (
                 <StopCard
@@ -938,29 +908,6 @@ const styles = StyleSheet.create({
   },
   fallbackBannerTxt: { fontSize: 13, color: COLORS.warning, lineHeight: 18, flex: 1 },
   itineraryContainer: { gap: 0 },
-  itineraryMeta: {
-    alignItems: 'center', marginBottom: 28,
-    paddingBottom: 22, borderBottomWidth: 1, borderBottomColor: COLORS.border,
-  },
-  itineraryDay: {
-    fontSize: 28, color: COLORS.textPrimary,
-    fontFamily: FONTS.displayHeavy,
-  },
-  itineraryDate: { fontSize: 13, color: COLORS.textMuted, marginTop: 4 },
-  itineraryCity: { fontSize: 13, color: COLORS.primary, marginTop: 3 },
-  metaChips:     { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, marginTop: 12 },
-  metaChip: {
-    paddingHorizontal: 10, paddingVertical: 5,
-    borderRadius: 999, backgroundColor: COLORS.surface,
-    borderWidth: 1, borderColor: COLORS.border,
-  },
-  metaChipTime:     { borderColor: COLORS.border, backgroundColor: COLORS.surfaceAlt },
-  metaChipText:     { color: COLORS.textSecondary, fontSize: 11, fontFamily: FONTS.bodySemiBold },
-  metaChipTimeText: { color: COLORS.textSecondary },
-  liveDataNote:     { color: COLORS.teal, fontSize: 11, fontStyle: 'italic', marginTop: 10, textAlign: 'center' },
-  costSummaryRow:   { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
-  costSummaryTxt:   { fontFamily: FONTS.bodySemiBold, fontSize: 13, color: COLORS.primary },
-
   resetBtn: {
     marginTop: 12, borderRadius: 16, height: 52,
     alignItems: 'center', justifyContent: 'center',
