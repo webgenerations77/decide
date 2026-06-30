@@ -1,6 +1,6 @@
 import { logUsage } from '../../lib/usageLog.js';
 import { runSmartEngine } from '../../lib/smart/index.js';
-import { computeCostSummary, pickForecastForDate, attachPriceLevels } from '../../lib/itineraryHelpers.js';
+import { computeCostSummary, pickForecastFromOpenMeteo, attachPriceLevels } from '../../lib/itineraryHelpers.js';
 
 const GOOGLE_KEY    = process.env.GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 const NPS_KEY       = process.env.EXPO_PUBLIC_NPS_API_KEY;
@@ -101,9 +101,12 @@ function getWeatherEmoji(condition) {
 
 async function fetchWeather(lat, lng, dateISO) {
   try {
-    const res  = await fetch(`https://wttr.in/${lat},${lng}?format=j1`);
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}`
+      + `&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,wind_speed_10m_max,wind_direction_10m_dominant`
+      + `&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=7`;
+    const res  = await fetch(url);
     const data = await res.json();
-    const f = pickForecastForDate(data, dateISO);
+    const f = pickForecastFromOpenMeteo(data, dateISO);
     if (!f) return null;
     if (f.beyondForecast) return { beyondForecast: true, condition: null, emoji: '🗓', temp_f: null, feels_like_f: null, wind_speed_mph: null, wind_dir: null };
     return { condition: f.condition, emoji: getWeatherEmoji(f.condition), temp_f: f.temp_f, feels_like_f: f.feels_like_f, wind_speed_mph: f.wind_speed_mph, wind_dir: f.wind_dir, beyondForecast: false };
