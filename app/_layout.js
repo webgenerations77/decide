@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, AppState } from 'react-native';
 import { Stack, useRouter, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -23,11 +23,12 @@ import {
   SpaceMono_700Bold,
 } from '@expo-google-fonts/space-mono';
 import { AuthProvider, useAuth } from '../context/AuthContext';
+import { ThemeProvider, useTheme } from '../context/ThemeContext';
 import OfflineBanner from '../components/OfflineBanner';
 import BetaBanner from '../components/BetaBanner';
 import BetaFeedback from '../components/BetaFeedback';
 import { isPublicRoute } from '../utils/betaRoutes';
-import { COLORS, FONTS } from '../constants/theme';
+import { FONTS } from '../constants/theme';
 import ScreenBackground from '../components/brand/ScreenBackground';
 import BrandLogo from '../components/brand/BrandLogo';
 import SectionLabel from '../components/brand/SectionLabel';
@@ -42,6 +43,8 @@ Notifications.setNotificationHandler({
 
 function DemoBanner({ onDismiss }) {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <View style={[styles.banner, { top: insets.top }]} pointerEvents="box-none">
       <View style={styles.bannerSide} />
@@ -63,6 +66,7 @@ function SplashScreen() {
 }
 
 function RootLayoutInner() {
+  const { scheme } = useTheme();
   const router = useRouter();
   const { user, loading: authLoading, isBetaTester } = useAuth();
   const pathname = usePathname();
@@ -130,7 +134,7 @@ function RootLayoutInner() {
 
   return (
     <>
-      <StatusBar style="dark" />
+      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <Stack screenOptions={{ headerShown: false }} />
       {demoMode && <DemoBanner onDismiss={disableDemo} />}
       {showBeta && pathname !== '/beta-guide' && !betaBannerDismissed && (
@@ -149,7 +153,7 @@ function RootLayoutInner() {
   );
 }
 
-export default function RootLayout() {
+function RootLayoutBody() {
   const [fontsLoaded] = useFonts({
     BricolageGrotesque_400Regular,
     BricolageGrotesque_600SemiBold,
@@ -172,23 +176,31 @@ export default function RootLayout() {
   }
 
   return (
+    <AuthProvider>
+      <RootLayoutInner />
+    </AuthProvider>
+  );
+}
+
+export default function RootLayout() {
+  return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <RootLayoutInner />
-      </AuthProvider>
+      <ThemeProvider>
+        <RootLayoutBody />
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   banner: {
     position: 'absolute', left: 0, right: 0,
     height: 32, zIndex: 9999, elevation: 20,
-    backgroundColor: COLORS.amber,
+    backgroundColor: c.amber,
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 12,
   },
   bannerSide: { width: 32, alignItems: 'flex-end', justifyContent: 'center' },
-  bannerText: { flex: 1, fontSize: 12, fontFamily: FONTS.bodyBold, color: COLORS.navy, textAlign: 'center' },
-  bannerX:    { fontSize: 14, fontFamily: FONTS.bodyBold, color: COLORS.navy },
+  bannerText: { flex: 1, fontSize: 12, fontFamily: FONTS.bodyBold, color: c.navy, textAlign: 'center' },
+  bannerX:    { fontSize: 14, fontFamily: FONTS.bodyBold, color: c.navy },
 });
