@@ -76,6 +76,32 @@ string-temp coercion, null fallbacks, and token mapping.
 "How Surprise Me works" explainer now appears only when a user actually taps Surprise Me,
 rather than on first launch — an improvement. Pill order is intentionally left as-is.
 
+## Update — weather wash → weather illustration bands
+
+The gradient-only wash shipped first (commit on `main`). On review the intent was an
+actual *image* of the forecast, so the wash was upgraded to a flat SVG illustration band:
+
+- **`components/itinerary/WeatherArt.js`** — renders a hand-authored SVG scene
+  (sun / partly cloudy / overcast / rain / thunderstorm / snow) over the existing
+  `weatherWash` sky gradient. All shapes use theme tokens, so dark mode is automatic;
+  `react-native-svg` (already a dep) draws it, zero network, ~1KB. Returns `null` for no
+  forecast. Bucketing + gradient stay in `lib/weatherWash.js` (still pure + tested).
+- **History cards**: full-bleed 72px band across the card top (negates card padding;
+  `overflow: hidden` clips to the rounded corners), content below on clean paper.
+- **Detail header**: rounded, inset 120px hero band between the back button and the title.
+
+Chosen over AI-generated raster because the environment has no `GEMINI_API_KEY`/Python, and
+flat vector is the better fit anyway. Verified visually via an HTML preview of all scenes.
+
+## Also in this batch (unrelated small changes)
+
+- **Loading screen pacing** (`components/LoadingAnimation.js`): rotating info cards
+  (weather / born-today / on-this-day) dwell longer — `ROTATE_MS` 3500 → 5500 (+2s each).
+- **Bourdain quotes** (`lib/bourdainQuotes.js`, `app/(tabs)/plan.js`): the
+  "Cheddar-curated, based on where you are" subtext under the DECIDE button is replaced by
+  a rotating Anthony Bourdain quote. A persisted index advances once per app launch, so
+  successive opens cycle the list in order. Shown on both the landing and generate screens.
+
 ## Out of scope
 
-Place photos, weather illustrations/motifs, animation, reordering the Spin pills.
+Place photos, animation, reordering the Spin pills.

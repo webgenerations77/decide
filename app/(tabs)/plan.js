@@ -24,6 +24,7 @@ import LoadingAnimation from '../../components/LoadingAnimation';
 import DistanceSlider from '../../components/DistanceSlider';
 import { getApiBase } from '../../services/apiBase';
 import { isValidWindow, windowChanged, canRefresh } from '../../lib/refreshPolicy';
+import { pickLaunchQuote, currentQuote, QUOTE_ATTRIBUTION } from '../../lib/bourdainQuotes';
 import PlaceDetailModal from '../../components/itinerary/PlaceDetailModal';
 import WeatherPill from '../../components/itinerary/WeatherPill';
 import StopCard from '../../components/itinerary/StopCard';
@@ -196,6 +197,10 @@ export default function PlanScreen() {
 
   const [selectedStop,    setSelectedStop]    = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+
+  // Bourdain quote shown under the DECIDE button — rotates once per app launch.
+  const [quote, setQuote] = useState(currentQuote());
+  useEffect(() => { pickLaunchQuote().then(setQuote); }, []);
 
   const pulseAnim   = useRef(new Animated.Value(1)).current;
   const pulseLoop   = useRef(null);
@@ -607,7 +612,7 @@ export default function PlanScreen() {
               </Animated.View>
             </Card>
 
-            <Text style={styles.landingSubtext}>Cheddar-curated, based on where you are</Text>
+            <Text style={styles.landingSubtext}>“{quote}” — {QUOTE_ATTRIBUTION}</Text>
           </ScreenBackground>
         )}
 
@@ -740,7 +745,7 @@ export default function PlanScreen() {
               loading={loading}
             />
           </Animated.View>
-          {!loading && <Text style={styles.generateSubtext}>Cheddar-curated, based on where you are</Text>}
+          {!loading && <Text style={styles.generateSubtext}>“{quote}” — {QUOTE_ATTRIBUTION}</Text>}
           {!loading && remainingDecisions != null && remainingDecisions !== Infinity && (
             <Text style={styles.remainingText}>{remainingDecisions}/{LIMITS.FREE_DECISIONS_PER_DAY} decisions left today</Text>
           )}
@@ -874,7 +879,7 @@ const makeStyles = (c) => StyleSheet.create({
   decideBtnSecondary: { backgroundColor: c.surface, borderWidth: 1, borderColor: c.border },
   decideBtnTitle: { color: c.primaryText, fontSize: 18, fontFamily: FONTS.displayHeavy },
   decideBtnSub:   { color: c.sky200, fontSize: 12, letterSpacing: 0.2 },
-  landingSubtext: { fontSize: 12, color: c.textMuted, letterSpacing: 0.2, textAlign: 'center', marginTop: 20 },
+  landingSubtext: { fontSize: 12, color: c.textMuted, letterSpacing: 0.2, textAlign: 'center', marginTop: 20, paddingHorizontal: 32, lineHeight: 17, fontStyle: 'italic' },
 
   // ── Plan / Itinerary container ────────────────────────────────────────────
   planContainer: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 8 },
@@ -962,7 +967,7 @@ const makeStyles = (c) => StyleSheet.create({
   },
 
   // Generate button
-  generateSubtext: { textAlign: 'center', fontSize: 12, color: c.textMuted, marginTop: 10 },
+  generateSubtext: { textAlign: 'center', fontSize: 12, color: c.textMuted, marginTop: 10, paddingHorizontal: 32, lineHeight: 17, fontStyle: 'italic' },
   remainingText:   { textAlign: 'center', fontSize: 11, color: c.textMuted, marginTop: 4 },
   retryBtn: {
     backgroundColor: c.surface, borderWidth: 1, borderColor: c.border,
