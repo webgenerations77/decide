@@ -17,6 +17,7 @@ import { FONTS } from '../constants/theme';
 import ScreenBackground from '../components/brand/ScreenBackground';
 import Card from '../components/brand/Card';
 import SectionLabel from '../components/brand/SectionLabel';
+import Badge from '../components/brand/Badge';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const AVATARS         = ['🧭', '🎯', '🎲', '🌮', '🎭', '🏄', '🎸', '🌟'];
@@ -635,45 +636,19 @@ export default function SettingsScreen() {
           <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>NOTIFICATIONS</SectionLabel>
           <Card style={styles.card}>
             <View style={styles.appRow}>
-              <Text style={styles.appRowLabel}>Notifications</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Text style={styles.appRowLabel}>Notifications</Text>
+                <Badge label="Coming Soon" tone="muted" />
+              </View>
               <Switch
-                value={notifications}
-                onValueChange={handleNotif}
+                value={false}
+                disabled
+                onValueChange={() => {}}
                 trackColor={{ false: colors.border, true: colors.primary }}
-                thumbColor={notifications ? colors.primary : colors.textMuted}
+                thumbColor={colors.textMuted}
+                style={{ opacity: 0.5 }}
               />
             </View>
-            {notifications && (
-              <View style={[styles.appRow, styles.appRowBorder]}>
-                <Text style={styles.appRowLabel}>Daily reminder</Text>
-                <View style={{ flexDirection: 'row', gap: 6 }}>
-                  {[
-                    { h: 7, m: 0, label: '7 AM' },
-                    { h: 8, m: 0, label: '8 AM' },
-                    { h: 9, m: 0, label: '9 AM' },
-                    { h: 10, m: 0, label: '10 AM' },
-                    { h: 12, m: 0, label: '12 PM' },
-                  ].map((t) => (
-                    <TouchableOpacity
-                      key={t.label}
-                      style={[
-                        styles.modePill,
-                        { flex: 0, paddingHorizontal: 10, paddingVertical: 6 },
-                        reminderHour === t.h && reminderMinute === t.m && styles.modePillActive,
-                      ]}
-                      onPress={() => handleReminderTime(t.h, t.m)}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={[
-                        styles.modePillText,
-                        { fontSize: 11 },
-                        reminderHour === t.h && reminderMinute === t.m && styles.modePillTextActive,
-                      ]}>{t.label}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-            )}
           </Card>
 
           {/* ── Subscription ─────────────────────────────────────────── */}
