@@ -158,3 +158,41 @@ endpoint stays open (fail-open). And verify a Resend domain before emailing anyo
 - **#4 Loading screen** — Lottie `loading.json` + rotating widgets (3-day weather [already in the
   wttr.in response], famous-birthday [free Wikimedia API], motivational quote [bundle locally]).
   ~$0 API cost. Needs `lottie-react-native` (not yet installed).
+
+---
+
+## 7. Dark mode + Settings improvements  ✅ SHIPPED (merged to `main` @ `62ca6f7`, 2026-06-30)
+Spec/plan: `docs/superpowers/{specs,plans}/2026-06-30-settings-improvements*`. 16-commit branch
+`settings-improvements`, subagent-driven, per-task reviews clean, opus whole-branch review "Yes-to-merge".
+See memory [[project-theme-system]] for the styling convention.
+
+**What shipped:**
+- Real app-wide dark mode: `context/ThemeContext.js` (`useTheme()` → `{ mode, scheme, colors, setMode }`,
+  Auto/Light/Dark, persisted via `KEYS.THEME_MODE`); `constants/theme.js` ships `LIGHT`/`DARK`/`PALETTES`.
+  ~38 view files converted to `const styles = useMemo(() => makeStyles(colors), [colors])`. `COLORS` is now
+  a `LIGHT` alias, **deprecated for styling** (data-layer category maps may still use it by design).
+- Settings: new Appearance segmented control; reordered cards; Notifications "Coming Soon" + disabled
+  (handlers retained inert); collapsible Subscription/Preferences/About (`components/brand/CollapsibleCard.js`,
+  start collapsed, persisted in `KEYS.COLLAPSED_SECTIONS`). New `components/brand/Badge.js`.
+
+**⚠ Not yet done — on-device QA (build + static review only, no emulator):** toggle Auto/Light/Dark and
+confirm every screen recolors; confirm Auto follows an OS appearance flip live; confirm the choice survives
+an app restart (watch for a one-frame flash on the splash); confirm the 3 collapsible cards persist; confirm
+the Location autocomplete dropdown still renders un-clipped in both themes.
+
+**Optional polish Minors (from final review — non-blocking):**
+1. Cold-start theme flash — `context/ThemeContext.js`: `mode` starts `'auto'`, saved mode loads async; a user
+   who pinned Light on a Dark device sees one frame of system scheme. Fix: gate first render on a `hydrated` flag.
+2. Ad-hoc card Views (`app/result.js` & `app/fallback.js` `PlaceCard`, `BetaFeedback` `fbCard`/`modalCard`
+   sheets) don't get the dark hairline border that shared `Card`/`CollapsibleCard` do. Distinguishable anyway
+   (DARK.surface steps above DARK.bg); follow-up for visual parity.
+3. `components/itinerary/helpers.js` `highlightConfig.buzz.borderColor = COLORS.textMuted` (#8B8475) is a static
+   grey left-border; marginal contrast on dark `surfaceAlt`. Could map `buzz` to a themed token.
+4. `context/ThemeContext.js` `setMode` is recreated each render and excluded from the value `useMemo([mode,scheme])`
+   deps — functionally safe (closes only over stable refs); eslint exhaustive-deps nit. Optional `useCallback`.
+5. `screens/SettingsScreen.js` dead notification handlers (`handleNotif`, `reminderHour/Minute`, `handleReminderTime`)
+   are intentionally retained for re-enable but will produce unused-var lint noise.
+
+**Deploy:** pushed to `origin/main`; live `https://decide-app.vercel.app` returns 200 (serves app login redirect),
+so prod is not frozen. Confirm the `62ca6f7` deployment shows **Ready** in the Vercel dashboard (MCP token is
+SAML-blocked from reading deployments headlessly). See [[project-vercel-deploy-gotchas]].
