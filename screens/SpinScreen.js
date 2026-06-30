@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, Animated, Easing,
-  Linking, ActivityIndicator, ScrollView,
+  Linking, ActivityIndicator, ScrollView, Image,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
@@ -16,7 +17,7 @@ import ScreenBackground from '../components/brand/ScreenBackground';
 import Card from '../components/brand/Card';
 import CTAButton from '../components/brand/CTAButton';
 import SectionLabel from '../components/brand/SectionLabel';
-import { searchNearbyPlaces, placeDetails } from '../services/placesService';
+import { searchNearbyPlaces, placeDetails, placePhotoUrl } from '../services/placesService';
 
 const SURPRISE_SEEN_KEY = '@decide/spin_surprise_seen';
 
@@ -63,17 +64,19 @@ async function fetchNearbyPlaces(lat, lng, types) {
       maxResultCount: 20,
       includedTypes: types,
     },
-    'places.id,places.displayName,places.formattedAddress,places.rating,places.editorialSummary,places.location,places.priceLevel',
+    'places.id,places.displayName,places.formattedAddress,places.rating,places.editorialSummary,places.location,places.priceLevel,places.photos,places.primaryTypeDisplayName',
   );
   return (data.places ?? []).map((p) => ({
-    name:        p.displayName?.text ?? '',
-    place_id:    p.id ?? '',
-    address:     p.formattedAddress ?? '',
-    rating:      p.rating ?? 0,
-    summary:     p.editorialSummary?.text ?? null,
-    lat:         p.location?.latitude ?? lat,
-    lng:         p.location?.longitude ?? lng,
-    price_level: PRICE_ENUM_TO_NUM[p.priceLevel] ?? null,
+    name:          p.displayName?.text ?? '',
+    place_id:      p.id ?? '',
+    address:       p.formattedAddress ?? '',
+    rating:        p.rating ?? 0,
+    summary:       p.editorialSummary?.text ?? null,
+    lat:           p.location?.latitude ?? lat,
+    lng:           p.location?.longitude ?? lng,
+    price_level:   PRICE_ENUM_TO_NUM[p.priceLevel] ?? null,
+    photo:         p.photos?.[0]?.name ?? null,
+    categoryLabel: p.primaryTypeDisplayName?.text ?? null,
   }));
 }
 
@@ -311,7 +314,20 @@ export default function SpinScreen() {
           {result && !spinning && (
             <Animated.View style={{ transform: [{ scale: cardScale }], width: '100%' }}>
               <Card style={{ borderLeftWidth: 3, borderLeftColor: result.categoryColor, gap: 8, overflow: 'hidden', borderWidth: 0.5, borderColor: colors.border }}>
+                {result.photo ? (
+                  <View style={styles.photoHeader}>
+                    <Image source={{ uri: placePhotoUrl(result.photo, 1000) }} style={styles.photoImg} resizeMode="cover" />
+                    <LinearGradient colors={['transparent', colors.surface]} style={styles.photoGradient} pointerEvents="none" />
+                  </View>
+                ) : null}
+
                 <SectionLabel tone="cobalt">🎲 Your one pick</SectionLabel>
+
+                {result.categoryLabel ? (
+                  <View style={[styles.catBadge, { backgroundColor: result.categoryColor + '22', borderColor: result.categoryColor + '55' }]}>
+                    <Text style={[styles.catBadgeTxt, { color: result.categoryColor }]}>{result.categoryLabel}</Text>
+                  </View>
+                ) : null}
 
                 <View style={styles.resultHeader}>
                   <Text style={styles.resultEmoji}>{result.categoryEmoji}</Text>
@@ -443,6 +459,14 @@ const makeStyles = (c) => StyleSheet.create({
   explainerDismissTxt: { fontFamily: FONTS.bodyBold, fontSize: 13, color: c.primary },
 
   // Result card styles (Card primitive handles bg/radius/shadow/padding)
+  // Full-bleed place photo header (negate the Card's 16px padding)
+  photoHeader:   { marginHorizontal: -16, marginTop: -16, marginBottom: 2, height: 150, backgroundColor: c.surfaceAlt },
+  photoImg:      { width: '100%', height: '100%' },
+  photoGradient: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 56 },
+  // Real place category eyebrow (e.g. "Brewery") — the key Surprise Me signal
+  catBadge:      { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, borderWidth: 1 },
+  catBadgeTxt:   { fontFamily: FONTS.bodySemiBold, fontSize: 11, letterSpacing: 0.3 },
+
   resultHeader:  { flexDirection: 'row', alignItems: 'center', gap: 10 },
   resultEmoji:   { fontSize: 24 },
   resultName:    { fontFamily: FONTS.displayHeavy, flex: 1, fontSize: 16, color: c.textPrimary },

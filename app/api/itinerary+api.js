@@ -219,11 +219,11 @@ async function fetchStopDetails(placeId) {
   try {
     // Places API (New) v1 — legacy Places Details is not enabled for this project.
     const res = await fetch(`https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?key=${GOOGLE_KEY}`, {
-      headers: { 'X-Goog-FieldMask': 'websiteUri,nationalPhoneNumber' },
+      headers: { 'X-Goog-FieldMask': 'websiteUri,nationalPhoneNumber,photos' },
     });
     const data = await res.json();
     if (!res.ok) return null;
-    return { website: data.websiteUri ?? null, phone: data.nationalPhoneNumber ?? null };
+    return { website: data.websiteUri ?? null, phone: data.nationalPhoneNumber ?? null, photo: data.photos?.[0]?.name ?? null };
   } catch { return null; }
 }
 
@@ -252,13 +252,22 @@ async function resolvePlaceId(name, lat, lng) {
 
 async function enrichWithContactLinks(itinerary) {
   const out = await Promise.all(itinerary.map(async (stop) => {
-    if (stop.website || stop.phone) return stop;
+    // Always attempt a details fetch for a real Google place_id so we can grab the
+    // photo — even when the stop already carries website/phone from live research.
+    // (Synthetic ids — demo_/nps_/ridb_/fallback_/find_/stop_ — return null cheaply.)
     let d = await fetchStopDetails(stop.place_id);
     if (!d && shouldResolveContact(stop)) {
       const realId = await resolvePlaceId(stop.name, stop.lat, stop.lng);
       if (realId) d = await fetchStopDetails(realId); // realId is a real Google id → passes the guard
     }
-    return d ? { ...stop, website: d.website, phone: d.phone } : stop;
+    if (!d) return stop;
+    // Photo always merges; website/phone only fill gaps so research-sourced links win.
+    return {
+      ...stop,
+      photo:   stop.photo   ?? d.photo,
+      website: stop.website ?? d.website,
+      phone:   stop.phone   ?? d.phone,
+    };
   }));
   return out;
 }

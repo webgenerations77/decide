@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import {
-  View, Text, TouchableOpacity, Modal, ActivityIndicator, Animated, Linking, StyleSheet,
+  View, Text, TouchableOpacity, Modal, ActivityIndicator, Animated, Linking, StyleSheet, Image,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { COLORS, CATEGORY_COLORS, CATEGORY_EMOJIS, FONTS, RADII } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
 import { getLocalKnowledge, getAllergyAlerts } from '../../constants/localKnowledge';
+import { placePhotoUrl } from '../../services/placesService';
 import { openMaps } from './helpers';
 import PriceLegendModal from './PriceLegendModal';
 
@@ -104,6 +106,12 @@ function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, 
           style={{ flex: 1 }}
         >
         <Animated.View style={[styles.stopCard, { borderLeftColor: color }, isSwapping && styles.stopCardSwapping, { transform: [{ scale: pressScale }] }]}>
+          {stop.photo ? (
+            <View style={styles.photoHeader}>
+              <Image source={{ uri: placePhotoUrl(stop.photo, 800) }} style={styles.photoImg} resizeMode="cover" />
+              <LinearGradient colors={['transparent', colors.surface]} style={styles.photoGradient} pointerEvents="none" />
+            </View>
+          ) : null}
           <View style={styles.stopHeaderRow}>
             <View style={[styles.timeChip, { backgroundColor: color + '22', borderColor: color + '55' }]}>
               <Text style={[styles.timeText, { color }]}>{stop.time}</Text>
@@ -261,6 +269,12 @@ const makeStyles = (c) => StyleSheet.create({
     padding: 16, gap: 7, overflow: 'hidden',
   },
   stopCardSwapping: { opacity: 0.6 },
+
+  // Place photo header (full-bleed across the padded card top)
+  photoHeader:   { marginHorizontal: -16, marginTop: -16, marginBottom: 2, height: 132, backgroundColor: c.surfaceAlt },
+  photoImg:      { width: '100%', height: '100%' },
+  photoGradient: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 52 },
+
   stopHeaderRow:    { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   timeChip:         { paddingHorizontal: 9, paddingVertical: 4, borderRadius: 999, borderWidth: 1 },
   timeText:         { fontSize: 12, fontFamily: FONTS.bodyBold },
