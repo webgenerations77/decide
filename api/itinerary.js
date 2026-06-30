@@ -1,6 +1,6 @@
 import { logUsage } from '../lib/usageLog.js';
 import { runSmartEngine } from '../lib/smart/index.js';
-import { computeCostSummary, pickForecastFromOpenMeteo, attachPriceLevels } from '../lib/itineraryHelpers.js';
+import { computeCostSummary, pickForecastFromOpenMeteo, attachPriceLevels, fillFoodPriceLevels } from '../lib/itineraryHelpers.js';
 import { getUSHoliday } from '../lib/smart/holidays.js';
 
 const GOOGLE_KEY    = process.env.GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
@@ -269,7 +269,7 @@ export default async function handler(req, res) {
     const withLinks = await enrichWithContactLinks(itinerary);
     const enriched=await enrichWithDrivingTimes(withLinks);
     const allPlaces = [...food, ...activity, ...shopping, ...allOutdoor];
-    const priced = attachPriceLevels(enriched, allPlaces);
+    const priced = fillFoodPriceLevels(attachPriceLevels(enriched, allPlaces), budget);
     const costSummary = computeCostSummary(priced);
     return res.json({itinerary:priced,weather,meta:{date:formattedDate,day_of_week:dayOfWeek,time_window:`${startTime} – ${endTime}`,preferences:{pace,budget,group_type},city:cityStr,cost_summary:costSummary?.label??null},discovery:{hadLiveData:smart.hadLiveData,findCount:smart.finds.length,anchorCount:smart.anchors.length,anchors:smart.anchors.map((a)=>({title:a.find?.title,interest:a.find?.interest,why:a.rationale,url:a.find?.url||null})),localHappenings:smart.localHappenings??null},generated_at:new Date().toISOString(),isFallback});
   } catch(err) {

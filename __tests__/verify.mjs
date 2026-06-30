@@ -5,7 +5,7 @@ import { wantsAlcohol } from '../lib/smart/sourceRegistry.js';
 import { wantsLiveMusic, summarizeShow } from '../lib/smart/liveMusic.js';
 import { buildScoutPrompt } from '../lib/smart/scout.js';
 import { buildSynthesisPrompt, validateStops } from '../lib/smart/synthesis.js';
-import { computeCostSummary, pickForecastFromOpenMeteo, wmoToCondition, degToCompass, priceEnumToNum, attachPriceLevels } from '../lib/itineraryHelpers.js';
+import { computeCostSummary, pickForecastFromOpenMeteo, wmoToCondition, degToCompass, priceEnumToNum, attachPriceLevels, budgetToPriceLevel, fillFoodPriceLevels } from '../lib/itineraryHelpers.js';
 
 let passed = 0;
 let failed = 0;
@@ -271,6 +271,20 @@ assert('computeCostSummary counts food after attach', (() => {
   const cs = computeCostSummary(stops);
   return cs && cs.high > 20; // food ($15–30) added on top of the $20 admission
 })());
+
+// ─── Task 4 — Restaurant pricing fallback ─────────────────────────────────────
+console.log('\nRestaurant pricing fallback:');
+assert('budget $ → 1',     budgetToPriceLevel('$') === 1);
+assert('budget $$$$ → 4',  budgetToPriceLevel('$$$$') === 4);
+assert('budget unknown → 2', budgetToPriceLevel(undefined) === 2);
+const filled = fillFoodPriceLevels([
+  { category: 'food', price_level: null, name: 'A' },
+  { category: 'food', price_level: 3, name: 'B' },
+  { category: 'activity', price_level: null, name: 'C' },
+], '$$$');
+assert('food null → inferred from budget', filled[0].price_level === 3);
+assert('food real value preserved',        filled[1].price_level === 3);
+assert('non-food null left untouched',     filled[2].price_level === null);
 
 // ─── SESSION 2 — validateStops live-music coords ──────────────────────────────
 console.log('\nSESSION 2 — validateStops live-music coords:');

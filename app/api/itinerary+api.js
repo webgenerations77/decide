@@ -1,6 +1,6 @@
 import { logUsage } from '../../lib/usageLog.js';
 import { runSmartEngine } from '../../lib/smart/index.js';
-import { computeCostSummary, pickForecastFromOpenMeteo, attachPriceLevels } from '../../lib/itineraryHelpers.js';
+import { computeCostSummary, pickForecastFromOpenMeteo, attachPriceLevels, fillFoodPriceLevels } from '../../lib/itineraryHelpers.js';
 import { getUSHoliday } from '../../lib/smart/holidays.js';
 
 const GOOGLE_KEY    = process.env.GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
@@ -401,7 +401,7 @@ export async function POST(request) {
     const withLinks = await enrichWithContactLinks(withDistance);
     const enriched = await enrichWithDrivingTimes(withLinks);
     const allPlaces = [...food, ...activity, ...shopping, ...allOutdoor];
-    const priced = attachPriceLevels(enriched, allPlaces);
+    const priced = fillFoodPriceLevels(attachPriceLevels(enriched, allPlaces), budget);
     const costSummary = computeCostSummary(priced);
 
     return Response.json({
