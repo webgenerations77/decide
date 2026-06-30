@@ -136,7 +136,14 @@ function RootLayoutInner() {
       {showBeta && pathname !== '/beta-guide' && !betaBannerDismissed && (
         <BetaBanner onDismiss={() => setBetaBannerDismissed(true)} topOffset={demoMode ? 32 : 0} />
       )}
-      {showBeta && pathname !== '/beta-guide' && <BetaFeedback />}
+      {showBeta && pathname !== '/beta-guide' && (
+        <BetaFeedback
+          topOffset={
+            (demoMode ? 32 : 0) +
+            (showBeta && pathname !== '/beta-guide' && !betaBannerDismissed ? 40 : 0)
+          }
+        />
+      )}
       <OfflineBanner />
     </>
   );
