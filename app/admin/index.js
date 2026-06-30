@@ -7,6 +7,8 @@ import ScreenBackground from '../../components/brand/ScreenBackground';
 import Card from '../../components/brand/Card';
 import SectionLabel from '../../components/brand/SectionLabel';
 import { COLORS, FONTS, RADII } from '../../constants/theme';
+import { PRICING } from '../../constants/pricing';
+import { getAdminRole } from '../../utils/admin';
 
 const RANGES = ['day', 'week', 'month'];
 const money = (n) => `$${(n || 0).toFixed(2)}`;
@@ -39,9 +41,13 @@ export default function AdminScreen() {
   }
 
   async function toggleBeta(u) {
+    const prev = u.role;
     const next = u.role === 'beta_tester' ? null : 'beta_tester';
     setUsers((list) => list.map((x) => (x.uid === u.uid ? { ...x, role: next } : x)));
-    try { await setUserRole(u.uid, next); } catch (e) { setErr(e.message); }
+    try { await setUserRole(u.uid, next); } catch (e) {
+      setUsers((list) => list.map((x) => (x.uid === u.uid ? { ...x, role: prev } : x)));
+      setErr(e.message);
+    }
   }
 
   return (
@@ -65,6 +71,7 @@ export default function AdminScreen() {
               <Row label="Input tokens" value={usage.totals.inputTokens.toLocaleString()} />
               <Row label="Output tokens" value={usage.totals.outputTokens.toLocaleString()} />
               <Row label="Est. cost" value={money(usage.totals.estCost)} />
+              <Text style={styles.pricingNote}>Estimates based on pricing effective {PRICING.effectiveDate}</Text>
               <Text style={styles.subhead}>By model</Text>
               {Object.entries(usage.byModel).map(([m, b]) => <Row key={m} label={m} value={money(b.estCost)} />)}
               <Text style={styles.subhead}>By route</Text>
@@ -75,19 +82,26 @@ export default function AdminScreen() {
 
         <SectionLabel tone="cobalt">USER ADMINISTRATION</SectionLabel>
         <Card>
-          {!users ? <ActivityIndicator color={COLORS.primary} /> : users.map((u) => (
-            <View key={u.uid} style={styles.userRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.userEmail}>{u.email}</Text>
-                <Text style={styles.userMeta}>{u.role || 'user'} · {u.status}</Text>
+          {!users ? <ActivityIndicator color={COLORS.primary} /> : users.map((u) => {
+            const rowIsAdmin = getAdminRole({ email: u.email }) === 'admin';
+            return (
+              <View key={u.uid} style={styles.userRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.userEmail}>{u.email}</Text>
+                  <Text style={styles.userMeta}>{u.role || 'user'} · {u.status}</Text>
+                </View>
+                {rowIsAdmin ? (
+                  <Text style={styles.adminLabel}>Admin</Text>
+                ) : (
+                  <Pressable onPress={() => toggleBeta(u)} style={[styles.betaBtn, u.role === 'beta_tester' && styles.betaBtnOn]}>
+                    <Text style={[styles.betaBtnText, u.role === 'beta_tester' && styles.betaBtnTextOn]}>
+                      {u.role === 'beta_tester' ? 'Beta ✓' : 'Grant beta'}
+                    </Text>
+                  </Pressable>
+                )}
               </View>
-              <Pressable onPress={() => toggleBeta(u)} style={[styles.betaBtn, u.role === 'beta_tester' && styles.betaBtnOn]}>
-                <Text style={[styles.betaBtnText, u.role === 'beta_tester' && styles.betaBtnTextOn]}>
-                  {u.role === 'beta_tester' ? 'Beta ✓' : 'Grant beta'}
-                </Text>
-              </Pressable>
-            </View>
-          ))}
+            );
+          })}
         </Card>
       </ScrollView>
     </ScreenBackground>
@@ -124,4 +138,6 @@ const styles = StyleSheet.create({
   betaBtnOn: { backgroundColor: COLORS.primary },
   betaBtnText: { fontFamily: FONTS.bodySemiBold, color: COLORS.textSecondary, fontSize: 13 },
   betaBtnTextOn: { color: COLORS.primaryText },
+  pricingNote: { fontFamily: FONTS.body, color: COLORS.textMuted, fontSize: 11, marginTop: 4 },
+  adminLabel: { fontFamily: FONTS.bodySemiBold, color: COLORS.textMuted, fontSize: 13 },
 });
