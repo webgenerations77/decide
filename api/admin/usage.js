@@ -8,6 +8,7 @@ export default async function handler(req, res) {
     const data = await fetchUsage(req.query.range || 'day');
     return res.json(data);
   } catch (e) {
-    return res.status(500).json({ error: 'usage_failed', message: e.message });
+    console.error('[api/admin/usage] usage_failed:', e);
+    return res.status(500).json({ error: 'usage_failed', message: e.message, _diag: { name: e.name, code: e.code, stack: e.stack } });
   }
 }
