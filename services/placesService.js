@@ -25,3 +25,10 @@ export async function placeDetails(placeId, fields) {
   const res = await fetch(`${getApiBase()}/api/places/details?${qs}`);
   return res.json();
 }
+
+// Build a keyless proxy URL for a Places (New) v1 photo resource name
+// ("places/.../photos/..."). The proxy 302-redirects to the real image, so the
+// returned URL can be used directly as an <Image> `uri`.
+export function placePhotoUrl(name, maxWidth = 800) {
+  return name ? `${getApiBase()}/api/places/photo?name=${encodeURIComponent(name)}&maxWidth=${maxWidth}` : null;
+}

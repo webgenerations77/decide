@@ -174,10 +174,13 @@ async function enrichWithDrivingTimes(itinerary) {
 async function fetchStopDetails(placeId) {
   if (!GOOGLE_KEY || !placeId || /^(demo_|nps_|ridb_|fallback_|find_|stop_)/.test(placeId)) return null;
   try {
-    const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=website,formatted_phone_number&key=${GOOGLE_KEY}`;
-    const res = await fetch(url);
+    // Places API (New) v1 — legacy Places Details is not enabled for this project.
+    const res = await fetch(`https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?key=${GOOGLE_KEY}`, {
+      headers: { 'X-Goog-FieldMask': 'websiteUri,nationalPhoneNumber,photos' },
+    });
     const data = await res.json();
-    return { website: data.result?.website ?? null, phone: data.result?.formatted_phone_number ?? null };
+    if (!res.ok) return null;
+    return { website: data.websiteUri ?? null, phone: data.nationalPhoneNumber ?? null, photo: data.photos?.[0]?.name ?? null };
   } catch { return null; }
 }
 
@@ -186,25 +189,42 @@ async function fetchStopDetails(placeId) {
 async function resolvePlaceId(name, lat, lng) {
   if (!GOOGLE_KEY || !name) return null;
   try {
-    const url = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json`
-      + `?input=${encodeURIComponent(name)}&inputtype=textquery&fields=place_id`
-      + `&locationbias=point:${lat},${lng}&key=${GOOGLE_KEY}`;
-    const res = await fetch(url);
+    // Places API (New) v1 searchText — legacy findplacefromtext is not enabled.
+    const res = await fetch(`https://places.googleapis.com/v1/places:searchText?key=${GOOGLE_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Goog-FieldMask': 'places.id' },
+      body: JSON.stringify({
+        textQuery: name,
+        maxResultCount: 1,
+        ...(lat != null && lng != null
+          ? { locationBias: { circle: { center: { latitude: lat, longitude: lng }, radius: 5000 } } }
+          : {}),
+      }),
+    });
     const data = await res.json();
-    logUsage({ route: 'places-findplace', model: 'google-places', requests: 1 });
-    return data.candidates?.[0]?.place_id ?? null;
+    logUsage({ route: 'places-searchtext', model: 'google-places', requests: 1 });
+    return data.places?.[0]?.id ?? null;
   } catch { return null; }
 }
 
 async function enrichWithContactLinks(itinerary) {
   const out = await Promise.all(itinerary.map(async (stop) => {
-    if (stop.website || stop.phone) return stop;
+    // Always attempt a details fetch for a real Google place_id so we can grab the
+    // photo — even when the stop already carries website/phone from live research.
+    // (Synthetic ids — demo_/nps_/ridb_/fallback_/find_/stop_ — return null cheaply.)
     let d = await fetchStopDetails(stop.place_id);
     if (!d && shouldResolveContact(stop)) {
       const realId = await resolvePlaceId(stop.name, stop.lat, stop.lng);
       if (realId) d = await fetchStopDetails(realId); // realId is a real Google id → passes the guard
     }
-    return d ? { ...stop, website: d.website, phone: d.phone } : stop;
+    if (!d) return stop;
+    // Photo always merges; website/phone only fill gaps so research-sourced links win.
+    return {
+      ...stop,
+      photo:   stop.photo   ?? d.photo,
+      website: stop.website ?? d.website,
+      phone:   stop.phone   ?? d.phone,
+    };
   }));
   return out;
 }

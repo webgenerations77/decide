@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
   View, Text, Modal, ScrollView, TouchableOpacity, ActivityIndicator,
-  Linking, Dimensions, StyleSheet,
+  Linking, Dimensions, StyleSheet, Image,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, CATEGORY_COLORS, CATEGORY_EMOJIS, FONTS } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
-import { placeDetails as fetchPlaceDetails } from '../../services/placesService';
+import { placeDetails as fetchPlaceDetails, placePhotoUrl } from '../../services/placesService';
 import SectionLabel from '../brand/SectionLabel';
 import { openMaps, makeHighlightConfig } from './helpers';
 import PriceLegendModal from './PriceLegendModal';
@@ -63,6 +64,13 @@ function PlaceDetailModal({ visible, stop, onClose }) {
         <TouchableOpacity activeOpacity={1} onPress={() => {}}>
           <View style={[styles.detailSheet, { height: screenHeight * 0.75 }]}>
             <View style={styles.dragHandle} />
+
+            {stop.photo ? (
+              <View style={styles.photoHeader}>
+                <Image source={{ uri: placePhotoUrl(stop.photo, 1200) }} style={styles.photoImg} resizeMode="cover" />
+                <LinearGradient colors={['transparent', colors.surface]} style={styles.photoGradient} pointerEvents="none" />
+              </View>
+            ) : null}
 
             <View style={styles.detailHeader}>
               <View style={[styles.detailCatPill, { backgroundColor: color + '22' }]}>
@@ -240,6 +248,11 @@ const makeStyles = (c) => StyleSheet.create({
     backgroundColor: c.border,
     alignSelf: 'center', marginTop: 12, marginBottom: 2,
   },
+
+  // Place photo header (full-bleed across the sheet top)
+  photoHeader:   { height: 168, marginTop: 6, backgroundColor: c.surfaceAlt },
+  photoImg:      { width: '100%', height: '100%' },
+  photoGradient: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 64 },
   detailHeader: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 20, paddingVertical: 14,
