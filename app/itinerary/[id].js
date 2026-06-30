@@ -4,19 +4,29 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { FONTS } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
+import { weatherWash } from '../../lib/weatherWash';
 import ScreenBackground from '../../components/brand/ScreenBackground';
 import WeatherPill from '../../components/itinerary/WeatherPill';
 import ItineraryMeta from '../../components/itinerary/ItineraryMeta';
 import StopCard from '../../components/itinerary/StopCard';
 import PlaceDetailModal from '../../components/itinerary/PlaceDetailModal';
 
-function Header({ onBack, children }) {
+function Header({ onBack, children, wash }) {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <View style={styles.header}>
+      {wash && (
+        <LinearGradient
+          colors={wash.colors}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.headerWash}
+        />
+      )}
       <TouchableOpacity onPress={onBack} activeOpacity={0.7} style={styles.backRow}>
         <Ionicons name="chevron-back" size={18} color={colors.primary} />
         <Text style={styles.backText}>Back</Text>
@@ -79,12 +89,13 @@ export default function ItineraryDetailScreen() {
   }
 
   const { itinerary, weather, meta } = entry;
+  const wash = weatherWash(weather, colors);
 
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
       <ScreenBackground variant="paper" style={styles.fill}>
         <ScrollView style={styles.fill} contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-          <Header onBack={() => router.back()}>
+          <Header onBack={() => router.back()} wash={wash}>
             <Text style={styles.title}>Your day</Text>
             <WeatherPill weather={weather} timeWindow={meta?.time_window ?? ''} />
           </Header>
@@ -119,7 +130,9 @@ export default function ItineraryDetailScreen() {
 const makeStyles = (c) => StyleSheet.create({
   screen:     { flex: 1, backgroundColor: c.bg },
   fill:       { flex: 1 },
-  header:     { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 6 },
+  header:     { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12, overflow: 'hidden' },
+  // The hero weather moment — reads a touch stronger than the history-card wash.
+  headerWash: { ...StyleSheet.absoluteFillObject, opacity: 0.85 },
   backRow:    { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   backText:   { fontFamily: FONTS.bodySemiBold, fontSize: 15, color: c.primary, marginLeft: 2 },
   title:      { fontFamily: FONTS.display, fontSize: 26, color: c.textPrimary, marginBottom: 8 },

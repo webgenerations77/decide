@@ -84,7 +84,7 @@ export default function SpinScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const router = useRouter();
-  const [category,    setCategory]    = useState('surprise');
+  const [category,    setCategory]    = useState('food');
   const [spinning,    setSpinning]    = useState(false);
   const [result,      setResult]      = useState(null);
   const [error,       setError]       = useState(null);
