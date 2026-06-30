@@ -11,7 +11,7 @@ import { fetchLoadingFacts } from '../lib/loadingFacts';
 // LottieView path ignores `style` and only honors `webStyle`).
 const SIZE = { width: 200, height: 200 };
 
-const ROTATE_MS = 3500;
+const ROTATE_MS = 5500;
 
 // Post-"Build my day" loading state — Lottie animation + cobalt status label,
 // plus rotating live info cards (weather / born today / on this day) fetched

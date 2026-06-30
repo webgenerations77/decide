@@ -5,9 +5,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { DEMO_HISTORY } from '../../services/demoData';
-import { weatherWash } from '../../lib/weatherWash';
+import WeatherArt from '../../components/itinerary/WeatherArt';
 import { COLORS, CATEGORY_COLORS, CATEGORY_EMOJIS, FONTS } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
 import ScreenBackground from '../../components/brand/ScreenBackground';
@@ -132,18 +131,10 @@ function ItineraryEntry({ item, onFeedbackUp, onFeedbackDown, onOpen }) {
     : '';
   const stopCount = item.stops?.length ?? 0;
   const tappable = Array.isArray(item.itinerary) && item.itinerary.length > 0;
-  const wash = weatherWash(item.weather, colors);
 
   return (
-    <Card style={[styles.itinCard, wash && styles.itinCardWashed]}>
-      {wash && (
-        <LinearGradient
-          colors={wash.colors}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.cardWash}
-        />
-      )}
+    <Card style={styles.itinCard}>
+      <WeatherArt weather={item.weather} height={72} style={styles.cardArt} />
       <TouchableOpacity
         activeOpacity={tappable ? 0.7 : 1}
         onPress={tappable ? onOpen : undefined}
@@ -506,10 +497,8 @@ const makeStyles = (c) => StyleSheet.create({
     borderWidth: 0.5, borderColor: c.border,
     marginBottom: 12, padding: 14, gap: 6, overflow: 'hidden',
   },
-  // When a weather wash is present the gradient becomes the card background.
-  itinCardWashed: { backgroundColor: 'transparent' },
-  // Whisper-light on history rows so these recall cards stay scannable.
-  cardWash:        { ...StyleSheet.absoluteFillObject, opacity: 0.5 },
+  // Full-bleed weather illustration band across the card top (negates card padding).
+  cardArt: { marginTop: -14, marginHorizontal: -14, marginBottom: 8 },
   itinHeader:  { gap: 2 },
   itinDate:    { fontSize: 17, fontFamily: FONTS.displayHeavy, color: c.textPrimary },
   itinCity:    { fontSize: 11, color: c.goldText },
