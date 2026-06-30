@@ -1,10 +1,11 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Linking, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { COLORS, FONTS, RADII, SHADOWS } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
+import { FONTS, RADII, SHADOWS } from '../constants/theme';
 import ScreenBackground from '../components/brand/ScreenBackground';
 import SectionLabel from '../components/brand/SectionLabel';
 import CTAButton from '../components/brand/CTAButton';
@@ -30,6 +31,9 @@ function deriveProsAndCons(rating, userRatingsTotal, isOpenNow) {
 }
 
 function PlaceCard({ place, rank }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const { pros, cons } = deriveProsAndCons(place.rating, place.userRatingsTotal, place.isOpenNow);
   const enterAnim  = useRef(new Animated.Value(0)).current;
   const slideAnim  = useRef(new Animated.Value(24)).current;
@@ -119,7 +123,7 @@ function PlaceCard({ place, rank }) {
 
         <TouchableOpacity onPress={handleGo} onPressIn={handlePressIn} onPressOut={handlePressOut} activeOpacity={0.88}>
           <LinearGradient
-            colors={[COLORS.primary, COLORS.primaryDark]}
+            colors={[colors.primary, colors.primaryDark]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.goBtn}
@@ -139,6 +143,9 @@ function PlaceCard({ place, rank }) {
 }
 
 export default function ResultScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const router = useRouter();
   const params = useLocalSearchParams();
 
@@ -207,7 +214,7 @@ export default function ResultScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   screen: { flex: 1 },
 
   header: {
@@ -219,24 +226,24 @@ const styles = StyleSheet.create({
   },
   backButton: {
     width: 40, height: 40, borderRadius: 20,
-    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: c.surface, borderWidth: 1, borderColor: c.border,
     alignItems: 'center', justifyContent: 'center',
   },
-  backArrow:    { color: COLORS.primary, fontSize: 20, lineHeight: 22 },
+  backArrow:    { color: c.primary, fontSize: 20, lineHeight: 22 },
   headerCenter: { flex: 1, alignItems: 'center' },
-  title:        { fontSize: 28, color: COLORS.textPrimary, fontFamily: FONTS.displayHeavy },
+  title:        { fontSize: 28, color: c.textPrimary, fontFamily: FONTS.displayHeavy },
   timeframeBadge: {
     marginTop: 4, paddingHorizontal: 10, paddingVertical: 3,
-    borderRadius: 12, backgroundColor: COLORS.gold + '22', borderWidth: 1, borderColor: COLORS.amber + '44',
+    borderRadius: 12, backgroundColor: c.gold + '22', borderWidth: 1, borderColor: c.amber + '44',
   },
-  timeframeText: { color: COLORS.primary },
+  timeframeText: { color: c.primary },
 
   listContent: { paddingHorizontal: 20, paddingBottom: 40 },
 
   // Place card — Animated.View requires direct style; uses SHADOWS.card for brand shadow
   card: {
     flexDirection: 'row',
-    backgroundColor: COLORS.surface,
+    backgroundColor: c.surface,
     borderRadius: 20,
     marginBottom: 14,
     overflow: 'hidden',
@@ -246,52 +253,52 @@ const styles = StyleSheet.create({
     width: 40,
     alignItems: 'center',
     paddingTop: 18,
-    backgroundColor: COLORS.surface,
+    backgroundColor: c.surface,
   },
   rankCircle: {
     width: 26, height: 26, borderRadius: 13,
-    backgroundColor: COLORS.amber, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: c.amber, alignItems: 'center', justifyContent: 'center',
   },
-  rankText: { color: COLORS.bg, fontSize: 12, fontFamily: FONTS.displayHeavy },
+  rankText: { color: c.bg, fontSize: 12, fontFamily: FONTS.displayHeavy },
 
   cardBody:     { flex: 1, padding: 14, gap: 6 },
   cardTitleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, paddingRight: 40 },
   cardEmoji:    { fontSize: 18 },
-  cardName:     { flex: 1, fontSize: 24, fontFamily: FONTS.display, color: COLORS.textPrimary, lineHeight: 28 },
+  cardName:     { flex: 1, fontSize: 24, fontFamily: FONTS.display, color: c.textPrimary, lineHeight: 28 },
 
   exciteBadge: {
     position: 'absolute', top: 12, right: 12,
-    backgroundColor: COLORS.amber + '22', borderRadius: 10,
+    backgroundColor: c.amber + '22', borderRadius: 10,
     paddingHorizontal: 7, paddingVertical: 2,
-    borderWidth: 1, borderColor: COLORS.amber + '44',
+    borderWidth: 1, borderColor: c.amber + '44',
   },
-  exciteText: { color: COLORS.goldText, fontSize: 10, fontFamily: FONTS.bodyBold },
+  exciteText: { color: c.goldText, fontSize: 10, fontFamily: FONTS.bodyBold },
 
-  vicinity:   { fontSize: 14, color: COLORS.textMuted, lineHeight: 19, fontStyle: 'italic', fontFamily: FONTS.body },
+  vicinity:   { fontSize: 14, color: c.textMuted, lineHeight: 19, fontStyle: 'italic', fontFamily: FONTS.body },
 
   metaRow:    { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  metaText:   { fontSize: 13, color: COLORS.textMuted, fontFamily: FONTS.body },
-  metaDot:    { fontSize: 13, color: COLORS.border, fontFamily: FONTS.body },
-  openText:   { fontSize: 13, color: COLORS.success, fontFamily: FONTS.bodySemiBold },
-  closedText: { fontSize: 13, color: COLORS.textMuted, fontFamily: FONTS.body },
+  metaText:   { fontSize: 13, color: c.textMuted, fontFamily: FONTS.body },
+  metaDot:    { fontSize: 13, color: c.border, fontFamily: FONTS.body },
+  openText:   { fontSize: 13, color: c.success, fontFamily: FONTS.bodySemiBold },
+  closedText: { fontSize: 13, color: c.textMuted, fontFamily: FONTS.body },
 
   prosConsBlock: { gap: 3 },
-  proLine: { fontSize: 13, color: COLORS.success, letterSpacing: 0.2, fontFamily: FONTS.body },
-  conLine: { fontSize: 13, color: COLORS.warning, letterSpacing: 0.2, fontFamily: FONTS.body },
+  proLine: { fontSize: 13, color: c.success, letterSpacing: 0.2, fontFamily: FONTS.body },
+  conLine: { fontSize: 13, color: c.warning, letterSpacing: 0.2, fontFamily: FONTS.body },
 
   goBtn: {
     marginTop: 4, borderRadius: 16, height: 52,
     alignItems: 'center', justifyContent: 'center',
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
+    shadowColor: c.primary, shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.38, shadowRadius: 12, elevation: 8,
   },
-  goBtnText: { color: COLORS.primaryText, fontSize: 15, fontFamily: FONTS.bodyBold },
+  goBtnText: { color: c.primaryText, fontSize: 15, fontFamily: FONTS.bodyBold },
 
   // Empty state
   emptyState:    { paddingTop: 80, alignItems: 'center', gap: 12 },
   emptyEmoji:    { fontSize: 48 },
-  emptyTitle:    { fontSize: 20, fontFamily: FONTS.display, color: COLORS.textPrimary },
-  emptySubtitle: { fontSize: 15, color: COLORS.textMuted, textAlign: 'center', lineHeight: 20, fontFamily: FONTS.body },
+  emptyTitle:    { fontSize: 20, fontFamily: FONTS.display, color: c.textPrimary },
+  emptySubtitle: { fontSize: 15, color: c.textMuted, textAlign: 'center', lineHeight: 20, fontFamily: FONTS.body },
 
   // "Find something different" button
   differentBtn: { marginTop: 6 },

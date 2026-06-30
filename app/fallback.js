@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { COLORS, FONTS } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
+import { FONTS } from '../constants/theme';
 import ScreenBackground from '../components/brand/ScreenBackground';
 import Card from '../components/brand/Card';
 import { searchNearbyPlaces } from '../services/placesService';
@@ -74,6 +75,9 @@ function deriveProsAndCons(rating, userRatingsTotal, isOpenNow) {
 }
 
 function PlaceCard({ place }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const { pros, cons } = deriveProsAndCons(place.rating, place.userRatingsTotal, place.isOpenNow);
   const emoji = place.emoji || CATEGORY_EMOJI[place.category] || '⚡';
 
@@ -126,6 +130,9 @@ function PlaceCard({ place }) {
 }
 
 export default function FallbackScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const router = useRouter();
   const params = useLocalSearchParams();
 
@@ -233,7 +240,7 @@ export default function FallbackScreen() {
 
         {loading ? (
           <View style={styles.loadingState}>
-            <ActivityIndicator color={COLORS.primary} size="large" />
+            <ActivityIndicator color={colors.primary} size="large" />
             <Text style={styles.loadingText}>Searching wider area...</Text>
           </View>
         ) : error ? (
@@ -256,7 +263,7 @@ export default function FallbackScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   screen: { flex: 1 },
 
   header: {
@@ -265,13 +272,13 @@ const styles = StyleSheet.create({
   },
   backButton: {
     width: 40, height: 40, borderRadius: 20,
-    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: c.surface, borderWidth: 1, borderColor: c.border,
     alignItems: 'center', justifyContent: 'center',
   },
-  backArrow:    { color: COLORS.primary, fontSize: 20, lineHeight: 22 },
+  backArrow:    { color: c.primary, fontSize: 20, lineHeight: 22 },
   headerCenter: { flex: 1, alignItems: 'center' },
-  title:        { fontSize: 28, color: COLORS.textPrimary, fontFamily: FONTS.displayHeavy },
-  subtitle:     { fontSize: 13, color: COLORS.textMuted, marginTop: 3, fontFamily: FONTS.body },
+  title:        { fontSize: 28, color: c.textPrimary, fontFamily: FONTS.displayHeavy },
+  subtitle:     { fontSize: 13, color: c.textMuted, marginTop: 3, fontFamily: FONTS.body },
 
   listContent: { paddingHorizontal: 20, paddingBottom: 40 },
 
@@ -279,44 +286,44 @@ const styles = StyleSheet.create({
   cardBody:     { padding: 16, gap: 6 },
   cardTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   cardEmoji:    { fontSize: 18 },
-  cardName:     { flex: 1, fontSize: 15, fontFamily: FONTS.display, color: COLORS.textPrimary },
+  cardName:     { flex: 1, fontSize: 15, fontFamily: FONTS.display, color: c.textPrimary },
   exciteBadge: {
-    backgroundColor: COLORS.amber + '22', borderRadius: 10,
+    backgroundColor: c.amber + '22', borderRadius: 10,
     paddingHorizontal: 7, paddingVertical: 2,
-    borderWidth: 1, borderColor: COLORS.amber + '44',
+    borderWidth: 1, borderColor: c.amber + '44',
   },
-  exciteText:   { color: COLORS.goldText, fontSize: 10, fontFamily: FONTS.bodyBold },
+  exciteText:   { color: c.goldText, fontSize: 10, fontFamily: FONTS.bodyBold },
 
-  vicinity:     { fontSize: 13, color: COLORS.textMuted, lineHeight: 18, fontStyle: 'italic', fontFamily: FONTS.body },
+  vicinity:     { fontSize: 13, color: c.textMuted, lineHeight: 18, fontStyle: 'italic', fontFamily: FONTS.body },
   metaRow:      { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  metaText:     { fontSize: 13, color: COLORS.textMuted, fontFamily: FONTS.body },
-  metaDot:      { fontSize: 13, color: COLORS.border, fontFamily: FONTS.body },
-  openText:     { fontSize: 13, color: COLORS.success, fontFamily: FONTS.bodySemiBold },
-  closedText:   { fontSize: 13, color: COLORS.textMuted, fontFamily: FONTS.body },
+  metaText:     { fontSize: 13, color: c.textMuted, fontFamily: FONTS.body },
+  metaDot:      { fontSize: 13, color: c.border, fontFamily: FONTS.body },
+  openText:     { fontSize: 13, color: c.success, fontFamily: FONTS.bodySemiBold },
+  closedText:   { fontSize: 13, color: c.textMuted, fontFamily: FONTS.body },
 
   prosConsBlock: { gap: 3 },
-  proLine:  { fontSize: 13, color: COLORS.success, letterSpacing: 0.2, fontFamily: FONTS.body },
-  conLine:  { fontSize: 13, color: COLORS.warning, letterSpacing: 0.2, fontFamily: FONTS.body },
+  proLine:  { fontSize: 13, color: c.success, letterSpacing: 0.2, fontFamily: FONTS.body },
+  conLine:  { fontSize: 13, color: c.warning, letterSpacing: 0.2, fontFamily: FONTS.body },
 
   goBtn: {
-    marginTop: 4, backgroundColor: COLORS.primary, borderRadius: 16,
+    marginTop: 4, backgroundColor: c.primary, borderRadius: 16,
     height: 56, alignItems: 'center', justifyContent: 'center',
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
+    shadowColor: c.primary, shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4, shadowRadius: 12, elevation: 8,
   },
-  goBtnText: { color: COLORS.primaryText, fontSize: 15, fontFamily: FONTS.bodyBold },
+  goBtnText: { color: c.primaryText, fontSize: 15, fontFamily: FONTS.bodyBold },
 
   loadingState: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 },
-  loadingText:  { color: COLORS.textMuted, fontSize: 15, fontFamily: FONTS.body },
+  loadingText:  { color: c.textMuted, fontSize: 15, fontFamily: FONTS.body },
 
   errorState: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, paddingHorizontal: 32 },
   errorEmoji: { fontSize: 48 },
-  errorTitle: { fontSize: 15, color: COLORS.textMuted, textAlign: 'center', lineHeight: 22, fontFamily: FONTS.body },
+  errorTitle: { fontSize: 15, color: c.textMuted, textAlign: 'center', lineHeight: 22, fontFamily: FONTS.body },
   retryBtn: {
-    marginTop: 8, backgroundColor: COLORS.surface, borderRadius: 16,
+    marginTop: 8, backgroundColor: c.surface, borderRadius: 16,
     height: 56, paddingHorizontal: 32,
     alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: COLORS.border,
+    borderWidth: 1, borderColor: c.border,
   },
-  retryText: { color: COLORS.primary, fontSize: 15, fontFamily: FONTS.bodySemiBold },
+  retryText: { color: c.primary, fontSize: 15, fontFamily: FONTS.bodySemiBold },
 });

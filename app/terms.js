@@ -1,7 +1,9 @@
+import { useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { COLORS, FONTS } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
+import { FONTS } from '../constants/theme';
 import ScreenBackground from '../components/brand/ScreenBackground';
 import Card from '../components/brand/Card';
 
@@ -10,6 +12,9 @@ const APP_NAME = 'Decide';
 const CONTACT_EMAIL = 'support@decideyourday.com';
 
 export default function TermsOfService() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const router = useRouter();
 
   return (
@@ -90,6 +95,9 @@ export default function TermsOfService() {
 }
 
 function Section({ title, children }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{title}</Text>
@@ -98,42 +106,42 @@ function Section({ title, children }) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   screen:   { flex: 1 },
   header: {
     paddingHorizontal: 20, paddingTop: 12, paddingBottom: 20,
-    borderBottomWidth: 1, borderBottomColor: COLORS.border,
+    borderBottomWidth: 1, borderBottomColor: c.border,
   },
   backBtn:  { marginBottom: 12 },
-  backTxt:  { color: COLORS.primary, fontSize: 14, fontFamily: FONTS.bodySemiBold },
+  backTxt:  { color: c.primary, fontSize: 14, fontFamily: FONTS.bodySemiBold },
   title:    {
-    fontSize: 24, color: COLORS.textPrimary,
+    fontSize: 24, color: c.textPrimary,
     fontFamily: FONTS.displayHeavy,
   },
-  subtitle: { fontSize: 12, color: COLORS.textMuted, marginTop: 4, fontFamily: FONTS.body },
+  subtitle: { fontSize: 12, color: c.textMuted, marginTop: 4, fontFamily: FONTS.body },
 
   content:  { paddingHorizontal: 20, paddingTop: 20 },
 
   introCard: {
     marginBottom: 24,
-    borderLeftWidth: 3, borderLeftColor: COLORS.gold,
+    borderLeftWidth: 3, borderLeftColor: c.gold,
   },
   introText: {
-    fontSize: 14, color: COLORS.textSecondary,
+    fontSize: 14, color: c.textSecondary,
     lineHeight: 21, fontStyle: 'italic', fontFamily: FONTS.body,
   },
 
   section:      { marginBottom: 24 },
   sectionTitle: {
-    fontSize: 14, color: COLORS.primary,
+    fontSize: 14, color: c.primary,
     marginBottom: 8, letterSpacing: 0.2, fontFamily: FONTS.bodyBold,
   },
   sectionBody:  {
-    fontSize: 14, color: COLORS.textSecondary,
+    fontSize: 14, color: c.textSecondary,
     lineHeight: 22, fontFamily: FONTS.body,
   },
   legalNote: {
-    fontSize: 11, color: COLORS.textMuted, fontStyle: 'italic', lineHeight: 16,
-    marginTop: 8, borderTopWidth: 1, borderTopColor: COLORS.border, paddingTop: 16, fontFamily: FONTS.body,
+    fontSize: 11, color: c.textMuted, fontStyle: 'italic', lineHeight: 16,
+    marginTop: 8, borderTopWidth: 1, borderTopColor: c.border, paddingTop: 16, fontFamily: FONTS.body,
   },
 });

@@ -1,12 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { getUsage, getUsers, setUserRole } from '../../services/adminApi';
 import ScreenBackground from '../../components/brand/ScreenBackground';
 import Card from '../../components/brand/Card';
 import SectionLabel from '../../components/brand/SectionLabel';
-import { COLORS, FONTS, RADII } from '../../constants/theme';
+import { FONTS, RADII } from '../../constants/theme';
 import { PRICING } from '../../constants/pricing';
 import { getAdminRole } from '../../utils/admin';
 
@@ -14,6 +15,9 @@ const RANGES = ['day', 'week', 'month'];
 const money = (n) => `$${(n || 0).toFixed(2)}`;
 
 export default function AdminScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const { user, loading, isAdmin } = useAuth();
   const router = useRouter();
 
@@ -37,7 +41,7 @@ export default function AdminScreen() {
   }, [loading, isAdmin]);
 
   if (loading || !isAdmin) {
-    return <ScreenBackground variant="paper"><View style={styles.center}><ActivityIndicator color={COLORS.primary} /></View></ScreenBackground>;
+    return <ScreenBackground variant="paper"><View style={styles.center}><ActivityIndicator color={colors.primary} /></View></ScreenBackground>;
   }
 
   async function toggleBeta(u) {
@@ -65,7 +69,7 @@ export default function AdminScreen() {
           ))}
         </View>
         <Card>
-          {!usage ? <ActivityIndicator color={COLORS.primary} /> : (
+          {!usage ? <ActivityIndicator color={colors.primary} /> : (
             <View>
               <Row label="Requests" value={String(usage.totals.requests)} />
               <Row label="Input tokens" value={usage.totals.inputTokens.toLocaleString()} />
@@ -82,7 +86,7 @@ export default function AdminScreen() {
 
         <SectionLabel tone="cobalt">USER ADMINISTRATION</SectionLabel>
         <Card>
-          {!users ? <ActivityIndicator color={COLORS.primary} /> : users.map((u) => {
+          {!users ? <ActivityIndicator color={colors.primary} /> : users.map((u) => {
             const rowIsAdmin = getAdminRole({ email: u.email }) === 'admin';
             return (
               <View key={u.uid} style={styles.userRow}>
@@ -109,6 +113,9 @@ export default function AdminScreen() {
 }
 
 function Row({ label, value }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   return (
     <View style={styles.row}>
       <Text style={styles.rowLabel}>{label}</Text>
@@ -117,27 +124,27 @@ function Row({ label, value }) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   container: { padding: 20, gap: 12 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  title: { fontFamily: FONTS.display, fontSize: 28, color: COLORS.textPrimary, marginBottom: 4 },
-  err: { color: COLORS.error, fontFamily: FONTS.bodyMedium },
+  title: { fontFamily: FONTS.display, fontSize: 28, color: c.textPrimary, marginBottom: 4 },
+  err: { color: c.error, fontFamily: FONTS.bodyMedium },
   rangeRow: { flexDirection: 'row', gap: 8 },
-  chip: { paddingVertical: 6, paddingHorizontal: 14, borderRadius: RADII.pill, backgroundColor: COLORS.surfaceAlt },
-  chipActive: { backgroundColor: COLORS.primary },
-  chipText: { fontFamily: FONTS.bodySemiBold, color: COLORS.textSecondary, textTransform: 'capitalize' },
-  chipTextActive: { color: COLORS.primaryText },
+  chip: { paddingVertical: 6, paddingHorizontal: 14, borderRadius: RADII.pill, backgroundColor: c.surfaceAlt },
+  chipActive: { backgroundColor: c.primary },
+  chipText: { fontFamily: FONTS.bodySemiBold, color: c.textSecondary, textTransform: 'capitalize' },
+  chipTextActive: { color: c.primaryText },
   row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 },
-  rowLabel: { fontFamily: FONTS.bodyMedium, color: COLORS.textSecondary },
-  rowValue: { fontFamily: FONTS.bodyBold, color: COLORS.textPrimary },
-  subhead: { fontFamily: FONTS.bodyBold, color: COLORS.textPrimary, marginTop: 12, marginBottom: 4 },
+  rowLabel: { fontFamily: FONTS.bodyMedium, color: c.textSecondary },
+  rowValue: { fontFamily: FONTS.bodyBold, color: c.textPrimary },
+  subhead: { fontFamily: FONTS.bodyBold, color: c.textPrimary, marginTop: 12, marginBottom: 4 },
   userRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, gap: 10 },
-  userEmail: { fontFamily: FONTS.bodySemiBold, color: COLORS.textPrimary },
-  userMeta: { fontFamily: FONTS.body, color: COLORS.textMuted, fontSize: 12 },
-  betaBtn: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: RADII.pill, backgroundColor: COLORS.surfaceAlt },
-  betaBtnOn: { backgroundColor: COLORS.primary },
-  betaBtnText: { fontFamily: FONTS.bodySemiBold, color: COLORS.textSecondary, fontSize: 13 },
-  betaBtnTextOn: { color: COLORS.primaryText },
-  pricingNote: { fontFamily: FONTS.body, color: COLORS.textMuted, fontSize: 11, marginTop: 4 },
-  adminLabel: { fontFamily: FONTS.bodySemiBold, color: COLORS.textMuted, fontSize: 13 },
+  userEmail: { fontFamily: FONTS.bodySemiBold, color: c.textPrimary },
+  userMeta: { fontFamily: FONTS.body, color: c.textMuted, fontSize: 12 },
+  betaBtn: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: RADII.pill, backgroundColor: c.surfaceAlt },
+  betaBtnOn: { backgroundColor: c.primary },
+  betaBtnText: { fontFamily: FONTS.bodySemiBold, color: c.textSecondary, fontSize: 13 },
+  betaBtnTextOn: { color: c.primaryText },
+  pricingNote: { fontFamily: FONTS.body, color: c.textMuted, fontSize: 11, marginTop: 4 },
+  adminLabel: { fontFamily: FONTS.bodySemiBold, color: c.textMuted, fontSize: 13 },
 });
