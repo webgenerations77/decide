@@ -114,7 +114,7 @@ function DecisionCard({ item, onFeedbackUp, onFeedbackDown }) {
 }
 
 // ─── ItineraryEntry ───────────────────────────────────────────────────────────
-function ItineraryEntry({ item, onFeedbackUp, onFeedbackDown }) {
+function ItineraryEntry({ item, onFeedbackUp, onFeedbackDown, onOpen }) {
   const prefs   = item.meta?.preferences ?? {};
   const pills   = [prefs.pace, prefs.budget, prefs.group_type].filter(Boolean);
   const dayLine = `${item.meta?.day_of_week ?? ''}, ${item.meta?.date ?? ''}`.trim().replace(/^,\s*/, '');
@@ -122,46 +122,57 @@ function ItineraryEntry({ item, onFeedbackUp, onFeedbackDown }) {
     ? `${item.weather.emoji ?? ''} ${item.weather.temp_f}°F`
     : '';
   const stopCount = item.stops?.length ?? 0;
+  const tappable = Array.isArray(item.itinerary) && item.itinerary.length > 0;
 
   return (
     <Card style={styles.itinCard}>
-      <View style={styles.itinHeader}>
-        <Text style={styles.itinDate}>{dayLine}</Text>
-        {item.meta?.city ? <Text style={styles.itinCity}>📍 {item.meta.city}</Text> : null}
-      </View>
+      <TouchableOpacity
+        activeOpacity={tappable ? 0.7 : 1}
+        onPress={tappable ? onOpen : undefined}
+        disabled={!tappable}
+      >
+        <View style={styles.itinHeader}>
+          <Text style={styles.itinDate}>{dayLine}</Text>
+          {item.meta?.city ? <Text style={styles.itinCity}>📍 {item.meta.city}</Text> : null}
+        </View>
 
-      <View style={styles.itinMetaRow}>
-        {pills.map((p) => (
-          <View key={p} style={styles.prefPill}>
-            <Text style={styles.prefPillTxt}>{p}</Text>
-          </View>
-        ))}
-      </View>
+        <View style={styles.itinMetaRow}>
+          {pills.map((p) => (
+            <View key={p} style={styles.prefPill}>
+              <Text style={styles.prefPillTxt}>{p}</Text>
+            </View>
+          ))}
+        </View>
 
-      <View style={styles.itinStatsRow}>
-        <Text style={styles.itinStats}>{stopCount} stop{stopCount !== 1 ? 's' : ''}</Text>
-        {weatherLine ? <Text style={styles.itinStats}>{weatherLine}</Text> : null}
-        {item.meta?.time_window ? (
-          <Text style={styles.itinStats}>🕐 {item.meta.time_window}</Text>
-        ) : null}
-      </View>
+        <View style={styles.itinStatsRow}>
+          <Text style={styles.itinStats}>{stopCount} stop{stopCount !== 1 ? 's' : ''}</Text>
+          {weatherLine ? <Text style={styles.itinStats}>{weatherLine}</Text> : null}
+          {item.meta?.time_window ? (
+            <Text style={styles.itinStats}>🕐 {item.meta.time_window}</Text>
+          ) : null}
+        </View>
 
-      {item.stops?.length > 0 && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.chipsScroll}
-        >
-          {item.stops.map((stop, i) => {
-            const c = CATEGORY_COLORS[stop.category] ?? COLORS.border;
-            return (
-              <View key={i} style={[styles.stopChip, { borderColor: c + '55' }]}>
-                <Text style={styles.stopChipTxt} numberOfLines={1}>{stop.name}</Text>
-              </View>
-            );
-          })}
-        </ScrollView>
-      )}
+        {tappable && (
+          <Text style={styles.tapDetailHint}>View full itinerary →</Text>
+        )}
+
+        {item.stops?.length > 0 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.chipsScroll}
+          >
+            {item.stops.map((stop, i) => {
+              const c = CATEGORY_COLORS[stop.category] ?? COLORS.border;
+              return (
+                <View key={i} style={[styles.stopChip, { borderColor: c + '55' }]}>
+                  <Text style={styles.stopChipTxt} numberOfLines={1}>{stop.name}</Text>
+                </View>
+              );
+            })}
+          </ScrollView>
+        )}
+      </TouchableOpacity>
 
       {item.feedback === 'down' && item.feedbackReason ? (
         <View style={[styles.feedbackTag, { marginTop: 6 }]}>
@@ -379,6 +390,7 @@ export default function HistoryScreen() {
               item={item}
               onFeedbackUp={() => handleThumbsUp(item, 'itinerary')}
               onFeedbackDown={() => handleThumbsDown(item, 'itinerary')}
+              onOpen={() => router.push(`/itinerary/${item.id}`)}
             />
           ))}
 
@@ -486,6 +498,7 @@ const styles = StyleSheet.create({
   prefPillTxt:  { fontSize: 11, fontFamily: FONTS.bodySemiBold, color: COLORS.goldText },
   itinStatsRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
   itinStats:    { fontSize: 11, color: COLORS.textSecondary },
+  tapDetailHint: { fontFamily: FONTS.bodySemiBold, fontSize: 12, color: COLORS.primary, marginTop: 8 },
   chipsScroll:  { paddingVertical: 4, gap: 6, flexDirection: 'row' },
   stopChip: {
     paddingHorizontal: 10, paddingVertical: 5,

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView,
-  Linking, ActivityIndicator, Animated, Modal, Platform, Dimensions,
+  Linking, Animated, Modal,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,18 +11,21 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { generateItinerary, swapStop } from '../../services/itineraryService';
 import { loadPlanDefaults, KEYS } from '../../services/settingsService';
-import { isAtDecisionLimit, incrementDecisionCount, getRemainingDecisions, LIMITS } from '../../services/subscriptionService';
+import { isAtDecisionLimit, incrementDecisionCount, getRemainingDecisions, isPro, LIMITS } from '../../services/subscriptionService';
 import { scheduleItineraryAlerts, cancelItineraryAlerts } from '../../services/notificationService';
-import { COLORS, CATEGORY_COLORS, CATEGORY_EMOJIS, PRICE_LEGEND, FONTS, RADII } from '../../constants/theme';
-import { getLocalKnowledge, getAllergyAlerts } from '../../constants/localKnowledge';
+import { COLORS, FONTS, RADII } from '../../constants/theme';
 import ScreenBackground from '../../components/brand/ScreenBackground';
 import Card from '../../components/brand/Card';
 import CTAButton from '../../components/brand/CTAButton';
 import SectionLabel from '../../components/brand/SectionLabel';
 import BrandLogo from '../../components/brand/BrandLogo';
 import LoadingAnimation from '../../components/LoadingAnimation';
-import { placeDetails as fetchPlaceDetails } from '../../services/placesService';
 import { getApiBase } from '../../services/apiBase';
+import { isValidWindow, windowChanged, canRefresh } from '../../lib/refreshPolicy';
+import PlaceDetailModal from '../../components/itinerary/PlaceDetailModal';
+import WeatherPill from '../../components/itinerary/WeatherPill';
+import StopCard from '../../components/itinerary/StopCard';
+import ItineraryMeta from '../../components/itinerary/ItineraryMeta';
 
 // ─── Date helpers ─────────────────────────────────────────────────────────────
 function getNextSevenDays() {
@@ -58,14 +61,6 @@ function datePillLabel(isoDate) {
 const START_TIMES = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM'];
 const END_TIMES   = ['4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM', '8:00 PM', '9:00 PM', '10:00 PM'];
 
-function timeToMinutes(timeStr) {
-  const [time, period] = timeStr.split(' ');
-  let [hours] = time.split(':').map(Number);
-  if (period === 'PM' && hours !== 12) hours += 12;
-  if (period === 'AM' && hours === 12) hours = 0;
-  return hours * 60;
-}
-
 // ─── Preference options ───────────────────────────────────────────────────────
 const PACE_OPTIONS = [
   { id: 'relaxed',  label: 'Relaxed',  emoji: '🌿' },
@@ -84,52 +79,6 @@ const GROUP_OPTIONS = [
   { id: 'family',  label: 'Family',  emoji: '👨‍👩‍👧' },
   { id: 'friends', label: 'Friends', emoji: '👥' },
 ];
-
-// ─── Feedback reasons ─────────────────────────────────────────────────────────
-const FEEDBACK_REASONS = ['Closed', 'Too crowded', 'Not my style', 'Too far', 'Too expensive', 'Other'];
-
-// ─── Highlight config ─────────────────────────────────────────────────────────
-const highlightConfig = {
-  entertainment: { icon: '🎵', borderColor: COLORS.amber },
-  special:       { icon: '🏷️', borderColor: COLORS.primary },
-  feature:       { icon: '✨', borderColor: COLORS.amber },
-  buzz:          { icon: '📰', borderColor: COLORS.textMuted },
-};
-
-// ─── Open maps ────────────────────────────────────────────────────────────────
-function openMaps(stop) {
-  const target = stop.lat && stop.lng
-    ? `${stop.lat},${stop.lng}`
-    : encodeURIComponent(stop.address || stop.name);
-  const url = Platform.OS === 'ios'
-    ? `maps://?daddr=${target}`
-    : `https://maps.google.com/?daddr=${target}`;
-  Linking.openURL(url).catch(() => {
-    Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${target}`);
-  });
-}
-
-// ─── Price legend modal ───────────────────────────────────────────────────────
-function PriceLegendModal({ visible, onClose }) {
-  return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={onClose}>
-        <TouchableOpacity activeOpacity={1} onPress={() => {}}>
-          <View style={styles.legendCard}>
-            <Text style={styles.legendTitle}>Price guide</Text>
-            {PRICE_LEGEND.map((row) => (
-              <View key={row.symbol} style={styles.legendRow}>
-                <Text style={styles.legendSymbol}>{row.symbol}</Text>
-                <Text style={styles.legendLabel}>{row.label}</Text>
-              </View>
-            ))}
-            <Text style={styles.legendSub}>Estimated per-person cost including a typical meal or entry</Text>
-          </View>
-        </TouchableOpacity>
-      </TouchableOpacity>
-    </Modal>
-  );
-}
 
 // ─── TimePickerPill ───────────────────────────────────────────────────────────
 function TimePickerPill({ label, value, options, onChange, disabled }) {
@@ -170,416 +119,6 @@ function TimePickerPill({ label, value, options, onChange, disabled }) {
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
-    </>
-  );
-}
-
-// ─── FeedbackModal ────────────────────────────────────────────────────────────
-function FeedbackModal({ visible, placeName, onClose, onSelect }) {
-  return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <TouchableOpacity style={styles.fbOverlay} activeOpacity={1} onPress={onClose}>
-        <TouchableOpacity activeOpacity={1} onPress={() => {}}>
-          <View style={styles.fbCard}>
-            <View style={styles.fbHandle} />
-            <Text style={styles.fbTitle}>What was the issue?</Text>
-            <Text style={styles.fbPlace} numberOfLines={1}>{placeName}</Text>
-            {FEEDBACK_REASONS.map((reason, i) => (
-              <TouchableOpacity
-                key={reason}
-                style={[styles.fbOption, i === FEEDBACK_REASONS.length - 1 && { borderBottomWidth: 0 }]}
-                onPress={() => onSelect(reason)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.fbOptionTxt}>{reason}</Text>
-              </TouchableOpacity>
-            ))}
-            <TouchableOpacity style={styles.fbCancel} onPress={onClose} activeOpacity={0.7}>
-              <Text style={styles.fbCancelTxt}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </TouchableOpacity>
-    </Modal>
-  );
-}
-
-// ─── PlaceDetailModal ─────────────────────────────────────────────────────────
-function PlaceDetailModal({ visible, stop, onClose }) {
-  const [placeDetails,  setPlaceDetails]  = useState(null);
-  const [detailLoading, setDetailLoading] = useState(false);
-  const [showLegend,    setShowLegend]    = useState(false);
-  const screenHeight = Dimensions.get('window').height;
-
-  useEffect(() => {
-    if (!visible || !stop) { setPlaceDetails(null); return; }
-    const pid = stop.place_id ?? '';
-    const isDemo     = pid.startsWith('demo_');
-    const isExternal = pid.startsWith('nps_') || pid.startsWith('ridb_');
-    if (isDemo || isExternal || !pid) {
-      setPlaceDetails(null);
-      setDetailLoading(false);
-      return;
-    }
-    setDetailLoading(true);
-    setPlaceDetails(null);
-    const fields = 'name,rating,user_ratings_total,formatted_phone_number,website,opening_hours,price_level';
-    fetchPlaceDetails(pid, fields)
-      .then((data) => { setPlaceDetails(data.result ?? null); setDetailLoading(false); })
-      .catch(() => setDetailLoading(false));
-  }, [visible, stop?.place_id]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  if (!stop) return null;
-
-  const color    = CATEGORY_COLORS[stop.category] ?? COLORS.amber;
-  const catEmoji = CATEGORY_EMOJIS[stop.category] ?? '⚡';
-  const priceLvl = [null, '$', '$$', '$$$', '$$$$'];
-
-  const rating    = stop.rating ?? placeDetails?.rating ?? 0;
-  const priceStr  = placeDetails?.price_level != null ? (priceLvl[placeDetails.price_level] ?? null) : null;
-  const openNow   = placeDetails?.opening_hours?.open_now;
-  const todayIdx  = new Date().getDay();
-  const todayHours = placeDetails?.opening_hours?.weekday_text
-    ? placeDetails.opening_hours.weekday_text[(todayIdx + 6) % 7]?.split(': ').slice(1).join(': ') ?? null
-    : null;
-  const phone   = stop.phone   ?? placeDetails?.formatted_phone_number ?? null;
-  const website = stop.website ?? placeDetails?.website ?? null;
-
-  const hasInfoRow = rating > 0 || priceStr || openNow != null;
-
-  return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <TouchableOpacity style={styles.detailOverlay} activeOpacity={1} onPress={onClose}>
-        <TouchableOpacity activeOpacity={1} onPress={() => {}}>
-          <View style={[styles.detailSheet, { height: screenHeight * 0.75 }]}>
-            <View style={styles.dragHandle} />
-
-            <View style={styles.detailHeader}>
-              <View style={[styles.detailCatPill, { backgroundColor: color + '22' }]}>
-                <Text style={[styles.detailCatPillTxt, { color }]}>{catEmoji} {(stop.category ?? '').toUpperCase()}</Text>
-              </View>
-              <TouchableOpacity style={styles.detailCloseBtn} onPress={onClose} activeOpacity={0.7}>
-                <Ionicons name="close" size={16} color={COLORS.textSecondary} />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView
-              style={styles.detailScroll}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 32 }}
-            >
-              <Text style={styles.detailName}>{stop.name}</Text>
-              {stop.address ? <Text style={styles.detailAddr}>{stop.address}</Text> : null}
-
-              {hasInfoRow && (
-                <View style={styles.detailInfoRow}>
-                  {rating > 0 && (
-                    <Text style={styles.detailInfoTxt}>
-                      ⭐ {typeof rating === 'number' ? rating.toFixed(1) : rating}
-                    </Text>
-                  )}
-                  {priceStr && (
-                    <>
-                      <Text style={styles.detailInfoDot}>·</Text>
-                      <TouchableOpacity onPress={() => setShowLegend(true)} activeOpacity={0.7}>
-                        <Text style={[styles.detailInfoTxt, { color: COLORS.goldText }]}>{priceStr} ⓘ</Text>
-                      </TouchableOpacity>
-                    </>
-                  )}
-                  {openNow != null && (
-                    <>
-                      <Text style={styles.detailInfoDot}>·</Text>
-                      <Text style={[styles.detailInfoTxt, { color: openNow ? COLORS.success : COLORS.error }]}>
-                        {openNow ? '● Open' : '● Closed'}
-                      </Text>
-                    </>
-                  )}
-                  {todayHours && (
-                    <><Text style={styles.detailInfoDot}>·</Text><Text style={styles.detailInfoTxt}>{todayHours}</Text></>
-                  )}
-                </View>
-              )}
-
-              {stop.admission_cost && (
-                <View style={styles.admissionRow}>
-                  <Ionicons name="ticket-outline" size={14} color={COLORS.gold} />
-                  <Text style={styles.admissionLabel}>Admission</Text>
-                  <Text style={styles.admissionValue}>{stop.admission_cost}</Text>
-                </View>
-              )}
-
-              {stop.live_music?.note ? (
-                <View style={styles.admissionRow}>
-                  <Ionicons name="musical-notes-outline" size={14} color={COLORS.primary} />
-                  <Text style={styles.admissionLabel}>Live music</Text>
-                  <Text style={styles.admissionValue}>{stop.live_music.note}</Text>
-                </View>
-              ) : null}
-
-              {detailLoading && <ActivityIndicator color={COLORS.primary} style={{ marginVertical: 20 }} />}
-
-              {stop.place_id?.startsWith('nps_')  && <View style={styles.detailSourceBadge}><Text style={styles.detailSourceTxt}>🌲 National Park Service</Text></View>}
-              {stop.place_id?.startsWith('ridb_') && <View style={styles.detailSourceBadge}><Text style={styles.detailSourceTxt}>🏕️ Recreation.gov</Text></View>}
-
-              {stop.reason ? (
-                <View style={styles.detailSection}>
-                  <SectionLabel tone="cobalt" style={{ marginBottom: 10 }}>Cheddar's take</SectionLabel>
-                  <Text style={styles.detailReasonText}>{stop.reason}</Text>
-                </View>
-              ) : null}
-
-              {stop.highlights?.length > 0 && (
-                <View style={styles.detailSection}>
-                  <SectionLabel tone="cobalt" style={{ marginBottom: 10 }}>Highlights</SectionLabel>
-                  {stop.highlights.map((h, i) => {
-                    const cfg = highlightConfig[h.type] ?? highlightConfig.feature;
-                    return (
-                      <View key={i} style={[styles.highlightRow, { borderLeftColor: cfg.borderColor }]}>
-                        <Text style={styles.highlightIcon}>{cfg.icon}</Text>
-                        <Text style={styles.highlightText}>{h.text}</Text>
-                      </View>
-                    );
-                  })}
-                </View>
-              )}
-
-              {(stop.distance || stop.excitement_score > 0) && (
-                <View style={styles.detailStatsRow}>
-                  {stop.distance ? (
-                    <TouchableOpacity onPress={() => openMaps(stop)} activeOpacity={0.7} style={styles.distanceLink}>
-                      <Ionicons name="location-outline" size={14} color={COLORS.primary} style={{ marginRight: 4 }} />
-                      <Text style={styles.distanceLinkTxt}>{stop.distance}</Text>
-                    </TouchableOpacity>
-                  ) : <View />}
-                  {stop.excitement_score > 0 && (
-                    <View style={styles.detailExciteBadge}>
-                      <Text style={styles.detailExciteTxt}>⚡ {stop.excitement_score}</Text>
-                    </View>
-                  )}
-                </View>
-              )}
-
-              <TouchableOpacity style={styles.detailNavBtn} onPress={() => openMaps(stop)} activeOpacity={0.7}>
-                <Ionicons name="navigate" size={18} color={COLORS.primaryText} style={{ marginRight: 8 }} />
-                <Text style={styles.detailNavBtnTxt}>Navigate here</Text>
-              </TouchableOpacity>
-
-              {(phone || website) && (
-                <View style={styles.detailSecondaryBtns}>
-                  {phone ? (
-                    <TouchableOpacity
-                      style={styles.detailSecBtn}
-                      onPress={() => Linking.openURL(`tel:${phone}`)}
-                      activeOpacity={0.7}
-                    >
-                      <Ionicons name="call-outline" size={16} color={COLORS.primary} style={{ marginRight: 6 }} />
-                      <Text style={styles.detailSecBtnTxt}>Call</Text>
-                    </TouchableOpacity>
-                  ) : null}
-                  {website ? (
-                    <TouchableOpacity
-                      style={styles.detailSecBtn}
-                      onPress={() => Linking.openURL(website)}
-                      activeOpacity={0.7}
-                    >
-                      <Ionicons name="globe-outline" size={16} color={COLORS.primary} style={{ marginRight: 6 }} />
-                      <Text style={styles.detailSecBtnTxt}>Website</Text>
-                    </TouchableOpacity>
-                  ) : null}
-                </View>
-              )}
-            </ScrollView>
-          </View>
-        </TouchableOpacity>
-      </TouchableOpacity>
-
-      <PriceLegendModal visible={showLegend} onClose={() => setShowLegend(false)} />
-    </Modal>
-  );
-}
-
-// ─── StopCard ─────────────────────────────────────────────────────────────────
-function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, weather, planDate, sensitivities }) {
-  const [feedback,          setFeedback]          = useState(null);
-  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
-  const [showLegend,        setShowLegend]        = useState(false);
-  const color = CATEGORY_COLORS[stop.category] ?? COLORS.amber;
-  const emoji = CATEGORY_EMOJIS[stop.category] ?? '⚡';
-
-  // Staggered entrance animation
-  const enterAnim  = useRef(new Animated.Value(0)).current;
-  const slideAnim  = useRef(new Animated.Value(28)).current;
-  const pressScale = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(enterAnim, { toValue: 1, duration: 380, delay: index * 75, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 360, delay: index * 75, useNativeDriver: true }),
-    ]).start();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleCardPressIn  = () => Animated.spring(pressScale, { toValue: 0.98, useNativeDriver: true, damping: 22, stiffness: 320 }).start();
-  const handleCardPressOut = () => Animated.spring(pressScale, { toValue: 1,    useNativeDriver: true, damping: 16, stiffness: 260 }).start();
-
-  useEffect(() => {
-    if (!stop.place_id) return;
-    AsyncStorage.getItem(`@decide/feedback_${stop.place_id}`)
-      .then((raw) => { if (raw) { try { setFeedback(JSON.parse(raw).feedback); } catch {} } })
-      .catch(() => {});
-  }, [stop.place_id]);
-
-  const saveFeedback = (type, reason = null) => {
-    if (!stop.place_id) return;
-    const data = { placeId: stop.place_id, placeName: stop.name, feedback: type, reason, timestamp: Date.now() };
-    AsyncStorage.setItem(`@decide/feedback_${stop.place_id}`, JSON.stringify(data)).catch(() => {});
-    setFeedback(type);
-  };
-
-  const localTips    = getLocalKnowledge({ stopName: stop.name, stopAddress: stop.address ?? '', category: stop.category, weather, date: planDate });
-  const allergyAlerts = getAllergyAlerts({ category: stop.category, stopName: stop.name, stopAddress: stop.address ?? '', sensitivities });
-
-  const isFood = stop.category === 'food';
-
-  return (
-    <>
-      <Animated.View style={[styles.stopRow, { opacity: enterAnim, transform: [{ translateY: slideAnim }] }]}>
-        <View style={styles.timelineCol}>
-          <View style={[styles.timelineDot, { backgroundColor: color }]} />
-          {!isLast && <View style={[styles.timelineLine, { backgroundColor: color + '33' }]} />}
-        </View>
-        <TouchableOpacity
-          activeOpacity={1}
-          onPress={() => onViewDetails(stop)}
-          onPressIn={handleCardPressIn}
-          onPressOut={handleCardPressOut}
-          disabled={isSwapping}
-          style={{ flex: 1 }}
-        >
-        <Animated.View style={[styles.stopCard, { borderLeftColor: color }, isSwapping && styles.stopCardSwapping, { transform: [{ scale: pressScale }] }]}>
-          <View style={styles.stopHeaderRow}>
-            <View style={[styles.timeChip, { backgroundColor: color + '22', borderColor: color + '55' }]}>
-              <Text style={[styles.timeText, { color }]}>{stop.time}</Text>
-            </View>
-            <Text style={styles.durationText}>{stop.duration_mins} min</Text>
-            <View style={[styles.catChip, { backgroundColor: color + '22' }]}>
-              <Text style={styles.catEmoji}>{emoji}</Text>
-              <Text style={[styles.catLabel, { color }]}>{stop.category}</Text>
-            </View>
-          </View>
-
-          <Text style={styles.stopName} numberOfLines={1}>{stop.name}</Text>
-          {stop.address ? <Text style={styles.stopAddress} numberOfLines={1}>{stop.address}</Text> : null}
-
-          {stop.distance ? (
-            <TouchableOpacity onPress={() => openMaps(stop)} activeOpacity={0.7} style={styles.distancePill}>
-              <Ionicons name="location-outline" size={12} color={COLORS.primary} style={{ marginRight: 3 }} />
-              <Text style={styles.distancePillTxt}>{stop.distance}</Text>
-            </TouchableOpacity>
-          ) : null}
-
-          {stop.admission_cost && (
-            <View style={styles.admissionBadge}>
-              <Ionicons name="ticket-outline" size={12} color={COLORS.gold} style={{ marginRight: 4 }} />
-              <Text style={styles.admissionBadgeTxt}>{stop.admission_cost}</Text>
-            </View>
-          )}
-
-          {stop.live_music?.note ? (
-            <View style={styles.liveMusicBadge}>
-              <Ionicons name="musical-notes-outline" size={12} color={COLORS.primary} style={{ marginRight: 4 }} />
-              <Text style={styles.liveMusicTxt} numberOfLines={1}>{stop.live_music.note}</Text>
-            </View>
-          ) : null}
-
-          {isFood && stop.price_level ? (
-            <TouchableOpacity onPress={() => setShowLegend(true)} activeOpacity={0.7} style={styles.pricePill}>
-              <Text style={styles.pricePillTxt}>{['', '$', '$$', '$$$', '$$$$'][stop.price_level] ?? ''} ⓘ</Text>
-            </TouchableOpacity>
-          ) : null}
-
-          {(stop.website || stop.phone) ? (
-            <View style={styles.contactRow}>
-              {stop.phone ? (
-                <TouchableOpacity style={styles.contactBtn} onPress={() => Linking.openURL(`tel:${stop.phone}`)} activeOpacity={0.7}>
-                  <Ionicons name="call-outline" size={13} color={COLORS.primary} style={{ marginRight: 4 }} />
-                  <Text style={styles.contactBtnTxt}>Call</Text>
-                </TouchableOpacity>
-              ) : null}
-              {stop.website ? (
-                <TouchableOpacity style={styles.contactBtn} onPress={() => Linking.openURL(stop.website)} activeOpacity={0.7}>
-                  <Ionicons name="globe-outline" size={13} color={COLORS.primary} style={{ marginRight: 4 }} />
-                  <Text style={styles.contactBtnTxt}>Website</Text>
-                </TouchableOpacity>
-              ) : null}
-            </View>
-          ) : null}
-
-          {stop.reason ? (
-            <View style={styles.reasonRow}>
-              <Text style={styles.stopReason}>{stop.reason}</Text>
-            </View>
-          ) : null}
-
-          {localTips.map((tip) => (
-            <View key={tip.id} style={[
-              styles.localKnowledgeBadge,
-              tip.severity === 'warning' ? styles.lkWarning
-              : tip.severity === 'info'  ? styles.lkInfo
-              : styles.lkTip,
-            ]}>
-              <Text style={styles.lkIcon}>
-                {tip.severity === 'warning' ? '⚠' : tip.severity === 'info' ? 'ℹ' : '💡'}
-              </Text>
-              <Text style={styles.lkText}>{tip.text}</Text>
-            </View>
-          ))}
-
-          {allergyAlerts.map((alert, i) => (
-            <View key={i} style={styles.allergyBadge}>
-              <Ionicons name="warning-outline" size={14} color={COLORS.error} style={{ marginRight: 6 }} />
-              <Text style={styles.allergyText}>{alert.sensitivity}: {alert.text}</Text>
-            </View>
-          ))}
-
-          <View style={styles.cardActionsRow}>
-            {stop.excitement_score > 0
-              ? <View style={styles.exciteBadge}><Text style={styles.exciteText}>⚡ {stop.excitement_score}</Text></View>
-              : <View />
-            }
-            <TouchableOpacity style={styles.swapBtn} onPress={onSwap} disabled={isSwapping} activeOpacity={0.7}>
-              {isSwapping
-                ? <View style={styles.swapLoadingRow}>
-                    <ActivityIndicator size="small" color={COLORS.textMuted} style={{ marginRight: 5 }} />
-                    <Text style={styles.swapBtnText}>Finding…</Text>
-                  </View>
-                : <Text style={styles.swapBtnText}>Try another →</Text>
-              }
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.thumbsRow}>
-            <TouchableOpacity style={[styles.thumbBtn, feedback === 'up' && styles.thumbBtnUp]} onPress={() => saveFeedback('up')} activeOpacity={0.7}>
-              <Text style={styles.thumbTxt}>👍</Text>
-            </TouchableOpacity>
-            <View style={styles.thumbDivider} />
-            <TouchableOpacity style={[styles.thumbBtn, feedback === 'down' && styles.thumbBtnDown]} onPress={() => setShowFeedbackModal(true)} activeOpacity={0.7}>
-              <Text style={styles.thumbTxt}>👎</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.tapHint}>
-            <Text style={styles.tapHintTxt}>Tap for details</Text>
-          </View>
-        </Animated.View>
-        </TouchableOpacity>
-      </Animated.View>
-
-      <FeedbackModal
-        visible={showFeedbackModal}
-        placeName={stop.name}
-        onClose={() => setShowFeedbackModal(false)}
-        onSelect={(reason) => { saveFeedback('down', reason); setShowFeedbackModal(false); }}
-      />
-      <PriceLegendModal visible={showLegend} onClose={() => setShowLegend(false)} />
     </>
   );
 }
@@ -641,6 +180,11 @@ export default function PlanScreen() {
   const [planDate,       setPlanDate]       = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
+  const [generatedStart,     setGeneratedStart]     = useState(null);
+  const [generatedEnd,       setGeneratedEnd]       = useState(null);
+  const [refreshCount,       setRefreshCount]       = useState(0);
+  const [currentItineraryId, setCurrentItineraryId] = useState(null);
+
   const [selectedStop,    setSelectedStop]    = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
 
@@ -660,7 +204,7 @@ export default function PlanScreen() {
   const btn2Slide = useRef(new Animated.Value(28)).current;
   const params      = useLocalSearchParams();
 
-  const isValidTimeWindow = timeToMinutes(endTime) - timeToMinutes(startTime) >= 180;
+  const isValidTimeWindow = isValidWindow(startTime, endTime);
 
   useFocusEffect(useCallback(() => {
     (async () => {
@@ -826,10 +370,20 @@ export default function PlanScreen() {
     cancelItineraryAlerts().catch(() => {});
   };
 
-  const generate = async () => {
+  const generate = async ({ asEdit = false } = {}) => {
     if (!coords) { setError("Still finding your location — give it a moment and try again."); return; }
     if (!isValidTimeWindow) return;
-    if (await isAtDecisionLimit()) { router.push('/paywall'); return; }
+    if (asEdit) {
+      const [pro, demoRaw] = await Promise.all([
+        isPro(),
+        AsyncStorage.getItem('@decide/demo_mode').catch(() => null),
+      ]);
+      if (!canRefresh({ isPro: pro, isDemo: demoRaw === 'true', refreshCount })) {
+        router.push('/paywall'); return;
+      }
+    } else {
+      if (await isAtDecisionLimit()) { router.push('/paywall'); return; }
+    }
     setLoading(true); setError(null);
     try {
       let feedbackCtx = {};
@@ -879,23 +433,39 @@ export default function PlanScreen() {
       try {
         const raw      = await AsyncStorage.getItem('@decide/itineraries');
         const existing = raw ? JSON.parse(raw) : [];
-        const entry    = {
-          id:        `itinerary_${Date.now()}`,
-          timestamp: Date.now(),
-          meta:      data.meta,
-          weather:   data.weather,
-          stops:     (data.itinerary ?? []).map((s) => ({ name: s.name, category: s.category })),
-          feedback:  null, feedbackReason: null,
-        };
-        await AsyncStorage.setItem(
-          '@decide/itineraries',
-          JSON.stringify([entry, ...existing.slice(0, 49)])
-        );
+        const summary  = (data.itinerary ?? []).map((s) => ({ name: s.name, category: s.category }));
+        const idx      = asEdit && currentItineraryId
+          ? existing.findIndex((e) => e.id === currentItineraryId)
+          : -1;
+        if (idx !== -1) {
+          existing[idx] = {
+            ...existing[idx],
+            meta: data.meta, weather: data.weather,
+            stops: summary, itinerary: data.itinerary ?? [], v: 2,
+          };
+          await AsyncStorage.setItem('@decide/itineraries', JSON.stringify(existing));
+        } else {
+          const id    = `itinerary_${Date.now()}`;
+          const entry = {
+            id, timestamp: Date.now(), meta: data.meta, weather: data.weather,
+            stops: summary, itinerary: data.itinerary ?? [], v: 2,
+            feedback: null, feedbackReason: null,
+          };
+          setCurrentItineraryId(id);
+          await AsyncStorage.setItem('@decide/itineraries', JSON.stringify([entry, ...existing.slice(0, 49)]));
+        }
       } catch (e) {
         console.warn('[history] save itinerary error', e);
       }
-      await incrementDecisionCount().catch(() => {});
-      getRemainingDecisions().then(setRemainingDecisions).catch(() => {});
+      if (asEdit) {
+        setRefreshCount((c) => c + 1);
+      } else {
+        setRefreshCount(0);
+        await incrementDecisionCount().catch(() => {});
+        getRemainingDecisions().then(setRemainingDecisions).catch(() => {});
+      }
+      setGeneratedStart(startTime);
+      setGeneratedEnd(endTime);
       const notifEnabled = await AsyncStorage.getItem(KEYS.NOTIFICATIONS).catch(() => null);
       if (notifEnabled === 'true' && data.itinerary) {
         scheduleItineraryAlerts(data.itinerary).catch(console.warn);
@@ -947,11 +517,25 @@ export default function PlanScreen() {
 
   const locationPillText = `${isManual ? '📌 ' : '📍 '}${locationLabel}`;
   const hasItinerary     = Array.isArray(itinerary) && itinerary.length > 0;
-  const weatherPillText  = weather?.beyondForecast
-    ? `🗓 Extended forecast not available — check back closer to your trip · ${meta?.time_window ?? `${startTime} – ${endTime}`}`
-    : weather
-    ? `${weather.emoji ?? ''} ${weather.condition} · ${weather.temp_f}°F${weather.wind_speed_mph ? ` · 💨 ${weather.wind_speed_mph}mph` : ''} · ${meta?.time_window ?? `${startTime} – ${endTime}`}`
-    : `${startTime} – ${endTime}`;
+
+  const windowDidChange = windowChanged(generatedStart, generatedEnd, startTime, endTime);
+  const timeEditor = (
+    <View style={styles.resultsTimeEditor}>
+      <View style={styles.timePickerRow}>
+        <TimePickerPill label="Start" value={startTime} options={START_TIMES} onChange={setStartTime} disabled={loading} />
+        <Text style={styles.timeArrow}>→</Text>
+        <TimePickerPill label="End"   value={endTime}   options={END_TIMES}   onChange={setEndTime}   disabled={loading} />
+      </View>
+      {!isValidTimeWindow && (
+        <Text style={styles.timeValidationHint}>Please allow at least 3 hours</Text>
+      )}
+      {windowDidChange && isValidTimeWindow && !loading && (
+        <View style={{ marginTop: 10 }}>
+          <CTAButton variant="cobalt" title="Refresh itinerary" onPress={() => generate({ asEdit: true })} />
+        </View>
+      )}
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
@@ -1065,7 +649,7 @@ export default function PlanScreen() {
             {error ? (
               <View style={styles.errorBlock}>
                 <Text style={styles.errorText}>{error}</Text>
-                <TouchableOpacity style={styles.retryBtn} onPress={generate} activeOpacity={0.7}>
+                <TouchableOpacity style={styles.retryBtn} onPress={() => generate()} activeOpacity={0.7}>
                   <Text style={styles.retryBtnText}>Try again</Text>
                 </TouchableOpacity>
               </View>
@@ -1079,9 +663,7 @@ export default function PlanScreen() {
           <View style={styles.planContainer}>
             <View style={styles.header}>
               <Text style={styles.appName}>Your day</Text>
-              <View style={styles.headerPill}>
-                <Text style={styles.headerPillText}>{weatherPillText}</Text>
-              </View>
+              <WeatherPill weather={weather} timeWindow={meta?.time_window ?? `${startTime} – ${endTime}`} />
             </View>
 
             <View style={styles.itineraryContainer}>
@@ -1093,38 +675,7 @@ export default function PlanScreen() {
                   </Text>
                 </View>
               )}
-              {meta && (
-                <View style={styles.itineraryMeta}>
-                  <Text style={styles.itineraryDay}>{meta.day_of_week}</Text>
-                  <Text style={styles.itineraryDate}>{meta.date} · {itinerary.length} stops</Text>
-                  {meta.city ? <Text style={styles.itineraryCity}>📍 {meta.city}</Text> : null}
-                  <View style={styles.metaChips}>
-                    {meta.time_window && (
-                      <View style={[styles.metaChip, styles.metaChipTime]}>
-                        <Text style={[styles.metaChipText, styles.metaChipTimeText]}>🕐 {meta.time_window}</Text>
-                      </View>
-                    )}
-                    {[meta.preferences?.pace, meta.preferences?.budget, meta.preferences?.group_type]
-                      .filter(Boolean)
-                      .map((v) => (
-                        <View key={v} style={styles.metaChip}>
-                          <Text style={styles.metaChipText}>{v}</Text>
-                        </View>
-                      ))}
-                  </View>
-                  {meta.cost_summary ? (
-                    <View style={styles.costSummaryRow}>
-                      <Ionicons name="wallet-outline" size={14} color={COLORS.primary} style={{ marginRight: 5 }} />
-                      <Text style={styles.costSummaryTxt}>{meta.cost_summary}</Text>
-                    </View>
-                  ) : null}
-                  {research?.hadLiveData && (
-                    <Text style={styles.liveDataNote}>
-                      ✨ Cheddar checked what's happening this week
-                    </Text>
-                  )}
-                </View>
-              )}
+              <ItineraryMeta meta={meta} stopCount={itinerary.length} research={research} timeEditor={timeEditor} />
 
               {itinerary.map((stop, i) => (
                 <StopCard
@@ -1163,7 +714,7 @@ export default function PlanScreen() {
             <CTAButton
               variant="cobalt"
               title="Build my day →"
-              onPress={generate}
+              onPress={() => generate()}
               disabled={!isValidTimeWindow}
               loading={loading}
             />
@@ -1355,6 +906,7 @@ const styles = StyleSheet.create({
   timePillInner:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   timePillValue:   { fontSize: 14, fontFamily: FONTS.bodyBold, color: COLORS.primary },
   timeValidationHint: { fontSize: 11, color: COLORS.error, marginTop: 2 },
+  resultsTimeEditor: { marginTop: 4, marginBottom: 12 },
   tripNoteInput: { backgroundColor: COLORS.surface, borderColor: COLORS.border, borderWidth: 1, borderRadius: RADII.md, color: COLORS.textPrimary, paddingHorizontal: 14, paddingVertical: 10, fontSize: 15, fontFamily: FONTS.body },
 
   // Time picker modal
@@ -1407,131 +959,6 @@ const styles = StyleSheet.create({
   },
   fallbackBannerTxt: { fontSize: 13, color: COLORS.warning, lineHeight: 18, flex: 1 },
   itineraryContainer: { gap: 0 },
-  itineraryMeta: {
-    alignItems: 'center', marginBottom: 28,
-    paddingBottom: 22, borderBottomWidth: 1, borderBottomColor: COLORS.border,
-  },
-  itineraryDay: {
-    fontSize: 28, color: COLORS.textPrimary,
-    fontFamily: FONTS.displayHeavy,
-  },
-  itineraryDate: { fontSize: 13, color: COLORS.textMuted, marginTop: 4 },
-  itineraryCity: { fontSize: 13, color: COLORS.primary, marginTop: 3 },
-  metaChips:     { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, marginTop: 12 },
-  metaChip: {
-    paddingHorizontal: 10, paddingVertical: 5,
-    borderRadius: 999, backgroundColor: COLORS.surface,
-    borderWidth: 1, borderColor: COLORS.border,
-  },
-  metaChipTime:     { borderColor: COLORS.border, backgroundColor: COLORS.surfaceAlt },
-  metaChipText:     { color: COLORS.textSecondary, fontSize: 11, fontFamily: FONTS.bodySemiBold },
-  metaChipTimeText: { color: COLORS.textSecondary },
-  liveDataNote:     { color: COLORS.teal, fontSize: 11, fontStyle: 'italic', marginTop: 10, textAlign: 'center' },
-  costSummaryRow:   { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
-  costSummaryTxt:   { fontFamily: FONTS.bodySemiBold, fontSize: 13, color: COLORS.primary },
-
-  // Stop card + timeline
-  stopRow:     { flexDirection: 'row', marginBottom: 14 },
-  timelineCol: { width: 28, alignItems: 'center' },
-  timelineDot: { width: 10, height: 10, borderRadius: 5, marginTop: 18, zIndex: 1 },
-  timelineLine:{ flex: 1, width: 2, marginTop: 2 },
-  stopCard: {
-    flex: 1, backgroundColor: COLORS.surface, borderRadius: 18,
-    borderWidth: 1, borderColor: COLORS.border, borderLeftWidth: 3,
-    padding: 16, gap: 7, overflow: 'hidden',
-  },
-  stopCardSwapping: { opacity: 0.6 },
-  stopHeaderRow:    { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  timeChip:         { paddingHorizontal: 9, paddingVertical: 4, borderRadius: 999, borderWidth: 1 },
-  timeText:         { fontSize: 12, fontFamily: FONTS.bodyBold },
-  durationText:     { fontSize: 11, color: COLORS.textMuted, fontFamily: FONTS.body },
-  catChip:          { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 },
-  catEmoji:         { fontSize: 12 },
-  catLabel:         { fontSize: 11, fontFamily: FONTS.bodySemiBold },
-  stopName:         { fontSize: 17, color: COLORS.textPrimary, fontFamily: FONTS.display },
-  stopAddress:      { fontSize: 12, color: COLORS.textMuted, lineHeight: 17 },
-
-  // Distance pill
-  distancePill: {
-    flexDirection: 'row', alignItems: 'center',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10, paddingVertical: 5,
-    borderRadius: 999, backgroundColor: COLORS.surfaceAlt,
-    borderWidth: 1, borderColor: COLORS.border,
-  },
-  distancePillTxt: { fontSize: 12, color: COLORS.primary, fontFamily: FONTS.bodySemiBold },
-
-  // Admission badge
-  admissionBadge: {
-    flexDirection: 'row', alignItems: 'center',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10, paddingVertical: 5,
-    borderRadius: 999, backgroundColor: COLORS.gold + '22',
-    borderWidth: 1, borderColor: COLORS.gold + '44',
-  },
-  admissionBadgeTxt: { fontSize: 12, color: COLORS.goldText, fontFamily: FONTS.bodySemiBold },
-  liveMusicBadge: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', marginTop: 6, paddingHorizontal: 8, paddingVertical: 4, borderRadius: RADII.sm, backgroundColor: COLORS.sky100 },
-  liveMusicTxt:   { fontFamily: FONTS.bodyMedium, fontSize: 12, color: COLORS.primary },
-
-  // Price tier pill
-  pricePill: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10, paddingVertical: 5,
-    borderRadius: 999, backgroundColor: COLORS.gold + '22',
-    borderWidth: 1, borderColor: COLORS.gold + '44',
-  },
-  pricePillTxt: { fontSize: 12, color: COLORS.goldText, fontFamily: FONTS.bodyBold },
-
-  // Contact links (website / call)
-  contactRow:    { flexDirection: 'row', gap: 8, marginTop: 8 },
-  contactBtn:    { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 5, borderRadius: RADII.sm, borderWidth: 1, borderColor: COLORS.borderLight, backgroundColor: COLORS.surface },
-  contactBtnTxt: { fontFamily: FONTS.bodySemiBold, fontSize: 12, color: COLORS.primary },
-
-  // Reason row
-  reasonRow: {
-    backgroundColor: COLORS.surfaceAlt, borderRadius: 10,
-    paddingHorizontal: 12, paddingVertical: 9,
-    borderLeftWidth: 2, borderLeftColor: COLORS.gold + '66',
-  },
-  stopReason: { fontSize: 13, color: COLORS.textSecondary, lineHeight: 18, fontStyle: 'italic', fontFamily: FONTS.body },
-
-  // Local knowledge callout
-  localKnowledgeBadge: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: 8,
-    borderRadius: 10, padding: 10, marginTop: 2,
-    borderLeftWidth: 3,
-  },
-  lkWarning: { backgroundColor: COLORS.warning + '12', borderLeftColor: COLORS.warning },
-  lkInfo:    { backgroundColor: COLORS.amber + '10', borderLeftColor: COLORS.amber },
-  lkTip:     { backgroundColor: COLORS.primary + '10', borderLeftColor: COLORS.primary },
-  lkIcon:    { fontSize: 13, lineHeight: 18 },
-  lkText:    { flex: 1, fontSize: 12, color: COLORS.textSecondary, lineHeight: 17, fontFamily: FONTS.body },
-
-  // Allergy alert
-  allergyBadge: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: 6,
-    backgroundColor: COLORS.error + '12', borderRadius: 10, padding: 10,
-    borderLeftWidth: 3, borderLeftColor: COLORS.error, marginTop: 2,
-  },
-  allergyText: { flex: 1, fontSize: 12, color: COLORS.error, lineHeight: 17 },
-
-  cardActionsRow:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
-  exciteBadge:      { backgroundColor: COLORS.gold + '22', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1, borderColor: COLORS.gold + '44' },
-  exciteText:       { color: COLORS.goldText, fontSize: 10, fontFamily: FONTS.bodyBold },
-  swapBtn:          { paddingVertical: 4, paddingHorizontal: 6 },
-  swapBtnText:      { color: COLORS.textMuted, fontSize: 12, fontFamily: FONTS.bodyMedium },
-  swapLoadingRow:   { flexDirection: 'row', alignItems: 'center' },
-  thumbsRow: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end',
-    marginTop: 8, paddingTop: 8,
-    borderTopWidth: 1, borderTopColor: COLORS.border,
-  },
-  thumbBtn:     { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
-  thumbBtnUp:   { backgroundColor: COLORS.success + '22' },
-  thumbBtnDown: { backgroundColor: COLORS.error + '22' },
-  thumbTxt:     { fontSize: 15 },
-  thumbDivider: { width: 1, height: 18, backgroundColor: COLORS.border, marginHorizontal: 6 },
-
   resetBtn: {
     marginTop: 12, borderRadius: 16, height: 52,
     alignItems: 'center', justifyContent: 'center',
@@ -1594,132 +1021,4 @@ const styles = StyleSheet.create({
   dayLabelToday: { color: COLORS.primary },
   daySub:        { fontSize: 13, color: COLORS.textMuted, fontFamily: FONTS.body },
 
-  // Feedback modal
-  fbOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'flex-end' },
-  fbCard: {
-    backgroundColor: COLORS.surface,
-    borderTopLeftRadius: 28, borderTopRightRadius: 28,
-    borderWidth: 1, borderColor: COLORS.border,
-    paddingBottom: 34, overflow: 'hidden',
-  },
-  fbHandle: {
-    width: 36, height: 4, borderRadius: 2,
-    backgroundColor: COLORS.border,
-    alignSelf: 'center', marginTop: 12, marginBottom: 2,
-  },
-  fbTitle: {
-    fontSize: 16, color: COLORS.textPrimary,
-    fontFamily: FONTS.display,
-    textAlign: 'center', paddingVertical: 16,
-    borderBottomWidth: 1, borderBottomColor: COLORS.border,
-  },
-  fbPlace:     { fontSize: 14, fontFamily: FONTS.bodySemiBold, color: COLORS.textSecondary, paddingHorizontal: 24, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: COLORS.surfaceAlt },
-  fbOption:    { paddingHorizontal: 24, paddingVertical: 17, borderBottomWidth: 1, borderBottomColor: COLORS.surfaceAlt },
-  fbOptionTxt: { fontSize: 15, fontFamily: FONTS.bodyMedium, color: COLORS.textSecondary },
-  fbCancel: {
-    marginHorizontal: 20, marginTop: 16,
-    borderRadius: 16, height: 52, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: COLORS.surfaceAlt, borderWidth: 1, borderColor: COLORS.border,
-  },
-  fbCancelTxt: { color: COLORS.textMuted, fontSize: 14, fontFamily: FONTS.bodySemiBold },
-
-  // Tap hint
-  tapHint:    { alignItems: 'center', paddingTop: 6, paddingBottom: 2 },
-  tapHintTxt: { fontSize: 11, color: COLORS.textMuted, fontFamily: FONTS.bodyMedium },
-
-  // Place detail modal
-  detailOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.72)', justifyContent: 'flex-end' },
-  detailSheet: {
-    backgroundColor: COLORS.surface,
-    borderTopLeftRadius: 28, borderTopRightRadius: 28,
-    borderWidth: 1, borderColor: COLORS.border,
-    overflow: 'hidden',
-  },
-  dragHandle: {
-    width: 36, height: 4, borderRadius: 2,
-    backgroundColor: COLORS.border,
-    alignSelf: 'center', marginTop: 12, marginBottom: 2,
-  },
-  detailHeader: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 20, paddingVertical: 14,
-    borderBottomWidth: 1, borderBottomColor: COLORS.border,
-  },
-  detailCatPill:    { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999 },
-  detailCatPillTxt: { fontSize: 11, fontFamily: FONTS.bodyBold, letterSpacing: 1 },
-  detailCloseBtn:   { width: 32, height: 32, borderRadius: 16, backgroundColor: COLORS.surfaceAlt, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', justifyContent: 'center' },
-  detailScroll:     { paddingHorizontal: 20, paddingTop: 18 },
-  detailName:       {
-    fontSize: 22, color: COLORS.textPrimary,
-    fontFamily: FONTS.display,
-    marginBottom: 4,
-  },
-  detailAddr:       { fontSize: 13, color: COLORS.textMuted, marginBottom: 14, lineHeight: 18 },
-
-  detailInfoRow:  { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 18 },
-  detailInfoTxt:  { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: COLORS.goldText },
-  detailInfoDot:  { fontSize: 13, color: COLORS.textMuted },
-
-  admissionRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: COLORS.gold + '22', borderRadius: 10,
-    paddingHorizontal: 12, paddingVertical: 8, marginBottom: 14,
-    borderWidth: 1, borderColor: COLORS.gold + '33',
-  },
-  admissionLabel: { fontSize: 12, fontFamily: FONTS.bodyBold, color: COLORS.primary, letterSpacing: 0.5 },
-  admissionValue: { fontSize: 13, color: COLORS.textPrimary, fontFamily: FONTS.bodyMedium, flex: 1 },
-
-  detailSection:      { marginBottom: 18 },
-  detailReasonText:   { fontSize: 15, color: COLORS.textPrimary, lineHeight: 23, fontStyle: 'italic', fontFamily: FONTS.body },
-
-  highlightRow: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: 10,
-    backgroundColor: COLORS.surfaceAlt, borderRadius: 8, padding: 10,
-    borderLeftWidth: 3, marginBottom: 6,
-  },
-  highlightIcon: { fontSize: 16, lineHeight: 20 },
-  highlightText: { flex: 1, fontSize: 14, color: COLORS.textPrimary, lineHeight: 20, fontFamily: FONTS.body },
-
-  detailStatsRow:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
-  distanceLink:    { flexDirection: 'row', alignItems: 'center' },
-  distanceLinkTxt: { fontSize: 13, color: COLORS.primary, fontFamily: FONTS.bodySemiBold },
-  detailExciteBadge: { backgroundColor: COLORS.gold + '22', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: COLORS.gold + '44' },
-  detailExciteTxt:   { color: COLORS.goldText, fontSize: 12, fontFamily: FONTS.bodyBold },
-
-  detailNavBtn: {
-    backgroundColor: COLORS.primary, borderRadius: 16,
-    height: 56, alignItems: 'center', justifyContent: 'center',
-    flexDirection: 'row',
-    marginBottom: 10,
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35, shadowRadius: 12, elevation: 8,
-  },
-  detailNavBtnTxt: { color: COLORS.primaryText, fontSize: 16, fontFamily: FONTS.bodyBold },
-
-  detailSecondaryBtns: { flexDirection: 'row', gap: 10 },
-  detailSecBtn: {
-    flex: 1, height: 48, borderRadius: 14, flexDirection: 'row',
-    backgroundColor: COLORS.surfaceAlt, borderWidth: 1, borderColor: COLORS.border,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  detailSecBtnTxt: { fontSize: 14, fontFamily: FONTS.bodySemiBold, color: COLORS.primary },
-
-  detailSourceBadge: { backgroundColor: COLORS.surfaceAlt, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, marginBottom: 14, alignSelf: 'flex-start', borderWidth: 1, borderColor: COLORS.border },
-  detailSourceTxt:   { color: COLORS.textSecondary, fontSize: 12, fontFamily: FONTS.bodySemiBold },
-
-  // Price legend modal
-  legendCard: {
-    backgroundColor: COLORS.surface, borderRadius: 20,
-    borderWidth: 1, borderColor: COLORS.border,
-    width: 280, padding: 22,
-  },
-  legendTitle: {
-    fontSize: 15, color: COLORS.textPrimary,
-    fontFamily: FONTS.display,
-    textAlign: 'center', marginBottom: 16,
-  },
-  legendRow:   { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  legendSymbol:{ fontSize: 15, fontFamily: FONTS.bodyBold, color: COLORS.goldText, width: 40 },
-  legendLabel: { fontSize: 14, color: COLORS.textSecondary, flex: 1, fontFamily: FONTS.body },
-  legendSub:   { fontSize: 11, color: COLORS.textMuted, marginTop: 14, lineHeight: 15, textAlign: 'center', fontFamily: FONTS.body },
 });
