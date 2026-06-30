@@ -1,3 +1,5 @@
+import { logUsage } from '../lib/usageLog.js';
+
 const GOOGLE_KEY = process.env.GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 const NEARBY_URL = 'https://places.googleapis.com/v1/places:searchNearby';
 
@@ -15,6 +17,7 @@ async function fetchPlaces(lat, lng, types, radius = 30000) {
     body: JSON.stringify({ locationRestriction: { circle: { center: { latitude: lat, longitude: lng }, radius } }, maxResultCount: 10, includedTypes: types }),
   });
   const data = await res.json();
+  logUsage({ route: 'places-nearby', model: 'google-places', requests: 1 });
   return (data.places ?? []).map((p) => ({
     name: p.displayName?.text ?? '', place_id: p.id ?? '', address: p.formattedAddress ?? '',
     rating: p.rating ?? 0, user_ratings_total: p.userRatingCount ?? 0, price_level: p.priceLevel ?? null,

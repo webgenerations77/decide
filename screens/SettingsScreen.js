@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView,
+  View, Text, TextInput, TouchableOpacity, Pressable, StyleSheet, ScrollView,
   Switch, ActivityIndicator, Modal, PanResponder, Animated, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -205,7 +205,7 @@ function DistanceSlider({ value, onChange }) {
 // ─── SettingsScreen ───────────────────────────────────────────────────────────
 export default function SettingsScreen() {
   const router = useRouter();
-  const { user, signOut, isBetaTester } = useAuth();
+  const { user, signOut, isBetaTester, isAdmin } = useAuth();
   const [loaded,         setLoaded]         = useState(false);
   const [displayName,    setDisplayName]    = useState('');
   const [avatar,         setAvatar]         = useState('🎯');
@@ -482,6 +482,22 @@ export default function SettingsScreen() {
               </>
             )}
           </Card>
+
+          {/* ── Admin (admin-only) ─────────────────────────────────────────── */}
+          {isAdmin && (
+            <>
+              <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>ADMIN</SectionLabel>
+              <Card style={styles.card}>
+                <Pressable style={styles.appRow} onPress={() => router.push('/admin')}>
+                  <View>
+                    <Text style={styles.appRowLabel}>Admin Dashboard</Text>
+                    <Text style={styles.demoSub}>API usage & user administration</Text>
+                  </View>
+                  <Text style={styles.appRowChevron}>›</Text>
+                </Pressable>
+              </Card>
+            </>
+          )}
 
           {/* ── Location ───────────────────────────────────────────────────── */}
           <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>LOCATION</SectionLabel>

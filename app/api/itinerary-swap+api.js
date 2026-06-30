@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { logUsage } from '../../lib/usageLog.js';
 
 const GOOGLE_KEY = process.env.GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 const NEARBY_URL = 'https://places.googleapis.com/v1/places:searchNearby';
@@ -51,6 +52,7 @@ async function fetchPlaces(lat, lng, types, radius = 30000) {
     }),
   });
   const data = await res.json();
+  logUsage({ route: 'places-nearby', model: 'google-places', requests: 1 });
   return (data.places ?? []).map((p) => ({
     name:               p.displayName?.text ?? '',
     place_id:           p.id ?? '',
@@ -116,6 +118,12 @@ Rules:
 - Write a fresh "reason" for the new pick
 - Return a single JSON object with fields: time, duration_mins, category, name, place_id, address, lat, lng, reason, excitement_score, admission_cost`,
         }],
+      });
+      logUsage({
+        route: 'itinerary-swap',
+        model: 'claude-haiku-4-5-20251001',
+        inputTokens: message.usage?.input_tokens ?? 0,
+        outputTokens: message.usage?.output_tokens ?? 0,
       });
 
       const raw    = message.content[0]?.text ?? '{}';

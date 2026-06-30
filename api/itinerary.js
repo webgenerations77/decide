@@ -1,3 +1,4 @@
+import { logUsage } from '../lib/usageLog.js';
 import { runSmartEngine } from '../lib/smart/index.js';
 import { computeCostSummary, pickForecastForDate, attachPriceLevels } from '../lib/itineraryHelpers.js';
 
@@ -51,6 +52,7 @@ async function fetchPlacesRaw(lat, lng, types, maxResults = 10) {
     body: JSON.stringify({ locationRestriction: { circle: { center: { latitude: lat, longitude: lng }, radius: 30000 } }, maxResultCount: maxResults, includedTypes: types }),
   });
   const data = await res.json();
+  logUsage({ route: 'places-nearby', model: 'google-places', requests: 1 });
   return (data.places ?? []).map((p) => ({
     name: p.displayName?.text ?? '', place_id: p.id ?? '', address: p.formattedAddress ?? '',
     rating: p.rating ?? 0, user_ratings_total: p.userRatingCount ?? 0, price_level: p.priceLevel ?? null,

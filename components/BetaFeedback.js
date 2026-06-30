@@ -14,7 +14,9 @@ function firstName(user) {
   return n || 'friend';
 }
 
-export default function BetaFeedback() {
+// `topOffset` pushes the FAB below any visible top banners (demo/beta) so it
+// anchors to the top-right corner without covering the bottom Settings tab.
+export default function BetaFeedback({ topOffset = 0 }) {
   const pathname = usePathname();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
@@ -63,7 +65,7 @@ export default function BetaFeedback() {
   return (
     <>
       <TouchableOpacity
-        style={[styles.fab, { bottom: 24 + insets.bottom }]}
+        style={[styles.fab, { top: insets.top + topOffset + 8 }]}
         onPress={openModal}
         activeOpacity={0.85}
       >

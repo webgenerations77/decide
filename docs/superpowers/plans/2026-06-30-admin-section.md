@@ -215,6 +215,7 @@ git commit -m "feat: add hardcoded admin constant and isAdmin util"
 
 **Files:**
 - Modify: `services/firebase.js` (add client Firestore `db` export)
+- Create: `utils/resolveRole.js` (pure, RN-free — node-testable)
 - Create: `services/rolesService.js`
 - Create: `__tests__/roles-resolve.mjs`
 - Modify: `context/AuthContext.js`
@@ -222,7 +223,7 @@ git commit -m "feat: add hardcoded admin constant and isAdmin util"
 **Interfaces:**
 - Consumes: `isAdmin` from `utils/admin.js`; existing `BETA_TESTERS` from `constants/betaTesters.js`.
 - Produces:
-  - `resolveRole({ firestoreRole, fallbackMap, email }): string|null` — pure precedence logic.
+  - `resolveRole({ firestoreRole, fallbackMap, email, hasDoc }): string|null` — pure precedence logic, in `utils/resolveRole.js` (no firebase/react-native imports so the node test can load it; `services/rolesService.js` re-exports it for app use).
   - `fetchUserRole(uid, email): Promise<string|null>` — reads `users/{uid}` via client Firestore, falls back to the hardcoded map on missing doc / error.
   - `useAuth()` value gains: `isAdmin: boolean` (sync), and `role`/`isBetaTester` now resolved async from Firestore.
 
@@ -246,7 +247,9 @@ Create `__tests__/roles-resolve.mjs`:
 
 ```javascript
 // __tests__/roles-resolve.mjs — run: node __tests__/roles-resolve.mjs
-import { resolveRole } from '../services/rolesService.js';
+// resolveRole lives in a RN-free module so this test runs under plain node
+// (services/rolesService.js imports ./firebase → react-native, which would crash node).
+import { resolveRole } from '../utils/resolveRole.js';
 let passed = 0, failed = 0;
 const assert = (l, c, d = '') => c ? (console.log(`  ✓ ${l}`), passed++) : (console.error(`  ✗ ${l}${d ? ` — ${d}` : ''}`), failed++);
 
@@ -270,17 +273,13 @@ process.exit(failed ? 1 : 0);
 - [ ] **Step 3: Run test to verify it fails**
 
 Run: `node __tests__/roles-resolve.mjs`
-Expected: FAIL — cannot find `../services/rolesService.js`.
+Expected: FAIL — cannot find `../utils/resolveRole.js`.
 
-- [ ] **Step 4: Write rolesService**
+- [ ] **Step 4: Write the pure resolveRole module, then rolesService**
 
-Create `services/rolesService.js`:
+First create `utils/resolveRole.js` (NO firebase/react-native imports — keeps it node-testable):
 
 ```javascript
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from './firebase';
-import { BETA_TESTERS } from '../constants/betaTesters';
-
 // Pure precedence: an existing Firestore doc is authoritative (even when role is null,
 // which represents an explicit revoke). With no doc, fall back to the hardcoded seed map.
 export function resolveRole({ firestoreRole, fallbackMap, email, hasDoc }) {
@@ -288,6 +287,17 @@ export function resolveRole({ firestoreRole, fallbackMap, email, hasDoc }) {
   const key = email?.toLowerCase?.().trim();
   return (key && fallbackMap[key]) || null;
 }
+```
+
+Then create `services/rolesService.js` (the I/O wrapper — this one DOES import firebase, so it is never loaded by the node test):
+
+```javascript
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from './firebase';
+import { BETA_TESTERS } from '../constants/betaTesters';
+import { resolveRole } from '../utils/resolveRole';
+
+export { resolveRole };
 
 // I/O wrapper: read users/{uid}; on any failure fall back to the hardcoded map.
 export async function fetchUserRole(uid, email) {
@@ -368,15 +378,20 @@ export function useIsAdmin() {
 }
 ```
 
-- [ ] **Step 7: Manual smoke check**
+- [ ] **Step 7: Static verification (do NOT start the dev server)**
 
-Run: `npx expo start --web` and confirm the app boots, you can sign in, and existing beta-tester behavior still works (the beta banner appears for a beta account). No console errors from Firestore.
-Expected: app loads; beta gate works via Firestore-with-fallback.
+Do not run `expo start` (it is an interactive long-running process). Instead verify statically:
+1. `node __tests__/roles-resolve.mjs` passes (`5 passed, 0 failed`).
+2. Grep-confirm `context/AuthContext.js` still exports `useAuth` and now also `useIsAdmin`, the value object includes `isAdmin`, `role`, and `isBetaTester`, and no consumer-facing key from the old context was dropped.
+3. Confirm `services/firebase.js` exports `db` alongside `app`, `auth`.
+4. Confirm `services/rolesService.js` re-exports `resolveRole` and exports `fetchUserRole`.
+
+The controller runs the full app (`expo start --web`) smoke test after the task review; the implementer should not.
 
 - [ ] **Step 8: Commit**
 
 ```bash
-git add services/firebase.js services/rolesService.js context/AuthContext.js __tests__/roles-resolve.mjs
+git add services/firebase.js utils/resolveRole.js services/rolesService.js context/AuthContext.js __tests__/roles-resolve.mjs
 git commit -m "feat: migrate beta roles to Firestore with fallback; add isAdmin to AuthContext"
 ```
 
