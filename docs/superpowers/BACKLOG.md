@@ -175,10 +175,10 @@ See memory [[project-theme-system]] for the styling convention.
   (handlers retained inert); collapsible Subscription/Preferences/About (`components/brand/CollapsibleCard.js`,
   start collapsed, persisted in `KEYS.COLLAPSED_SECTIONS`). New `components/brand/Badge.js`.
 
-**⚠ Not yet done — on-device QA (build + static review only, no emulator):** toggle Auto/Light/Dark and
-confirm every screen recolors; confirm Auto follows an OS appearance flip live; confirm the choice survives
-an app restart (watch for a one-frame flash on the splash); confirm the 3 collapsible cards persist; confirm
-the Location autocomplete dropdown still renders un-clipped in both themes.
+**On-device QA — partial (2026-06-30):** ✅ user confirmed the **dark-mode toggle works** on-device
+(light↔dark switch + the `hydrated` gate did not break startup). Still unverified: Auto follows an OS
+appearance flip live; choice survives an app restart with no one-frame splash flash; the 3 collapsible
+cards persist; the Location autocomplete dropdown renders un-clipped in both themes.
 
 **Optional polish Minors (from final review)  ✅ DONE (branch `polish/dark-mode-minors`, 2026-06-30)**
 Verified with `npx expo export --platform web` (clean build). Not yet eyeballed in a running app.
