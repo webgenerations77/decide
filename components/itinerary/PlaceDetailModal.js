@@ -34,7 +34,7 @@ function PlaceDetailModal({ visible, stop, onClose }) {
     }
     setDetailLoading(true);
     setPlaceDetails(null);
-    const fields = 'name,rating,user_ratings_total,formatted_phone_number,website,opening_hours,price_level';
+    const fields = 'name,rating,user_ratings_total,formatted_phone_number,website,opening_hours,price_level,reviews';
     fetchPlaceDetails(pid, fields)
       .then((data) => { setPlaceDetails(data.result ?? null); setDetailLoading(false); })
       .catch(() => setDetailLoading(false));
@@ -47,7 +47,8 @@ function PlaceDetailModal({ visible, stop, onClose }) {
   const priceLvl = [null, '$', '$$', '$$$', '$$$$'];
 
   const rating    = stop.rating ?? placeDetails?.rating ?? 0;
-  const priceStr  = placeDetails?.price_level != null ? (priceLvl[placeDetails.price_level] ?? null) : null;
+  const priceLevelNum = placeDetails?.price_level ?? stop.price_level;
+  const priceStr  = priceLevelNum != null ? (priceLvl[priceLevelNum] ?? null) : null;
   const openNow   = placeDetails?.opening_hours?.open_now;
   const todayIdx  = new Date().getDay();
   const todayHours = placeDetails?.opening_hours?.weekday_text
@@ -92,9 +93,11 @@ function PlaceDetailModal({ visible, stop, onClose }) {
               {hasInfoRow && (
                 <View style={styles.detailInfoRow}>
                   {rating > 0 && (
-                    <Text style={styles.detailInfoTxt}>
-                      ⭐ {typeof rating === 'number' ? rating.toFixed(1) : rating}
-                    </Text>
+                    <TouchableOpacity onPress={() => openMaps(stop)} activeOpacity={0.7}>
+                      <Text style={styles.detailInfoTxt}>
+                        ⭐ {typeof rating === 'number' ? rating.toFixed(1) : rating} ›
+                      </Text>
+                    </TouchableOpacity>
                   )}
                   {priceStr && (
                     <>
@@ -179,6 +182,39 @@ function PlaceDetailModal({ visible, stop, onClose }) {
                 </View>
               )}
 
+              {placeDetails?.reviews?.length > 0 && (
+                <View style={styles.detailSection}>
+                  <SectionLabel tone="cobalt" style={{ marginBottom: 10 }}>Reviews</SectionLabel>
+                  {placeDetails.reviews.slice(0, 3).map((review, i) => {
+                    const Wrapper = review.author_url ? TouchableOpacity : View;
+                    return (
+                      <Wrapper
+                        key={i}
+                        style={styles.reviewCard}
+                        {...(review.author_url
+                          ? { activeOpacity: 0.7, onPress: () => Linking.openURL(review.author_url) }
+                          : {})}
+                      >
+                        <View style={styles.reviewHeader}>
+                          {review.author_name ? (
+                            <Text style={styles.reviewAuthor} numberOfLines={1}>{review.author_name}</Text>
+                          ) : <View />}
+                          {review.rating != null && (
+                            <Text style={styles.reviewStars}>⭐ {review.rating}</Text>
+                          )}
+                        </View>
+                        {review.text ? (
+                          <Text style={styles.reviewText} numberOfLines={4}>{review.text}</Text>
+                        ) : null}
+                        {review.relative_time_description ? (
+                          <Text style={styles.reviewTime}>{review.relative_time_description}</Text>
+                        ) : null}
+                      </Wrapper>
+                    );
+                  })}
+                </View>
+              )}
+
               {(stop.distance || stop.excitement_score > 0) && (
                 <View style={styles.detailStatsRow}>
                   {stop.distance ? (
@@ -252,7 +288,7 @@ const makeStyles = (c) => StyleSheet.create({
   // Place photo header (full-bleed across the sheet top)
   photoHeader:   { height: 168, marginTop: 6, backgroundColor: c.surfaceAlt },
   photoImg:      { width: '100%', height: '100%' },
-  photoGradient: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 64 },
+  photoGradient: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 128 },
   detailHeader: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 20, paddingVertical: 14,
@@ -300,6 +336,16 @@ const makeStyles = (c) => StyleSheet.create({
   },
   highlightIcon: { fontSize: 16, lineHeight: 20 },
   highlightText: { flex: 1, fontSize: 14, color: c.textPrimary, lineHeight: 20, fontFamily: FONTS.body },
+
+  reviewCard: {
+    backgroundColor: c.surfaceAlt, borderRadius: 10, padding: 12,
+    borderWidth: 1, borderColor: c.border, marginBottom: 8,
+  },
+  reviewHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
+  reviewAuthor: { flex: 1, fontSize: 13, fontFamily: FONTS.bodySemiBold, color: c.textPrimary, marginRight: 8 },
+  reviewStars:  { fontSize: 12, fontFamily: FONTS.bodyBold, color: c.goldText },
+  reviewText:   { fontSize: 13, color: c.textSecondary, lineHeight: 19, fontFamily: FONTS.body },
+  reviewTime:   { fontSize: 11, color: c.textMuted, fontFamily: FONTS.body, marginTop: 6 },
 
   detailStatsRow:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
   distanceLink:    { flexDirection: 'row', alignItems: 'center' },

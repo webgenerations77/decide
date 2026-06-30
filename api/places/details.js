@@ -4,7 +4,7 @@ const GOOGLE_KEY = process.env.GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_
 // The legacy Places Details API is not enabled for this project (and Google no longer
 // lets new projects enable it), so we call v1 and translate the response back into the
 // legacy `{ status, result }` shape the client already expects — no client change needed.
-const V1_FIELD_MASK = 'id,displayName,rating,userRatingCount,nationalPhoneNumber,websiteUri,regularOpeningHours,priceLevel';
+const V1_FIELD_MASK = 'id,displayName,rating,userRatingCount,nationalPhoneNumber,websiteUri,regularOpeningHours,priceLevel,reviews';
 
 const PRICE_ENUM_TO_NUM = {
   PRICE_LEVEL_FREE: 0, PRICE_LEVEL_INEXPENSIVE: 1, PRICE_LEVEL_MODERATE: 2,
@@ -24,6 +24,14 @@ function toLegacyResult(p) {
       open_now: p.regularOpeningHours.openNow,
       weekday_text: p.regularOpeningHours.weekdayDescriptions,
     } : undefined,
+    reviews: (p.reviews || []).slice(0, 5).map((r) => ({
+      author_name: r.authorAttribution?.displayName ?? null,
+      author_url: r.authorAttribution?.uri ?? null,
+      profile_photo_url: r.authorAttribution?.photoUri ?? null,
+      rating: r.rating ?? null,
+      text: r.text?.text ?? r.originalText?.text ?? '',
+      relative_time_description: r.relativePublishTimeDescription ?? null,
+    })),
   };
 }
 

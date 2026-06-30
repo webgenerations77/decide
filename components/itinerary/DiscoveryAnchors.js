@@ -43,9 +43,7 @@ export default function DiscoveryAnchors({ research }) {
 
       {research.hadLiveData && (
         <>
-          {anchors.length === 0 ? (
-            <Text style={styles.liveDataNote}>✨ Cheddar checked what's happening this week</Text>
-          ) : (
+          {anchors.length === 0 ? null : (
             <View style={styles.wrap}>
               <TouchableOpacity style={styles.header} onPress={() => setExpanded((e) => !e)} activeOpacity={0.7}>
                 <Text style={styles.headerText}>✨ What Cheddar found this week ({anchors.length})</Text>
