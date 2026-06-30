@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   KeyboardAvoidingView, Platform,
@@ -6,7 +6,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
-import { COLORS, FONTS } from '../../constants/theme';
+import { FONTS } from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 import ScreenBackground from '../../components/brand/ScreenBackground';
 import CTAButton from '../../components/brand/CTAButton';
 import Card from '../../components/brand/Card';
@@ -18,6 +19,8 @@ export default function ForgotPasswordScreen() {
   const [error, setError] = useState('');
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const handleReset = async () => {
     if (!email.trim()) { setError('Please enter your email.'); return; }
@@ -76,7 +79,7 @@ export default function ForgotPasswordScreen() {
                     value={email}
                     onChangeText={setEmail}
                     placeholder="you@example.com"
-                    placeholderTextColor={COLORS.textMuted}
+                    placeholderTextColor={colors.textMuted}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoComplete="email"
@@ -100,35 +103,35 @@ export default function ForgotPasswordScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   flex: { flex: 1 },
   content: { flex: 1, justifyContent: 'center', paddingHorizontal: 24 },
   backBtn: { marginBottom: 24 },
-  backTxt: { color: COLORS.primary, fontSize: 14, fontFamily: FONTS.bodySemiBold },
+  backTxt: { color: c.primary, fontSize: 14, fontFamily: FONTS.bodySemiBold },
   hero: { alignItems: 'center', marginBottom: 32 },
   heroTitle: {
-    fontSize: 26, color: COLORS.textPrimary,
+    fontSize: 26, color: c.textPrimary,
     fontFamily: FONTS.displayHeavy,
     marginBottom: 8,
   },
-  heroSub: { fontSize: 15, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 22 },
+  heroSub: { fontSize: 15, color: c.textSecondary, textAlign: 'center', lineHeight: 22 },
   errorBox: {
-    backgroundColor: COLORS.error + '18', borderRadius: 12,
+    backgroundColor: c.error + '18', borderRadius: 12,
     padding: 14, marginBottom: 16,
-    borderWidth: 1, borderColor: COLORS.error + '44',
+    borderWidth: 1, borderColor: c.error + '44',
   },
-  errorText: { color: COLORS.error, fontSize: 14, textAlign: 'center' },
+  errorText: { color: c.error, fontSize: 14, textAlign: 'center' },
   successBox: {
-    backgroundColor: COLORS.success + '18', borderRadius: 12,
+    backgroundColor: c.success + '18', borderRadius: 12,
     padding: 16, marginBottom: 16,
-    borderWidth: 1, borderColor: COLORS.success + '44',
+    borderWidth: 1, borderColor: c.success + '44',
   },
-  successText: { color: COLORS.success, fontSize: 15, textAlign: 'center', fontFamily: FONTS.bodySemiBold },
+  successText: { color: c.success, fontSize: 15, textAlign: 'center', fontFamily: FONTS.bodySemiBold },
   form: { gap: 12 },
-  label: { color: COLORS.textSecondary, fontSize: 13, fontFamily: FONTS.bodySemiBold },
+  label: { color: c.textSecondary, fontSize: 13, fontFamily: FONTS.bodySemiBold },
   input: {
-    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: c.surface, borderWidth: 1, borderColor: c.border,
     borderRadius: 14, paddingHorizontal: 16, height: 52,
-    fontSize: 16, color: COLORS.textPrimary,
+    fontSize: 16, color: c.textPrimary,
   },
 });

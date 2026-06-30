@@ -4,9 +4,10 @@ import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import * as Notifications from 'expo-notifications';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { save, KEYS } from '../../services/settingsService';
-import { COLORS, FONTS } from '../../constants/theme';
+import { FONTS } from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 import ScreenBackground from '../../components/brand/ScreenBackground';
 import CTAButton from '../../components/brand/CTAButton';
 import SectionLabel from '../../components/brand/SectionLabel';
@@ -39,10 +40,14 @@ const CUISINES    = [
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 function Question({ children }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return <Text style={styles.question}>{children}</Text>;
 }
 
 function PillRow({ options, selected, onSelect }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <View style={styles.pillRow}>
       {options.map((opt) => {
@@ -65,6 +70,8 @@ function PillRow({ options, selected, onSelect }) {
 }
 
 function ChipGrid({ options, selected, onToggle }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <View style={styles.chipGrid}>
       {options.map((opt) => {
@@ -87,6 +94,8 @@ function ChipGrid({ options, selected, onToggle }) {
 // ─── Screen ───────────────────────────────────────────────────────────────────
 export default function OnboardingScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const [group,         setGroup]         = useState('couple');
   const [budget,        setBudget]        = useState('$$');
@@ -177,8 +186,8 @@ export default function OnboardingScreen() {
             <Switch
               value={notifications}
               onValueChange={setNotifications}
-              trackColor={{ false: COLORS.border, true: COLORS.primary }}
-              thumbColor={notifications ? COLORS.surface : COLORS.textMuted}
+              trackColor={{ false: colors.border, true: colors.primary }}
+              thumbColor={notifications ? colors.surface : colors.textMuted}
             />
           </View>
         </ScrollView>
@@ -196,7 +205,7 @@ export default function OnboardingScreen() {
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   safeArea: { flex: 1 },
   screen:   { flex: 1 },
   content:  { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 20 },
@@ -204,12 +213,12 @@ const styles = StyleSheet.create({
   // Hero
   hero: { alignItems: 'center', gap: 12, marginBottom: 32 },
   heroTitle: {
-    fontSize: 28, color: COLORS.textPrimary,
+    fontSize: 28, color: c.textPrimary,
     fontFamily: FONTS.displayHeavy,
     textAlign: 'center',
   },
   heroSub: {
-    fontSize: 15, color: COLORS.textSecondary,
+    fontSize: 15, color: c.textSecondary,
     fontFamily: FONTS.body,
     textAlign: 'center', lineHeight: 22, maxWidth: 300,
   },
@@ -219,7 +228,7 @@ const styles = StyleSheet.create({
 
   // Question labels
   question: {
-    fontSize: 15, fontFamily: FONTS.bodySemiBold, color: COLORS.textSecondary,
+    fontSize: 15, fontFamily: FONTS.bodySemiBold, color: c.textSecondary,
     marginBottom: 10, lineHeight: 21,
   },
 
@@ -227,40 +236,40 @@ const styles = StyleSheet.create({
   pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 },
   pill: {
     paddingHorizontal: 16, paddingVertical: 11, borderRadius: 16,
-    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: c.surface, borderWidth: 1, borderColor: c.border,
   },
-  pillActive:     { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  pillText:       { fontSize: 14, color: COLORS.textSecondary, fontFamily: FONTS.bodyMedium },
-  pillTextActive: { color: COLORS.primaryText, fontFamily: FONTS.bodyBold },
+  pillActive:     { backgroundColor: c.primary, borderColor: c.primary },
+  pillText:       { fontSize: 14, color: c.textSecondary, fontFamily: FONTS.bodyMedium },
+  pillTextActive: { color: c.primaryText, fontFamily: FONTS.bodyBold },
 
   // Multi-select cuisine chips
   chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
   chip: {
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
-    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: c.surface, borderWidth: 1, borderColor: c.border,
   },
-  chipActive:     { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  chipText:       { fontSize: 13, color: COLORS.textSecondary, fontFamily: FONTS.bodyMedium },
-  chipTextActive: { color: COLORS.primaryText, fontFamily: FONTS.bodySemiBold },
+  chipActive:     { backgroundColor: c.primary, borderColor: c.primary },
+  chipText:       { fontSize: 13, color: c.textSecondary, fontFamily: FONTS.bodyMedium },
+  chipTextActive: { color: c.primaryText, fontFamily: FONTS.bodySemiBold },
 
   // Notifications row
   toggleRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: COLORS.surface, borderRadius: 16,
-    borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: c.surface, borderRadius: 16,
+    borderWidth: 1, borderColor: c.border,
     paddingHorizontal: 16, paddingVertical: 16,
     marginBottom: 8,
   },
   toggleInfo:  { flex: 1, marginRight: 16 },
-  toggleLabel: { fontSize: 15, color: COLORS.textPrimary, fontFamily: FONTS.bodySemiBold, marginBottom: 3 },
-  toggleSub:   { fontSize: 13, color: COLORS.textMuted, fontFamily: FONTS.body, lineHeight: 18 },
+  toggleLabel: { fontSize: 15, color: c.textPrimary, fontFamily: FONTS.bodySemiBold, marginBottom: 3 },
+  toggleSub:   { fontSize: 13, color: c.textMuted, fontFamily: FONTS.body, lineHeight: 18 },
 
   // Fixed bottom bar
   bottomBar: {
     paddingHorizontal: 20, paddingTop: 14, paddingBottom: 24,
-    gap: 10, backgroundColor: COLORS.bg,
-    borderTopWidth: 1, borderTopColor: COLORS.border,
+    gap: 10, backgroundColor: c.bg,
+    borderTopWidth: 1, borderTopColor: c.border,
   },
   skipWrap: { alignItems: 'center', paddingVertical: 4 },
-  skipText: { color: COLORS.textMuted, fontSize: 14, fontFamily: FONTS.body },
+  skipText: { color: c.textMuted, fontSize: 14, fontFamily: FONTS.body },
 });
