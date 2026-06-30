@@ -33,8 +33,8 @@ const PACE_OPTS = [
 ];
 const START_TIMES = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM'];
 const END_TIMES   = ['4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM', '8:00 PM', '9:00 PM', '10:00 PM'];
-const CUISINES    = [
-  'Italian', 'Mexican', 'Japanese', 'American', 'Thai', 'Indian',
+const CUISINES = [
+  'Italian', 'Mexican', 'Japanese', 'Chinese', 'American', 'Thai', 'Indian',
   'Mediterranean', 'Korean', 'Vietnamese', 'BBQ', 'Seafood', 'Pizza',
 ];
 
