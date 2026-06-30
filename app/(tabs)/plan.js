@@ -26,6 +26,7 @@ import { getApiBase } from '../../services/apiBase';
 import { timeToMinutes, isValidWindow } from '../../lib/refreshPolicy';
 import PriceLegendModal from '../../components/itinerary/PriceLegendModal';
 import { openMaps, highlightConfig } from '../../components/itinerary/helpers';
+import WeatherPill from '../../components/itinerary/WeatherPill';
 
 // ─── Date helpers ─────────────────────────────────────────────────────────────
 function getNextSevenDays() {
@@ -899,11 +900,6 @@ export default function PlanScreen() {
 
   const locationPillText = `${isManual ? '📌 ' : '📍 '}${locationLabel}`;
   const hasItinerary     = Array.isArray(itinerary) && itinerary.length > 0;
-  const weatherPillText  = weather?.beyondForecast
-    ? `🗓 Extended forecast not available — check back closer to your trip · ${meta?.time_window ?? `${startTime} – ${endTime}`}`
-    : weather
-    ? `${weather.emoji ?? ''} ${weather.condition} · ${weather.temp_f}°F${weather.wind_speed_mph ? ` · 💨 ${weather.wind_speed_mph}mph` : ''} · ${meta?.time_window ?? `${startTime} – ${endTime}`}`
-    : `${startTime} – ${endTime}`;
 
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
@@ -1031,9 +1027,7 @@ export default function PlanScreen() {
           <View style={styles.planContainer}>
             <View style={styles.header}>
               <Text style={styles.appName}>Your day</Text>
-              <View style={styles.headerPill}>
-                <Text style={styles.headerPillText}>{weatherPillText}</Text>
-              </View>
+              <WeatherPill weather={weather} timeWindow={meta?.time_window ?? `${startTime} – ${endTime}`} />
             </View>
 
             <View style={styles.itineraryContainer}>
