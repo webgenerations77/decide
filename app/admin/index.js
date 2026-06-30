@@ -1,5 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -56,9 +58,19 @@ export default function AdminScreen() {
 
   return (
     <ScreenBackground variant="paper">
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Admin</Text>
-        {err ? <Text style={styles.err}>{err}</Text> : null}
+      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+        <ScrollView contentContainerStyle={styles.container}>
+          <View style={styles.header}>
+            <Pressable
+              onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/settings'))}
+              style={styles.backBtn}
+              hitSlop={10}
+            >
+              <Ionicons name="chevron-back" size={22} color={colors.textPrimary} />
+            </Pressable>
+            <Text style={styles.title}>Admin</Text>
+          </View>
+          {err ? <Text style={styles.err}>{err}</Text> : null}
 
         <SectionLabel tone="cobalt">API USAGE</SectionLabel>
         <View style={styles.rangeRow}>
@@ -107,7 +119,8 @@ export default function AdminScreen() {
             );
           })}
         </Card>
-      </ScrollView>
+        </ScrollView>
+      </SafeAreaView>
     </ScreenBackground>
   );
 }
@@ -127,7 +140,13 @@ function Row({ label, value }) {
 const makeStyles = (c) => StyleSheet.create({
   container: { padding: 20, gap: 12 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  title: { fontFamily: FONTS.display, fontSize: 28, color: c.textPrimary, marginBottom: 4 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
+  backBtn: {
+    width: 36, height: 36, borderRadius: 18, marginLeft: -6,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: c.surfaceAlt, borderWidth: 1, borderColor: c.border,
+  },
+  title: { fontFamily: FONTS.display, fontSize: 28, color: c.textPrimary },
   err: { color: c.error, fontFamily: FONTS.bodyMedium },
   rangeRow: { flexDirection: 'row', gap: 8 },
   chip: { paddingVertical: 6, paddingHorizontal: 14, borderRadius: RADII.pill, backgroundColor: c.surfaceAlt },
