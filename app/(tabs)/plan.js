@@ -23,6 +23,7 @@ import BrandLogo from '../../components/brand/BrandLogo';
 import LoadingAnimation from '../../components/LoadingAnimation';
 import { placeDetails as fetchPlaceDetails } from '../../services/placesService';
 import { getApiBase } from '../../services/apiBase';
+import { timeToMinutes, isValidWindow } from '../../lib/refreshPolicy';
 
 // ─── Date helpers ─────────────────────────────────────────────────────────────
 function getNextSevenDays() {
@@ -57,14 +58,6 @@ function datePillLabel(isoDate) {
 // ─── Time options ─────────────────────────────────────────────────────────────
 const START_TIMES = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM'];
 const END_TIMES   = ['4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM', '8:00 PM', '9:00 PM', '10:00 PM'];
-
-function timeToMinutes(timeStr) {
-  const [time, period] = timeStr.split(' ');
-  let [hours] = time.split(':').map(Number);
-  if (period === 'PM' && hours !== 12) hours += 12;
-  if (period === 'AM' && hours === 12) hours = 0;
-  return hours * 60;
-}
 
 // ─── Preference options ───────────────────────────────────────────────────────
 const PACE_OPTIONS = [
@@ -660,7 +653,7 @@ export default function PlanScreen() {
   const btn2Slide = useRef(new Animated.Value(28)).current;
   const params      = useLocalSearchParams();
 
-  const isValidTimeWindow = timeToMinutes(endTime) - timeToMinutes(startTime) >= 180;
+  const isValidTimeWindow = isValidWindow(startTime, endTime);
 
   useFocusEffect(useCallback(() => {
     (async () => {
