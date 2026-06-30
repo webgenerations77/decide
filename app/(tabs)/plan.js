@@ -850,10 +850,10 @@ const makeStyles = (c) => StyleSheet.create({
   // ── Landing ──────────────────────────────────────────────────────────────
   landingContainer: {
     flex: 1, alignItems: 'center',
-    paddingHorizontal: 24, paddingTop: 56, paddingBottom: 48,
+    paddingHorizontal: 24, paddingTop: 24, paddingBottom: 32,
     justifyContent: 'center',
   },
-  landingHero: { alignItems: 'center', marginBottom: 32 },
+  landingHero: { alignItems: 'center', marginBottom: 24 },
   landingHeroTag: {
     fontSize: 16, color: c.textSecondary, textAlign: 'center',
     fontFamily: FONTS.display, letterSpacing: 0.2, marginTop: 12,
