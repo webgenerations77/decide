@@ -1,5 +1,5 @@
-import { runSmartEngine } from '../../api/smart/index.js';
-import { computeCostSummary, pickForecastForDate, attachPriceLevels } from '../../api/itineraryHelpers.js';
+import { runSmartEngine } from '../../lib/smart/index.js';
+import { computeCostSummary, pickForecastForDate, attachPriceLevels } from '../../lib/itineraryHelpers.js';
 
 const GOOGLE_KEY    = process.env.GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 const NPS_KEY       = process.env.EXPO_PUBLIC_NPS_API_KEY;

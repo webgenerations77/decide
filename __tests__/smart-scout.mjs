@@ -1,5 +1,5 @@
 // __tests__/smart-scout.mjs — run: node __tests__/smart-scout.mjs
-import { buildScoutPrompt, validateHunts } from '../api/smart/scout.js';
+import { buildScoutPrompt, validateHunts } from '../lib/smart/scout.js';
 let passed = 0, failed = 0;
 const assert = (l, c, d = '') => c ? (console.log(`  ✓ ${l}`), passed++) : (console.error(`  ✗ ${l}${d ? ` — ${d}` : ''}`), failed++);
 

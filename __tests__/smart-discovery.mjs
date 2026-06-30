@@ -1,5 +1,5 @@
 // __tests__/smart-discovery.mjs — run: node __tests__/smart-discovery.mjs
-import { normalizeFind, dedupeFinds, discoveryCacheKey } from '../api/smart/discovery.js';
+import { normalizeFind, dedupeFinds, discoveryCacheKey } from '../lib/smart/discovery.js';
 let passed = 0, failed = 0;
 const assert = (l, c, d = '') => c ? (console.log(`  ✓ ${l}`), passed++) : (console.error(`  ✗ ${l}${d ? ` — ${d}` : ''}`), failed++);
 

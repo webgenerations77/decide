@@ -1,6 +1,6 @@
 import {
   validateFeedback, sendFeedbackEmail, gateFeedbackRequest, checkFeedbackRate,
-} from './feedbackEmail.js';
+} from '../lib/feedbackEmail.js';
 
 export default async function handler(req, res) {
   if (req.method === 'GET') return res.json({ status: 'ok', message: 'Feedback API is running' });

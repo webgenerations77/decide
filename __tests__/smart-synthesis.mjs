@@ -1,5 +1,5 @@
 // __tests__/smart-synthesis.mjs — run: node __tests__/smart-synthesis.mjs
-import { buildSynthesisPrompt, validateStops } from '../api/smart/synthesis.js';
+import { buildSynthesisPrompt, validateStops } from '../lib/smart/synthesis.js';
 let passed = 0, failed = 0;
 const assert = (l, c, d = '') => c ? (console.log(`  ✓ ${l}`), passed++) : (console.error(`  ✗ ${l}${d ? ` — ${d}` : ''}`), failed++);
 
