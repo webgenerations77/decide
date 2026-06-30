@@ -264,7 +264,7 @@ export default async function handler(req, res) {
     const allPlaces = [...food, ...activity, ...shopping, ...allOutdoor];
     const priced = attachPriceLevels(enriched, allPlaces);
     const costSummary = computeCostSummary(priced);
-    return res.json({itinerary:priced,weather,meta:{date:formattedDate,day_of_week:dayOfWeek,time_window:`${startTime} – ${endTime}`,preferences:{pace,budget,group_type},city:cityStr,cost_summary:costSummary?.label??null},discovery:{hadLiveData:smart.hadLiveData,findCount:smart.finds.length,anchorCount:smart.anchors.length,anchors:smart.anchors.map((a)=>({title:a.find?.title,interest:a.find?.interest,why:a.rationale}))},generated_at:new Date().toISOString(),isFallback});
+    return res.json({itinerary:priced,weather,meta:{date:formattedDate,day_of_week:dayOfWeek,time_window:`${startTime} – ${endTime}`,preferences:{pace,budget,group_type},city:cityStr,cost_summary:costSummary?.label??null},discovery:{hadLiveData:smart.hadLiveData,findCount:smart.finds.length,anchorCount:smart.anchors.length,anchors:smart.anchors.map((a)=>({title:a.find?.title,interest:a.find?.interest,why:a.rationale,url:a.find?.url||null}))},generated_at:new Date().toISOString(),isFallback});
   } catch(err) {
     console.error('[itinerary] error:',err);
     return res.status(500).json({error:err.message});

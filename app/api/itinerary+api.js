@@ -412,7 +412,7 @@ export async function POST(request) {
         hadLiveData: smart.hadLiveData,
         findCount: smart.finds.length,
         anchorCount: smart.anchors.length,
-        anchors: smart.anchors.map((a) => ({ title: a.find?.title, interest: a.find?.interest, why: a.rationale })),
+        anchors: smart.anchors.map((a) => ({ title: a.find?.title, interest: a.find?.interest, why: a.rationale, url: a.find?.url || null })),
       },
       generated_at: new Date().toISOString(),
       isFallback,
