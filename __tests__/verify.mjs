@@ -350,6 +350,36 @@ assert('real google id → skip (already handled)', shouldResolveContact({ place
 assert('nps_ id → skip',                        shouldResolveContact({ place_id:'nps_x', name:'X', lat:1, lng:2 }) === false);
 assert('missing coords → skip',                 shouldResolveContact({ place_id:'find_x', name:'X' }) === false);
 
+// ─── Weather wash (gradient behind itinerary cards) ──────────────────────────
+import { weatherBucket, weatherWash } from '../lib/weatherWash.js';
+
+console.log('\nWeather wash — bucketing:');
+assert('Clear → clear',                weatherBucket({ condition: 'Clear', temp_f: 72 }) === 'clear');
+assert('Clear + 88°F → hot',           weatherBucket({ condition: 'Clear', temp_f: 88 }) === 'hot');
+assert('hot needs clear, not rain',    weatherBucket({ condition: 'Heavy rain', temp_f: 90 }) === 'rain');
+assert('Partly cloudy → partly',       weatherBucket({ condition: 'Partly cloudy', temp_f: 60 }) === 'partly');
+assert('Overcast → overcast',          weatherBucket({ condition: 'Overcast', temp_f: 60 }) === 'overcast');
+assert('plain cloudy → overcast',      weatherBucket({ condition: 'Cloudy', temp_f: 60 }) === 'overcast');
+assert('Light drizzle → rain',         weatherBucket({ condition: 'Light drizzle', temp_f: 55 }) === 'rain');
+assert('Thunderstorm → thunder',       weatherBucket({ condition: 'Thunderstorm', temp_f: 70 }) === 'thunder');
+assert('Heavy snow → snow',            weatherBucket({ condition: 'Heavy snow', temp_f: 30 }) === 'snow');
+assert('Fog → fog',                    weatherBucket({ condition: 'Fog', temp_f: 50 }) === 'fog');
+assert('emoji fallback ☀️ → clear',    weatherBucket({ emoji: '☀️', temp_f: '74' }) === 'clear');
+assert('emoji ⛅ → partly',            weatherBucket({ emoji: '⛅', temp_f: '64' }) === 'partly');
+assert('emoji ☁️ → overcast',          weatherBucket({ emoji: '☁️', temp_f: '62' }) === 'overcast');
+assert('string temp hot via emoji',    weatherBucket({ emoji: '☀️', temp_f: '90' }) === 'hot');
+assert('beyondForecast → null',        weatherBucket({ beyondForecast: true }) === null);
+assert('no condition/emoji → null',    weatherBucket({ temp_f: 70 }) === null);
+assert('null weather → null',          weatherBucket(null) === null);
+
+console.log('\nWeather wash — token mapping:');
+const C = { sky100:'s1', sky200:'s2', sky300:'s3', surface:'sf', surfaceAlt:'sa', border:'bd', borderLight:'bl', gold:'#F4B63A' };
+assert('clear → [sky100, surface]',    JSON.stringify(weatherWash({ condition:'Clear', temp_f:70 }, C).colors) === JSON.stringify(['s1','sf']));
+assert('rain → [sky200, sky100]',      JSON.stringify(weatherWash({ condition:'Rain', temp_f:55 }, C).colors) === JSON.stringify(['s2','s1']));
+assert('hot → [surfaceAlt, gold+33]',  JSON.stringify(weatherWash({ condition:'Clear', temp_f:90 }, C).colors) === JSON.stringify(['sa','#F4B63A33']));
+assert('null forecast → null wash',    weatherWash({ beyondForecast: true }, C) === null);
+assert('no colors → null wash',        weatherWash({ condition:'Clear', temp_f:70 }, null) === null);
+
 // ─── Summary ──────────────────────────────────────────────────────────────────
 console.log(`\n${'─'.repeat(50)}`);
 console.log(`Results: ${passed} passed, ${failed} failed`);
