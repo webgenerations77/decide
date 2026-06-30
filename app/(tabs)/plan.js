@@ -11,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { generateItinerary, swapStop } from '../../services/itineraryService';
 import { loadPlanDefaults, KEYS } from '../../services/settingsService';
-import { isAtDecisionLimit, incrementDecisionCount, getRemainingDecisions, LIMITS } from '../../services/subscriptionService';
+import { isAtDecisionLimit, incrementDecisionCount, getRemainingDecisions, isPro, LIMITS } from '../../services/subscriptionService';
 import { scheduleItineraryAlerts, cancelItineraryAlerts } from '../../services/notificationService';
 import { COLORS, FONTS, RADII } from '../../constants/theme';
 import ScreenBackground from '../../components/brand/ScreenBackground';
@@ -21,7 +21,7 @@ import SectionLabel from '../../components/brand/SectionLabel';
 import BrandLogo from '../../components/brand/BrandLogo';
 import LoadingAnimation from '../../components/LoadingAnimation';
 import { getApiBase } from '../../services/apiBase';
-import { isValidWindow } from '../../lib/refreshPolicy';
+import { timeToMinutes, isValidWindow, windowChanged, canRefresh } from '../../lib/refreshPolicy';
 import PlaceDetailModal from '../../components/itinerary/PlaceDetailModal';
 import WeatherPill from '../../components/itinerary/WeatherPill';
 import StopCard from '../../components/itinerary/StopCard';
@@ -179,6 +179,11 @@ export default function PlanScreen() {
   const [coords,         setCoords]         = useState(null);
   const [planDate,       setPlanDate]       = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
+
+  const [generatedStart,     setGeneratedStart]     = useState(null);
+  const [generatedEnd,       setGeneratedEnd]       = useState(null);
+  const [refreshCount,       setRefreshCount]       = useState(0);
+  const [currentItineraryId, setCurrentItineraryId] = useState(null);
 
   const [selectedStop,    setSelectedStop]    = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -365,10 +370,20 @@ export default function PlanScreen() {
     cancelItineraryAlerts().catch(() => {});
   };
 
-  const generate = async () => {
+  const generate = async ({ asEdit = false } = {}) => {
     if (!coords) { setError("Still finding your location — give it a moment and try again."); return; }
     if (!isValidTimeWindow) return;
-    if (await isAtDecisionLimit()) { router.push('/paywall'); return; }
+    if (asEdit) {
+      const [pro, demoRaw] = await Promise.all([
+        isPro(),
+        AsyncStorage.getItem('@decide/demo_mode').catch(() => null),
+      ]);
+      if (!canRefresh({ isPro: pro, isDemo: demoRaw === 'true', refreshCount })) {
+        router.push('/paywall'); return;
+      }
+    } else {
+      if (await isAtDecisionLimit()) { router.push('/paywall'); return; }
+    }
     setLoading(true); setError(null);
     try {
       let feedbackCtx = {};
@@ -418,23 +433,39 @@ export default function PlanScreen() {
       try {
         const raw      = await AsyncStorage.getItem('@decide/itineraries');
         const existing = raw ? JSON.parse(raw) : [];
-        const entry    = {
-          id:        `itinerary_${Date.now()}`,
-          timestamp: Date.now(),
-          meta:      data.meta,
-          weather:   data.weather,
-          stops:     (data.itinerary ?? []).map((s) => ({ name: s.name, category: s.category })),
-          feedback:  null, feedbackReason: null,
-        };
-        await AsyncStorage.setItem(
-          '@decide/itineraries',
-          JSON.stringify([entry, ...existing.slice(0, 49)])
-        );
+        const summary  = (data.itinerary ?? []).map((s) => ({ name: s.name, category: s.category }));
+        const idx      = asEdit && currentItineraryId
+          ? existing.findIndex((e) => e.id === currentItineraryId)
+          : -1;
+        if (idx !== -1) {
+          existing[idx] = {
+            ...existing[idx],
+            meta: data.meta, weather: data.weather,
+            stops: summary, itinerary: data.itinerary ?? [], v: 2,
+          };
+          await AsyncStorage.setItem('@decide/itineraries', JSON.stringify(existing));
+        } else {
+          const id    = `itinerary_${Date.now()}`;
+          const entry = {
+            id, timestamp: Date.now(), meta: data.meta, weather: data.weather,
+            stops: summary, itinerary: data.itinerary ?? [], v: 2,
+            feedback: null, feedbackReason: null,
+          };
+          setCurrentItineraryId(id);
+          await AsyncStorage.setItem('@decide/itineraries', JSON.stringify([entry, ...existing.slice(0, 49)]));
+        }
       } catch (e) {
         console.warn('[history] save itinerary error', e);
       }
-      await incrementDecisionCount().catch(() => {});
-      getRemainingDecisions().then(setRemainingDecisions).catch(() => {});
+      if (asEdit) {
+        setRefreshCount((c) => c + 1);
+      } else {
+        setRefreshCount(0);
+        await incrementDecisionCount().catch(() => {});
+        getRemainingDecisions().then(setRemainingDecisions).catch(() => {});
+      }
+      setGeneratedStart(startTime);
+      setGeneratedEnd(endTime);
       const notifEnabled = await AsyncStorage.getItem(KEYS.NOTIFICATIONS).catch(() => null);
       if (notifEnabled === 'true' && data.itinerary) {
         scheduleItineraryAlerts(data.itinerary).catch(console.warn);
@@ -486,6 +517,25 @@ export default function PlanScreen() {
 
   const locationPillText = `${isManual ? '📌 ' : '📍 '}${locationLabel}`;
   const hasItinerary     = Array.isArray(itinerary) && itinerary.length > 0;
+
+  const windowDidChange = windowChanged(generatedStart, generatedEnd, startTime, endTime);
+  const timeEditor = (
+    <View style={styles.resultsTimeEditor}>
+      <View style={styles.timePickerRow}>
+        <TimePickerPill label="Start" value={startTime} options={START_TIMES} onChange={setStartTime} disabled={loading} />
+        <Text style={styles.timeArrow}>→</Text>
+        <TimePickerPill label="End"   value={endTime}   options={END_TIMES}   onChange={setEndTime}   disabled={loading} />
+      </View>
+      {!isValidTimeWindow && (
+        <Text style={styles.timeValidationHint}>Please allow at least 3 hours</Text>
+      )}
+      {windowDidChange && isValidTimeWindow && !loading && (
+        <View style={{ marginTop: 10 }}>
+          <CTAButton variant="cobalt" title="Refresh itinerary" onPress={() => generate({ asEdit: true })} />
+        </View>
+      )}
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
@@ -599,7 +649,7 @@ export default function PlanScreen() {
             {error ? (
               <View style={styles.errorBlock}>
                 <Text style={styles.errorText}>{error}</Text>
-                <TouchableOpacity style={styles.retryBtn} onPress={generate} activeOpacity={0.7}>
+                <TouchableOpacity style={styles.retryBtn} onPress={() => generate()} activeOpacity={0.7}>
                   <Text style={styles.retryBtnText}>Try again</Text>
                 </TouchableOpacity>
               </View>
@@ -625,7 +675,7 @@ export default function PlanScreen() {
                   </Text>
                 </View>
               )}
-              <ItineraryMeta meta={meta} stopCount={itinerary.length} research={research} />
+              <ItineraryMeta meta={meta} stopCount={itinerary.length} research={research} timeEditor={timeEditor} />
 
               {itinerary.map((stop, i) => (
                 <StopCard
@@ -664,7 +714,7 @@ export default function PlanScreen() {
             <CTAButton
               variant="cobalt"
               title="Build my day →"
-              onPress={generate}
+              onPress={() => generate()}
               disabled={!isValidTimeWindow}
               loading={loading}
             />
@@ -856,6 +906,7 @@ const styles = StyleSheet.create({
   timePillInner:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   timePillValue:   { fontSize: 14, fontFamily: FONTS.bodyBold, color: COLORS.primary },
   timeValidationHint: { fontSize: 11, color: COLORS.error, marginTop: 2 },
+  resultsTimeEditor: { marginTop: 4, marginBottom: 12 },
   tripNoteInput: { backgroundColor: COLORS.surface, borderColor: COLORS.border, borderWidth: 1, borderRadius: RADII.md, color: COLORS.textPrimary, paddingHorizontal: 14, paddingVertical: 10, fontSize: 15, fontFamily: FONTS.body },
 
   // Time picker modal
