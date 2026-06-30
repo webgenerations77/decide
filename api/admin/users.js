@@ -17,6 +17,7 @@ export default async function handler(req, res) {
   try {
     return res.json({ users: await listUsersWithRoles() });
   } catch (e) {
-    return res.status(500).json({ error: 'users_failed', message: e.message });
+    console.error('[api/admin/users] users_failed:', e);
+    return res.status(500).json({ error: 'users_failed', message: e.message, _diag: { name: e.name, code: e.code, stack: e.stack } });
   }
 }

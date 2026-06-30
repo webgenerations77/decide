@@ -56,7 +56,8 @@ export default function BetaGuide() {
             </Text>
             <Text style={styles.h}>🎯 Quick Spin</Text>
             <Text style={styles.p}>
-              Can't even commit to planning? Hit Spin and I'll throw you one solid pick on the spot.
+              Can't even commit to planning? Hit Spin and I'll throw you one solid pick on the spot —
+              now with a quick reason for why, plus one-tap Directions, Website, and Call.
               Perfect for "just tell me where to eat."
             </Text>
             <Text style={styles.h}>📜 History</Text>
@@ -80,6 +81,7 @@ export default function BetaGuide() {
             <Text style={styles.p}>• Plan a day in a few different places and dates — your hometown, then somewhere you're visiting.</Text>
             <Text style={styles.p}>• Try a weird combo on purpose (packed pace + tight budget + a picky note) and see if I hold up.</Text>
             <Text style={styles.p}>• Swap a stop or two — does the replacement actually make sense?</Text>
+            <Text style={styles.p}>• Hit Surprise Me a few times — does the "why this pick" line make sense, and do the Directions / Website / Call buttons work?</Text>
             <Text style={styles.p}>• Watch for the "what's happening right now" picks — events and specials tied to your real dates. Tell me when they land and when they're off.</Text>
             <Text style={styles.p}>• Push the edges. The stuff that breaks is exactly what I need to hear about.</Text>
           </Card>
