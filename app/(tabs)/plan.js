@@ -21,7 +21,7 @@ import SectionLabel from '../../components/brand/SectionLabel';
 import BrandLogo from '../../components/brand/BrandLogo';
 import LoadingAnimation from '../../components/LoadingAnimation';
 import { getApiBase } from '../../services/apiBase';
-import { timeToMinutes, isValidWindow, windowChanged, canRefresh } from '../../lib/refreshPolicy';
+import { isValidWindow, windowChanged, canRefresh } from '../../lib/refreshPolicy';
 import PlaceDetailModal from '../../components/itinerary/PlaceDetailModal';
 import WeatherPill from '../../components/itinerary/WeatherPill';
 import StopCard from '../../components/itinerary/StopCard';

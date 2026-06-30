@@ -4,7 +4,7 @@ import {
   Linking, Dimensions, StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, CATEGORY_COLORS, CATEGORY_EMOJIS, FONTS, RADII } from '../../constants/theme';
+import { COLORS, CATEGORY_COLORS, CATEGORY_EMOJIS, FONTS } from '../../constants/theme';
 import { placeDetails as fetchPlaceDetails } from '../../services/placesService';
 import SectionLabel from '../brand/SectionLabel';
 import { openMaps, highlightConfig } from './helpers';

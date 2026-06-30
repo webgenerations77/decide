@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, FONTS, RADII } from '../../constants/theme';
+import { COLORS, FONTS } from '../../constants/theme';
 
 export default function ItineraryMeta({ meta, stopCount, research, timeEditor = null }) {
   if (!meta) return null;

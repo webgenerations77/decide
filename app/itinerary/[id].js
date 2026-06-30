@@ -4,12 +4,24 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { COLORS, FONTS, RADII } from '../../constants/theme';
+import { COLORS, FONTS } from '../../constants/theme';
 import ScreenBackground from '../../components/brand/ScreenBackground';
 import WeatherPill from '../../components/itinerary/WeatherPill';
 import ItineraryMeta from '../../components/itinerary/ItineraryMeta';
 import StopCard from '../../components/itinerary/StopCard';
 import PlaceDetailModal from '../../components/itinerary/PlaceDetailModal';
+
+function Header({ onBack, children }) {
+  return (
+    <View style={styles.header}>
+      <TouchableOpacity onPress={onBack} activeOpacity={0.7} style={styles.backRow}>
+        <Ionicons name="chevron-back" size={18} color={COLORS.primary} />
+        <Text style={styles.backText}>Back</Text>
+      </TouchableOpacity>
+      {children}
+    </View>
+  );
+}
 
 export default function ItineraryDetailScreen() {
   const router = useRouter();
@@ -36,21 +48,11 @@ export default function ItineraryDetailScreen() {
     })();
   }, [id]);
 
-  const Header = ({ children }) => (
-    <View style={styles.header}>
-      <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7} style={styles.backRow}>
-        <Ionicons name="chevron-back" size={18} color={COLORS.primary} />
-        <Text style={styles.backText}>Back</Text>
-      </TouchableOpacity>
-      {children}
-    </View>
-  );
-
   if (entry === undefined) {
     return (
       <SafeAreaView style={styles.screen} edges={['top']}>
         <ScreenBackground variant="paper" style={styles.fill}>
-          <Header />
+          <Header onBack={() => router.back()} />
           <ActivityIndicator color={COLORS.primary} style={{ marginTop: 40 }} />
         </ScreenBackground>
       </SafeAreaView>
@@ -61,7 +63,7 @@ export default function ItineraryDetailScreen() {
     return (
       <SafeAreaView style={styles.screen} edges={['top']}>
         <ScreenBackground variant="paper" style={styles.fill}>
-          <Header />
+          <Header onBack={() => router.back()} />
           <View style={styles.emptyWrap}>
             <Text style={styles.emptyTitle}>This plan is no longer available</Text>
             <Text style={styles.emptySub}>Full detail isn't saved for older itineraries.</Text>
@@ -75,34 +77,36 @@ export default function ItineraryDetailScreen() {
 
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
-      <ScrollView style={styles.fill} contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-        <Header>
-          <Text style={styles.title}>Your day</Text>
-          <WeatherPill weather={weather} timeWindow={meta?.time_window ?? ''} />
-        </Header>
+      <ScreenBackground variant="paper" style={styles.fill}>
+        <ScrollView style={styles.fill} contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+          <Header onBack={() => router.back()}>
+            <Text style={styles.title}>Your day</Text>
+            <WeatherPill weather={weather} timeWindow={meta?.time_window ?? ''} />
+          </Header>
 
-        <View style={styles.body}>
-          <ItineraryMeta meta={meta} stopCount={itinerary.length} research={null} />
-          {itinerary.map((stop, i) => (
-            <StopCard
-              key={`${stop.place_id}-${i}`}
-              stop={stop}
-              index={i}
-              isLast={i === itinerary.length - 1}
-              onViewDetails={(s) => { setSelectedStop(s); setShowDetailModal(true); }}
-              weather={weather}
-              planDate={entry.timestamp}
-              sensitivities={sensitivities}
-            />
-          ))}
-        </View>
-      </ScrollView>
+          <View style={styles.body}>
+            <ItineraryMeta meta={meta} stopCount={itinerary.length} research={null} />
+            {itinerary.map((stop, i) => (
+              <StopCard
+                key={`${stop.place_id}-${i}`}
+                stop={stop}
+                index={i}
+                isLast={i === itinerary.length - 1}
+                onViewDetails={(s) => { setSelectedStop(s); setShowDetailModal(true); }}
+                weather={weather}
+                planDate={entry.timestamp}
+                sensitivities={sensitivities}
+              />
+            ))}
+          </View>
+        </ScrollView>
 
-      <PlaceDetailModal
-        visible={showDetailModal}
-        stop={selectedStop}
-        onClose={() => setShowDetailModal(false)}
-      />
+        <PlaceDetailModal
+          visible={showDetailModal}
+          stop={selectedStop}
+          onClose={() => setShowDetailModal(false)}
+        />
+      </ScreenBackground>
     </SafeAreaView>
   );
 }

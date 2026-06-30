@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
-import { COLORS, FONTS, RADII } from '../../constants/theme';
+import { COLORS } from '../../constants/theme';
 
 export function buildWeatherPillText(weather, timeWindow) {
   const tw = timeWindow ?? '';

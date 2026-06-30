@@ -1,5 +1,5 @@
 import { View, Text, Modal, TouchableOpacity, StyleSheet } from 'react-native';
-import { COLORS, FONTS, RADII, PRICE_LEGEND } from '../../constants/theme';
+import { COLORS, FONTS, PRICE_LEGEND } from '../../constants/theme';
 
 export default function PriceLegendModal({ visible, onClose }) {
   return (
