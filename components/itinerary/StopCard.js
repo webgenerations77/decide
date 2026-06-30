@@ -271,9 +271,9 @@ const makeStyles = (c) => StyleSheet.create({
   stopCardSwapping: { opacity: 0.6 },
 
   // Place photo header (full-bleed across the padded card top)
-  photoHeader:   { marginHorizontal: -16, marginTop: -16, marginBottom: 2, height: 132, backgroundColor: c.surfaceAlt },
+  photoHeader:   { marginHorizontal: -16, marginTop: -16, marginBottom: 2, height: 150, backgroundColor: c.surfaceAlt },
   photoImg:      { width: '100%', height: '100%' },
-  photoGradient: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 52 },
+  photoGradient: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 104 },
 
   stopHeaderRow:    { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   timeChip:         { paddingHorizontal: 9, paddingVertical: 4, borderRadius: 999, borderWidth: 1 },
