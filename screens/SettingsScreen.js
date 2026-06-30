@@ -18,6 +18,7 @@ import ScreenBackground from '../components/brand/ScreenBackground';
 import Card from '../components/brand/Card';
 import SectionLabel from '../components/brand/SectionLabel';
 import Badge from '../components/brand/Badge';
+import CollapsibleCard from '../components/brand/CollapsibleCard';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const AVATARS         = ['🧭', '🎯', '🎲', '🌮', '🎭', '🏄', '🎸', '🌟'];
@@ -505,8 +506,7 @@ export default function SettingsScreen() {
           )}
 
           {/* ── Preferences ───────────────────────────────────────────────── */}
-          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>PREFERENCES</SectionLabel>
-          <Card style={styles.card}>
+          <CollapsibleCard title="PREFERENCES" sectionKey="preferences" style={styles.collapsibleSpacing}>
             {/* CUISINES & DIETARY */}
             <Text style={styles.fieldLabel}>CUISINES</Text>
             <ChipGrid options={CUISINES} selected={cuisines} onToggle={toggleCuisine} />
@@ -562,7 +562,7 @@ export default function SettingsScreen() {
             {!validWindow && (
               <Text style={styles.timeValidationHint}>⚠ Please allow at least 3 hours</Text>
             )}
-          </Card>
+          </CollapsibleCard>
 
           {/* ── Location ───────────────────────────────────────────────────── */}
           <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>LOCATION</SectionLabel>
@@ -652,8 +652,7 @@ export default function SettingsScreen() {
           </Card>
 
           {/* ── Subscription ─────────────────────────────────────────── */}
-          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>SUBSCRIPTION</SectionLabel>
-          <Card style={styles.card}>
+          <CollapsibleCard title="SUBSCRIPTION" sectionKey="subscription" style={styles.collapsibleSpacing}>
             <View style={styles.appRow}>
               <Text style={styles.appRowLabel}>Plan</Text>
               <Text style={[styles.appRowValue, proStatus && { color: colors.primary }]}>
@@ -680,7 +679,7 @@ export default function SettingsScreen() {
                 </TouchableOpacity>
               </>
             )}
-          </Card>
+          </CollapsibleCard>
 
           {/* ── Beta ───────────────────────────────────────────────────────── */}
           {isBetaTester && (
@@ -700,8 +699,7 @@ export default function SettingsScreen() {
           )}
 
           {/* ── About & Data ──────────────────────────────────────────────── */}
-          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>ABOUT & DATA</SectionLabel>
-          <Card style={styles.card}>
+          <CollapsibleCard title="ABOUT & DATA" sectionKey="about" style={styles.collapsibleSpacing}>
             <TouchableOpacity
               style={styles.appRow}
               activeOpacity={0.7}
@@ -736,7 +734,7 @@ export default function SettingsScreen() {
               <Text style={styles.appRowLabel}>Version</Text>
               <Text style={styles.appRowValue}>Decide v1.0.0</Text>
             </View>
-          </Card>
+          </CollapsibleCard>
 
           {/* ── Demo Mode ──────────────────────────────────────────────────── */}
           <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>DEVELOPER</SectionLabel>
@@ -869,6 +867,8 @@ const makeStyles = (c) => StyleSheet.create({
   sectionHeaderSpacing: {
     marginTop: 24, marginBottom: 10, paddingHorizontal: 4,
   },
+
+  collapsibleSpacing: { marginTop: 24 },
 
   card:         { borderRadius: 18, borderWidth: 0.5, borderColor: c.border, padding: 18, overflow: 'hidden' },
   locationCard: { borderRadius: 18, borderWidth: 0.5, borderColor: c.border, padding: 18, zIndex: 10 },
