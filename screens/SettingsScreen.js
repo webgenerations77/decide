@@ -19,6 +19,7 @@ import Card from '../components/brand/Card';
 import SectionLabel from '../components/brand/SectionLabel';
 import Badge from '../components/brand/Badge';
 import CollapsibleCard from '../components/brand/CollapsibleCard';
+import { APP_VERSION } from '../components/brand/VersionTag';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const AVATARS         = ['🧭', '🎯', '🎲', '🌮', '🎭', '🏄', '🎸', '🌟'];
@@ -732,7 +733,7 @@ export default function SettingsScreen() {
 
             <View style={[styles.appRow, styles.appRowBorder]}>
               <Text style={styles.appRowLabel}>Version</Text>
-              <Text style={styles.appRowValue}>Decide v1.0.0</Text>
+              <Text style={styles.appRowValue}>Decide v{APP_VERSION}</Text>
             </View>
           </CollapsibleCard>
 

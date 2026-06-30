@@ -17,6 +17,8 @@ import ScreenBackground from '../components/brand/ScreenBackground';
 import Card from '../components/brand/Card';
 import CTAButton from '../components/brand/CTAButton';
 import SectionLabel from '../components/brand/SectionLabel';
+import BrandLogo from '../components/brand/BrandLogo';
+import VersionTag from '../components/brand/VersionTag';
 import { searchNearbyPlaces, placeDetails, placePhotoUrl } from '../services/placesService';
 
 const SURPRISE_SEEN_KEY = '@decide/spin_surprise_seen';
@@ -251,6 +253,7 @@ export default function SpinScreen() {
           keyboardShouldPersistTaps="handled"
         >
           {/* Header */}
+          <View style={styles.brandRow}><BrandLogo variant="full" size={30} /></View>
           <Text style={styles.title}>QUICK SPIN</Text>
           <Text style={styles.sub}>Instant pick, no overthinking</Text>
           {remainingSpins != null && remainingSpins !== Infinity && (
@@ -403,6 +406,8 @@ export default function SpinScreen() {
               </TouchableOpacity>
             </View>
           )}
+
+          <VersionTag style={{ marginTop: 28 }} />
         </ScrollView>
       </SafeAreaView>
     </ScreenBackground>
@@ -416,6 +421,7 @@ const makeStyles = (c) => StyleSheet.create({
     alignItems: 'center',
   },
 
+  brandRow: { marginBottom: 14, alignItems: 'center' },
   title: {
     fontFamily: FONTS.displayHeavy,
     fontSize: 28, color: c.textPrimary,

@@ -12,6 +12,8 @@ import { useTheme } from '../../context/ThemeContext';
 import ScreenBackground from '../../components/brand/ScreenBackground';
 import Card from '../../components/brand/Card';
 import CTAButton from '../../components/brand/CTAButton';
+import BrandLogo from '../../components/brand/BrandLogo';
+import VersionTag from '../../components/brand/VersionTag';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const FEEDBACK_REASONS = ['Closed', 'Too crowded', 'Not my style', 'Too far', 'Too expensive', 'Other'];
@@ -238,7 +240,7 @@ export default function HistoryScreen() {
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const router = useRouter();
 
-  const [activeFilter,    setActiveFilter]    = useState('decisions');
+  const [activeFilter,    setActiveFilter]    = useState('itineraries');
   const [decisions,       setDecisions]       = useState([]);
   const [itineraries,     setItineraries]     = useState([]);
   const [feedbackModal,   setFeedbackModal]   = useState(false);
@@ -337,11 +339,12 @@ export default function HistoryScreen() {
           showsVerticalScrollIndicator={false}
         >
           {/* Header */}
+          <View style={styles.brandRow}><BrandLogo variant="full" size={30} /></View>
           <Text style={styles.title}>History</Text>
 
           {/* Filter pills */}
           <View style={styles.filterRow}>
-            {['decisions', 'itineraries'].map((f) => (
+            {['itineraries', 'decisions'].map((f) => (
               <TouchableOpacity
                 key={f}
                 style={[styles.filterPill, activeFilter === f && styles.filterPillActive]}
@@ -405,6 +408,7 @@ export default function HistoryScreen() {
             />
           ))}
 
+          <VersionTag style={{ marginTop: 24 }} />
           <View style={{ height: 40 }} />
         </ScrollView>
 
@@ -424,6 +428,7 @@ const makeStyles = (c) => StyleSheet.create({
   scroll:        { flex: 1 },
   scrollContent: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 24 },
 
+  brandRow: { alignItems: 'center', marginBottom: 12 },
   title: {
     fontSize: 28, color: c.textPrimary,
     fontFamily: FONTS.displayHeavy,

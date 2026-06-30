@@ -20,6 +20,7 @@ import Card from '../../components/brand/Card';
 import CTAButton from '../../components/brand/CTAButton';
 import SectionLabel from '../../components/brand/SectionLabel';
 import BrandLogo from '../../components/brand/BrandLogo';
+import VersionTag from '../../components/brand/VersionTag';
 import LoadingAnimation from '../../components/LoadingAnimation';
 import DistanceSlider from '../../components/DistanceSlider';
 import { getApiBase } from '../../services/apiBase';
@@ -613,6 +614,7 @@ export default function PlanScreen() {
             </Card>
 
             <Text style={styles.landingSubtext}>“{quote}” — {QUOTE_ATTRIBUTION}</Text>
+            <VersionTag style={{ marginTop: 14 }} />
           </ScreenBackground>
         )}
 
