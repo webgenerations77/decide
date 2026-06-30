@@ -1,7 +1,8 @@
 import { useEffect, useState, useMemo } from 'react';
-import { View, Text, ScrollView, Pressable, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, Pressable, ActivityIndicator, Modal, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -9,9 +10,14 @@ import { getUsage, getUsers, setUserRole } from '../../services/adminApi';
 import ScreenBackground from '../../components/brand/ScreenBackground';
 import Card from '../../components/brand/Card';
 import SectionLabel from '../../components/brand/SectionLabel';
+import LoadingAnimation from '../../components/LoadingAnimation';
 import { FONTS, RADII } from '../../constants/theme';
 import { PRICING } from '../../constants/pricing';
 import { getAdminRole } from '../../utils/admin';
+
+// Berlin, MD — fallback coords so the loading-screen preview's weather card always
+// has somewhere to forecast even if no location preference is set.
+const PREVIEW_FALLBACK_COORDS = { latitude: 38.3226, longitude: -75.2179 };
 
 const RANGES = ['day', 'week', 'month'];
 const money = (n) => `$${(n || 0).toFixed(2)}`;
@@ -27,6 +33,19 @@ export default function AdminScreen() {
   const [usage, setUsage] = useState(null);
   const [users, setUsers] = useState(null);
   const [err, setErr] = useState(null);
+  const [loadingPreview, setLoadingPreview] = useState(false);
+  const [previewCoords, setPreviewCoords] = useState(PREVIEW_FALLBACK_COORDS);
+
+  async function openLoadingPreview() {
+    let coords = PREVIEW_FALLBACK_COORDS;
+    try {
+      const raw = await AsyncStorage.getItem('@decide/manual_location');
+      const loc = raw ? JSON.parse(raw) : null;
+      if (loc?.latitude && loc?.longitude) coords = { latitude: loc.latitude, longitude: loc.longitude };
+    } catch {}
+    setPreviewCoords(coords);
+    setLoadingPreview(true);
+  }
 
   useEffect(() => {
     if (!loading && (!user || !isAdmin)) router.replace('/');
@@ -71,6 +90,18 @@ export default function AdminScreen() {
             <Text style={styles.title}>Admin</Text>
           </View>
           {err ? <Text style={styles.err}>{err}</Text> : null}
+
+        <SectionLabel tone="cobalt">TOOLS</SectionLabel>
+        <Card>
+          <Pressable style={styles.toolRow} onPress={openLoadingPreview}>
+            <Ionicons name="play-circle-outline" size={20} color={colors.primary} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.toolLabel}>Test loading screen</Text>
+              <Text style={styles.toolSub}>Preview the animation + rotating info cards</Text>
+            </View>
+            <Text style={styles.toolChevron}>›</Text>
+          </Pressable>
+        </Card>
 
         <SectionLabel tone="cobalt">API USAGE</SectionLabel>
         <View style={styles.rangeRow}>
@@ -120,6 +151,15 @@ export default function AdminScreen() {
           })}
         </Card>
         </ScrollView>
+
+        <Modal visible={loadingPreview} animationType="fade" onRequestClose={() => setLoadingPreview(false)}>
+          <ScreenBackground variant="paper">
+            <Pressable style={styles.previewOverlay} onPress={() => setLoadingPreview(false)}>
+              <LoadingAnimation coords={previewCoords} />
+              <Text style={styles.previewHint}>Preview · tap anywhere to close</Text>
+            </Pressable>
+          </ScreenBackground>
+        </Modal>
       </SafeAreaView>
     </ScreenBackground>
   );
@@ -166,4 +206,10 @@ const makeStyles = (c) => StyleSheet.create({
   betaBtnTextOn: { color: c.primaryText },
   pricingNote: { fontFamily: FONTS.body, color: c.textMuted, fontSize: 11, marginTop: 4 },
   adminLabel: { fontFamily: FONTS.bodySemiBold, color: c.textMuted, fontSize: 13 },
+  toolRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 4 },
+  toolLabel: { fontFamily: FONTS.bodySemiBold, color: c.textPrimary, fontSize: 15 },
+  toolSub: { fontFamily: FONTS.body, color: c.textMuted, fontSize: 12, marginTop: 1 },
+  toolChevron: { fontFamily: FONTS.body, color: c.textMuted, fontSize: 22 },
+  previewOverlay: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 },
+  previewHint: { fontFamily: FONTS.mono, color: c.textMuted, fontSize: 11, letterSpacing: 0.5 },
 });
