@@ -496,22 +496,6 @@ export default function SettingsScreen() {
             <Text style={[styles.demoSub, { marginTop: 10 }]}>Auto follows your device's appearance.</Text>
           </Card>
 
-          {/* ── Admin (admin-only) ─────────────────────────────────────────── */}
-          {isAdmin && (
-            <>
-              <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>ADMIN</SectionLabel>
-              <Card style={styles.card}>
-                <Pressable style={styles.appRow} onPress={() => router.push('/admin')}>
-                  <View>
-                    <Text style={styles.appRowLabel}>Admin Dashboard</Text>
-                    <Text style={styles.demoSub}>API usage & user administration</Text>
-                  </View>
-                  <Text style={styles.appRowChevron}>›</Text>
-                </Pressable>
-              </Card>
-            </>
-          )}
-
           {/* ── Preferences ───────────────────────────────────────────────── */}
           <CollapsibleCard title="PREFERENCES" sectionKey="preferences" defaultCollapsed={false} style={styles.collapsibleSpacing}>
             {/* CUISINES & DIETARY */}
@@ -799,6 +783,22 @@ export default function SettingsScreen() {
               <Text style={styles.appRowChevron}>›</Text>
             </TouchableOpacity>
           </Card>
+
+          {/* ── Admin (admin-only) — kept at the very bottom ───────────────── */}
+          {isAdmin && (
+            <>
+              <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>ADMIN</SectionLabel>
+              <Card style={styles.card}>
+                <Pressable style={styles.appRow} onPress={() => router.push('/admin')}>
+                  <View>
+                    <Text style={styles.appRowLabel}>Admin Dashboard</Text>
+                    <Text style={styles.demoSub}>API usage & user administration</Text>
+                  </View>
+                  <Text style={styles.appRowChevron}>›</Text>
+                </Pressable>
+              </Card>
+            </>
+          )}
 
           <View style={{ height: 48 }} />
         </ScrollView>
