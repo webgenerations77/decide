@@ -17,6 +17,8 @@ export const KEYS = {
   DEFAULT_END_TIME:   '@decide/default_end_time',
   NOTIFICATIONS:      '@decide/notifications',
   TOS_ACCEPTED:       '@decide/tos_accepted',     // ISO timestamp of acceptance
+  THEME_MODE:         '@decide/theme_mode',          // 'auto' | 'light' | 'dark'
+  COLLAPSED_SECTIONS: '@decide/collapsed_sections',  // JSON map { [sectionKey]: boolean }
 };
 
 const DEFAULTS = {
