@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { getDemoSpinResult } from '../services/demoData';
 import { isAtSpinLimit, incrementSpinCount, getRemainingSpins, LIMITS } from '../services/subscriptionService';
 import { COLORS, FONTS, RADII } from '../constants/theme';
@@ -14,7 +15,28 @@ import { useTheme } from '../context/ThemeContext';
 import ScreenBackground from '../components/brand/ScreenBackground';
 import Card from '../components/brand/Card';
 import CTAButton from '../components/brand/CTAButton';
-import { searchNearbyPlaces } from '../services/placesService';
+import SectionLabel from '../components/brand/SectionLabel';
+import { searchNearbyPlaces, placeDetails } from '../services/placesService';
+
+const SURPRISE_SEEN_KEY = '@decide/spin_surprise_seen';
+
+// Cheddar-voiced "why this pick" built from real signals — no AI call, so it
+// never invents preferences we don't have. Demo picks keep their own reason.
+function buildSpinReason(pick, catNoun, openNow) {
+  if (pick.reason) return pick.reason;
+  const noun = catNoun || 'spot';
+  let lead;
+  if (pick.rating >= 4.6)      lead = `a highly-rated ${noun} just minutes from you`;
+  else if (pick.rating >= 4.2) lead = `a well-reviewed ${noun} close by`;
+  else if (pick.rating > 0)    lead = `a solid ${noun} nearby`;
+  else                         lead = `a ${noun} near you worth a look`;
+
+  let tail = '';
+  if (openNow === true)       tail = " — and it's open right now";
+  else if (openNow === false) tail = " — though it looks closed now, so call ahead";
+
+  return `Picked this because it's ${lead}${tail}.`;
+}
 
 const PRICE_ENUM_TO_NUM = {
   PRICE_LEVEL_INEXPENSIVE: 1, PRICE_LEVEL_MODERATE: 2,
@@ -22,15 +44,15 @@ const PRICE_ENUM_TO_NUM = {
 };
 
 const CATEGORIES = [
-  { id: 'surprise',  label: 'Surprise Me', emoji: '🎲', color: COLORS.primary,
+  { id: 'surprise',  label: 'Surprise Me', emoji: '🎲', color: COLORS.primary, noun: 'spot',
     types: ['restaurant','cafe','art_gallery','park','museum','movie_theater','bowling_alley'] },
-  { id: 'food',      label: 'Food',        emoji: '🍽️', color: COLORS.food,
+  { id: 'food',      label: 'Food',        emoji: '🍽️', color: COLORS.food, noun: 'place to eat',
     types: ['restaurant','cafe','bar','bakery','coffee_shop'] },
-  { id: 'activity',  label: 'Activity',    emoji: '🎭', color: COLORS.activity,
+  { id: 'activity',  label: 'Activity',    emoji: '🎭', color: COLORS.activity, noun: 'thing to do',
     types: ['museum','art_gallery','bowling_alley','movie_theater','karaoke','comedy_club'] },
-  { id: 'outdoor',   label: 'Outdoor',     emoji: '🌿', color: COLORS.outdoor,
+  { id: 'outdoor',   label: 'Outdoor',     emoji: '🌿', color: COLORS.outdoor, noun: 'outdoor spot',
     types: ['park','hiking_area','botanical_garden','zoo'] },
-  { id: 'shopping',  label: 'Shopping',    emoji: '🛍️', color: COLORS.shopping,
+  { id: 'shopping',  label: 'Shopping',    emoji: '🛍️', color: COLORS.shopping, noun: 'place to shop',
     types: ['shopping_mall','market','book_store','gift_shop'] },
 ];
 
@@ -65,7 +87,9 @@ export default function SpinScreen() {
   const [error,       setError]       = useState(null);
   const [coords,      setCoords]      = useState(null);
   const [locLoading,  setLocLoading]  = useState(true);
+  const [detailLoading, setDetailLoading] = useState(false);
   const [remainingSpins, setRemainingSpins] = useState(null);
+  const [surpriseSeen, setSurpriseSeen] = useState(true); // assume seen until storage says otherwise
 
   const spinAnim   = useRef(new Animated.Value(0)).current;
   const bounceAnim = useRef(new Animated.Value(0)).current;
@@ -101,7 +125,15 @@ export default function SpinScreen() {
       }
     })();
     getRemainingSpins().then(setRemainingSpins).catch(() => {});
+    AsyncStorage.getItem(SURPRISE_SEEN_KEY)
+      .then((v) => setSurpriseSeen(v === 'true'))
+      .catch(() => {});
   }, []);
+
+  const dismissSurpriseExplainer = () => {
+    setSurpriseSeen(true);
+    AsyncStorage.setItem(SURPRISE_SEEN_KEY, 'true').catch(() => {});
+  };
 
   const spin = async () => {
     if (spinning || !coords) return;
@@ -149,12 +181,35 @@ export default function SpinScreen() {
       }
 
       setTimeout(async () => {
-        setResult({ ...pick, categoryId: cat.id, categoryEmoji: cat.emoji, categoryColor: cat.color });
+        setResult({
+          ...pick,
+          reason: buildSpinReason(pick, cat.noun, null),
+          categoryId: cat.id, categoryEmoji: cat.emoji, categoryColor: cat.color,
+        });
         setSpinning(false);
         bounceAnim.setValue(0);
         Animated.spring(bounceAnim, { toValue: 1, friction: 6, useNativeDriver: true }).start();
         await incrementSpinCount().catch(() => {});
         getRemainingSpins().then(setRemainingSpins).catch(() => {});
+
+        // Enrich with website / phone / open-now so the result has real next steps
+        const pid = pick.place_id ?? '';
+        if (pid && !pid.startsWith('demo_') && !pid.startsWith('nps_') && !pid.startsWith('ridb_')) {
+          setDetailLoading(true);
+          try {
+            const data = await placeDetails(pid, 'name,formatted_phone_number,website,opening_hours');
+            const d = data?.result ?? null;
+            const openNow = d?.opening_hours?.open_now;
+            setResult((prev) => (prev && prev.place_id === pid ? {
+              ...prev,
+              website: d?.website ?? null,
+              phone:   d?.formatted_phone_number ?? null,
+              openNow: openNow ?? null,
+              reason:  buildSpinReason(pick, cat.noun, openNow ?? null),
+            } : prev));
+          } catch { /* keep base reason; website/call simply won't show */ }
+          setDetailLoading(false);
+        }
       }, 1000);
     } catch (e) {
       setTimeout(() => {
@@ -169,6 +224,9 @@ export default function SpinScreen() {
     const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(result.address || result.name)}&query_place_id=${result.place_id}`;
     Linking.openURL(url);
   };
+
+  const handleWebsite = () => { if (result?.website) Linking.openURL(result.website); };
+  const handleCall    = () => { if (result?.phone) Linking.openURL(`tel:${result.phone}`); };
 
   const spinRotation = spinAnim.interpolate({
     inputRange: [0, 1],
@@ -212,6 +270,22 @@ export default function SpinScreen() {
             ))}
           </View>
 
+          {/* One-time Surprise Me explainer */}
+          {category === 'surprise' && !surpriseSeen && !result && (
+            <View style={styles.explainerCard}>
+              <Text style={styles.explainerEmoji}>🎲</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.explainerTitle}>How Surprise Me works</Text>
+                <Text style={styles.explainerBody}>
+                  One random spot near you — a single suggestion, not a full day plan. Don't love it? Just spin again.
+                </Text>
+                <TouchableOpacity onPress={dismissSurpriseExplainer} activeOpacity={0.7} style={styles.explainerDismiss}>
+                  <Text style={styles.explainerDismissTxt}>Got it</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
           {/* Spin button */}
           <View style={styles.spinWrap}>
             {locLoading ? (
@@ -233,33 +307,73 @@ export default function SpinScreen() {
             )}
           </View>
 
-          {/* Result card */}
+          {/* Result card — one single suggested stop (not an itinerary) */}
           {result && !spinning && (
             <Animated.View style={{ transform: [{ scale: cardScale }], width: '100%' }}>
               <Card style={{ borderLeftWidth: 3, borderLeftColor: result.categoryColor, gap: 8, overflow: 'hidden', borderWidth: 0.5, borderColor: colors.border }}>
+                <SectionLabel tone="cobalt">🎲 Your one pick</SectionLabel>
+
                 <View style={styles.resultHeader}>
                   <Text style={styles.resultEmoji}>{result.categoryEmoji}</Text>
                   <Text style={styles.resultName} numberOfLines={2}>{result.name}</Text>
                 </View>
-                {result.summary ? (
-                  <Text style={styles.resultReason} numberOfLines={3}>{result.summary}</Text>
-                ) : null}
+
                 {result.address ? (
                   <Text style={styles.resultAddress} numberOfLines={1}>📍 {result.address}</Text>
                 ) : null}
-                {result.rating > 0 ? (
-                  <Text style={styles.resultRating}>⭐ {result.rating.toFixed(1)}</Text>
-                ) : null}
-                {result.price_level ? (
-                  <Text style={styles.resultPrice}>{['', '$', '$$', '$$$', '$$$$'][result.price_level] ?? ''}</Text>
+
+                {/* Meta row: rating · price · open status */}
+                {(result.rating > 0 || result.price_level || result.openNow != null) && (
+                  <View style={styles.metaRow}>
+                    {result.rating > 0 && (
+                      <Text style={styles.metaTxt}>⭐ {typeof result.rating === 'number' ? result.rating.toFixed(1) : result.rating}</Text>
+                    )}
+                    {result.price_level ? (
+                      <Text style={styles.metaTxt}>{['', '$', '$$', '$$$', '$$$$'][result.price_level] ?? ''}</Text>
+                    ) : null}
+                    {result.openNow != null && (
+                      <Text style={[styles.metaTxt, { color: result.openNow ? colors.success : colors.error }]}>
+                        {result.openNow ? '● Open now' : '● Closed now'}
+                      </Text>
+                    )}
+                  </View>
+                )}
+
+                {/* Why this pick */}
+                {result.reason ? (
+                  <View style={styles.whyBox}>
+                    <SectionLabel tone="cobalt" style={{ marginBottom: 6 }}>Why this pick</SectionLabel>
+                    <Text style={styles.whyTxt}>{result.reason}</Text>
+                  </View>
                 ) : null}
 
-                <View style={styles.resultActions}>
-                  <CTAButton variant="cobalt" title="LET'S GO →" onPress={handleGo} style={{ flex: 1 }} />
-                  <TouchableOpacity style={styles.againBtn} onPress={spin} activeOpacity={0.7}>
-                    <Text style={styles.againBtnTxt}>🎲 Spin Again</Text>
-                  </TouchableOpacity>
-                </View>
+                {/* Primary next step */}
+                <CTAButton variant="cobalt" title="Get Directions" leftIcon={<Ionicons name="navigate" size={18} color={colors.white} />} onPress={handleGo} style={{ marginTop: 2 }} />
+
+                {/* Website / Call */}
+                {(result.website || result.phone) && (
+                  <View style={styles.secRow}>
+                    {result.website ? (
+                      <TouchableOpacity style={styles.secBtn} onPress={handleWebsite} activeOpacity={0.7}>
+                        <Ionicons name="globe-outline" size={16} color={colors.primary} style={{ marginRight: 6 }} />
+                        <Text style={styles.secBtnTxt}>Website</Text>
+                      </TouchableOpacity>
+                    ) : null}
+                    {result.phone ? (
+                      <TouchableOpacity style={styles.secBtn} onPress={handleCall} activeOpacity={0.7}>
+                        <Ionicons name="call-outline" size={16} color={colors.primary} style={{ marginRight: 6 }} />
+                        <Text style={styles.secBtnTxt}>Call</Text>
+                      </TouchableOpacity>
+                    ) : null}
+                  </View>
+                )}
+
+                {detailLoading && <ActivityIndicator color={colors.primary} size="small" style={{ marginTop: 2 }} />}
+
+                {/* Spin again */}
+                <TouchableOpacity style={styles.againBtn} onPress={spin} activeOpacity={0.7}>
+                  <Text style={styles.againBtnTxt}>🎲 Spin Again</Text>
+                </TouchableOpacity>
               </Card>
             </Animated.View>
           )}
@@ -315,21 +429,48 @@ const makeStyles = (c) => StyleSheet.create({
   spinLabel:       { fontFamily: FONTS.bodyBold, fontSize: 12, color: c.primary, letterSpacing: 3 },
   spinLabelActive: { color: c.accent },
 
+  // One-time Surprise Me explainer
+  explainerCard: {
+    flexDirection: 'row', gap: 12, alignItems: 'flex-start',
+    backgroundColor: c.sky100, borderRadius: RADII.md,
+    borderWidth: 1, borderColor: c.borderLight,
+    padding: 14, marginBottom: 24, width: '100%',
+  },
+  explainerEmoji: { fontSize: 22, marginTop: 1 },
+  explainerTitle: { fontFamily: FONTS.bodyBold, fontSize: 14, color: c.textPrimary, marginBottom: 4 },
+  explainerBody:  { fontFamily: FONTS.body, fontSize: 13, color: c.textSecondary, lineHeight: 19 },
+  explainerDismiss: { alignSelf: 'flex-start', marginTop: 10 },
+  explainerDismissTxt: { fontFamily: FONTS.bodyBold, fontSize: 13, color: c.primary },
+
   // Result card styles (Card primitive handles bg/radius/shadow/padding)
   resultHeader:  { flexDirection: 'row', alignItems: 'center', gap: 10 },
   resultEmoji:   { fontSize: 24 },
-  resultName:    { fontFamily: FONTS.displayHeavy, flex: 1, fontSize: 15, color: c.textPrimary },
-  resultReason:  { fontFamily: FONTS.body, fontSize: 13, color: c.textSecondary, lineHeight: 18, fontStyle: 'italic' },
+  resultName:    { fontFamily: FONTS.displayHeavy, flex: 1, fontSize: 16, color: c.textPrimary },
   resultAddress: { fontFamily: FONTS.body, fontSize: 13, color: c.textSecondary },
-  resultRating:  { fontFamily: FONTS.body, fontSize: 13, color: c.goldText },
-  resultPrice:   { fontFamily: FONTS.bodySemiBold, fontSize: 14, color: c.primary },
 
-  resultActions: { flexDirection: 'row', gap: 10, marginTop: 4 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 12 },
+  metaTxt: { fontFamily: FONTS.bodySemiBold, fontSize: 13, color: c.goldText },
+
+  whyBox: {
+    backgroundColor: c.surfaceAlt, borderRadius: RADII.md,
+    padding: 12, marginTop: 4,
+    borderLeftWidth: 3, borderLeftColor: c.primary,
+  },
+  whyTxt: { fontFamily: FONTS.body, fontSize: 14, color: c.textPrimary, lineHeight: 20 },
+
+  secRow: { flexDirection: 'row', gap: 10 },
+  secBtn: {
+    flex: 1, height: 48, borderRadius: RADII.lg, flexDirection: 'row',
+    backgroundColor: c.surfaceAlt, borderWidth: 1, borderColor: c.border,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  secBtnTxt: { fontFamily: FONTS.bodySemiBold, fontSize: 14, color: c.primary },
+
   againBtn: {
     paddingHorizontal: 16, borderRadius: RADII.lg,
-    height: 56, justifyContent: 'center',
-    backgroundColor: c.surfaceAlt, borderWidth: 1, borderColor: c.border,
-    alignItems: 'center',
+    height: 52, justifyContent: 'center',
+    backgroundColor: c.surface, borderWidth: 1, borderColor: c.border,
+    alignItems: 'center', marginTop: 2,
   },
   againBtnTxt: { fontFamily: FONTS.bodySemiBold, fontSize: 13, color: c.textSecondary },
 
