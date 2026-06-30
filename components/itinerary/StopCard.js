@@ -139,7 +139,7 @@ function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, 
             </View>
           ) : null}
 
-          {stop.provenance?.why ? (
+          {stop.provenance?.why && !stop.live_music?.note ? (
             <View style={styles.provenanceBadge}>
               <Text style={styles.provenanceTxt} numberOfLines={1}>📰 Live find</Text>
             </View>
