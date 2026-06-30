@@ -237,6 +237,7 @@ export default function SettingsScreen() {
   const [dietary,        setDietary]        = useState([]);
   const [activityStyles, setActivityStyles] = useState([]);
   const [sensitivities,  setSensitivities]  = useState([]);
+  const [neurodivergent, setNeurodivergent] = useState(false);
   const [maxDistance,    setMaxDistance]    = useState(10);
   const [pace,           setPace]           = useState('moderate');
   const [budget,         setBudget]         = useState('$$');
@@ -272,6 +273,7 @@ export default function SettingsScreen() {
       setDietary(s.dietary);
       setActivityStyles(s.activityStyles);
       setSensitivities(s.sensitivities ?? []);
+      setNeurodivergent(s.neurodivergent ?? false);
       setMaxDistance(s.maxDistance);
       setPace(s.pace);
       setBudget(s.budget);
@@ -387,6 +389,7 @@ export default function SettingsScreen() {
   const toggleDietary      = (id) => { const next = dietary.includes(id) ? dietary.filter((x) => x !== id) : [...dietary, id]; setDietary(next); save(KEYS.DIETARY, next); };
   const toggleActivity     = (id) => { const next = activityStyles.includes(id) ? activityStyles.filter((x) => x !== id) : [...activityStyles, id]; setActivityStyles(next); save(KEYS.ACTIVITY_STYLES, next); };
   const toggleSensitivity  = (id) => { const next = sensitivities.includes(id) ? sensitivities.filter((x) => x !== id) : [...sensitivities, id]; setSensitivities(next); save(KEYS.SENSITIVITIES, next); };
+  const toggleNeurodivergent = () => { const next = !neurodivergent; setNeurodivergent(next); save(KEYS.NEURODIVERGENT, next); };
 
   const handleDistance = (v) => { setMaxDistance(v); save(KEYS.MAX_DISTANCE, v); };
   const handlePace     = (v) => { setPace(v);        save(KEYS.DEFAULT_PACE, v); };
@@ -530,6 +533,17 @@ export default function SettingsScreen() {
 
             <Text style={styles.sensitivityDisclaimer}>
               ⚠ These alerts are informational only. Always verify allergen information directly with the venue.
+            </Text>
+
+            {/* SENSORY ENVIRONMENT */}
+            <Text style={[styles.fieldLabel, { marginTop: 20 }]}>SENSORY ENVIRONMENT</Text>
+            <ChipGrid
+              options={['Neurodivergent-friendly']}
+              selected={neurodivergent ? ['Neurodivergent-friendly'] : []}
+              onToggle={toggleNeurodivergent}
+            />
+            <Text style={styles.sensitivityNote}>
+              When on, Cheddar favors calmer, quieter, more predictable places and a less packed schedule.
             </Text>
 
             {/* ACTIVITY STYLE & DISTANCE */}

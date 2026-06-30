@@ -9,6 +9,7 @@ export const KEYS = {
   DIETARY:            '@decide/dietary',
   ACTIVITY_STYLES:    '@decide/activity_styles',
   SENSITIVITIES:      '@decide/sensitivities',    // array of sensitivity names (food + environmental)
+  NEURODIVERGENT:     '@decide/neurodivergent',   // boolean — sensory-friendly itinerary bias
   MAX_DISTANCE:       '@decide/max_distance',
   DEFAULT_PACE:       '@decide/default_pace',
   DEFAULT_BUDGET:     '@decide/default_budget',
@@ -30,6 +31,7 @@ const DEFAULTS = {
   dietary:        [],
   activityStyles: [],
   sensitivities:  [],
+  neurodivergent: false,
   maxDistance:    10,
   pace:           'moderate',
   budget:         '$$',
@@ -58,6 +60,7 @@ export async function loadAllSettings() {
       dietary:        map[KEYS.DIETARY]             ?? DEFAULTS.dietary,
       activityStyles: map[KEYS.ACTIVITY_STYLES]     ?? DEFAULTS.activityStyles,
       sensitivities:  map[KEYS.SENSITIVITIES]       ?? DEFAULTS.sensitivities,
+      neurodivergent: map[KEYS.NEURODIVERGENT]      ?? DEFAULTS.neurodivergent,
       maxDistance:    map[KEYS.MAX_DISTANCE]        ?? DEFAULTS.maxDistance,
       pace:           map[KEYS.DEFAULT_PACE]        ?? DEFAULTS.pace,
       budget:         map[KEYS.DEFAULT_BUDGET]      ?? DEFAULTS.budget,
