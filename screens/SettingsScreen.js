@@ -513,7 +513,7 @@ export default function SettingsScreen() {
           )}
 
           {/* ── Preferences ───────────────────────────────────────────────── */}
-          <CollapsibleCard title="PREFERENCES" sectionKey="preferences" style={styles.collapsibleSpacing}>
+          <CollapsibleCard title="PREFERENCES" sectionKey="preferences" defaultCollapsed={false} style={styles.collapsibleSpacing}>
             {/* CUISINES & DIETARY */}
             <Text style={styles.fieldLabel}>CUISINES</Text>
             <ChipGrid options={CUISINES} selected={cuisines} onToggle={toggleCuisine} />
@@ -531,12 +531,6 @@ export default function SettingsScreen() {
             <Text style={[styles.fieldLabel, { marginTop: 16 }]}>ENVIRONMENTAL</Text>
             <ChipGrid options={ENV_SENSITIVITIES} selected={sensitivities} onToggle={toggleSensitivity} />
 
-            <Text style={styles.sensitivityDisclaimer}>
-              ⚠ These alerts are informational only. Always verify allergen information directly with the venue.
-            </Text>
-
-            {/* SENSORY ENVIRONMENT */}
-            <Text style={[styles.fieldLabel, { marginTop: 20 }]}>SENSORY ENVIRONMENT</Text>
             <ChipGrid
               options={['Neurodivergent-friendly']}
               selected={neurodivergent ? ['Neurodivergent-friendly'] : []}
@@ -544,6 +538,10 @@ export default function SettingsScreen() {
             />
             <Text style={styles.sensitivityNote}>
               When on, Cheddar favors calmer, quieter, more predictable places and a less packed schedule.
+            </Text>
+
+            <Text style={styles.sensitivityDisclaimer}>
+              ⚠ These alerts are informational only. Always verify allergen information directly with the venue.
             </Text>
 
             {/* ACTIVITY STYLE & DISTANCE */}
