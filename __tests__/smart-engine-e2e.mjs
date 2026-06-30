@@ -5,7 +5,7 @@ for (const line of fs.readFileSync(path.resolve('.env'), 'utf8').split(/\r?\n/))
   const m = line.match(/^([A-Z_][A-Z0-9_]*)=(.*)$/);
   if (m) process.env[m[1]] = m[2].replace(/\r$/, '').replace(/^"|"$/g, '');
 }
-const { runSmartEngine } = await import('file:///' + path.resolve('api/smart/index.js').replace(/\\/g, '/'));
+const { runSmartEngine } = await import('file:///' + path.resolve('lib/smart/index.js').replace(/\\/g, '/'));
 
 let passed = 0, failed = 0;
 const assert = (l, c, d = '') => c ? (console.log(`  ✓ ${l}`), passed++) : (console.error(`  ✗ ${l}${d ? ` — ${d}` : ''}`), failed++);

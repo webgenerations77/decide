@@ -1,4 +1,4 @@
-import { selectSources } from '../api/smart/sourceRegistry.js';
+import { selectSources } from '../lib/smart/sourceRegistry.js';
 let passed = 0, failed = 0;
 const assert = (l, c, d = '') => c ? (console.log(`  ✓ ${l}`), passed++) : (console.error(`  ✗ ${l}${d ? ` — ${d}` : ''}`), failed++);
 assert('breweries → brewery source', selectSources('breweries').some((s) => s.key === 'brewery'));

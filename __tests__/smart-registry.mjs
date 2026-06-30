@@ -1,4 +1,4 @@
-import { selectSources, matchesInterest, INTEREST_OSM_TAGS } from '../api/smart/sourceRegistry.js';
+import { selectSources, matchesInterest, INTEREST_OSM_TAGS } from '../lib/smart/sourceRegistry.js';
 
 let passed = 0, failed = 0;
 const assert = (l, c, d = '') => c ? (console.log(`  ✓ ${l}`), passed++) : (console.error(`  ✗ ${l}${d ? ` — ${d}` : ''}`), failed++);

@@ -1,11 +1,11 @@
 // Quick verification script for the new feature logic
 // Run with: node __tests__/verify.mjs
 
-import { wantsAlcohol } from '../api/smart/sourceRegistry.js';
-import { wantsLiveMusic, summarizeShow } from '../api/smart/liveMusic.js';
-import { buildScoutPrompt } from '../api/smart/scout.js';
-import { buildSynthesisPrompt, validateStops } from '../api/smart/synthesis.js';
-import { computeCostSummary, pickForecastForDate, priceEnumToNum, attachPriceLevels } from '../api/itineraryHelpers.js';
+import { wantsAlcohol } from '../lib/smart/sourceRegistry.js';
+import { wantsLiveMusic, summarizeShow } from '../lib/smart/liveMusic.js';
+import { buildScoutPrompt } from '../lib/smart/scout.js';
+import { buildSynthesisPrompt, validateStops } from '../lib/smart/synthesis.js';
+import { computeCostSummary, pickForecastForDate, priceEnumToNum, attachPriceLevels } from '../lib/itineraryHelpers.js';
 
 let passed = 0;
 let failed = 0;

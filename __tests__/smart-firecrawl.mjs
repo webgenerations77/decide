@@ -1,5 +1,5 @@
 // __tests__/smart-firecrawl.mjs — run: node __tests__/smart-firecrawl.mjs
-import { fetchWithTimeout } from '../api/smart/firecrawl.js';
+import { fetchWithTimeout } from '../lib/smart/firecrawl.js';
 
 let passed = 0, failed = 0;
 const assert = (l, c, d = '') => c ? (console.log(`  ✓ ${l}`), passed++) : (console.error(`  ✗ ${l}${d ? ` — ${d}` : ''}`), failed++);

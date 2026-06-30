@@ -1,5 +1,5 @@
 // __tests__/smart-anchors.mjs — run: node __tests__/smart-anchors.mjs
-import { buildAnchorPrompt, validateAnchors } from '../api/smart/anchors.js';
+import { buildAnchorPrompt, validateAnchors } from '../lib/smart/anchors.js';
 let passed = 0, failed = 0;
 const assert = (l, c, d = '') => c ? (console.log(`  ✓ ${l}`), passed++) : (console.error(`  ✗ ${l}${d ? ` — ${d}` : ''}`), failed++);
 

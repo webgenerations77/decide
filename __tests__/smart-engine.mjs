@@ -1,5 +1,5 @@
 // __tests__/smart-engine.mjs — run: node __tests__/smart-engine.mjs
-import { runSmartEngine } from '../api/smart/index.js';
+import { runSmartEngine } from '../lib/smart/index.js';
 let passed = 0, failed = 0;
 const assert = (l, c, d = '') => c ? (console.log(`  ✓ ${l}`), passed++) : (console.error(`  ✗ ${l}${d ? ` — ${d}` : ''}`), failed++);
 

@@ -1,6 +1,6 @@
 import {
   validateFeedback, sendFeedbackEmail, gateFeedbackRequest, checkFeedbackRate,
-} from '../../api/feedbackEmail.js';
+} from '../../lib/feedbackEmail.js';
 
 export async function POST(request) {
   const secret = request.headers.get('x-feedback-secret');
