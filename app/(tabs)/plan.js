@@ -21,6 +21,7 @@ import CTAButton from '../../components/brand/CTAButton';
 import SectionLabel from '../../components/brand/SectionLabel';
 import BrandLogo from '../../components/brand/BrandLogo';
 import LoadingAnimation from '../../components/LoadingAnimation';
+import DistanceSlider from '../../components/DistanceSlider';
 import { getApiBase } from '../../services/apiBase';
 import { isValidWindow, windowChanged, canRefresh } from '../../lib/refreshPolicy';
 import PlaceDetailModal from '../../components/itinerary/PlaceDetailModal';
@@ -174,6 +175,7 @@ export default function PlanScreen() {
   const [endTime,   setEndTime]   = useState('8:00 PM');
   const [cuisines,  setCuisines]  = useState([]);
   const [tripNote,  setTripNote]  = useState('');
+  const [maxDistance, setMaxDistance] = useState(25);
 
   const [itinerary,      setItinerary]      = useState(null);
   const [weather,        setWeather]        = useState(null);
@@ -303,7 +305,15 @@ export default function PlanScreen() {
     AsyncStorage.getItem('@decide/display_name').then((n) => {
       if (n) setDisplayName(n);
     }).catch(() => {});
+    AsyncStorage.getItem('@decide/max_distance').then((v) => {
+      if (v != null) { const n = parseInt(v, 10); if (!Number.isNaN(n)) setMaxDistance(n); }
+    }).catch(() => {});
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleMaxDistance = (v) => {
+    setMaxDistance(v);
+    AsyncStorage.setItem('@decide/max_distance', String(v)).catch(() => {});
+  };
 
   useEffect(() => {
     if (!params.date || params.date === seenDateRef.current) return;
@@ -635,6 +645,8 @@ export default function PlanScreen() {
               <SectionLabel tone="cobalt">Group</SectionLabel>
               <PillRow options={GROUP_OPTIONS}  selected={groupType} onSelect={setGroupType} disabled={loading} />
 
+              <DistanceSlider value={maxDistance} onChange={handleMaxDistance} />
+
               <SectionLabel tone="cobalt">Time window</SectionLabel>
               <View style={styles.timePickerRow}>
                 <TimePickerPill label="Start" value={startTime} options={START_TIMES} onChange={setStartTime} disabled={loading} />
@@ -755,7 +767,7 @@ export default function PlanScreen() {
       {/* Loading overlay — centered, covers the form/buttons while Cheddar builds the day */}
       {loading && (
         <View style={styles.loadingOverlay}>
-          <LoadingAnimation />
+          <LoadingAnimation coords={coords} />
         </View>
       )}
 
