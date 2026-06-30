@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PALETTES, LIGHT } from '../constants/theme';
@@ -21,25 +21,32 @@ const ThemeContext = createContext({
 export function ThemeProvider({ children }) {
   const systemScheme = useColorScheme(); // 'light' | 'dark' | null, live-updates
   const [mode, setModeState] = useState('auto');
+  // Saved mode loads async; gate the first render on it so a user who pinned a mode
+  // opposite their OS scheme never sees a one-frame flash of the wrong scheme.
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     AsyncStorage.getItem(KEYS.THEME_MODE)
       .then((saved) => {
         if (saved === 'light' || saved === 'dark' || saved === 'auto') setModeState(saved);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setHydrated(true));
   }, []);
 
-  const setMode = (next) => {
+  const setMode = useCallback((next) => {
     setModeState(next);
     AsyncStorage.setItem(KEYS.THEME_MODE, next).catch(() => {});
-  };
+  }, []);
 
   const scheme = resolveScheme(mode, systemScheme);
   const value = useMemo(
     () => ({ mode, scheme, colors: PALETTES[scheme], setMode }),
-    [mode, scheme],
+    [mode, scheme, setMode],
   );
+
+  // Until the saved mode is read, render nothing (native/expo splash stays up).
+  if (!hydrated) return null;
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }

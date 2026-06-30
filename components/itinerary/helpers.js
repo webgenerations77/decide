@@ -1,12 +1,16 @@
 import { Platform, Linking } from 'react-native';
-import { COLORS } from '../../constants/theme';
 
-export const highlightConfig = {
-  entertainment: { icon: '🎵', borderColor: COLORS.amber },
-  special:       { icon: '🏷️', borderColor: COLORS.primary },
-  feature:       { icon: '✨', borderColor: COLORS.amber },
-  buzz:          { icon: '📰', borderColor: COLORS.textMuted },
-};
+// Theme-aware highlight styling. Pass the active palette (from useTheme) so the
+// left-border colors track light/dark. `buzz` uses textSecondary (not textMuted)
+// so the news/buzz rule stays legible on dark surfaceAlt.
+export function makeHighlightConfig(colors) {
+  return {
+    entertainment: { icon: '🎵', borderColor: colors.amber },
+    special:       { icon: '🏷️', borderColor: colors.primary },
+    feature:       { icon: '✨', borderColor: colors.amber },
+    buzz:          { icon: '📰', borderColor: colors.textSecondary },
+  };
+}
 
 export function openMaps(stop) {
   const target = stop.lat && stop.lng

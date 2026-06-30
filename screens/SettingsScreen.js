@@ -394,6 +394,9 @@ export default function SettingsScreen() {
   const handleGroup    = (v) => { setGroup(v);       save(KEYS.DEFAULT_GROUP, v); };
   const handleStart    = (v) => { setStartTime(v);   save(KEYS.DEFAULT_START_TIME, v); };
   const handleEnd      = (v) => { setEndTime(v);     save(KEYS.DEFAULT_END_TIME, v); };
+  // Notifications are "Coming Soon" (Switch is hard-disabled below). These handlers are
+  // intentionally retained, inert, for when the feature is re-enabled — not dead code.
+  // eslint-disable-next-line no-unused-vars
   const handleNotif = async (v) => {
     if (v) {
       const { status } = await Notifications.requestPermissionsAsync().catch(() => ({ status: 'denied' }));
@@ -412,6 +415,7 @@ export default function SettingsScreen() {
     }
   };
 
+  // eslint-disable-next-line no-unused-vars
   const handleReminderTime = (hour, minute) => {
     setReminderHour(hour);
     setReminderMinute(minute);

@@ -180,18 +180,22 @@ confirm every screen recolors; confirm Auto follows an OS appearance flip live; 
 an app restart (watch for a one-frame flash on the splash); confirm the 3 collapsible cards persist; confirm
 the Location autocomplete dropdown still renders un-clipped in both themes.
 
-**Optional polish Minors (from final review — non-blocking):**
-1. Cold-start theme flash — `context/ThemeContext.js`: `mode` starts `'auto'`, saved mode loads async; a user
-   who pinned Light on a Dark device sees one frame of system scheme. Fix: gate first render on a `hydrated` flag.
-2. Ad-hoc card Views (`app/result.js` & `app/fallback.js` `PlaceCard`, `BetaFeedback` `fbCard`/`modalCard`
-   sheets) don't get the dark hairline border that shared `Card`/`CollapsibleCard` do. Distinguishable anyway
-   (DARK.surface steps above DARK.bg); follow-up for visual parity.
-3. `components/itinerary/helpers.js` `highlightConfig.buzz.borderColor = COLORS.textMuted` (#8B8475) is a static
-   grey left-border; marginal contrast on dark `surfaceAlt`. Could map `buzz` to a themed token.
-4. `context/ThemeContext.js` `setMode` is recreated each render and excluded from the value `useMemo([mode,scheme])`
-   deps — functionally safe (closes only over stable refs); eslint exhaustive-deps nit. Optional `useCallback`.
-5. `screens/SettingsScreen.js` dead notification handlers (`handleNotif`, `reminderHour/Minute`, `handleReminderTime`)
-   are intentionally retained for re-enable but will produce unused-var lint noise.
+**Optional polish Minors (from final review)  ✅ DONE (branch `polish/dark-mode-minors`, 2026-06-30)**
+Verified with `npx expo export --platform web` (clean build). Not yet eyeballed in a running app.
+1. ✅ Cold-start theme flash — `context/ThemeContext.js` now gates the first render on a `hydrated` flag
+   (set in the load effect's `.finally`); returns `null` until the saved mode is read, so the native/expo
+   splash stays up and no wrong-scheme frame paints.
+2. ✅ Dark hairline parity — added `scheme === 'dark'` hairline borders to the ad-hoc surfaces:
+   `app/result.js` `PlaceCard` `card` and `BetaFeedback` `sheet`. (`app/fallback.js` `PlaceCard` already
+   wraps the shared `Card`, so it inherited the border — no change needed. The old `fbCard`/`modalCard`
+   style names in this note were stale.)
+3. ✅ `components/itinerary/helpers.js` — `highlightConfig` is now `makeHighlightConfig(colors)` (theme-aware);
+   `buzz` maps to `colors.textSecondary` (legible on dark `surfaceAlt`, unlike the old static `textMuted`).
+   `PlaceDetailModal` memoizes it off `colors`.
+4. ✅ `context/ThemeContext.js` `setMode` wrapped in `useCallback([])` and added to the value `useMemo` deps.
+5. ✅ `screens/SettingsScreen.js` — retained-but-inert `handleNotif`/`handleReminderTime` annotated with
+   `// eslint-disable-next-line no-unused-vars` + a comment so future linting won't flag them (kept for re-enable;
+   note: project has no eslint config today, so this is pre-emptive).
 
 **Deploy:** pushed to `origin/main`; live `https://decide-app.vercel.app` returns 200 (serves app login redirect),
 so prod is not frozen. Confirm the `62ca6f7` deployment shows **Ready** in the Vercel dashboard (MCP token is

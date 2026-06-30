@@ -8,7 +8,7 @@ import { COLORS, CATEGORY_COLORS, CATEGORY_EMOJIS, FONTS } from '../../constants
 import { useTheme } from '../../context/ThemeContext';
 import { placeDetails as fetchPlaceDetails } from '../../services/placesService';
 import SectionLabel from '../brand/SectionLabel';
-import { openMaps, highlightConfig } from './helpers';
+import { openMaps, makeHighlightConfig } from './helpers';
 import PriceLegendModal from './PriceLegendModal';
 
 // ─── PlaceDetailModal ─────────────────────────────────────────────────────────
@@ -18,6 +18,7 @@ function PlaceDetailModal({ visible, stop, onClose }) {
   const [showLegend,    setShowLegend]    = useState(false);
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const highlightConfig = useMemo(() => makeHighlightConfig(colors), [colors]);
   const screenHeight = Dimensions.get('window').height;
 
   useEffect(() => {

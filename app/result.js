@@ -31,8 +31,8 @@ function deriveProsAndCons(rating, userRatingsTotal, isOpenNow) {
 }
 
 function PlaceCard({ place, rank }) {
-  const { colors } = useTheme();
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { colors, scheme } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, scheme), [colors, scheme]);
 
   const { pros, cons } = deriveProsAndCons(place.rating, place.userRatingsTotal, place.isOpenNow);
   const enterAnim  = useRef(new Animated.Value(0)).current;
@@ -143,8 +143,8 @@ function PlaceCard({ place, rank }) {
 }
 
 export default function ResultScreen() {
-  const { colors } = useTheme();
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { colors, scheme } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, scheme), [colors, scheme]);
 
   const router = useRouter();
   const params = useLocalSearchParams();
@@ -214,7 +214,7 @@ export default function ResultScreen() {
   );
 }
 
-const makeStyles = (c) => StyleSheet.create({
+const makeStyles = (c, scheme) => StyleSheet.create({
   screen: { flex: 1 },
 
   header: {
@@ -240,7 +240,8 @@ const makeStyles = (c) => StyleSheet.create({
 
   listContent: { paddingHorizontal: 20, paddingBottom: 40 },
 
-  // Place card — Animated.View requires direct style; uses SHADOWS.card for brand shadow
+  // Place card — Animated.View requires direct style; uses SHADOWS.card for brand shadow.
+  // Dark hairline matches the shared Card for visual parity in dark mode.
   card: {
     flexDirection: 'row',
     backgroundColor: c.surface,
@@ -248,6 +249,7 @@ const makeStyles = (c) => StyleSheet.create({
     marginBottom: 14,
     overflow: 'hidden',
     ...SHADOWS.card,
+    ...(scheme === 'dark' && { borderWidth: StyleSheet.hairlineWidth, borderColor: c.border }),
   },
   cardLeft: {
     width: 40,

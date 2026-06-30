@@ -21,8 +21,8 @@ export default function BetaFeedback({ topOffset = 0 }) {
   const pathname = usePathname();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { colors, scheme } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, scheme), [colors, scheme]);
 
   const [open, setOpen] = useState(false);
   const [page, setPage] = useState(pathname);
@@ -138,7 +138,7 @@ export default function BetaFeedback({ topOffset = 0 }) {
   );
 }
 
-const makeStyles = (c) => StyleSheet.create({
+const makeStyles = (c, scheme) => StyleSheet.create({
   fab: {
     position: 'absolute', right: 24, zIndex: 9997, elevation: 18,
     backgroundColor: c.primary, borderRadius: RADII.pill,
@@ -159,6 +159,8 @@ const makeStyles = (c) => StyleSheet.create({
   sheet: {
     backgroundColor: c.bg, borderTopLeftRadius: RADII.lg, borderTopRightRadius: RADII.lg,
     maxHeight: '88%',
+    // Hairline separates the sheet from the dimmed backdrop in dark mode (parity with Card).
+    ...(scheme === 'dark' && { borderTopWidth: StyleSheet.hairlineWidth, borderColor: c.border }),
   },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
   title: { fontSize: 20, fontFamily: FONTS.displayHeavy, color: c.textPrimary },
