@@ -44,6 +44,11 @@ const GROUP_OPTIONS  = [
   { id: 'family',  label: 'Family',  emoji: '👨‍👩‍👧' },
   { id: 'friends', label: 'Friends', emoji: '👥' },
 ];
+const APPEARANCE_OPTIONS = [
+  { id: 'auto',  label: 'Auto'  },
+  { id: 'light', label: 'Light' },
+  { id: 'dark',  label: 'Dark'  },
+];
 const START_TIMES = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM'];
 const END_TIMES   = ['4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM', '8:00 PM', '9:00 PM', '10:00 PM'];
 
@@ -215,7 +220,7 @@ function DistanceSlider({ value, onChange }) {
 export default function SettingsScreen() {
   const router = useRouter();
   const { user, signOut, isBetaTester, isAdmin } = useAuth();
-  const { colors } = useTheme();
+  const { colors, mode, setMode } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const [loaded,         setLoaded]         = useState(false);
   const [displayName,    setDisplayName]    = useState('');
@@ -463,35 +468,23 @@ export default function SettingsScreen() {
             </View>
           </Card>
 
-          {/* ── Subscription ─────────────────────────────────────────── */}
-          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>SUBSCRIPTION</SectionLabel>
+          {/* ── Appearance ──────────────────────────────────────────────────── */}
+          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>APPEARANCE</SectionLabel>
           <Card style={styles.card}>
-            <View style={styles.appRow}>
-              <Text style={styles.appRowLabel}>Plan</Text>
-              <Text style={[styles.appRowValue, proStatus && { color: colors.primary }]}>
-                {proStatus ? '👑 Decide Pro' : 'Free'}
-              </Text>
-            </View>
-            {!proStatus && (
-              <>
-                <View style={[styles.appRow, styles.appRowBorder]}>
-                  <Text style={styles.appRowLabel}>Decisions today</Text>
-                  <Text style={styles.appRowValue}>{usageDecisions}/{LIMITS.FREE_DECISIONS_PER_DAY}</Text>
-                </View>
-                <View style={[styles.appRow, styles.appRowBorder]}>
-                  <Text style={styles.appRowLabel}>Spins today</Text>
-                  <Text style={styles.appRowValue}>{usageSpins}/{LIMITS.FREE_SPINS_PER_DAY}</Text>
-                </View>
+            <Text style={styles.fieldLabel}>THEME</Text>
+            <View style={styles.modeRow}>
+              {APPEARANCE_OPTIONS.map((o) => (
                 <TouchableOpacity
-                  style={[styles.appRow, styles.appRowBorder]}
+                  key={o.id}
+                  style={[styles.modePill, mode === o.id && styles.modePillActive]}
+                  onPress={() => setMode(o.id)}
                   activeOpacity={0.7}
-                  onPress={() => router.push('/paywall')}
                 >
-                  <Text style={[styles.appRowLabel, { color: colors.primary }]}>Upgrade to Pro</Text>
-                  <Text style={styles.appRowChevron}>›</Text>
+                  <Text style={[styles.modePillText, mode === o.id && styles.modePillTextActive]}>{o.label}</Text>
                 </TouchableOpacity>
-              </>
-            )}
+              ))}
+            </View>
+            <Text style={[styles.demoSub, { marginTop: 10 }]}>Auto follows your device's appearance.</Text>
           </Card>
 
           {/* ── Admin (admin-only) ─────────────────────────────────────────── */}
@@ -509,6 +502,66 @@ export default function SettingsScreen() {
               </Card>
             </>
           )}
+
+          {/* ── Preferences ───────────────────────────────────────────────── */}
+          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>PREFERENCES</SectionLabel>
+          <Card style={styles.card}>
+            {/* CUISINES & DIETARY */}
+            <Text style={styles.fieldLabel}>CUISINES</Text>
+            <ChipGrid options={CUISINES} selected={cuisines} onToggle={toggleCuisine} />
+
+            <Text style={[styles.fieldLabel, { marginTop: 16 }]}>DIETARY RESTRICTIONS</Text>
+            <ChipGrid options={DIETARY} selected={dietary} onToggle={toggleDietary} />
+
+            {/* SENSITIVITIES & ALLERGIES */}
+            <Text style={[styles.sensitivityNote, { marginTop: 20 }]}>
+              Cheddar will flag relevant risks on cards — food allergens at restaurants, environmental triggers at outdoor spots.
+            </Text>
+            <Text style={styles.fieldLabel}>FOOD ALLERGENS</Text>
+            <ChipGrid options={FOOD_SENSITIVITIES} selected={sensitivities} onToggle={toggleSensitivity} />
+
+            <Text style={[styles.fieldLabel, { marginTop: 16 }]}>ENVIRONMENTAL</Text>
+            <ChipGrid options={ENV_SENSITIVITIES} selected={sensitivities} onToggle={toggleSensitivity} />
+
+            <Text style={styles.sensitivityDisclaimer}>
+              ⚠ These alerts are informational only. Always verify allergen information directly with the venue.
+            </Text>
+
+            {/* ACTIVITY STYLE & DISTANCE */}
+            <Text style={[styles.fieldLabel, { marginTop: 20 }]}>ACTIVITY STYLE</Text>
+            <ChipGrid options={ACTIVITY_STYLES} selected={activityStyles} onToggle={toggleActivity} />
+
+            <View style={styles.distanceHeader}>
+              <Text style={[styles.fieldLabel, { marginTop: 0, marginBottom: 0 }]}>MAX TRAVEL DISTANCE</Text>
+              <Text style={styles.distanceValue}>Within {maxDistance} mi</Text>
+            </View>
+            <DistanceSlider value={maxDistance} onChange={handleDistance} />
+            <View style={styles.distanceTicks}>
+              <Text style={styles.distanceTick}>1 mi</Text>
+              <Text style={styles.distanceTick}>25 mi</Text>
+              <Text style={styles.distanceTick}>50 mi</Text>
+            </View>
+
+            {/* DEFAULT PLAN */}
+            <Text style={[styles.fieldLabel, { marginTop: 14 }]}>PACE</Text>
+            <PillRow options={PACE_OPTIONS} selected={pace} onSelect={handlePace} />
+
+            <Text style={[styles.fieldLabel, { marginTop: 14 }]}>BUDGET</Text>
+            <PillRow options={BUDGET_OPTIONS} selected={budget} onSelect={handleBudget} />
+
+            <Text style={[styles.fieldLabel, { marginTop: 14 }]}>GROUP</Text>
+            <PillRow options={GROUP_OPTIONS} selected={group} onSelect={handleGroup} />
+
+            <Text style={[styles.fieldLabel, { marginTop: 14 }]}>TIME WINDOW</Text>
+            <View style={styles.timePickerRow}>
+              <TimePickerPill label="Start" value={startTime} options={START_TIMES} onChange={handleStart} />
+              <Text style={styles.timeArrow}>→</Text>
+              <TimePickerPill label="End"   value={endTime}   options={END_TIMES}   onChange={handleEnd} />
+            </View>
+            {!validWindow && (
+              <Text style={styles.timeValidationHint}>⚠ Please allow at least 3 hours</Text>
+            )}
+          </Card>
 
           {/* ── Location ───────────────────────────────────────────────────── */}
           <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>LOCATION</SectionLabel>
@@ -578,66 +631,6 @@ export default function SettingsScreen() {
             )}
           </Card>
 
-          {/* ── Preferences ───────────────────────────────────────────────── */}
-          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>PREFERENCES</SectionLabel>
-          <Card style={styles.card}>
-            {/* CUISINES & DIETARY */}
-            <Text style={styles.fieldLabel}>CUISINES</Text>
-            <ChipGrid options={CUISINES} selected={cuisines} onToggle={toggleCuisine} />
-
-            <Text style={[styles.fieldLabel, { marginTop: 16 }]}>DIETARY RESTRICTIONS</Text>
-            <ChipGrid options={DIETARY} selected={dietary} onToggle={toggleDietary} />
-
-            {/* SENSITIVITIES & ALLERGIES */}
-            <Text style={[styles.sensitivityNote, { marginTop: 20 }]}>
-              Cheddar will flag relevant risks on cards — food allergens at restaurants, environmental triggers at outdoor spots.
-            </Text>
-            <Text style={styles.fieldLabel}>FOOD ALLERGENS</Text>
-            <ChipGrid options={FOOD_SENSITIVITIES} selected={sensitivities} onToggle={toggleSensitivity} />
-
-            <Text style={[styles.fieldLabel, { marginTop: 16 }]}>ENVIRONMENTAL</Text>
-            <ChipGrid options={ENV_SENSITIVITIES} selected={sensitivities} onToggle={toggleSensitivity} />
-
-            <Text style={styles.sensitivityDisclaimer}>
-              ⚠ These alerts are informational only. Always verify allergen information directly with the venue.
-            </Text>
-
-            {/* ACTIVITY STYLE & DISTANCE */}
-            <Text style={[styles.fieldLabel, { marginTop: 20 }]}>ACTIVITY STYLE</Text>
-            <ChipGrid options={ACTIVITY_STYLES} selected={activityStyles} onToggle={toggleActivity} />
-
-            <View style={styles.distanceHeader}>
-              <Text style={[styles.fieldLabel, { marginTop: 0, marginBottom: 0 }]}>MAX TRAVEL DISTANCE</Text>
-              <Text style={styles.distanceValue}>Within {maxDistance} mi</Text>
-            </View>
-            <DistanceSlider value={maxDistance} onChange={handleDistance} />
-            <View style={styles.distanceTicks}>
-              <Text style={styles.distanceTick}>1 mi</Text>
-              <Text style={styles.distanceTick}>25 mi</Text>
-              <Text style={styles.distanceTick}>50 mi</Text>
-            </View>
-
-            {/* DEFAULT PLAN */}
-            <Text style={[styles.fieldLabel, { marginTop: 14 }]}>PACE</Text>
-            <PillRow options={PACE_OPTIONS} selected={pace} onSelect={handlePace} />
-
-            <Text style={[styles.fieldLabel, { marginTop: 14 }]}>BUDGET</Text>
-            <PillRow options={BUDGET_OPTIONS} selected={budget} onSelect={handleBudget} />
-
-            <Text style={[styles.fieldLabel, { marginTop: 14 }]}>GROUP</Text>
-            <PillRow options={GROUP_OPTIONS} selected={group} onSelect={handleGroup} />
-
-            <Text style={[styles.fieldLabel, { marginTop: 14 }]}>TIME WINDOW</Text>
-            <View style={styles.timePickerRow}>
-              <TimePickerPill label="Start" value={startTime} options={START_TIMES} onChange={handleStart} />
-              <Text style={styles.timeArrow}>→</Text>
-              <TimePickerPill label="End"   value={endTime}   options={END_TIMES}   onChange={handleEnd} />
-            </View>
-            {!validWindow && (
-              <Text style={styles.timeValidationHint}>⚠ Please allow at least 3 hours</Text>
-            )}
-          </Card>
-
           {/* ── Notifications ─────────────────────────────────────────────── */}
           <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>NOTIFICATIONS</SectionLabel>
           <Card style={styles.card}>
@@ -680,6 +673,37 @@ export default function SettingsScreen() {
                   ))}
                 </View>
               </View>
+            )}
+          </Card>
+
+          {/* ── Subscription ─────────────────────────────────────────── */}
+          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>SUBSCRIPTION</SectionLabel>
+          <Card style={styles.card}>
+            <View style={styles.appRow}>
+              <Text style={styles.appRowLabel}>Plan</Text>
+              <Text style={[styles.appRowValue, proStatus && { color: colors.primary }]}>
+                {proStatus ? '👑 Decide Pro' : 'Free'}
+              </Text>
+            </View>
+            {!proStatus && (
+              <>
+                <View style={[styles.appRow, styles.appRowBorder]}>
+                  <Text style={styles.appRowLabel}>Decisions today</Text>
+                  <Text style={styles.appRowValue}>{usageDecisions}/{LIMITS.FREE_DECISIONS_PER_DAY}</Text>
+                </View>
+                <View style={[styles.appRow, styles.appRowBorder]}>
+                  <Text style={styles.appRowLabel}>Spins today</Text>
+                  <Text style={styles.appRowValue}>{usageSpins}/{LIMITS.FREE_SPINS_PER_DAY}</Text>
+                </View>
+                <TouchableOpacity
+                  style={[styles.appRow, styles.appRowBorder]}
+                  activeOpacity={0.7}
+                  onPress={() => router.push('/paywall')}
+                >
+                  <Text style={[styles.appRowLabel, { color: colors.primary }]}>Upgrade to Pro</Text>
+                  <Text style={styles.appRowChevron}>›</Text>
+                </TouchableOpacity>
+              </>
             )}
           </Card>
 
@@ -740,6 +764,7 @@ export default function SettingsScreen() {
           </Card>
 
           {/* ── Demo Mode ──────────────────────────────────────────────────── */}
+          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>DEVELOPER</SectionLabel>
           <Card style={styles.card}>
             <View style={styles.demoToggleRow}>
               <View style={styles.demoLabelGroup}>
