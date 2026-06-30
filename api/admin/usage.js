@@ -9,6 +9,6 @@ export default async function handler(req, res) {
     return res.json(data);
   } catch (e) {
     console.error('[api/admin/usage] usage_failed:', e);
-    return res.status(500).json({ error: 'usage_failed', message: e.message, _diag: { name: e.name, code: e.code, stack: e.stack } });
+    return res.status(500).json({ error: 'usage_failed', message: e.message });
   }
 }
