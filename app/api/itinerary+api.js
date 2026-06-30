@@ -1,3 +1,4 @@
+import { logUsage } from '../../lib/usageLog.js';
 import { runSmartEngine } from '../../lib/smart/index.js';
 import { computeCostSummary, pickForecastForDate, attachPriceLevels } from '../../lib/itineraryHelpers.js';
 
@@ -68,6 +69,7 @@ async function fetchPlaces(lat, lng, types, radius = 30000) {
     }),
   });
   const data = await res.json();
+  logUsage({ route: 'places-nearby', model: 'google-places', requests: 1 });
   return (data.places ?? []).map((p) => ({
     name:               p.displayName?.text ?? '',
     place_id:           p.id ?? '',
