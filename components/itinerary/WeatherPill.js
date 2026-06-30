@@ -1,5 +1,6 @@
+import { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { COLORS } from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 
 export function buildWeatherPillText(weather, timeWindow) {
   const tw = timeWindow ?? '';
@@ -14,6 +15,8 @@ export function buildWeatherPillText(weather, timeWindow) {
 }
 
 export default function WeatherPill({ weather, timeWindow }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <View style={styles.headerPill}>
       <Text style={styles.headerPillText}>{buildWeatherPillText(weather, timeWindow)}</Text>
@@ -21,11 +24,11 @@ export default function WeatherPill({ weather, timeWindow }) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   headerPill: {
     marginTop: 10, paddingHorizontal: 12, paddingVertical: 6,
-    borderRadius: 20, backgroundColor: COLORS.surface,
-    borderWidth: 1, borderColor: COLORS.border,
+    borderRadius: 20, backgroundColor: c.surface,
+    borderWidth: 1, borderColor: c.border,
   },
-  headerPillText: { fontSize: 12, color: COLORS.textSecondary, letterSpacing: 0.2 },
+  headerPillText: { fontSize: 12, color: c.textSecondary, letterSpacing: 0.2 },
 });

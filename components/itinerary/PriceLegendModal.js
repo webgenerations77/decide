@@ -1,7 +1,11 @@
+import { useMemo } from 'react';
 import { View, Text, Modal, TouchableOpacity, StyleSheet } from 'react-native';
-import { COLORS, FONTS, PRICE_LEGEND } from '../../constants/theme';
+import { FONTS, PRICE_LEGEND } from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function PriceLegendModal({ visible, onClose }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={onClose}>
@@ -22,23 +26,23 @@ export default function PriceLegendModal({ visible, onClose }) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   modalOverlay: {
     flex: 1, backgroundColor: 'rgba(0,0,0,0.72)',
     justifyContent: 'center', alignItems: 'center', padding: 40,
   },
   legendCard: {
-    backgroundColor: COLORS.surface, borderRadius: 20,
-    borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: c.surface, borderRadius: 20,
+    borderWidth: 1, borderColor: c.border,
     width: 280, padding: 22,
   },
   legendTitle: {
-    fontSize: 15, color: COLORS.textPrimary,
+    fontSize: 15, color: c.textPrimary,
     fontFamily: FONTS.display,
     textAlign: 'center', marginBottom: 16,
   },
-  legendRow:   { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  legendSymbol:{ fontSize: 15, fontFamily: FONTS.bodyBold, color: COLORS.goldText, width: 40 },
-  legendLabel: { fontSize: 14, color: COLORS.textSecondary, flex: 1, fontFamily: FONTS.body },
-  legendSub:   { fontSize: 11, color: COLORS.textMuted, marginTop: 14, lineHeight: 15, textAlign: 'center', fontFamily: FONTS.body },
+  legendRow:    { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: c.border },
+  legendSymbol: { fontSize: 15, fontFamily: FONTS.bodyBold, color: c.goldText, width: 40 },
+  legendLabel:  { fontSize: 14, color: c.textSecondary, flex: 1, fontFamily: FONTS.body },
+  legendSub:    { fontSize: 11, color: c.textMuted, marginTop: 14, lineHeight: 15, textAlign: 'center', fontFamily: FONTS.body },
 });
