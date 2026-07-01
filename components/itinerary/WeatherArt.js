@@ -7,10 +7,11 @@
 // Bucketing + sky gradient live in lib/weatherWash.js (pure, tested). This file owns
 // only the vector scenes.
 import { useMemo } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, Image, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle, Ellipse, Line, Path, G } from 'react-native-svg';
 import { weatherBucket, weatherWash } from '../../lib/weatherWash';
+import { WEATHER_PHOTOS } from '../../constants/weatherPhotos';
 import { useTheme } from '../../context/ThemeContext';
 
 // Illustration coordinate space; the band stretches to fill, cropping via slice.
@@ -120,21 +121,32 @@ export default function WeatherArt({ weather, height = 72, style }) {
   const { colors } = useTheme();
   const bucket = useMemo(() => weatherBucket(weather), [weather]);
   const wash   = useMemo(() => weatherWash(weather, colors), [weather, colors]);
-  if (!bucket) return null;
+
+  // Prefer a bundled photo for this condition (or the `default` when there's no forecast);
+  // fall back to the hand-drawn vector scene. When no photo is configured, behavior is
+  // unchanged: render the scene, or nothing when there's no usable forecast.
+  const photo = (bucket && WEATHER_PHOTOS[bucket]) || WEATHER_PHOTOS.default;
+  if (!bucket && !photo) return null;
 
   return (
     <View style={[{ height, width: '100%', overflow: 'hidden' }, style]}>
-      {wash && (
-        <LinearGradient
-          colors={wash.colors}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
+      {photo ? (
+        <Image source={photo} style={StyleSheet.absoluteFill} resizeMode="cover" />
+      ) : (
+        <>
+          {wash && (
+            <LinearGradient
+              colors={wash.colors}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+          )}
+          <Svg width="100%" height="100%" viewBox={`0 0 ${VB_W} ${VB_H}`} preserveAspectRatio="xMidYMid slice">
+            <Scene bucket={bucket} c={colors} />
+          </Svg>
+        </>
       )}
-      <Svg width="100%" height="100%" viewBox={`0 0 ${VB_W} ${VB_H}`} preserveAspectRatio="xMidYMid slice">
-        <Scene bucket={bucket} c={colors} />
-      </Svg>
     </View>
   );
 }
