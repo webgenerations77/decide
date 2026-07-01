@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
   View, Text, Modal, ScrollView, TouchableOpacity, ActivityIndicator,
-  Linking, Dimensions, StyleSheet, Image,
+  Linking, StyleSheet, Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,7 +20,6 @@ function PlaceDetailModal({ visible, stop, onClose }) {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const highlightConfig = useMemo(() => makeHighlightConfig(colors), [colors]);
-  const screenHeight = Dimensions.get('window').height;
 
   useEffect(() => {
     if (!visible || !stop) { setPlaceDetails(null); return; }
@@ -61,9 +60,9 @@ function PlaceDetailModal({ visible, stop, onClose }) {
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <TouchableOpacity style={styles.detailOverlay} activeOpacity={1} onPress={onClose}>
-        <TouchableOpacity activeOpacity={1} onPress={() => {}}>
-          <View style={[styles.detailSheet, { maxHeight: screenHeight * 0.85 }]}>
+      <View style={styles.detailOverlay}>
+        <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={onClose} />
+          <View style={styles.detailSheet}>
             <View style={styles.dragHandle} />
 
             {stop.photo ? (
@@ -262,8 +261,7 @@ function PlaceDetailModal({ visible, stop, onClose }) {
               )}
             </ScrollView>
           </View>
-        </TouchableOpacity>
-      </TouchableOpacity>
+      </View>
 
       <PriceLegendModal visible={showLegend} onClose={() => setShowLegend(false)} />
     </Modal>
@@ -274,6 +272,7 @@ const makeStyles = (c) => StyleSheet.create({
   // Place detail modal
   detailOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.72)', justifyContent: 'flex-end' },
   detailSheet: {
+    maxHeight: '90%',
     backgroundColor: c.surface,
     borderTopLeftRadius: 28, borderTopRightRadius: 28,
     borderWidth: 1, borderColor: c.border,
