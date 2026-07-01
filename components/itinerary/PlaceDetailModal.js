@@ -5,7 +5,8 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, CATEGORY_COLORS, CATEGORY_EMOJIS, FONTS } from '../../constants/theme';
+import { FONTS } from '../../constants/theme';
+import { categoryVisual } from '../../constants/categoryVisuals';
 import { useTheme } from '../../context/ThemeContext';
 import { placeDetails as fetchPlaceDetails, placePhotoUrl } from '../../services/placesService';
 import SectionLabel from '../brand/SectionLabel';
@@ -64,8 +65,7 @@ function PlaceDetailModal({ visible, stop, onClose }) {
 
   if (!stop) return null;
 
-  const color    = CATEGORY_COLORS[stop.category] ?? COLORS.amber;  // data-layer
-  const catEmoji = CATEGORY_EMOJIS[stop.category] ?? '⚡';
+  const { icon: catIcon, color } = categoryVisual(stop.category);  // data-layer
   const priceLvl = [null, '$', '$$', '$$$', '$$$$'];
 
   const rating    = stop.rating ?? placeDetails?.rating ?? 0;
@@ -96,8 +96,9 @@ function PlaceDetailModal({ visible, stop, onClose }) {
             ) : null}
 
             <View style={styles.detailHeader}>
-              <View style={[styles.detailCatPill, { backgroundColor: color + '22' }]}>
-                <Text style={[styles.detailCatPillTxt, { color }]}>{catEmoji} {(stop.category ?? '').toUpperCase()}</Text>
+              <View style={[styles.detailCatPill, { backgroundColor: color + '22', flexDirection: 'row', alignItems: 'center', gap: 5 }]}>
+                <Ionicons name={catIcon} size={13} color={color} />
+                <Text style={[styles.detailCatPillTxt, { color }]}>{(stop.category ?? '').toUpperCase()}</Text>
               </View>
               <TouchableOpacity style={styles.detailCloseBtn} onPress={onClose} activeOpacity={0.7}>
                 <Ionicons name="close" size={16} color={colors.textSecondary} />

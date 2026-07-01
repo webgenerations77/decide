@@ -3,12 +3,14 @@ import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView, Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { DEMO_HISTORY } from '../../services/demoData';
 import { loadHistory, syncHistory, updateFeedback } from '../../services/historyService';
 import WeatherArt from '../../components/itinerary/WeatherArt';
-import { COLORS, CATEGORY_COLORS, CATEGORY_EMOJIS, FONTS } from '../../constants/theme';
+import { FONTS } from '../../constants/theme';
+import { categoryVisual } from '../../constants/categoryVisuals';
 import useViewportOverlay, { WEB_OVERLAY_FIX } from '../../hooks/useViewportOverlay';
 import { useTheme } from '../../context/ThemeContext';
 import ScreenBackground from '../../components/brand/ScreenBackground';
@@ -68,15 +70,14 @@ function FeedbackModal({ visible, itemName, onClose, onSelect }) {
 function DecisionCard({ item, onFeedbackUp, onFeedbackDown }) {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const color    = CATEGORY_COLORS[item.category] ?? COLORS.primary;
-  const catEmoji = CATEGORY_EMOJIS[item.category] ?? '⚡';
-  const score    = item.excitementScore ?? item.excitement_score ?? 0;
+  const { icon: catIcon, color } = categoryVisual(item.category);
+  const score = item.excitementScore ?? item.excitement_score ?? 0;
 
   return (
     <Card style={[styles.decisionCard, { borderLeftColor: color }]}>
       <View style={styles.decisionTop}>
         <View style={styles.decisionNameRow}>
-          <Text style={styles.decisionCatEmoji}>{catEmoji}</Text>
+          <Ionicons name={catIcon} size={15} color={color} style={styles.decisionCatIcon} />
           <Text style={styles.decisionName} numberOfLines={1}>{item.name}</Text>
           {score > 0 && (
             <View style={styles.exciteBadge}>
@@ -176,7 +177,7 @@ function ItineraryEntry({ item, onFeedbackUp, onFeedbackDown, onOpen }) {
             contentContainerStyle={styles.chipsScroll}
           >
             {item.stops.map((stop, i) => {
-              const c = CATEGORY_COLORS[stop.category] ?? COLORS.border;
+              const c = categoryVisual(stop.category).color;
               return (
                 <View key={i} style={[styles.stopChip, { borderColor: c + '55' }]}>
                   <Text style={styles.stopChipTxt} numberOfLines={1}>{stop.name}</Text>
@@ -467,7 +468,7 @@ const makeStyles = (c) => StyleSheet.create({
   },
   decisionTop:      { padding: 14, gap: 5 },
   decisionNameRow:  { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  decisionCatEmoji: { fontSize: 16 },
+  decisionCatIcon:  { marginRight: 2 },
   decisionName:     { flex: 1, fontSize: 15, fontFamily: FONTS.bodyBold, color: c.textPrimary },
   exciteBadge: {
     backgroundColor: c.primary + '33', borderRadius: 10,

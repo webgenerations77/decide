@@ -5,7 +5,8 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { COLORS, CATEGORY_COLORS, CATEGORY_EMOJIS, FONTS, RADII } from '../../constants/theme';
+import { FONTS, RADII } from '../../constants/theme';
+import { categoryVisual } from '../../constants/categoryVisuals';
 import useViewportOverlay, { WEB_OVERLAY_FIX } from '../../hooks/useViewportOverlay';
 import { useTheme } from '../../context/ThemeContext';
 import { getLocalKnowledge, getAllergyAlerts } from '../../constants/localKnowledge';
@@ -54,8 +55,7 @@ function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, 
   const [showLegend,        setShowLegend]        = useState(false);
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const color = CATEGORY_COLORS[stop.category] ?? COLORS.amber;  // data-layer: brand-fixed category color
-  const emoji = CATEGORY_EMOJIS[stop.category] ?? '⚡';
+  const { icon: catIcon, color } = categoryVisual(stop.category);  // data-layer: category → icon/color
 
   // Staggered entrance animation
   const enterAnim  = useRef(new Animated.Value(0)).current;
@@ -119,7 +119,7 @@ function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, 
             </View>
             <Text style={styles.durationText}>{stop.duration_mins} min</Text>
             <View style={[styles.catChip, { backgroundColor: color + '22' }]}>
-              <Text style={styles.catEmoji}>{emoji}</Text>
+              <Ionicons name={catIcon} size={13} color={color} />
               <Text style={[styles.catLabel, { color }]}>{stop.category}</Text>
             </View>
           </View>
