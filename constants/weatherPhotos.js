@@ -12,13 +12,13 @@
 // WeatherArt falls back to its hand-drawn vector scene for any bucket with no entry here,
 // so leaving some (or all) commented out is safe and the app still builds.
 export const WEATHER_PHOTOS = {
-  // clear:    require('../assets/weather/clear.png'),
-  // hot:      require('../assets/weather/hot.png'),
-  // partly:   require('../assets/weather/partly.png'),
-  // overcast: require('../assets/weather/overcast.png'),
-  // fog:      require('../assets/weather/fog.png'),
-  // rain:     require('../assets/weather/rain.png'),
-  // thunder:  require('../assets/weather/thunder.png'),
-  // snow:     require('../assets/weather/snow.png'),
-  // default:  require('../assets/weather/default.png'),
+  clear:    require('../assets/weather/clear.png'),
+  hot:      require('../assets/weather/hot.png'),
+  partly:   require('../assets/weather/partly.png'),
+  overcast: require('../assets/weather/overcast.png'),
+  // fog: add assets/weather/fog.png then uncomment — falls back to the vector fog scene until then.
+  rain:     require('../assets/weather/rain.png'),
+  thunder:  require('../assets/weather/thunder.png'),
+  snow:     require('../assets/weather/snow.png'),
+  default:  require('../assets/weather/default.png'),
 };
