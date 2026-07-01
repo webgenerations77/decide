@@ -6,7 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
-import { getUsage, getUsers, setUserRole } from '../../services/adminApi';
+import { getUsage, getUserStats, getUsers, setUserRole } from '../../services/adminApi';
 import ScreenBackground from '../../components/brand/ScreenBackground';
 import Card from '../../components/brand/Card';
 import SectionLabel from '../../components/brand/SectionLabel';
@@ -21,6 +21,11 @@ const PREVIEW_FALLBACK_COORDS = { latitude: 38.3226, longitude: -75.2179 };
 
 const RANGES = ['day', 'week', 'month'];
 const money = (n) => `$${(n || 0).toFixed(2)}`;
+const formatDate = (v, fallback = 'Unknown') => {
+  if (!v) return fallback;
+  const d = new Date(v);
+  return Number.isNaN(d.getTime()) ? fallback : d.toLocaleDateString();
+};
 
 export default function AdminScreen() {
   const { colors } = useTheme();
@@ -35,6 +40,10 @@ export default function AdminScreen() {
   const [err, setErr] = useState(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [previewCoords, setPreviewCoords] = useState(PREVIEW_FALLBACK_COORDS);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [detailStats, setDetailStats] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailErr, setDetailErr] = useState(null);
 
   const emailByUid = useMemo(() => {
     const m = {};
@@ -53,6 +62,23 @@ export default function AdminScreen() {
     } catch {}
     setPreviewCoords(coords);
     setLoadingPreview(true);
+  }
+
+  function openUserDetail(u) {
+    setSelectedUser(u);
+    setDetailStats(null);
+    setDetailErr(null);
+    setDetailLoading(true);
+    getUserStats(u.uid)
+      .then(setDetailStats)
+      .catch((e) => setDetailErr(e.message))
+      .finally(() => setDetailLoading(false));
+  }
+
+  function closeUserDetail() {
+    setSelectedUser(null);
+    setDetailStats(null);
+    setDetailErr(null);
   }
 
   useEffect(() => {
@@ -155,10 +181,10 @@ export default function AdminScreen() {
             const rowIsAdmin = getAdminRole({ email: u.email }) === 'admin';
             return (
               <View key={u.uid} style={styles.userRow}>
-                <View style={{ flex: 1 }}>
+                <Pressable style={{ flex: 1 }} onPress={() => openUserDetail(u)}>
                   <Text style={styles.userEmail}>{u.email}</Text>
                   <Text style={styles.userMeta}>{u.role || 'user'} · {u.status}</Text>
-                </View>
+                </Pressable>
                 {rowIsAdmin ? (
                   <Text style={styles.adminLabel}>Admin</Text>
                 ) : (
@@ -181,6 +207,54 @@ export default function AdminScreen() {
               <Text style={styles.previewHint}>Preview · tap anywhere to close</Text>
             </Pressable>
           </ScreenBackground>
+        </Modal>
+
+        <Modal visible={!!selectedUser} animationType="fade" transparent onRequestClose={closeUserDetail}>
+          <Pressable style={styles.detailBackdrop} onPress={closeUserDetail}>
+            <Pressable style={styles.detailSheet} onPress={() => {}}>
+              <ScrollView contentContainerStyle={{ gap: 4 }}>
+                <View style={styles.detailHeader}>
+                  <Text style={styles.detailEmail}>{selectedUser?.email}</Text>
+                  <Pressable onPress={closeUserDetail} hitSlop={10}>
+                    <Ionicons name="close" size={22} color={colors.textPrimary} />
+                  </Pressable>
+                </View>
+                <Text style={styles.userMeta}>{selectedUser?.role || 'user'} · {selectedUser?.status}</Text>
+
+                <Text style={styles.subhead}>Account</Text>
+                <Row label="Created" value={formatDate(selectedUser?.createdAt)} />
+                <Row label="Last login" value={formatDate(selectedUser?.lastSignIn, 'Never')} />
+
+                <Text style={styles.subhead}>API usage ({range})</Text>
+                {selectedUser && usage?.byUser?.[selectedUser.uid] ? (
+                  <>
+                    <Row label="Requests" value={String(usage.byUser[selectedUser.uid].requests || 0)} />
+                    <Row label="Input tokens" value={(usage.byUser[selectedUser.uid].inputTokens || 0).toLocaleString()} />
+                    <Row label="Output tokens" value={(usage.byUser[selectedUser.uid].outputTokens || 0).toLocaleString()} />
+                    <Row label="Est. cost" value={money(usage.byUser[selectedUser.uid].estCost)} />
+                  </>
+                ) : (
+                  <Text style={styles.toolSub}>No usage in this range</Text>
+                )}
+
+                <Text style={styles.subhead}>Activity</Text>
+                {detailLoading ? (
+                  <ActivityIndicator color={colors.primary} />
+                ) : detailErr ? (
+                  <Text style={styles.err}>{detailErr}</Text>
+                ) : detailStats ? (
+                  <>
+                    <Row label="Itineraries" value={String(detailStats.itineraries)} />
+                    <Row label="Decisions" value={String(detailStats.decisions)} />
+                    <Row label="Locations" value={String(detailStats.locations)} />
+                    {detailStats.cities?.length ? (
+                      <Text style={styles.toolSub}>{detailStats.cities.join(', ')}</Text>
+                    ) : null}
+                  </>
+                ) : null}
+              </ScrollView>
+            </Pressable>
+          </Pressable>
         </Modal>
       </SafeAreaView>
     </ScreenBackground>
@@ -234,4 +308,11 @@ const makeStyles = (c) => StyleSheet.create({
   toolChevron: { fontFamily: FONTS.body, color: c.textMuted, fontSize: 22 },
   previewOverlay: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 },
   previewHint: { fontFamily: FONTS.mono, color: c.textMuted, fontSize: 11, letterSpacing: 0.5 },
+  detailBackdrop: { flex: 1, backgroundColor: 'rgba(16,42,76,0.5)', justifyContent: 'flex-end' },
+  detailSheet: {
+    maxHeight: '80%', backgroundColor: c.surface, borderTopLeftRadius: RADII.lg, borderTopRightRadius: RADII.lg,
+    padding: 20, borderWidth: 1, borderColor: c.border,
+  },
+  detailHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  detailEmail: { fontFamily: FONTS.bodyBold, color: c.textPrimary, fontSize: 17, flexShrink: 1 },
 });
