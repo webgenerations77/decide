@@ -5,20 +5,20 @@
 //
 // HOW TO ACTIVATE (photos are bundled, so they work offline with no API key):
 //   1. Drop approved images into decide-app/assets/weather/ using these filenames
-//      (jpg, landscape, ~1200px wide is plenty): clear.jpg, hot.jpg, partly.jpg,
-//      overcast.jpg, fog.jpg, rain.jpg, thunder.jpg, snow.jpg, default.jpg
+//      (png, landscape, ~1200px wide is plenty): clear.png, hot.png, partly.png,
+//      overcast.png, fog.png, rain.png, thunder.png, snow.png, default.png
 //   2. Uncomment the matching lines below.
 //
 // WeatherArt falls back to its hand-drawn vector scene for any bucket with no entry here,
 // so leaving some (or all) commented out is safe and the app still builds.
 export const WEATHER_PHOTOS = {
-  // clear:    require('../assets/weather/clear.jpg'),
-  // hot:      require('../assets/weather/hot.jpg'),
-  // partly:   require('../assets/weather/partly.jpg'),
-  // overcast: require('../assets/weather/overcast.jpg'),
-  // fog:      require('../assets/weather/fog.jpg'),
-  // rain:     require('../assets/weather/rain.jpg'),
-  // thunder:  require('../assets/weather/thunder.jpg'),
-  // snow:     require('../assets/weather/snow.jpg'),
-  // default:  require('../assets/weather/default.jpg'),
+  // clear:    require('../assets/weather/clear.png'),
+  // hot:      require('../assets/weather/hot.png'),
+  // partly:   require('../assets/weather/partly.png'),
+  // overcast: require('../assets/weather/overcast.png'),
+  // fog:      require('../assets/weather/fog.png'),
+  // rain:     require('../assets/weather/rain.png'),
+  // thunder:  require('../assets/weather/thunder.png'),
+  // snow:     require('../assets/weather/snow.png'),
+  // default:  require('../assets/weather/default.png'),
 };

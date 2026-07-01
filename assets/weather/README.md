@@ -1,17 +1,17 @@
 # Weather card photos
 
 Drop approved landscape photos here to replace the vector weather scenes on itinerary cards.
-Filenames (jpg, ~1200px wide is plenty):
+Filenames (png, ~1200px wide is plenty):
 
-- `clear.jpg` — bright blue sky / sunny
-- `hot.jpg` — hot, hazy sun / heat
-- `partly.jpg` — partly cloudy, sun + clouds
-- `overcast.jpg` — grey overcast sky
-- `fog.jpg` — fog / mist
-- `rain.jpg` — rain
-- `thunder.jpg` — storm / lightning
-- `snow.jpg` — snow
-- `default.jpg` — a nice generic scene, used when a plan has no forecast
+- `clear.png` — bright blue sky / sunny
+- `hot.png` — hot, hazy sun / heat
+- `partly.png` — partly cloudy, sun + clouds
+- `overcast.png` — grey overcast sky
+- `fog.png` — fog / mist
+- `rain.png` — rain
+- `thunder.png` — storm / lightning
+- `snow.png` — snow
+- `default.png` — a nice generic scene, used when a plan has no forecast
 
 After adding files, uncomment the matching lines in `constants/weatherPhotos.js`.
 Any bucket left without a photo falls back to the hand-drawn vector scene automatically.
