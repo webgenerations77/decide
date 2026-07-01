@@ -634,6 +634,8 @@ export default function PlanScreen() {
             </View>
 
             <Card style={styles.prefsCard}>
+              <DistanceSlider value={maxDistance} onChange={handleMaxDistance} />
+
               <SectionLabel tone="cobalt">Date</SectionLabel>
               <TouchableOpacity
                 style={[styles.datePill, loading && { opacity: 0.5 }]}
@@ -653,8 +655,6 @@ export default function PlanScreen() {
 
               <SectionLabel tone="cobalt">Group</SectionLabel>
               <PillRow options={GROUP_OPTIONS}  selected={groupType} onSelect={setGroupType} disabled={loading} />
-
-              <DistanceSlider value={maxDistance} onChange={handleMaxDistance} />
 
               <SectionLabel tone="cobalt">Time window</SectionLabel>
               <View style={styles.timePickerRow}>
@@ -749,7 +749,6 @@ export default function PlanScreen() {
               loading={loading}
             />
           </Animated.View>
-          {!loading && <Text style={styles.generateSubtext}>“{quote}” — {QUOTE_ATTRIBUTION}</Text>}
           {!loading && remainingDecisions != null && remainingDecisions !== Infinity && (
             <Text style={styles.remainingText}>{remainingDecisions}/{LIMITS.FREE_DECISIONS_PER_DAY} decisions left today</Text>
           )}
