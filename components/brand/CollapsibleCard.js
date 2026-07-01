@@ -57,7 +57,7 @@ const makeStyles = (c, scheme) => StyleSheet.create({
     paddingHorizontal: 4, paddingVertical: 6, marginBottom: 10,
   },
   title: { fontFamily: FONTS.monoBold, fontSize: 11, letterSpacing: 1.6, textTransform: 'uppercase', color: c.primary },
-  chevron: { fontSize: 13, color: c.textMuted },
+  chevron: { fontSize: 20, lineHeight: 20, color: c.textMuted },
   chevronOpen: { color: c.primary },
   body: {
     backgroundColor: c.surface, borderRadius: RADII.md, padding: 16, ...SHADOWS.card,
