@@ -35,12 +35,12 @@ export default function BetaGuide() {
         <ScrollView contentContainerStyle={styles.content}>
           <GradientHeader style={styles.header}>
             <Text style={styles.eyebrow}>BETA GUIDE</Text>
-            <Text style={styles.headerTitle}>Welcome to Cheddar 🧀</Text>
+            <Text style={styles.headerTitle}>Welcome to Decide 🧭</Text>
           </GradientHeader>
 
           <Text style={styles.lead}>
             You're one of the very first people inside Decide — thanks for that. Here's the deal:
-            tell me roughly what you're in the mood for, and I'll plan the whole day — where to eat,
+            tell us roughly what you're in the mood for, and we'll plan the whole day — where to eat,
             what to do, in what order, drive times sorted. No more standing around asking "so what do
             you want to do?" We'll decide. You just go.{'\n\n'}
             This takes two minutes to read. Then go break things.
@@ -50,52 +50,56 @@ export default function BetaGuide() {
           <Card style={styles.card}>
             <Text style={styles.h}>🗺️ Plan — the main event</Text>
             <Text style={styles.p}>
-              Set your vibe — pace, budget, who's with you, a quick note like "anniversary, we love
-              seafood" — and I build a full day, stop by stop, with a reason for each pick. Don't like
-              one? Swap it and I'll find another.
+              Set your vibe — pace, budget, who's with you, and a quick note like "anniversary, we love
+              seafood." If your note has real detail, we'll ask one quick follow-up to nail the day, then
+              build it stop by stop, each with a reason for the pick. Don't like one? Swap it and we'll
+              find another.
             </Text>
             <Text style={styles.h}>🎯 Quick Spin</Text>
             <Text style={styles.p}>
-              Can't even commit to planning? Hit Spin and I'll throw you one solid pick on the spot —
-              now with a quick reason for why, plus one-tap Directions, Website, and Call.
+              Can't even commit to planning? Hit Spin and we'll throw you one solid pick on the spot —
+              with a quick reason for why, plus one-tap Directions, Website, and Call.
               Perfect for "just tell me where to eat."
             </Text>
             <Text style={styles.h}>📜 History</Text>
             <Text style={styles.p}>
-              Every day I've planned and every spin lands here, so you can pull up that great taco
-              place from last week.
+              Every day we've planned and every spin lands here — and it syncs across your devices — so
+              you can pull up that great taco place from last week.
             </Text>
           </Card>
 
           <SectionLabel tone="cobalt" style={styles.section}>SET YOURSELF UP FIRST (2 MIN)</SectionLabel>
           <Card style={styles.card}>
             <Text style={styles.p}>
-              The more I know, the better the day. In Settings, set your location, your default pace
-              and budget, and — this one matters — your dietary needs and sensitivities. Tell me you're
-              vegetarian or allergic to shellfish and I'll plan around it every single time.
+              The more we know, the better the day. In Settings, set your location, your default pace
+              and budget, and — this one matters — your dietary needs and sensitivities. Tell us you're
+              vegetarian or allergic to shellfish and we'll plan around it every single time. While
+              you're there, pick a profile avatar and try light or dark mode.
             </Text>
           </Card>
 
-          <SectionLabel tone="cobalt" style={styles.section}>WHAT I'D LOVE YOU TO TEST</SectionLabel>
+          <SectionLabel tone="cobalt" style={styles.section}>WHAT WE'D LOVE YOU TO TEST</SectionLabel>
           <Card style={styles.card}>
             <Text style={styles.p}>• Plan a day in a few different places and dates — your hometown, then somewhere you're visiting.</Text>
-            <Text style={styles.p}>• Try a weird combo on purpose (packed pace + tight budget + a picky note) and see if I hold up.</Text>
+            <Text style={styles.p}>• Add a detailed note (e.g. "first time here, love live music") — we may ask one follow-up question first. Does it make sense, and does your answer actually improve the plan?</Text>
+            <Text style={styles.p}>• Try a weird combo on purpose (packed pace + tight budget + a picky note) and see if we hold up.</Text>
             <Text style={styles.p}>• Swap a stop or two — does the replacement actually make sense?</Text>
+            <Text style={styles.p}>• Check each stop's details — the activity icon, the price for restaurants, and the day's weather up top. Flag anything that looks wrong.</Text>
             <Text style={styles.p}>• Hit Surprise Me a few times — does the "why this pick" line make sense, and do the Directions / Website / Call buttons work?</Text>
-            <Text style={styles.p}>• Watch for the "what's happening right now" picks — events and specials tied to your real dates. Tell me when they land and when they're off.</Text>
-            <Text style={styles.p}>• Push the edges. The stuff that breaks is exactly what I need to hear about.</Text>
+            <Text style={styles.p}>• Watch for the "what's happening right now" picks — events and specials tied to your real dates. Tell us when they land and when they're off.</Text>
+            <Text style={styles.p}>• Push the edges. The stuff that breaks is exactly what we need to hear about.</Text>
           </Card>
 
-          <SectionLabel tone="cobalt" style={styles.section}>FOUND SOMETHING? TELL ME.</SectionLabel>
+          <SectionLabel tone="cobalt" style={styles.section}>FOUND SOMETHING? TELL US.</SectionLabel>
           <Card style={styles.card}>
             <Text style={styles.p}>
               See the 💬 Give Feedback button floating in the corner? Tap it anytime — it's on every
-              screen. The most useful reports tell me three things: what screen you were on, what you
+              screen. The most useful reports tell us three things: what screen you were on, what you
               expected, and what actually happened. Even "this just felt off" is genuinely useful —
               don't hold back.
             </Text>
             <Text style={[styles.p, styles.signoff]}>
-              Thanks for helping shape this, {firstName(user)}. Now go plan something.{'\n'}— Cheddar
+              Thanks for helping shape this, {firstName(user)}. Now go plan something.{'\n'}— The Decide team
             </Text>
           </Card>
 
