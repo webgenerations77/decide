@@ -139,77 +139,79 @@ function ItineraryEntry({ item, onFeedbackUp, onFeedbackDown, onOpen }) {
 
   return (
     <Card style={styles.itinCard}>
-      <WeatherArt weather={item.weather} height={72} style={styles.cardArt} />
-      <TouchableOpacity
-        activeOpacity={tappable ? 0.7 : 1}
-        onPress={tappable ? onOpen : undefined}
-        disabled={!tappable}
-      >
-        <View style={styles.itinHeader}>
-          <Text style={styles.itinDate}>{dayLine}</Text>
-          {item.meta?.city ? <Text style={styles.itinCity}>📍 {item.meta.city}</Text> : null}
-        </View>
+      <WeatherArt weather={item.weather} style={[StyleSheet.absoluteFill, styles.cardArtBg]} />
+      <View style={styles.itinCardContent}>
+        <TouchableOpacity
+          activeOpacity={tappable ? 0.7 : 1}
+          onPress={tappable ? onOpen : undefined}
+          disabled={!tappable}
+        >
+          <View style={styles.itinHeader}>
+            <Text style={styles.itinDate}>{dayLine}</Text>
+            {item.meta?.city ? <Text style={styles.itinCity}>📍 {item.meta.city}</Text> : null}
+          </View>
 
-        <View style={styles.itinMetaRow}>
-          {pills.map((p) => (
-            <View key={p} style={styles.prefPill}>
-              <Text style={styles.prefPillTxt}>{p}</Text>
-            </View>
-          ))}
-        </View>
+          <View style={styles.itinMetaRow}>
+            {pills.map((p) => (
+              <View key={p} style={styles.prefPill}>
+                <Text style={styles.prefPillTxt}>{p}</Text>
+              </View>
+            ))}
+          </View>
 
-        <View style={styles.itinStatsRow}>
-          <Text style={styles.itinStats}>{stopCount} stop{stopCount !== 1 ? 's' : ''}</Text>
-          {weatherLine ? <Text style={styles.itinStats}>{weatherLine}</Text> : null}
-          {item.meta?.time_window ? (
-            <Text style={styles.itinStats}>🕐 {item.meta.time_window}</Text>
-          ) : null}
-        </View>
+          <View style={styles.itinStatsRow}>
+            <Text style={styles.itinStats}>{stopCount} stop{stopCount !== 1 ? 's' : ''}</Text>
+            {weatherLine ? <Text style={styles.itinStats}>{weatherLine}</Text> : null}
+            {item.meta?.time_window ? (
+              <Text style={styles.itinStats}>🕐 {item.meta.time_window}</Text>
+            ) : null}
+          </View>
 
-        {tappable && (
-          <Text style={styles.tapDetailHint}>View full itinerary →</Text>
-        )}
+          {tappable && (
+            <Text style={styles.tapDetailHint}>View full itinerary →</Text>
+          )}
 
-        {item.stops?.length > 0 && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.chipsScroll}
+          {item.stops?.length > 0 && (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.chipsScroll}
+            >
+              {item.stops.map((stop, i) => {
+                const c = categoryVisual(stop.category).color;
+                return (
+                  <View key={i} style={[styles.stopChip, { borderColor: c + '55' }]}>
+                    <Text style={styles.stopChipTxt} numberOfLines={1}>{stop.name}</Text>
+                  </View>
+                );
+              })}
+            </ScrollView>
+          )}
+        </TouchableOpacity>
+
+        {item.feedback === 'down' && item.feedbackReason ? (
+          <View style={[styles.feedbackTag, { marginTop: 6 }]}>
+            <Text style={styles.feedbackTagTxt}>❌ {item.feedbackReason}</Text>
+          </View>
+        ) : null}
+
+        <View style={[styles.thumbsRow, { borderTopWidth: 0.5, borderTopColor: colors.border, paddingTop: 10, marginTop: 8 }]}>
+          <TouchableOpacity
+            style={[styles.thumbBtn, item.feedback === 'up' && styles.thumbBtnUp]}
+            onPress={onFeedbackUp}
+            activeOpacity={0.7}
           >
-            {item.stops.map((stop, i) => {
-              const c = categoryVisual(stop.category).color;
-              return (
-                <View key={i} style={[styles.stopChip, { borderColor: c + '55' }]}>
-                  <Text style={styles.stopChipTxt} numberOfLines={1}>{stop.name}</Text>
-                </View>
-              );
-            })}
-          </ScrollView>
-        )}
-      </TouchableOpacity>
-
-      {item.feedback === 'down' && item.feedbackReason ? (
-        <View style={[styles.feedbackTag, { marginTop: 6 }]}>
-          <Text style={styles.feedbackTagTxt}>❌ {item.feedbackReason}</Text>
+            <Text style={styles.thumbTxt}>👍</Text>
+          </TouchableOpacity>
+          <View style={styles.thumbDivider} />
+          <TouchableOpacity
+            style={[styles.thumbBtn, item.feedback === 'down' && styles.thumbBtnDown]}
+            onPress={onFeedbackDown}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.thumbTxt}>👎</Text>
+          </TouchableOpacity>
         </View>
-      ) : null}
-
-      <View style={[styles.thumbsRow, { borderTopWidth: 0.5, borderTopColor: colors.border, paddingTop: 10, marginTop: 8 }]}>
-        <TouchableOpacity
-          style={[styles.thumbBtn, item.feedback === 'up' && styles.thumbBtnUp]}
-          onPress={onFeedbackUp}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.thumbTxt}>👍</Text>
-        </TouchableOpacity>
-        <View style={styles.thumbDivider} />
-        <TouchableOpacity
-          style={[styles.thumbBtn, item.feedback === 'down' && styles.thumbBtnDown]}
-          onPress={onFeedbackDown}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.thumbTxt}>👎</Text>
-        </TouchableOpacity>
       </View>
     </Card>
   );
@@ -506,8 +508,11 @@ const makeStyles = (c) => StyleSheet.create({
     borderWidth: 0.5, borderColor: c.border,
     marginBottom: 12, padding: 14, gap: 6, overflow: 'hidden',
   },
-  // Full-bleed weather illustration band across the card top (negates card padding).
-  cardArt: { marginTop: -14, marginHorizontal: -14, marginBottom: 8 },
+  // Faded full-card weather background, behind all content (item.weather may be absent —
+  // WeatherArt renders null in that case, leaving the card's plain surface color).
+  cardArtBg: { opacity: 0.15 },
+  // Foreground layer above the weather background so text stays fully readable.
+  itinCardContent: { zIndex: 1, gap: 6 },
   itinHeader:  { gap: 2 },
   itinDate:    { fontSize: 17, fontFamily: FONTS.displayHeavy, color: c.textPrimary },
   itinCity:    { fontSize: 11, color: c.goldText },
