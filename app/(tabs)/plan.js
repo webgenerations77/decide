@@ -603,10 +603,15 @@ export default function PlanScreen() {
             </Card>
 
             <Text style={styles.landingSubtext}>“{quote}” — {QUOTE_ATTRIBUTION}</Text>
-            <View style={styles.poweredRow}>
+            <TouchableOpacity
+              style={styles.poweredRow}
+              onPress={() => Linking.openURL('https://stc.spinachthecow.com')}
+              activeOpacity={0.7}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
               <Text style={styles.poweredText}>Powered by</Text>
               <Image source={require('../../assets/logo-stc.png')} style={styles.poweredLogo} resizeMode="contain" />
-            </View>
+            </TouchableOpacity>
             <VersionTag style={{ marginTop: 10 }} />
           </View>
         )}
