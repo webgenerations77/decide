@@ -9,7 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { generateItinerary, swapStop } from '../../services/itineraryService';
+import { generateItinerary, swapStop, getClarifyingQuestion } from '../../services/itineraryService';
 import { saveItinerary } from '../../services/historyService';
 import { loadPlanDefaults, KEYS } from '../../services/settingsService';
 import { isAtDecisionLimit, incrementDecisionCount, getRemainingDecisions, isPro, LIMITS } from '../../services/subscriptionService';
@@ -60,6 +60,14 @@ function datePillLabel(isoDate) {
   if (cmp.getTime() === today.getTime())    return 'Today';
   if (cmp.getTime() === tomorrow.getTime()) return 'Tomorrow';
   return d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+}
+
+const GENERIC_NOTES = new Set(['no', 'nope', 'nothing', 'none', 'n/a', 'na', 'idk', 'whatever']);
+function isGenericNote(s) {
+  if (!s) return true;
+  const trimmed = s.trim();
+  if (trimmed.length < 2) return true;
+  return GENERIC_NOTES.has(trimmed.toLowerCase());
 }
 
 // ─── Time options ─────────────────────────────────────────────────────────────
@@ -179,6 +187,12 @@ export default function PlanScreen() {
   const [cuisines,  setCuisines]  = useState([]);
   const [tripNote,  setTripNote]  = useState('');
   const [maxDistance, setMaxDistance] = useState(25);
+
+  // Cheddar's one-shot clarifying follow-up on the trip note
+  const [clarifyQuestion, setClarifyQuestion] = useState(null);
+  const [clarifyAnswer,   setClarifyAnswer]   = useState('');
+  const [clarifyAsked,    setClarifyAsked]    = useState(false);
+  const [clarifyLoading,  setClarifyLoading]  = useState(false);
 
   const [itinerary,      setItinerary]      = useState(null);
   const [weather,        setWeather]        = useState(null);
@@ -394,11 +408,12 @@ export default function PlanScreen() {
   const goToLanding = () => {
     setItinerary(null); setWeather(null); setMeta(null); setError(null); setIsFallback(false); setResearch(null);
     setTripNote('');
+    setClarifyQuestion(null); setClarifyAnswer(''); setClarifyAsked(false); setClarifyLoading(false);
     setView('landing');
     cancelItineraryAlerts().catch(() => {});
   };
 
-  const generate = async ({ asEdit = false } = {}) => {
+  const generate = async ({ asEdit = false, tripNoteOverride = null } = {}) => {
     if (!coords) { setError("Still finding your location — give it a moment and try again."); return; }
     if (!isValidTimeWindow) return;
     if (asEdit) {
@@ -451,7 +466,7 @@ export default function PlanScreen() {
         startTime, endTime, date: planDate,
         feedback: feedbackCtx,
         maxDistanceMiles,
-        tripNote, activityStyles, dietary, neurodivergent,
+        tripNote: tripNoteOverride ?? tripNote, activityStyles, dietary, neurodivergent,
       });
       setItinerary(data.itinerary);
       setWeather(data.weather);
@@ -494,6 +509,35 @@ export default function PlanScreen() {
     }
   };
 
+  const handleBuildPress = async () => {
+    if (clarifyAsked || isGenericNote(tripNote)) {
+      generate();
+      return;
+    }
+    setClarifyLoading(true);
+    const r = await getClarifyingQuestion(tripNote);
+    setClarifyLoading(false);
+    setClarifyAsked(true);
+    if (r?.question) {
+      setClarifyQuestion(r.question);
+    } else {
+      generate();
+    }
+  };
+
+  const handleClarifyContinue = () => {
+    const combined = clarifyAnswer.trim()
+      ? `${tripNote}\n\nCheddar asked: "${clarifyQuestion}" — they answered: "${clarifyAnswer.trim()}"`
+      : tripNote;
+    setClarifyQuestion(null);
+    generate({ tripNoteOverride: combined });
+  };
+
+  const handleClarifySkip = () => {
+    setClarifyQuestion(null);
+    generate();
+  };
+
   const handleSwap = async (index) => {
     if (!coords) return;
     setSwappingIndex(index);
@@ -528,6 +572,7 @@ export default function PlanScreen() {
   const resetToConfiguring = () => {
     setItinerary(null); setWeather(null); setMeta(null); setError(null); setIsFallback(false); setResearch(null);
     setTripNote('');
+    setClarifyQuestion(null); setClarifyAnswer(''); setClarifyAsked(false); setClarifyLoading(false);
     setView('configuring');
   };
 
@@ -676,6 +721,29 @@ export default function PlanScreen() {
               />
             </Card>
 
+            {clarifyQuestion ? (
+              <Card style={styles.clarifyCard}>
+                <Text style={styles.clarifyLabel}>🧀 Cheddar</Text>
+                <Text style={styles.clarifyQuestionText}>{clarifyQuestion}</Text>
+                <TextInput
+                  style={styles.clarifyInput}
+                  placeholder="Type your answer…"
+                  placeholderTextColor={colors.textMuted}
+                  value={clarifyAnswer}
+                  onChangeText={setClarifyAnswer}
+                  autoFocus
+                />
+                <View style={styles.clarifyBtnRow}>
+                  <View style={{ flex: 1 }}>
+                    <CTAButton variant="secondary" title="Skip" onPress={handleClarifySkip} disabled={loading} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <CTAButton variant="cobalt" title="Continue" onPress={handleClarifyContinue} disabled={loading} />
+                  </View>
+                </View>
+              </Card>
+            ) : null}
+
             {error ? (
               <View style={styles.errorBlock}>
                 <Text style={styles.errorText}>{error}</Text>
@@ -743,9 +811,9 @@ export default function PlanScreen() {
             <CTAButton
               variant="cobalt"
               title="Build my day →"
-              onPress={() => generate()}
-              disabled={!isValidTimeWindow}
-              loading={loading}
+              onPress={handleBuildPress}
+              disabled={!isValidTimeWindow || clarifyLoading}
+              loading={loading || clarifyLoading}
             />
           </Animated.View>
           {!loading && remainingDecisions != null && remainingDecisions !== Infinity && (
@@ -937,6 +1005,13 @@ const makeStyles = (c) => StyleSheet.create({
   timeValidationHint: { fontSize: 11, color: c.error, marginTop: 2 },
   resultsTimeEditor: { marginTop: 4, marginBottom: 12 },
   tripNoteInput: { backgroundColor: c.surface, borderColor: c.border, borderWidth: 1, borderRadius: RADII.md, color: c.textPrimary, paddingHorizontal: 14, paddingVertical: 10, fontSize: 15, fontFamily: FONTS.body },
+
+  // Cheddar's clarifying follow-up (chat-style)
+  clarifyCard: { marginTop: 14, borderWidth: 1, borderColor: c.borderLight, backgroundColor: c.sky100, gap: 10 },
+  clarifyLabel: { fontSize: 11, fontFamily: FONTS.monoBold, color: c.primary, letterSpacing: 0.5, textTransform: 'uppercase' },
+  clarifyQuestionText: { fontSize: 15, fontFamily: FONTS.bodyMedium, color: c.textPrimary, lineHeight: 21 },
+  clarifyInput: { backgroundColor: c.surface, borderColor: c.border, borderWidth: 1, borderRadius: RADII.md, color: c.textPrimary, paddingHorizontal: 14, paddingVertical: 10, fontSize: 15, fontFamily: FONTS.body },
+  clarifyBtnRow: { flexDirection: 'row', gap: 10 },
 
   // Time picker modal
   modalOverlay: {

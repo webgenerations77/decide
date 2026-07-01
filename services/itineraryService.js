@@ -54,6 +54,23 @@ export async function generateItinerary({
   return res.json();
 }
 
+export async function getClarifyingQuestion(tripNote) {
+  try {
+    const demoRaw = await AsyncStorage.getItem('@decide/demo_mode');
+    if (demoRaw === 'true') return { skip: true };
+  } catch {}
+  try {
+    const base = getApiBase();
+    const res = await fetch(`${base}/api/clarify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
+      body: JSON.stringify({ tripNote }),
+    });
+    if (!res.ok) return { skip: true };
+    return await res.json();
+  } catch { return { skip: true }; }
+}
+
 export async function swapStop({ itinerary, stopIndex, latitude, longitude }) {
   const base = getApiBase();
   const res  = await fetch(`${base}/api/itinerary-swap`, {
