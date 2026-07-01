@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { loadHistory } from '../../services/historyService';
 import { FONTS } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
 import ScreenBackground from '../../components/brand/ScreenBackground';
@@ -41,12 +42,11 @@ export default function ItineraryDetailScreen() {
   useEffect(() => {
     (async () => {
       try {
-        const [raw, sensRaw] = await Promise.all([
-          AsyncStorage.getItem('@decide/itineraries'),
+        const [{ itineraries }, sensRaw] = await Promise.all([
+          loadHistory(),
           AsyncStorage.getItem('@decide/sensitivities'),
         ]);
-        const list  = raw ? JSON.parse(raw) : [];
-        const found = list.find((e) => e.id === id);
+        const found = itineraries.find((e) => e.id === id);
         setSensitivities(sensRaw ? JSON.parse(sensRaw) : []);
         setEntry(found && Array.isArray(found.itinerary) && found.itinerary.length ? found : null);
       } catch {

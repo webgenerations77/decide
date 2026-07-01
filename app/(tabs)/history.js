@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { DEMO_HISTORY } from '../../services/demoData';
+import { loadHistory, syncHistory, updateFeedback } from '../../services/historyService';
 import WeatherArt from '../../components/itinerary/WeatherArt';
 import { COLORS, CATEGORY_COLORS, CATEGORY_EMOJIS, FONTS } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
@@ -259,12 +260,14 @@ export default function HistoryScreen() {
           return;
         }
         setIsDemo(false);
-        const [dRaw, iRaw] = await Promise.all([
-          AsyncStorage.getItem('@decide/decisions'),
-          AsyncStorage.getItem('@decide/itineraries'),
-        ]);
-        setDecisions(dRaw ? JSON.parse(dRaw) : []);
-        setItineraries(iRaw ? JSON.parse(iRaw) : []);
+        const cached = await loadHistory();
+        setDecisions(cached.decisions);
+        setItineraries(cached.itineraries);
+        // background reconcile with the cloud; refresh UI when it returns
+        syncHistory().then((merged) => {
+          setDecisions(merged.decisions);
+          setItineraries(merged.itineraries);
+        }).catch(() => {});
       } catch {
         setDecisions([]);
         setItineraries([]);
@@ -280,14 +283,13 @@ export default function HistoryScreen() {
         d.id === pendingItem.id ? { ...d, feedback: type, feedbackReason: reason } : d
       );
       setDecisions(updated);
-      if (!isDemo) { try { await AsyncStorage.setItem('@decide/decisions', JSON.stringify(updated)); } catch {} }
     } else {
       const updated = itineraries.map((it) =>
         it.id === pendingItem.id ? { ...it, feedback: type, feedbackReason: reason } : it
       );
       setItineraries(updated);
-      if (!isDemo) { try { await AsyncStorage.setItem('@decide/itineraries', JSON.stringify(updated)); } catch {} }
     }
+    if (!isDemo) { updateFeedback(pendingType === 'decision' ? 'decisions' : 'itineraries', pendingItem.id, type, reason); }
 
     setPendingItem(null);
     setPendingType(null);
@@ -302,13 +304,13 @@ export default function HistoryScreen() {
         d.id === item.id ? { ...d, feedback: nextFeedback, feedbackReason: null } : d
       );
       setDecisions(updated);
-      if (!isDemo) { try { await AsyncStorage.setItem('@decide/decisions', JSON.stringify(updated)); } catch {} }
+      if (!isDemo) { updateFeedback('decisions', item.id, nextFeedback, null); }
     } else {
       const updated = itineraries.map((it) =>
         it.id === item.id ? { ...it, feedback: nextFeedback, feedbackReason: null } : it
       );
       setItineraries(updated);
-      if (!isDemo) { try { await AsyncStorage.setItem('@decide/itineraries', JSON.stringify(updated)); } catch {} }
+      if (!isDemo) { updateFeedback('itineraries', item.id, nextFeedback, null); }
     }
   };
 
