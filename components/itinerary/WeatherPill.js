@@ -2,16 +2,23 @@ import { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 
+// Replace the ASCII space inside a clock time ("11:00 AM") with a non-breaking
+// space so a time never wraps across lines mid-value.
+const NBSP = '\u00A0';
+function keepTimesWhole(s) {
+  return s.replace(/(\d{1,2}:\d{2})\s+([AP]M)/gi, `$1${NBSP}$2`);
+}
+
 export function buildWeatherPillText(weather, timeWindow) {
   const tw = timeWindow ?? '';
   if (weather?.beyondForecast) {
-    return `🗓 Extended forecast not available — check back closer to your trip · ${tw}`;
+    return keepTimesWhole(`🗓 Extended forecast not available — check back closer to your trip · ${tw}`);
   }
   if (weather) {
     const wind = weather.wind_speed_mph ? ` · 💨 ${weather.wind_speed_mph}mph` : '';
-    return `${weather.emoji ?? ''} ${weather.condition} · ${weather.temp_f}°F${wind} · ${tw}`;
+    return keepTimesWhole(`${weather.emoji ?? ''} ${weather.condition} · ${weather.temp_f}°F${wind} · ${tw}`);
   }
-  return tw;
+  return keepTimesWhole(tw);
 }
 
 export default function WeatherPill({ weather, timeWindow }) {

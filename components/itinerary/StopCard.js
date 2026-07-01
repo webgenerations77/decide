@@ -297,21 +297,21 @@ const makeStyles = (c) => StyleSheet.create({
 
   // Admission badge
   admissionBadge: {
-    flexDirection: 'row', alignItems: 'center',
-    alignSelf: 'flex-start',
+    flexDirection: 'row', alignItems: 'flex-start',
+    alignSelf: 'flex-start', maxWidth: '100%',
     paddingHorizontal: 10, paddingVertical: 5,
-    borderRadius: 999, backgroundColor: c.gold + '22',
+    borderRadius: 14, backgroundColor: c.gold + '22',
     borderWidth: 1, borderColor: c.gold + '44',
   },
-  admissionBadgeTxt: { fontSize: 12, color: c.goldText, fontFamily: FONTS.bodySemiBold },
+  admissionBadgeTxt: { flexShrink: 1, fontSize: 12, color: c.goldText, fontFamily: FONTS.bodySemiBold, lineHeight: 16 },
   parkingBadge: {
-    flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start',
+    flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', maxWidth: '100%',
     paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999,
     backgroundColor: c.surfaceAlt, borderWidth: 1, borderColor: c.border,
   },
-  parkingBadgeTxt: { fontSize: 12, color: c.textSecondary, fontFamily: FONTS.bodyMedium },
-  liveMusicBadge: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', marginTop: 6, paddingHorizontal: 8, paddingVertical: 4, borderRadius: RADII.sm, backgroundColor: c.sky100 },
-  liveMusicTxt:   { fontFamily: FONTS.bodyMedium, fontSize: 12, color: c.primary },
+  parkingBadgeTxt: { flexShrink: 1, fontSize: 12, color: c.textSecondary, fontFamily: FONTS.bodyMedium },
+  liveMusicBadge: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', maxWidth: '100%', marginTop: 6, paddingHorizontal: 8, paddingVertical: 4, borderRadius: RADII.sm, backgroundColor: c.sky100 },
+  liveMusicTxt:   { flexShrink: 1, fontFamily: FONTS.bodyMedium, fontSize: 12, color: c.primary },
   provenanceBadge: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', marginTop: 6, paddingHorizontal: 8, paddingVertical: 4, borderRadius: RADII.sm, backgroundColor: c.sky100 },
   provenanceTxt:   { fontFamily: FONTS.bodyMedium, fontSize: 12, color: c.primary },
 
