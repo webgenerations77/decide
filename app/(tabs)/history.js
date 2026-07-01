@@ -509,7 +509,8 @@ const makeStyles = (c) => StyleSheet.create({
     marginBottom: 12, padding: 14, gap: 6, overflow: 'hidden',
   },
   // Faded full-card weather background, behind all content (item.weather may be absent —
-  // WeatherArt renders null in that case, leaving the card's plain surface color).
+  // WeatherArt falls back to its default bundled photo in that case, so a faded default
+  // weather image still shows behind the card rather than the plain surface color).
   cardArtBg: { opacity: 0.15 },
   // Foreground layer above the weather background so text stays fully readable.
   itinCardContent: { zIndex: 1, gap: 6 },

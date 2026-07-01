@@ -9,6 +9,7 @@ export async function GET(request) {
   try {
     return Response.json(await getUserStats(uid));
   } catch (e) {
+    console.error('[api/admin/user-stats] user_stats_failed:', e);
     return Response.json({ error: 'user_stats_failed', message: e.message }, { status: 500 });
   }
 }

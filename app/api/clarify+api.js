@@ -12,7 +12,12 @@ If the note is empty, generic, or uninformative (e.g. "no", "nothing", "n/a", "i
 }
 
 export async function POST(request) {
-  const { tripNote } = await request.json();
+  let tripNote;
+  try {
+    ({ tripNote } = await request.json());
+  } catch {
+    return Response.json({ skip: true });
+  }
   if (!tripNote || tripNote.trim().length < 2) {
     return Response.json({ skip: true });
   }

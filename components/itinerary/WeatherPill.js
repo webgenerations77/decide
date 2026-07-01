@@ -11,12 +11,13 @@ function keepTimesWhole(s) {
 
 export function buildWeatherPillText(weather, timeWindow) {
   const tw = timeWindow ?? '';
+  const tail = tw ? ` · ${tw}` : '';
   if (weather?.beyondForecast) {
-    return keepTimesWhole(`🗓 Extended forecast not available — check back closer to your trip · ${tw}`);
+    return keepTimesWhole(`🗓 Extended forecast not available — check back closer to your trip${tail}`);
   }
   if (weather) {
     const wind = weather.wind_speed_mph ? ` · 💨 ${weather.wind_speed_mph}mph` : '';
-    return keepTimesWhole(`${weather.emoji ?? ''} ${weather.condition} · ${weather.temp_f}°F${wind} · ${tw}`);
+    return keepTimesWhole(`${weather.emoji ?? ''} ${weather.condition} · ${weather.temp_f}°F${wind}${tail}`);
   }
   return keepTimesWhole(tw);
 }

@@ -59,16 +59,23 @@ export async function getClarifyingQuestion(tripNote) {
     const demoRaw = await AsyncStorage.getItem('@decide/demo_mode');
     if (demoRaw === 'true') return { skip: true };
   } catch {}
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
   try {
     const base = getApiBase();
     const res = await fetch(`${base}/api/clarify`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
       body: JSON.stringify({ tripNote }),
+      signal: controller.signal,
     });
     if (!res.ok) return { skip: true };
     return await res.json();
-  } catch { return { skip: true }; }
+  } catch {
+    return { skip: true };
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 export async function swapStop({ itinerary, stopIndex, latitude, longitude }) {
