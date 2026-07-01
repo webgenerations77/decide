@@ -4,6 +4,7 @@ import { computeCostSummary, pickForecastFromOpenMeteo, attachPriceLevels, fillF
 import { getUSHoliday } from '../lib/smart/holidays.js';
 import { getUidFromAuth } from '../lib/admin/auth.js';
 import { runWithUser } from '../lib/usageContext.js';
+import { getClarifyingQuestion } from '../lib/clarify.js';
 
 const GOOGLE_KEY    = process.env.GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 const NPS_KEY       = process.env.EXPO_PUBLIC_NPS_API_KEY;
@@ -253,6 +254,13 @@ export default async function handler(req, res) {
   return runWithUser(uid, async () => {
     if (req.method === 'GET') return res.json({ status: 'ok', message: 'Itinerary API is running' });
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+    // Cheddar's single follow-up clarifying question (folded in from /api/clarify to stay under
+    // Vercel's 12-function cap). Fails open to { skip: true }; never blocks generation.
+    if (req.query.mode === 'clarify') {
+      const { tripNote = '' } = req.body || {};
+      return res.json(await getClarifyingQuestion(tripNote));
+    }
 
     try {
       const { latitude, longitude, date, preferences = {}, startTime = '11:00 AM', endTime = '8:00 PM', feedback = {}, tripNote = '' } = req.body;

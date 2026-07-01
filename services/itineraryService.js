@@ -63,7 +63,7 @@ export async function getClarifyingQuestion(tripNote) {
   const timeoutId = setTimeout(() => controller.abort(), 5000);
   try {
     const base = getApiBase();
-    const res = await fetch(`${base}/api/clarify`, {
+    const res = await fetch(`${base}/api/itinerary?mode=clarify`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
       body: JSON.stringify({ tripNote }),

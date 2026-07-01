@@ -4,6 +4,7 @@ import { computeCostSummary, pickForecastFromOpenMeteo, attachPriceLevels, fillF
 import { getUSHoliday } from '../../lib/smart/holidays.js';
 import { getUidFromAuth } from '../../lib/admin/auth.js';
 import { runWithUser } from '../../lib/usageContext.js';
+import { getClarifyingQuestion } from '../../lib/clarify.js';
 
 const GOOGLE_KEY    = process.env.GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 const NPS_KEY       = process.env.EXPO_PUBLIC_NPS_API_KEY;
@@ -356,6 +357,12 @@ export async function GET() {
 export async function POST(request) {
   const uid = await getUidFromAuth(request.headers.get('authorization'));
   return runWithUser(uid, async () => {
+    // Cheddar's single follow-up clarifying question (folded in from /api/clarify to stay under
+    // Vercel's 12-function cap). Fails open to { skip: true }; never blocks generation.
+    if (new URL(request.url).searchParams.get('mode') === 'clarify') {
+      const { tripNote = '' } = await request.json().catch(() => ({}));
+      return Response.json(await getClarifyingQuestion(tripNote));
+    }
     try {
       const {
         latitude, longitude, date, preferences = {},

@@ -28,7 +28,7 @@ export async function setUserRole(uid, role) {
 }
 
 export async function getUserStats(uid) {
-  const res = await fetch(`/api/admin/user-stats?uid=${encodeURIComponent(uid)}`, { headers: await authHeader() });
+  const res = await fetch(`/api/admin/users?uid=${encodeURIComponent(uid)}`, { headers: await authHeader() });
   if (!res.ok) throw new Error(`user_stats_${res.status}`);
   return res.json();
 }
