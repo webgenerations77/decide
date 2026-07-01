@@ -277,8 +277,8 @@ const makeStyles = (c) => StyleSheet.create({
   photoGradient: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 104 },
 
   stopHeaderRow:    { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  timeChip:         { paddingHorizontal: 9, paddingVertical: 4, borderRadius: 999, borderWidth: 1 },
-  timeText:         { fontSize: 12, fontFamily: FONTS.bodyBold },
+  timeChip:         { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, borderWidth: 1 },
+  timeText:         { fontSize: 16, fontFamily: FONTS.bodyBold },
   durationText:     { fontSize: 11, color: c.textMuted, fontFamily: FONTS.body },
   catChip:          { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 },
   catEmoji:         { fontSize: 12 },
