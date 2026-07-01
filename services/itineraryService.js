@@ -2,6 +2,16 @@ import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import { getDemoItinerary } from './demoData';
+import { auth } from './firebase';
+
+async function authHeader() {
+  try {
+    const token = await auth.currentUser?.getIdToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  } catch {
+    return {};
+  }
+}
 
 function getApiBase() {
   if (Platform.OS === 'web') return '';
@@ -32,7 +42,7 @@ export async function generateItinerary({
   const base = getApiBase();
   const res  = await fetch(`${base}/api/itinerary`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
     body: JSON.stringify({ latitude, longitude, date, preferences: { ...preferences, activityStyles, dietary, neurodivergent }, startTime, endTime, feedback, maxDistanceMiles, tripNote }),
   });
 
@@ -48,7 +58,7 @@ export async function swapStop({ itinerary, stopIndex, latitude, longitude }) {
   const base = getApiBase();
   const res  = await fetch(`${base}/api/itinerary-swap`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
     body: JSON.stringify({ itinerary, stopIndex, latitude, longitude }),
   });
 
