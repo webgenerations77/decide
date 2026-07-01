@@ -89,8 +89,6 @@ function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, 
   const localTips    = getLocalKnowledge({ stopName: stop.name, stopAddress: stop.address ?? '', category: stop.category, weather, date: planDate });
   const allergyAlerts = getAllergyAlerts({ category: stop.category, stopName: stop.name, stopAddress: stop.address ?? '', sensitivities });
 
-  const isFood = stop.category === 'food';
-
   return (
     <>
       <Animated.View style={[styles.stopRow, { opacity: enterAnim, transform: [{ translateY: slideAnim }] }]}>
@@ -161,7 +159,7 @@ function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, 
             </View>
           ) : null}
 
-          {isFood && stop.price_level ? (
+          {stop.price_level >= 1 && stop.price_level <= 4 ? (
             <TouchableOpacity onPress={() => setShowLegend(true)} activeOpacity={0.7} style={styles.pricePill}>
               <Text style={styles.pricePillTxt}>{['', '$', '$$', '$$$', '$$$$'][stop.price_level] ?? ''} ⓘ</Text>
             </TouchableOpacity>
