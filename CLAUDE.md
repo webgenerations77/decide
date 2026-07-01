@@ -39,6 +39,8 @@ Brand primitives (`components/brand/`) — compose tokens; use these instead of 
 - `ScreenBackground` (variant paper/cream/sky/brand) · `Card` · `GradientHeader`
 - `CTAButton` (variant go/cobalt/secondary, optional `leftIcon`, loading, disabled)
 - `SectionLabel` (Space Mono eyebrow; tone muted/cobalt)
+- `CollapsibleCard` (title + persisted collapse state via KEYS.COLLAPSED_SECTIONS; `defaultCollapsed`)
+- `VersionTag` (app version from `expo-constants`; `APP_VERSION` export — single source of truth)
 
 ## App Structure
 - app/_layout.js               — root layout, auth guard, demo banner, offline banner
@@ -52,15 +54,23 @@ Brand primitives (`components/brand/`) — compose tokens; use these instead of 
 - app/terms.js                 — Terms of Service page
 - app/onboarding/index.js      — first-run preference setup
 - app/paywall.js               — subscription upsell
+- app/admin/index.js           — admin dashboard (API usage incl. per-user breakdown; user admin)
+- app/itinerary/[id].js        — saved-itinerary detail view (reads history via loadHistory)
 - app/api/itinerary+api.js     — POST: generate full-day itinerary (Cheddar)
 - app/api/itinerary-swap+api.js— POST: swap a single stop
 - app/api/geocode+api.js       — GET: reverse geocode (?lat=&lng=) and forward search (?q=)
-- screens/SettingsScreen.js    — full settings UI
-- components/brand/            — brand primitives (BrandLogo, ScreenBackground, Card, CTAButton, SectionLabel, GradientHeader)
+- app/api/history+api.js       — GET/POST/DELETE: per-user history sync (auth-gated); prod twin api/history.js
+- app/api/admin/usage+api.js   — GET: API usage aggregate (totals + byModel/byRoute/byUser); prod twin api/admin/usage.js
+- screens/SettingsScreen.js    — full settings UI (collapsible sections; Itinerary Preferences default-expanded)
+- components/brand/            — brand primitives (BrandLogo, ScreenBackground, Card, CTAButton, SectionLabel, CollapsibleCard, VersionTag, GradientHeader)
 - constants/theme.js           — COLORS + FONTS + RADII + SHADOWS + PRICE_LEGEND + CATEGORY_COLORS/EMOJIS
 - constants/localKnowledge.js  — Cheddar local tips (Delmarva/DE/MD beach region)
+- lib/history/                 — merge.js (pure mergeById) + store.js (Firestore admin, users/{uid}/{itineraries|decisions})
+- lib/usageContext.js          — AsyncLocalStorage request-scoped userId for usage attribution
+- lib/admin/auth.js            — getUidFromAuth(header): verify ID token → uid or null (never throws)
 - services/settingsService.js  — AsyncStorage keys + load/save helpers
-- services/itineraryService.js — client-side POST to /api/itinerary
+- services/itineraryService.js — client-side POST to /api/itinerary (sends Firebase ID token)
+- services/historyService.js   — cross-device history: AsyncStorage cache + syncHistory() merge over /api/history
 - services/subscriptionService.js — free tier limits, decision/spin counters
 - services/notificationService.js — daily reminder scheduling
 
@@ -73,6 +83,22 @@ Brand primitives (`components/brand/`) — compose tokens; use these instead of 
 - Manual location search uses Places Autocomplete + Place Details via /api/geocode?q=
 - AI assistant is named "Cheddar" in all user-facing text — never "AI" or "artificial intelligence"
 - All new colors must come from constants/theme.js — no hardcoded hex values in components
+- Server API endpoints exist as mirrored twins: prod Vercel `api/*.js` (req/res) + dev Expo
+  `app/api/*+api.js` (Request/Response). Keep both in sync when editing a handler.
+- Auth for server data: client sends `Authorization: Bearer <idToken>` (`auth.currentUser.getIdToken()`);
+  server verifies via `getUidFromAuth` (lib/admin/auth.js). Itinerary endpoints stay public (log-only
+  attribution); `/api/history` and `/api/admin/*` require a valid uid (401 otherwise).
+
+## History Sync (cross-device)
+- Itineraries + decisions live in Firestore (`users/{uid}/{itineraries|decisions}/{id}`) written only
+  server-side (`lib/history/store.js`), with AsyncStorage (`@decide/itineraries`, `@decide/decisions`)
+  as an offline-durable cache. `services/historyService.js` reads cache first, then `syncHistory()`
+  union-merges cache+server by id (newest `updatedAt ?? timestamp` wins) — this also does migration
+  and offline-write flush. All writes/reads/clear go through the service, never raw AsyncStorage.
+- KNOWN LIMITATION: "Clear History" is device-local (union merge has no deletion tracking; a clear is
+  resurrected by another device's stale cache). Cross-device delete needs tombstones (queued follow-up).
+- API usage is attributed per-user via request-scoped `AsyncLocalStorage` (`lib/usageContext.js`):
+  handlers `runWithUser(uid, ...)`, `logUsage` reads `currentUserId()`. Admin dashboard shows byUser.
 
 ## Itinerary Spec
 - Time window: configurable (default 11am–8pm), minimum 3 hours

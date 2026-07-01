@@ -497,7 +497,7 @@ export default function SettingsScreen() {
           </CollapsibleCard>
 
           {/* ── Preferences ───────────────────────────────────────────────── */}
-          <CollapsibleCard title="Itinerary Preferences" sectionKey="preferences" defaultCollapsed={false} style={styles.collapsibleSpacing}>
+          <CollapsibleCard title="ITINERARY PREFERENCES" sectionKey="preferences" defaultCollapsed={false} style={styles.collapsibleSpacing}>
             {/* MAX TRAVEL DISTANCE */}
             <View style={[styles.distanceHeader, { marginTop: 0 }]}>
               <Text style={[styles.fieldLabel, { marginTop: 0, marginBottom: 0 }]}>MAX TRAVEL DISTANCE</Text>
