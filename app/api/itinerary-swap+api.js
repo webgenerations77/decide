@@ -1,5 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { logUsage } from '../../lib/usageLog.js';
+import { getUidFromAuth } from '../../lib/admin/auth.js';
+import { runWithUser } from '../../lib/usageContext.js';
 
 const GOOGLE_KEY = process.env.GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 const NEARBY_URL = 'https://places.googleapis.com/v1/places:searchNearby';
@@ -74,35 +76,37 @@ function extractJSON(text) {
 }
 
 export async function POST(request) {
-  try {
-    const { itinerary, stopIndex, latitude, longitude } = await request.json();
-
-    if (!itinerary || stopIndex == null || !latitude || !longitude) {
-      return Response.json({ error: 'itinerary, stopIndex, latitude, and longitude are required' }, { status: 400 });
-    }
-
-    const stop  = itinerary[stopIndex];
-    const types = PLACE_TYPES[stop.category] ?? PLACE_TYPES.activity;
-    const places = await fetchPlaces(latitude, longitude, types);
-
-    const usedNames = new Set(itinerary.map((s) => s.name));
-    const available = places.filter((p) => !usedNames.has(p.name));
-
-    if (available.length === 0) {
-      return Response.json({ error: `No alternative ${stop.category} places found nearby` }, { status: 404 });
-    }
-
-    let newStop;
+  const uid = await getUidFromAuth(request.headers.get('authorization'));
+  return runWithUser(uid, async () => {
     try {
-      const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+      const { itinerary, stopIndex, latitude, longitude } = await request.json();
 
-      const message = await client.messages.create({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 512,
-        system: 'You are Cheddar, a travel planning assistant. Return ONLY a valid JSON object for a single itinerary stop. No prose, no markdown, no explanation.',
-        messages: [{
-          role: 'user',
-          content: `Replace this itinerary stop with a different option.
+      if (!itinerary || stopIndex == null || !latitude || !longitude) {
+        return Response.json({ error: 'itinerary, stopIndex, latitude, and longitude are required' }, { status: 400 });
+      }
+
+      const stop  = itinerary[stopIndex];
+      const types = PLACE_TYPES[stop.category] ?? PLACE_TYPES.activity;
+      const places = await fetchPlaces(latitude, longitude, types);
+
+      const usedNames = new Set(itinerary.map((s) => s.name));
+      const available = places.filter((p) => !usedNames.has(p.name));
+
+      if (available.length === 0) {
+        return Response.json({ error: `No alternative ${stop.category} places found nearby` }, { status: 404 });
+      }
+
+      let newStop;
+      try {
+        const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+        const message = await client.messages.create({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 512,
+          system: 'You are Cheddar, a travel planning assistant. Return ONLY a valid JSON object for a single itinerary stop. No prose, no markdown, no explanation.',
+          messages: [{
+            role: 'user',
+            content: `Replace this itinerary stop with a different option.
 
 Stop being replaced:
 ${JSON.stringify(stop, null, 2)}
@@ -117,44 +121,45 @@ Rules:
 - Pick a DIFFERENT place from the available list
 - Write a fresh "reason" for the new pick
 - Return a single JSON object with fields: time, duration_mins, category, name, place_id, address, lat, lng, reason, excitement_score, admission_cost, parking (a short caveat string for free/low-cost outdoor or public attractions where paid parking is likely — e.g. "Metered/paid lots nearby"; otherwise null)`,
-        }],
-      });
-      logUsage({
-        route: 'itinerary-swap',
-        model: 'claude-haiku-4-5-20251001',
-        inputTokens: message.usage?.input_tokens ?? 0,
-        outputTokens: message.usage?.output_tokens ?? 0,
-      });
+          }],
+        });
+        logUsage({
+          route: 'itinerary-swap',
+          model: 'claude-haiku-4-5-20251001',
+          inputTokens: message.usage?.input_tokens ?? 0,
+          outputTokens: message.usage?.output_tokens ?? 0,
+        });
 
-      const raw    = message.content[0]?.text ?? '{}';
-      const parsed = JSON.parse(extractJSON(raw));
-      const candidate = Array.isArray(parsed) ? parsed[0] : parsed;
-      if (!candidate?.name) throw new Error('Invalid stop returned');
-      newStop = candidate;
-    } catch (e) {
-      console.warn('[swap] Claude unavailable, picking locally:', e.message);
-      const pick = available[0];
-      newStop = {
-        time:            stop.time,
-        duration_mins:   stop.duration_mins,
-        category:        stop.category,
-        name:            pick.name,
-        place_id:        pick.place_id,
-        address:         pick.address,
-        lat:             pick.lat,
-        lng:             pick.lng,
-        reason:          pick.summary ?? `A solid alternative ${stop.category} choice nearby.`,
-        excitement_score: Math.min(Math.round((pick.rating || 4) * 18), 95),
-        admission_cost:  null,
-        parking:         null,
-      };
+        const raw    = message.content[0]?.text ?? '{}';
+        const parsed = JSON.parse(extractJSON(raw));
+        const candidate = Array.isArray(parsed) ? parsed[0] : parsed;
+        if (!candidate?.name) throw new Error('Invalid stop returned');
+        newStop = candidate;
+      } catch (e) {
+        console.warn('[swap] Claude unavailable, picking locally:', e.message);
+        const pick = available[0];
+        newStop = {
+          time:            stop.time,
+          duration_mins:   stop.duration_mins,
+          category:        stop.category,
+          name:            pick.name,
+          place_id:        pick.place_id,
+          address:         pick.address,
+          lat:             pick.lat,
+          lng:             pick.lng,
+          reason:          pick.summary ?? `A solid alternative ${stop.category} choice nearby.`,
+          excitement_score: Math.min(Math.round((pick.rating || 4) * 18), 95),
+          admission_cost:  null,
+          parking:         null,
+        };
+      }
+
+      const updated = [...itinerary];
+      updated[stopIndex] = newStop;
+      return Response.json({ itinerary: updated });
+    } catch (err) {
+      console.error('[swap] error:', err);
+      return Response.json({ error: err.message }, { status: 500 });
     }
-
-    const updated = [...itinerary];
-    updated[stopIndex] = newStop;
-    return Response.json({ itinerary: updated });
-  } catch (err) {
-    console.error('[swap] error:', err);
-    return Response.json({ error: err.message }, { status: 500 });
-  }
+  });
 }

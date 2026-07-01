@@ -1,4 +1,6 @@
 import { logUsage } from '../lib/usageLog.js';
+import { getUidFromAuth } from '../lib/admin/auth.js';
+import { runWithUser } from '../lib/usageContext.js';
 
 const GOOGLE_KEY = process.env.GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 const NEARBY_URL = 'https://places.googleapis.com/v1/places:searchNearby';
@@ -27,46 +29,49 @@ async function fetchPlaces(lat, lng, types, radius = 30000) {
 }
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  const uid = await getUidFromAuth(req.headers.authorization);
+  return runWithUser(uid, async () => {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  try {
-    const { itinerary, stopIndex, latitude, longitude } = req.body;
-    if (!itinerary || stopIndex == null || !latitude || !longitude) {
-      return res.status(400).json({ error: 'itinerary, stopIndex, latitude, and longitude are required' });
+    try {
+      const { itinerary, stopIndex, latitude, longitude } = req.body;
+      if (!itinerary || stopIndex == null || !latitude || !longitude) {
+        return res.status(400).json({ error: 'itinerary, stopIndex, latitude, and longitude are required' });
+      }
+
+      const stop = itinerary[stopIndex];
+      const types = PLACE_TYPES[stop.category] ?? PLACE_TYPES.activity;
+      const places = await fetchPlaces(latitude, longitude, types);
+      const usedNames = new Set(itinerary.map((s) => s.name));
+      const available = places.filter((p) => !usedNames.has(p.name));
+
+      if (available.length === 0) {
+        return res.status(404).json({ error: `No alternative ${stop.category} places found nearby` });
+      }
+
+      const sorted = [...available].sort((a, b) => b.rating - a.rating);
+      const pick = sorted[0];
+      const newStop = {
+        time: stop.time,
+        duration_mins: stop.duration_mins,
+        category: stop.category,
+        name: pick.name,
+        place_id: pick.place_id,
+        address: pick.address,
+        lat: pick.lat,
+        lng: pick.lng,
+        reason: pick.summary ?? `A well-rated ${stop.category} spot nearby.`,
+        excitement_score: Math.min(Math.round((pick.rating || 4) * 18), 95),
+        admission_cost: null,
+        parking: null,
+      };
+
+      const updated = [...itinerary];
+      updated[stopIndex] = newStop;
+      return res.json({ itinerary: updated });
+    } catch (err) {
+      console.error('[swap] error:', err);
+      return res.status(500).json({ error: err.message });
     }
-
-    const stop = itinerary[stopIndex];
-    const types = PLACE_TYPES[stop.category] ?? PLACE_TYPES.activity;
-    const places = await fetchPlaces(latitude, longitude, types);
-    const usedNames = new Set(itinerary.map((s) => s.name));
-    const available = places.filter((p) => !usedNames.has(p.name));
-
-    if (available.length === 0) {
-      return res.status(404).json({ error: `No alternative ${stop.category} places found nearby` });
-    }
-
-    const sorted = [...available].sort((a, b) => b.rating - a.rating);
-    const pick = sorted[0];
-    const newStop = {
-      time: stop.time,
-      duration_mins: stop.duration_mins,
-      category: stop.category,
-      name: pick.name,
-      place_id: pick.place_id,
-      address: pick.address,
-      lat: pick.lat,
-      lng: pick.lng,
-      reason: pick.summary ?? `A well-rated ${stop.category} spot nearby.`,
-      excitement_score: Math.min(Math.round((pick.rating || 4) * 18), 95),
-      admission_cost: null,
-      parking: null,
-    };
-
-    const updated = [...itinerary];
-    updated[stopIndex] = newStop;
-    return res.json({ itinerary: updated });
-  } catch (err) {
-    console.error('[swap] error:', err);
-    return res.status(500).json({ error: err.message });
-  }
+  });
 }
