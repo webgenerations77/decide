@@ -41,15 +41,23 @@ async function postUpsert(type, items) {
 }
 
 async function upsertLocal(type, entry) {
-  const stamped = { ...entry, updatedAt: Date.now() };
   const cache = await readCache(type);
-  const idx = cache.findIndex((e) => e.id === stamped.id);
+  const idx = cache.findIndex((e) => e.id === entry.id);
+  const base = idx !== -1 ? cache[idx] : null;
+  const record = {
+    ...entry,
+    // A content refresh of an existing item must not reset its created-at or wipe feedback.
+    timestamp:      base ? base.timestamp      : entry.timestamp,
+    feedback:       base ? base.feedback       : entry.feedback,
+    feedbackReason: base ? base.feedbackReason : entry.feedbackReason,
+    updatedAt: Date.now(),
+  };
   const next = idx !== -1
-    ? cache.map((e) => (e.id === stamped.id ? stamped : e))
-    : [stamped, ...cache];
+    ? cache.map((e) => (e.id === entry.id ? record : e))
+    : [record, ...cache];
   await writeCache(type, next);
-  postUpsert(type, [stamped]);
-  return stamped;
+  postUpsert(type, [record]);
+  return record;
 }
 
 export function saveItinerary(entry) { return upsertLocal('itineraries', entry); }
