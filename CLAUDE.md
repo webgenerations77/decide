@@ -61,12 +61,16 @@ Brand primitives (`components/brand/`) — compose tokens; use these instead of 
 - app/api/geocode+api.js       — GET: reverse geocode (?lat=&lng=) and forward search (?q=)
 - app/api/history+api.js       — GET/POST/DELETE: per-user history sync (auth-gated); prod twin api/history.js
 - app/api/admin/usage+api.js   — GET: API usage aggregate (totals + byModel/byRoute/byUser); prod twin api/admin/usage.js
-- screens/SettingsScreen.js    — full settings UI (collapsible sections; Itinerary Preferences default-expanded)
+- screens/SettingsScreen.js    — full settings UI (collapsible sections; Itinerary Preferences default-expanded; DiceBear-generated avatar picker — stores a seed string, renders from DiceBear PNG API)
 - components/brand/            — brand primitives (BrandLogo, ScreenBackground, Card, CTAButton, SectionLabel, CollapsibleCard, VersionTag, GradientHeader)
+- components/itinerary/        — StopCard, PlaceDetailModal + PriceLegendModal (bottom sheets), WeatherArt (photo-backed weather band), ItineraryMeta, WeatherPill
+- hooks/useViewportOverlay.js  — pins RN Modal overlays to the VISUAL viewport on web (fixes mobile-web sheet drift); exports useViewportOverlay(visible) + WEB_OVERLAY_FIX style. ALWAYS pair with Modal animationType="fade" (never "slide" — its transform traps position:fixed)
 - constants/theme.js           — COLORS + FONTS + RADII + SHADOWS + PRICE_LEGEND + CATEGORY_COLORS/EMOJIS
 - constants/localKnowledge.js  — Cheddar local tips (Delmarva/DE/MD beach region)
+- constants/weatherPhotos.js   — weather bucket → bundled photo (assets/weather/*.jpg, ~1200px optimized); WeatherArt falls back to its SVG scene for any bucket with no entry
+- lib/bourdainQuotes.js        — rotating quote under the DECIDE button (once per app launch); food/drink/travel only, verified quotes
 - lib/history/                 — merge.js (pure mergeById) + store.js (Firestore admin, users/{uid}/{itineraries|decisions})
-- lib/usageContext.js          — AsyncLocalStorage request-scoped userId for usage attribution
+- lib/usageContext.js          — request-scoped userId for usage attribution; AsyncLocalStorage anchored on globalThis (the module loads twice across the ESM/CJS graph — a plain module singleton mis-attributed every request as anonymous)
 - lib/admin/auth.js            — getUidFromAuth(header): verify ID token → uid or null (never throws)
 - services/settingsService.js  — AsyncStorage keys + load/save helpers
 - services/itineraryService.js — client-side POST to /api/itinerary (sends Firebase ID token)
@@ -88,6 +92,11 @@ Brand primitives (`components/brand/`) — compose tokens; use these instead of 
 - Auth for server data: client sends `Authorization: Bearer <idToken>` (`auth.currentUser.getIdToken()`);
   server verifies via `getUidFromAuth` (lib/admin/auth.js). Itinerary endpoints stay public (log-only
   attribution); `/api/history` and `/api/admin/*` require a valid uid (401 otherwise).
+- Module singletons shared across the import graph MUST be anchored on `globalThis` (`globalThis.__x ??= ...`).
+  This project bundles the same module twice across the ESM/CJS boundary — it forced firebaseAdmin to `.cjs`
+  and made usageContext's AsyncLocalStorage log everything as anonymous until moved to globalThis.
+- Mobile-web modals: RN `Modal` doesn't pin content to the viewport on web. For any transparent overlay use
+  `useViewportOverlay` + `WEB_OVERLAY_FIX` and `animationType="fade"` (see hooks/useViewportOverlay.js).
 
 ## History Sync (cross-device)
 - Itineraries + decisions live in Firestore (`users/{uid}/{itineraries|decisions}/{id}`) written only
@@ -97,8 +106,10 @@ Brand primitives (`components/brand/`) — compose tokens; use these instead of 
   and offline-write flush. All writes/reads/clear go through the service, never raw AsyncStorage.
 - KNOWN LIMITATION: "Clear History" is device-local (union merge has no deletion tracking; a clear is
   resurrected by another device's stale cache). Cross-device delete needs tombstones (queued follow-up).
-- API usage is attributed per-user via request-scoped `AsyncLocalStorage` (`lib/usageContext.js`):
-  handlers `runWithUser(uid, ...)`, `logUsage` reads `currentUserId()`. Admin dashboard shows byUser.
+- API usage is attributed per-user via request-scoped `AsyncLocalStorage` (`lib/usageContext.js`, anchored
+  on globalThis): handlers `runWithUser(uid, ...)`, `logUsage` reads `currentUserId()`. Admin dashboard maps
+  uid→email. Itinerary + swap attribute; the standalone place-detail/search + geocode endpoints don't wrap
+  `runWithUser` yet, so their rows still log as anonymous (queued follow-up).
 
 ## Itinerary Spec
 - Time window: configurable (default 11am–8pm), minimum 3 hours
