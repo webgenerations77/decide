@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   View, Text, Modal, ScrollView, TouchableOpacity, ActivityIndicator,
   Linking, StyleSheet, Image, Platform,
@@ -20,6 +20,29 @@ function PlaceDetailModal({ visible, stop, onClose }) {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const highlightConfig = useMemo(() => makeHighlightConfig(colors), [colors]);
+  const overlayRef = useRef(null);
+
+  // Web mobile: position:fixed pins to the LAYOUT viewport, which drifts out of view
+  // when the page is pinch-zoomed or scrolled. Glue the overlay to the VISUAL viewport
+  // (the actual zoomed window) so the sheet is always exactly over what the user sees.
+  useEffect(() => {
+    if (Platform.OS !== 'web' || !visible) return;
+    const vv = typeof window !== 'undefined' ? window.visualViewport : null;
+    const el = overlayRef.current;
+    if (!vv || !el || !el.style) return;
+    const sync = () => {
+      el.style.width = `${vv.width}px`;
+      el.style.height = `${vv.height}px`;
+      el.style.transform = `translate(${vv.offsetLeft}px, ${vv.offsetTop}px)`;
+    };
+    sync();
+    vv.addEventListener('resize', sync);
+    vv.addEventListener('scroll', sync);
+    return () => {
+      vv.removeEventListener('resize', sync);
+      vv.removeEventListener('scroll', sync);
+    };
+  }, [visible]);
 
   useEffect(() => {
     if (!visible || !stop) { setPlaceDetails(null); return; }
@@ -59,8 +82,8 @@ function PlaceDetailModal({ visible, stop, onClose }) {
   const hasInfoRow = rating > 0 || priceStr || openNow != null;
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.detailOverlay}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View ref={overlayRef} style={styles.detailOverlay}>
         <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={onClose} />
           <View style={styles.detailSheet}>
             <View style={styles.dragHandle} />
@@ -270,12 +293,14 @@ function PlaceDetailModal({ visible, stop, onClose }) {
 
 const makeStyles = (c) => StyleSheet.create({
   // Place detail modal
-  // On web, RN's Modal doesn't reliably pin to the viewport, so the sheet lands at the
-  // bottom of the (tall) page instead of overlaying the current view. position:'fixed'
-  // (web-only) forces a true viewport overlay regardless of page scroll.
+  // On web, RN's Modal doesn't pin its content to the viewport, so the sheet lands at the
+  // top/bottom of the (tall) page instead of overlaying the current view. Fix the overlay
+  // to the viewport with explicit 100% dimensions (Yoga won't derive a height from
+  // top/bottom:0, so justifyContent:'flex-end' would otherwise no-op and dump it at the
+  // top). The visualViewport effect above further glues it to the zoomed window.
   detailOverlay: {
     ...(Platform.OS === 'web'
-      ? { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }
+      ? { position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', touchAction: 'none' }
       : { flex: 1 }),
     backgroundColor: 'rgba(0,0,0,0.72)',
     justifyContent: 'flex-end',

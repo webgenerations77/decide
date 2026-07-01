@@ -28,9 +28,10 @@ export default function PriceLegendModal({ visible, onClose }) {
 
 const makeStyles = (c) => StyleSheet.create({
   modalOverlay: {
-    // Web: RN Modal doesn't pin to the viewport, so fix the overlay to it (see PlaceDetailModal).
+    // Web: RN Modal doesn't pin to the viewport, so fix the overlay to it with explicit
+    // 100% dimensions (Yoga won't derive height from top/bottom:0). See PlaceDetailModal.
     ...(Platform.OS === 'web'
-      ? { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }
+      ? { position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', touchAction: 'none' }
       : { flex: 1 }),
     backgroundColor: 'rgba(0,0,0,0.72)',
     justifyContent: 'center', alignItems: 'center', padding: 40,
