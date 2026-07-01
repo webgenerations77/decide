@@ -46,17 +46,23 @@ const PRICE_ENUM_TO_NUM = {
   PRICE_LEVEL_EXPENSIVE: 3, PRICE_LEVEL_VERY_EXPENSIVE: 4,
 };
 
+// Places API (New) v1 includedTypes only — every type below is drawn from the
+// vetted set in app/api/itinerary+api.js PLACE_TYPES, so all resolve on v1.
 const CATEGORIES = [
   { id: 'surprise',  label: 'Surprise Me', emoji: '🎲', color: COLORS.primary, noun: 'spot',
-    types: ['restaurant','cafe','art_gallery','park','museum','movie_theater','bowling_alley'] },
+    types: ['restaurant','cafe','bar','art_gallery','park','museum','movie_theater','bowling_alley','tourist_attraction','ice_cream_shop'] },
   { id: 'food',      label: 'Food',        emoji: '🍽️', color: COLORS.food, noun: 'place to eat',
-    types: ['restaurant','cafe','bar','bakery','coffee_shop'] },
+    types: ['restaurant','seafood_restaurant','pizza_restaurant','american_restaurant','italian_restaurant','mexican_restaurant','steak_house','sushi_restaurant','barbecue_restaurant','diner','hamburger_restaurant'] },
+  { id: 'coffee',    label: 'Coffee & Sweets', emoji: '☕', color: COLORS.accentDark, noun: 'café or sweet spot',
+    types: ['cafe','coffee_shop','bakery','ice_cream_shop','donut_shop'] },
+  { id: 'drinks',    label: 'Drinks',      emoji: '🍸', color: COLORS.primaryDark, noun: 'spot for a drink',
+    types: ['bar','wine_bar','gastropub','night_club'] },
   { id: 'activity',  label: 'Activity',    emoji: '🎭', color: COLORS.activity, noun: 'thing to do',
-    types: ['museum','art_gallery','bowling_alley','movie_theater','karaoke','comedy_club'] },
+    types: ['museum','art_gallery','bowling_alley','movie_theater','amusement_park','aquarium','tourist_attraction','water_park','comedy_club','karaoke'] },
   { id: 'outdoor',   label: 'Outdoor',     emoji: '🌿', color: COLORS.outdoor, noun: 'outdoor spot',
-    types: ['park','hiking_area','botanical_garden','zoo'] },
+    types: ['park','hiking_area','botanical_garden','national_park','zoo'] },
   { id: 'shopping',  label: 'Shopping',    emoji: '🛍️', color: COLORS.shopping, noun: 'place to shop',
-    types: ['shopping_mall','market','book_store','gift_shop'] },
+    types: ['shopping_mall','market','department_store','clothing_store','book_store','gift_shop'] },
 ];
 
 async function fetchNearbyPlaces(lat, lng, types) {
