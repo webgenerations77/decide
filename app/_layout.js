@@ -94,8 +94,10 @@ function RootLayoutInner() {
     if (!ready || !isBetaTester || guideCheckedRef.current) return;
     guideCheckedRef.current = true;
     (async () => {
-      const seen = await AsyncStorage.getItem('@decide/beta_guide_seen').catch(() => null);
-      if (seen === 'true') return;
+      // Default: show the beta guide on every login. Only skip if the tester unchecked
+      // "show every time" (persisted as @decide/beta_guide_always='false').
+      const always = await AsyncStorage.getItem('@decide/beta_guide_always').catch(() => null);
+      if (always === 'false') return;
       const onboarded = await AsyncStorage.getItem('@decide/onboardingComplete').catch(() => null);
       if (onboarded === 'true') router.push('/beta-guide');
     })();

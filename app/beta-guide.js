@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { ScrollView, Text, StyleSheet } from 'react-native';
+import { useMemo, useState, useEffect } from 'react';
+import { ScrollView, Text, StyleSheet, Pressable, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -24,8 +24,17 @@ export default function BetaGuide() {
   const router = useRouter();
   const { user } = useAuth();
 
+  // "Show this guide every time I log in" — defaults to checked (on). The guide reappears on
+  // each login unless the tester unchecks this (persisted as @decide/beta_guide_always='false').
+  const [alwaysShow, setAlwaysShow] = useState(true);
+  useEffect(() => {
+    AsyncStorage.getItem('@decide/beta_guide_always')
+      .then((raw) => { if (raw != null) setAlwaysShow(raw !== 'false'); })
+      .catch(() => {});
+  }, []);
+
   const done = async () => {
-    await AsyncStorage.setItem('@decide/beta_guide_seen', 'true').catch(() => {});
+    await AsyncStorage.setItem('@decide/beta_guide_always', alwaysShow ? 'true' : 'false').catch(() => {});
     router.back();
   };
 
@@ -103,6 +112,13 @@ export default function BetaGuide() {
             </Text>
           </Card>
 
+          <Pressable style={styles.checkRow} onPress={() => setAlwaysShow((v) => !v)} hitSlop={8}>
+            <View style={[styles.checkbox, alwaysShow && styles.checkboxActive]}>
+              {alwaysShow ? <Text style={styles.checkmark}>✓</Text> : null}
+            </View>
+            <Text style={styles.checkLabel}>Show this guide every time I log in</Text>
+          </Pressable>
+
           <CTAButton title="Got it — let's go" variant="cobalt" onPress={done} style={{ marginTop: 8 }} />
         </ScrollView>
       </SafeAreaView>
@@ -121,4 +137,12 @@ const makeStyles = (c) => StyleSheet.create({
   h: { fontFamily: FONTS.bodyBold, fontSize: 15, color: c.textPrimary, marginTop: 4 },
   p: { fontFamily: FONTS.body, fontSize: 14, lineHeight: 20, color: c.textSecondary },
   signoff: { marginTop: 10, fontStyle: 'italic', color: c.textPrimary },
+  checkRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 16, paddingHorizontal: 2 },
+  checkbox: {
+    width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: c.border,
+    alignItems: 'center', justifyContent: 'center', backgroundColor: c.surface,
+  },
+  checkboxActive: { backgroundColor: c.primary, borderColor: c.primary },
+  checkmark: { fontSize: 13, color: c.white, fontFamily: FONTS.displayHeavy },
+  checkLabel: { flex: 1, fontFamily: FONTS.bodyMedium, fontSize: 14, color: c.textSecondary },
 });
