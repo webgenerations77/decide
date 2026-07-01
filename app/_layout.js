@@ -68,7 +68,7 @@ function SplashScreen() {
 function RootLayoutInner() {
   const { scheme } = useTheme();
   const router = useRouter();
-  const { user, loading: authLoading, isBetaTester } = useAuth();
+  const { user, loading: authLoading, isBetaTester, isAdmin } = useAuth();
   const pathname = usePathname();
   const [betaBannerDismissed, setBetaBannerDismissed] = useState(false);
   const [demoMode, setDemoMode] = useState(false);
@@ -91,17 +91,17 @@ function RootLayoutInner() {
   }, [authLoading, user]);
 
   useEffect(() => {
-    if (!ready || !isBetaTester || guideCheckedRef.current) return;
+    if (!ready || !(isBetaTester || isAdmin) || guideCheckedRef.current) return;
     guideCheckedRef.current = true;
     (async () => {
-      // Default: show the beta guide on every login. Only skip if the tester unchecked
-      // "show every time" (persisted as @decide/beta_guide_always='false').
+      // Default: show the beta guide on every login for beta testers AND admins. Only skip if
+      // they unchecked "show every time" (persisted as @decide/beta_guide_always='false').
       const always = await AsyncStorage.getItem('@decide/beta_guide_always').catch(() => null);
       if (always === 'false') return;
       const onboarded = await AsyncStorage.getItem('@decide/onboardingComplete').catch(() => null);
       if (onboarded === 'true') router.push('/beta-guide');
     })();
-  }, [ready, isBetaTester]);
+  }, [ready, isBetaTester, isAdmin]);
 
   useEffect(() => {
     const sub = Notifications.addNotificationResponseReceivedListener(response => {
