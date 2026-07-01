@@ -10,6 +10,7 @@ import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { generateItinerary, swapStop } from '../../services/itineraryService';
+import { saveItinerary } from '../../services/historyService';
 import { loadPlanDefaults, KEYS } from '../../services/settingsService';
 import { isAtDecisionLimit, incrementDecisionCount, getRemainingDecisions, isPro, LIMITS } from '../../services/subscriptionService';
 import { scheduleItineraryAlerts, cancelItineraryAlerts } from '../../services/notificationService';
@@ -456,29 +457,15 @@ export default function PlanScreen() {
       setView('itinerary');
 
       try {
-        const raw      = await AsyncStorage.getItem('@decide/itineraries');
-        const existing = raw ? JSON.parse(raw) : [];
-        const summary  = (data.itinerary ?? []).map((s) => ({ name: s.name, category: s.category }));
-        const idx      = asEdit && currentItineraryId
-          ? existing.findIndex((e) => e.id === currentItineraryId)
-          : -1;
-        if (idx !== -1) {
-          existing[idx] = {
-            ...existing[idx],
-            meta: data.meta, weather: data.weather,
-            stops: summary, itinerary: data.itinerary ?? [], v: 2,
-          };
-          await AsyncStorage.setItem('@decide/itineraries', JSON.stringify(existing));
-        } else {
-          const id    = `itinerary_${Date.now()}`;
-          const entry = {
-            id, timestamp: Date.now(), meta: data.meta, weather: data.weather,
-            stops: summary, itinerary: data.itinerary ?? [], v: 2,
-            feedback: null, feedbackReason: null,
-          };
-          setCurrentItineraryId(id);
-          await AsyncStorage.setItem('@decide/itineraries', JSON.stringify([entry, ...existing.slice(0, 49)]));
-        }
+        const summary = (data.itinerary ?? []).map((s) => ({ name: s.name, category: s.category }));
+        const id = asEdit && currentItineraryId ? currentItineraryId : `itinerary_${Date.now()}`;
+        const entry = {
+          id, timestamp: Date.now(), meta: data.meta, weather: data.weather,
+          stops: summary, itinerary: data.itinerary ?? [], v: 2,
+          feedback: null, feedbackReason: null,
+        };
+        setCurrentItineraryId(id);
+        await saveItinerary(entry);
       } catch (e) {
         console.warn('[history] save itinerary error', e);
       }
