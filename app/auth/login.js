@@ -70,9 +70,16 @@ export default function LoginScreen() {
       const result = await promptAsync();
       if (result?.type === 'success') {
         await signInWithGoogleCredential(result.params.id_token);
+      } else {
+        // Surface WHY the Google step didn't complete (dismiss / cancel / error / locked)
+        // so a stuck tester can report it instead of a silent bounce back to login.
+        setError(`Google sign-in didn't complete (${result?.type ?? 'no response'}). Please try again.`);
       }
     } catch (e) {
-      setError(e.message || 'Google sign-in failed.');
+      // Show the Firebase error code so we can tell apart an invite-list rejection, a
+      // provider conflict (account-exists-with-different-credential), a disabled account, etc.
+      const code = e.code ? ` [${e.code}]` : '';
+      setError(`${e.message || 'Google sign-in failed.'}${code}`);
     } finally {
       setLoading(false);
     }
