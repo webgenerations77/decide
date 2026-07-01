@@ -9,7 +9,6 @@ import { FONTS } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
 import ScreenBackground from '../../components/brand/ScreenBackground';
 import WeatherArt from '../../components/itinerary/WeatherArt';
-import WeatherPill from '../../components/itinerary/WeatherPill';
 import ItineraryMeta from '../../components/itinerary/ItineraryMeta';
 import StopCard from '../../components/itinerary/StopCard';
 import PlaceDetailModal from '../../components/itinerary/PlaceDetailModal';
@@ -86,12 +85,10 @@ export default function ItineraryDetailScreen() {
     <SafeAreaView style={styles.screen} edges={['top']}>
       <ScreenBackground variant="paper" style={styles.fill}>
         <ScrollView style={styles.fill} contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-          <Header onBack={() => router.back()} weather={weather}>
-            <WeatherPill weather={weather} timeWindow={meta?.time_window ?? ''} />
-          </Header>
+          <Header onBack={() => router.back()} weather={weather} />
 
           <View style={styles.body}>
-            <ItineraryMeta meta={meta} stopCount={itinerary.length} research={null} />
+            <ItineraryMeta meta={meta} stopCount={itinerary.length} research={null} weather={weather} />
             {itinerary.map((stop, i) => (
               <StopCard
                 key={`${stop.place_id}-${i}`}

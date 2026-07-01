@@ -29,7 +29,6 @@ import { isValidWindow, windowChanged, canRefresh } from '../../lib/refreshPolic
 import { pickLaunchQuote, currentQuote, QUOTE_ATTRIBUTION } from '../../lib/bourdainQuotes';
 import PlaceDetailModal from '../../components/itinerary/PlaceDetailModal';
 import useViewportOverlay, { WEB_OVERLAY_FIX } from '../../hooks/useViewportOverlay';
-import WeatherPill from '../../components/itinerary/WeatherPill';
 import StopCard from '../../components/itinerary/StopCard';
 import ItineraryMeta from '../../components/itinerary/ItineraryMeta';
 
@@ -694,7 +693,6 @@ export default function PlanScreen() {
           <View style={styles.planContainer}>
             <View style={styles.header}>
               <Text style={styles.appName}>Your day</Text>
-              <WeatherPill weather={weather} timeWindow={meta?.time_window ?? `${startTime} – ${endTime}`} />
             </View>
 
             <View style={styles.itineraryContainer}>
@@ -706,7 +704,7 @@ export default function PlanScreen() {
                   </Text>
                 </View>
               )}
-              <ItineraryMeta meta={meta} stopCount={itinerary.length} research={research} timeEditor={timeEditor} />
+              <ItineraryMeta meta={meta} stopCount={itinerary.length} research={research} timeEditor={timeEditor} weather={weather} />
 
               {itinerary.map((stop, i) => (
                 <StopCard

@@ -4,8 +4,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { FONTS } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
 import DiscoveryAnchors from './DiscoveryAnchors';
+import WeatherPill from './WeatherPill';
 
-export default function ItineraryMeta({ meta, stopCount, research, timeEditor = null }) {
+export default function ItineraryMeta({ meta, stopCount, research, timeEditor = null, weather = null }) {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   if (!meta) return null;
@@ -14,6 +15,7 @@ export default function ItineraryMeta({ meta, stopCount, research, timeEditor = 
       <Text style={styles.itineraryDay}>{meta.day_of_week}</Text>
       <Text style={styles.itineraryDate}>{meta.date} · {stopCount} stops</Text>
       {meta.city ? <Text style={styles.itineraryCity}>📍 {meta.city}</Text> : null}
+      {weather ? <WeatherPill weather={weather} timeWindow="" /> : null}
       {timeEditor}
       <View style={styles.metaChips}>
         {!timeEditor && meta.time_window && (
