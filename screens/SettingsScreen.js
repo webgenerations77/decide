@@ -527,11 +527,13 @@ export default function SettingsScreen() {
             <Text style={[styles.fieldLabel, { marginTop: 16 }]}>ENVIRONMENTAL</Text>
             <ChipGrid options={ENV_SENSITIVITIES} selected={sensitivities} onToggle={toggleSensitivity} />
 
-            <ChipGrid
-              options={['Neurodivergent-friendly']}
-              selected={neurodivergent ? ['Neurodivergent-friendly'] : []}
-              onToggle={toggleNeurodivergent}
-            />
+            <View style={{ marginTop: 8 }}>
+              <ChipGrid
+                options={['Neurodivergent-friendly']}
+                selected={neurodivergent ? ['Neurodivergent-friendly'] : []}
+                onToggle={toggleNeurodivergent}
+              />
+            </View>
 
             <Text style={styles.sensitivityDisclaimer}>
               ⚠ These alerts are informational only. Always verify allergen information directly with the venue.

@@ -63,7 +63,7 @@ function PlaceDetailModal({ visible, stop, onClose }) {
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <TouchableOpacity style={styles.detailOverlay} activeOpacity={1} onPress={onClose}>
         <TouchableOpacity activeOpacity={1} onPress={() => {}}>
-          <View style={[styles.detailSheet, { height: screenHeight * 0.75 }]}>
+          <View style={[styles.detailSheet, { maxHeight: screenHeight * 0.85 }]}>
             <View style={styles.dragHandle} />
 
             {stop.photo ? (
@@ -297,7 +297,7 @@ const makeStyles = (c) => StyleSheet.create({
   detailCatPill:    { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999 },
   detailCatPillTxt: { fontSize: 11, fontFamily: FONTS.bodyBold, letterSpacing: 1 },
   detailCloseBtn:   { width: 32, height: 32, borderRadius: 16, backgroundColor: c.surfaceAlt, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center' },
-  detailScroll:     { paddingHorizontal: 20, paddingTop: 18 },
+  detailScroll:     { flexShrink: 1, paddingHorizontal: 20, paddingTop: 18 },
   detailName:       {
     fontSize: 22, color: c.textPrimary,
     fontFamily: FONTS.display,
