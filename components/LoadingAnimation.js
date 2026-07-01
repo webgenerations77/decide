@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import LottieView from 'lottie-react-native';
 import SectionLabel from './brand/SectionLabel';
+import BrandLogo from './brand/BrandLogo';
 import Card from './brand/Card';
 import { FONTS } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
@@ -49,6 +50,7 @@ export default function LoadingAnimation({ label = 'Building your day…', coord
 
   return (
     <View style={styles.wrap}>
+      <View style={styles.brandRow}><BrandLogo variant="full" size={34} /></View>
       <LottieView
         source={require('../assets/loading.json')}
         autoPlay
@@ -76,6 +78,7 @@ export default function LoadingAnimation({ label = 'Building your day…', coord
 
 const makeStyles = (c) => StyleSheet.create({
   wrap:     { alignItems: 'center', justifyContent: 'center', paddingVertical: 32 },
+  brandRow: { marginBottom: 8 },
   lottie:   SIZE,
   label:    { marginTop: 12, textAlign: 'center' },
   cardWrap: { marginTop: 24, width: 300, maxWidth: '88%' },
