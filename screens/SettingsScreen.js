@@ -499,8 +499,20 @@ export default function SettingsScreen() {
 
           {/* ── Preferences ───────────────────────────────────────────────── */}
           <CollapsibleCard title="PREFERENCES" sectionKey="preferences" defaultCollapsed={false} style={styles.collapsibleSpacing}>
+            {/* MAX TRAVEL DISTANCE */}
+            <View style={[styles.distanceHeader, { marginTop: 0 }]}>
+              <Text style={[styles.fieldLabel, { marginTop: 0, marginBottom: 0 }]}>MAX TRAVEL DISTANCE</Text>
+              <Text style={styles.distanceValue}>Within {maxDistance} mi</Text>
+            </View>
+            <DistanceSlider value={maxDistance} onChange={handleDistance} />
+            <View style={styles.distanceTicks}>
+              <Text style={styles.distanceTick}>1 mi</Text>
+              <Text style={styles.distanceTick}>25 mi</Text>
+              <Text style={styles.distanceTick}>50 mi</Text>
+            </View>
+
             {/* CUISINES & DIETARY */}
-            <Text style={styles.fieldLabel}>CUISINES</Text>
+            <Text style={[styles.fieldLabel, { marginTop: 20 }]}>CUISINES</Text>
             <ChipGrid options={CUISINES} selected={cuisines} onToggle={toggleCuisine} />
 
             <Text style={[styles.fieldLabel, { marginTop: 16 }]}>DIETARY RESTRICTIONS</Text>
@@ -508,7 +520,7 @@ export default function SettingsScreen() {
 
             {/* SENSITIVITIES & ALLERGIES */}
             <Text style={[styles.sensitivityNote, { marginTop: 20 }]}>
-              Cheddar will flag relevant risks on cards — food allergens at restaurants, environmental triggers at outdoor spots.
+              Decide will flag relevant risks on cards — food allergens at restaurants, environmental triggers at outdoor spots.
             </Text>
             <Text style={styles.fieldLabel}>FOOD ALLERGENS</Text>
             <ChipGrid options={FOOD_SENSITIVITIES} selected={sensitivities} onToggle={toggleSensitivity} />
@@ -522,27 +534,16 @@ export default function SettingsScreen() {
               onToggle={toggleNeurodivergent}
             />
             <Text style={styles.sensitivityNote}>
-              When on, Cheddar favors calmer, quieter, more predictable places and a less packed schedule.
+              When on, Decide favors calmer, quieter, more predictable places and a less packed schedule.
             </Text>
 
             <Text style={styles.sensitivityDisclaimer}>
               ⚠ These alerts are informational only. Always verify allergen information directly with the venue.
             </Text>
 
-            {/* ACTIVITY STYLE & DISTANCE */}
+            {/* ACTIVITY STYLE */}
             <Text style={[styles.fieldLabel, { marginTop: 20 }]}>ACTIVITY STYLE</Text>
             <ChipGrid options={ACTIVITY_STYLES} selected={activityStyles} onToggle={toggleActivity} />
-
-            <View style={styles.distanceHeader}>
-              <Text style={[styles.fieldLabel, { marginTop: 0, marginBottom: 0 }]}>MAX TRAVEL DISTANCE</Text>
-              <Text style={styles.distanceValue}>Within {maxDistance} mi</Text>
-            </View>
-            <DistanceSlider value={maxDistance} onChange={handleDistance} />
-            <View style={styles.distanceTicks}>
-              <Text style={styles.distanceTick}>1 mi</Text>
-              <Text style={styles.distanceTick}>25 mi</Text>
-              <Text style={styles.distanceTick}>50 mi</Text>
-            </View>
 
             {/* DEFAULT PLAN */}
             <Text style={[styles.fieldLabel, { marginTop: 14 }]}>PACE</Text>
@@ -566,8 +567,7 @@ export default function SettingsScreen() {
           </CollapsibleCard>
 
           {/* ── Location ───────────────────────────────────────────────────── */}
-          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>LOCATION</SectionLabel>
-          <Card style={styles.locationCard}>
+          <CollapsibleCard title="LOCATION" sectionKey="location" style={[styles.collapsibleSpacing, { zIndex: 10 }]}>
             <View style={styles.modeRow}>
               {[
                 { id: 'auto',   label: '📍 Auto-Detect' },
@@ -631,11 +631,10 @@ export default function SettingsScreen() {
                 )}
               </View>
             )}
-          </Card>
+          </CollapsibleCard>
 
           {/* ── Notifications ─────────────────────────────────────────────── */}
-          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>NOTIFICATIONS</SectionLabel>
-          <Card style={styles.card}>
+          <CollapsibleCard title="NOTIFICATIONS" sectionKey="notifications" style={styles.collapsibleSpacing}>
             <View style={styles.appRow}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <Text style={styles.appRowLabel}>Notifications</Text>
@@ -650,7 +649,7 @@ export default function SettingsScreen() {
                 style={{ opacity: 0.5 }}
               />
             </View>
-          </Card>
+          </CollapsibleCard>
 
           {/* ── Subscription ─────────────────────────────────────────── */}
           <CollapsibleCard title="SUBSCRIPTION" sectionKey="subscription" style={styles.collapsibleSpacing}>
@@ -738,8 +737,7 @@ export default function SettingsScreen() {
           </CollapsibleCard>
 
           {/* ── Demo Mode ──────────────────────────────────────────────────── */}
-          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>DEVELOPER</SectionLabel>
-          <Card style={styles.card}>
+          <CollapsibleCard title="DEVELOPER" sectionKey="developer" style={styles.collapsibleSpacing}>
             <View style={styles.demoToggleRow}>
               <View style={styles.demoLabelGroup}>
                 <View style={styles.demoLabelRow}>
@@ -764,11 +762,10 @@ export default function SettingsScreen() {
                 </Text>
               </View>
             )}
-          </Card>
+          </CollapsibleCard>
 
           {/* ── Account ─────────────────────────────────────────── */}
-          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>ACCOUNT</SectionLabel>
-          <Card style={styles.card}>
+          <CollapsibleCard title="ACCOUNT" sectionKey="account" style={styles.collapsibleSpacing}>
             {user?.email && (
               <View style={styles.appRow}>
                 <Text style={styles.appRowLabel}>Email</Text>
@@ -783,7 +780,7 @@ export default function SettingsScreen() {
               <Text style={[styles.appRowLabel, { color: colors.error }]}>Sign Out</Text>
               <Text style={styles.appRowChevron}>›</Text>
             </TouchableOpacity>
-          </Card>
+          </CollapsibleCard>
 
           {/* ── Admin (admin-only) — kept at the very bottom ───────────────── */}
           {isAdmin && (
