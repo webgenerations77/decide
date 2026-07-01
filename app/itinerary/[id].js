@@ -119,10 +119,14 @@ const makeStyles = (c) => StyleSheet.create({
   fill:       { flex: 1 },
   header:     { paddingHorizontal: 20, paddingTop: 6, paddingBottom: 4 },
   // Rounded weather illustration hero, inset by the header's horizontal padding.
-  headerArt:  { marginTop: 4, marginBottom: 8, borderRadius: 14 },
+  // zIndex 0: an explicit background layer so it never stacks above the metadata
+  // below, even if this band's layout changes to overlap in the future.
+  headerArt:  { marginTop: 4, marginBottom: 8, borderRadius: 14, zIndex: 0 },
   backRow:    { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
   backText:   { fontFamily: FONTS.bodySemiBold, fontSize: 15, color: c.primary, marginLeft: 2 },
-  body:       { paddingHorizontal: 20 },
+  // zIndex 1: keeps the day/date/stops/city/weather/tags metadata as the foreground
+  // stacking context relative to the weather banner above.
+  body:       { paddingHorizontal: 20, zIndex: 1 },
   emptyWrap:  { alignItems: 'center', paddingHorizontal: 32, paddingTop: 60 },
   emptyTitle: { fontFamily: FONTS.display, fontSize: 19, color: c.textPrimary, textAlign: 'center' },
   emptySub:   { fontFamily: FONTS.body, fontSize: 14, color: c.textMuted, textAlign: 'center', marginTop: 8 },
