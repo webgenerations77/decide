@@ -11,14 +11,31 @@ import { auth } from './firebase';
 import { BETA_TESTERS } from '../constants/betaTesters';
 import { ADMINS } from '../constants/admins';
 
-// Sign-in / sign-up allowlist = every invited beta tester + every admin. Derived from the
-// single sources of truth (constants/betaTesters.js, constants/admins.js) so it can never
-// drift out of sync — a hand-maintained copy here previously locked out beta testers who
-// weren't also listed twice. Those constants are already keyed by lowercased email.
-const ALLOWED_EMAILS = new Set([...Object.keys(BETA_TESTERS), ...Object.keys(ADMINS)]);
+// Gmail treats "." and "+tag" in the local part as insignificant, and googlemail.com == gmail.com.
+// A Google account whose email is stored as e.g. "dwayne.phil@gmail.com" is the SAME inbox as the
+// invited "dwaynephil@gmail.com" but a different STRING — a raw Set match locked those testers out
+// after a successful sign-in. Normalize both the allowlist and the incoming email so they compare
+// by identity, not by exact spelling.
+function normalizeEmail(email) {
+  const e = (email || '').toLowerCase().trim();
+  const at = e.lastIndexOf('@');
+  if (at < 0) return e;
+  let local = e.slice(0, at);
+  let domain = e.slice(at + 1);
+  if (domain === 'googlemail.com') domain = 'gmail.com';
+  if (domain === 'gmail.com') local = local.split('+')[0].replace(/\./g, '');
+  return `${local}@${domain}`;
+}
+
+// Sign-in / sign-up allowlist = every invited beta tester + every admin. Derived from the single
+// sources of truth (constants/betaTesters.js, constants/admins.js) so it can never drift out of
+// sync — a hand-maintained copy here previously locked out beta testers who weren't also listed twice.
+const ALLOWED_EMAILS = new Set(
+  [...Object.keys(BETA_TESTERS), ...Object.keys(ADMINS)].map(normalizeEmail)
+);
 
 function isAllowed(email) {
-  return !!email && ALLOWED_EMAILS.has(email.toLowerCase().trim());
+  return !!email && ALLOWED_EMAILS.has(normalizeEmail(email));
 }
 
 function checkAllowed(email) {
