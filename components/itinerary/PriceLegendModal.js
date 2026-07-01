@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { View, Text, Modal, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, Modal, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { FONTS, PRICE_LEGEND } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -28,7 +28,11 @@ export default function PriceLegendModal({ visible, onClose }) {
 
 const makeStyles = (c) => StyleSheet.create({
   modalOverlay: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.72)',
+    // Web: RN Modal doesn't pin to the viewport, so fix the overlay to it (see PlaceDetailModal).
+    ...(Platform.OS === 'web'
+      ? { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }
+      : { flex: 1 }),
+    backgroundColor: 'rgba(0,0,0,0.72)',
     justifyContent: 'center', alignItems: 'center', padding: 40,
   },
   legendCard: {

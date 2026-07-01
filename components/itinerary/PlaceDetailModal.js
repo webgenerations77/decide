@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
   View, Text, Modal, ScrollView, TouchableOpacity, ActivityIndicator,
-  Linking, StyleSheet, Image,
+  Linking, StyleSheet, Image, Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -270,7 +270,16 @@ function PlaceDetailModal({ visible, stop, onClose }) {
 
 const makeStyles = (c) => StyleSheet.create({
   // Place detail modal
-  detailOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.72)', justifyContent: 'flex-end' },
+  // On web, RN's Modal doesn't reliably pin to the viewport, so the sheet lands at the
+  // bottom of the (tall) page instead of overlaying the current view. position:'fixed'
+  // (web-only) forces a true viewport overlay regardless of page scroll.
+  detailOverlay: {
+    ...(Platform.OS === 'web'
+      ? { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }
+      : { flex: 1 }),
+    backgroundColor: 'rgba(0,0,0,0.72)',
+    justifyContent: 'flex-end',
+  },
   detailSheet: {
     maxHeight: '90%',
     backgroundColor: c.surface,
