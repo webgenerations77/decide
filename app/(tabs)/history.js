@@ -9,6 +9,7 @@ import { DEMO_HISTORY } from '../../services/demoData';
 import { loadHistory, syncHistory, updateFeedback } from '../../services/historyService';
 import WeatherArt from '../../components/itinerary/WeatherArt';
 import { COLORS, CATEGORY_COLORS, CATEGORY_EMOJIS, FONTS } from '../../constants/theme';
+import useViewportOverlay, { WEB_OVERLAY_FIX } from '../../hooks/useViewportOverlay';
 import { useTheme } from '../../context/ThemeContext';
 import ScreenBackground from '../../components/brand/ScreenBackground';
 import Card from '../../components/brand/Card';
@@ -36,10 +37,11 @@ function formatTimestamp(ts) {
 function FeedbackModal({ visible, itemName, onClose, onSelect }) {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const overlayRef = useViewportOverlay(visible);
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <TouchableOpacity style={styles.fbOverlay} activeOpacity={1} onPress={onClose}>
-        <TouchableOpacity activeOpacity={1} onPress={() => {}}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View ref={overlayRef} style={styles.fbOverlay}>
+        <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={onClose} />
           <View style={styles.fbCard}>
             <Text style={styles.fbTitle}>WHAT WAS THE ISSUE?</Text>
             <Text style={styles.fbPlace} numberOfLines={1}>{itemName}</Text>
@@ -57,8 +59,7 @@ function FeedbackModal({ visible, itemName, onClose, onSelect }) {
               <Text style={styles.fbCancelTxt}>Cancel</Text>
             </TouchableOpacity>
           </View>
-        </TouchableOpacity>
-      </TouchableOpacity>
+      </View>
     </Modal>
   );
 }
@@ -537,7 +538,7 @@ const makeStyles = (c) => StyleSheet.create({
   emptySub:   { fontSize: 15, color: c.textMuted, textAlign: 'center', lineHeight: 20 },
 
   // Feedback modal
-  fbOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'flex-end' },
+  fbOverlay: { ...WEB_OVERLAY_FIX, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'flex-end' },
   fbCard: {
     backgroundColor: c.surface,
     borderTopLeftRadius: 24, borderTopRightRadius: 24,

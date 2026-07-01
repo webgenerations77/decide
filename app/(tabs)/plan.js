@@ -28,6 +28,7 @@ import { getApiBase } from '../../services/apiBase';
 import { isValidWindow, windowChanged, canRefresh } from '../../lib/refreshPolicy';
 import { pickLaunchQuote, currentQuote, QUOTE_ATTRIBUTION } from '../../lib/bourdainQuotes';
 import PlaceDetailModal from '../../components/itinerary/PlaceDetailModal';
+import useViewportOverlay, { WEB_OVERLAY_FIX } from '../../hooks/useViewportOverlay';
 import WeatherPill from '../../components/itinerary/WeatherPill';
 import StopCard from '../../components/itinerary/StopCard';
 import ItineraryMeta from '../../components/itinerary/ItineraryMeta';
@@ -90,6 +91,7 @@ function TimePickerPill({ label, value, options, onChange, disabled }) {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const [open, setOpen] = useState(false);
+  const overlayRef = useViewportOverlay(open);
   return (
     <>
       <TouchableOpacity
@@ -104,8 +106,8 @@ function TimePickerPill({ label, value, options, onChange, disabled }) {
         </View>
       </TouchableOpacity>
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setOpen(false)}>
-          <TouchableOpacity activeOpacity={1} onPress={() => {}}>
+        <View ref={overlayRef} style={styles.modalOverlay}>
+          <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={() => setOpen(false)} />
             <View style={styles.modalCard}>
               <Text style={styles.modalTitle}>{label} time</Text>
               {options.map((opt, i) => (
@@ -123,8 +125,7 @@ function TimePickerPill({ label, value, options, onChange, disabled }) {
                 </TouchableOpacity>
               ))}
             </View>
-          </TouchableOpacity>
-        </TouchableOpacity>
+        </View>
       </Modal>
     </>
   );
@@ -199,6 +200,10 @@ export default function PlanScreen() {
 
   const [selectedStop,    setSelectedStop]    = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+
+  // Pin the picker overlays to the visible viewport on web (see useViewportOverlay).
+  const weekPickerOverlayRef = useViewportOverlay(showWeekPicker);
+  const datePickerOverlayRef = useViewportOverlay(showDatePicker);
 
   // Bourdain quote shown under the DECIDE button — rotates once per app launch.
   const [quote, setQuote] = useState(currentQuote());
@@ -776,9 +781,9 @@ export default function PlanScreen() {
       )}
 
       {/* Week picker */}
-      <Modal visible={showWeekPicker} transparent animationType="slide" onRequestClose={() => setShowWeekPicker(false)}>
-        <TouchableOpacity style={styles.weekPickerOverlay} activeOpacity={1} onPress={() => setShowWeekPicker(false)}>
-          <TouchableOpacity activeOpacity={1} onPress={() => {}}>
+      <Modal visible={showWeekPicker} transparent animationType="fade" onRequestClose={() => setShowWeekPicker(false)}>
+        <View ref={weekPickerOverlayRef} style={styles.weekPickerOverlay}>
+          <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={() => setShowWeekPicker(false)} />
             <View style={styles.weekPickerCard}>
               <View style={styles.weekPickerHeader}>
                 <Text style={styles.weekPickerTitle}>Choose a day</Text>
@@ -798,14 +803,13 @@ export default function PlanScreen() {
                 </TouchableOpacity>
               ))}
             </View>
-          </TouchableOpacity>
-        </TouchableOpacity>
+        </View>
       </Modal>
 
       {/* Date picker */}
-      <Modal visible={showDatePicker} transparent animationType="slide" onRequestClose={() => setShowDatePicker(false)}>
-        <TouchableOpacity style={styles.weekPickerOverlay} activeOpacity={1} onPress={() => setShowDatePicker(false)}>
-          <TouchableOpacity activeOpacity={1} onPress={() => {}}>
+      <Modal visible={showDatePicker} transparent animationType="fade" onRequestClose={() => setShowDatePicker(false)}>
+        <View ref={datePickerOverlayRef} style={styles.weekPickerOverlay}>
+          <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={() => setShowDatePicker(false)} />
             <View style={styles.weekPickerCard}>
               <View style={styles.weekPickerHeader}>
                 <Text style={styles.weekPickerTitle}>Choose a day</Text>
@@ -827,8 +831,7 @@ export default function PlanScreen() {
                 </TouchableOpacity>
               ))}
             </View>
-          </TouchableOpacity>
-        </TouchableOpacity>
+        </View>
       </Modal>
 
       <PlaceDetailModal
@@ -939,7 +942,7 @@ const makeStyles = (c) => StyleSheet.create({
 
   // Time picker modal
   modalOverlay: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.72)',
+    ...WEB_OVERLAY_FIX, backgroundColor: 'rgba(0,0,0,0.72)',
     justifyContent: 'center', alignItems: 'center', padding: 40,
   },
   modalCard: {
@@ -1017,7 +1020,7 @@ const makeStyles = (c) => StyleSheet.create({
   stickyNavTxt: { color: c.primaryText, fontSize: 17, fontFamily: FONTS.bodyBold },
 
   // Week / Date picker
-  weekPickerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'flex-end' },
+  weekPickerOverlay: { ...WEB_OVERLAY_FIX, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'flex-end' },
   weekPickerCard: {
     backgroundColor: c.surface,
     borderTopLeftRadius: 28, borderTopRightRadius: 28,

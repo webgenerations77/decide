@@ -7,6 +7,7 @@ import { submitFeedback } from '../services/feedbackService';
 import CTAButton from './brand/CTAButton';
 import { useTheme } from '../context/ThemeContext';
 import { FONTS, RADII } from '../constants/theme';
+import useViewportOverlay, { WEB_OVERLAY_FIX } from '../hooks/useViewportOverlay';
 
 const TYPES = ['Bug Report', 'Feature Suggestion', 'General Impression', 'Something Felt Off'];
 
@@ -31,6 +32,7 @@ export default function BetaFeedback({ topOffset = 0 }) {
   const [rating, setRating] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState(null); // { kind: 'success' | 'error', text }
+  const overlayRef = useViewportOverlay(open);
 
   const openModal = () => { setPage(pathname); setOpen(true); };
 
@@ -77,8 +79,8 @@ export default function BetaFeedback({ topOffset = 0 }) {
 
       {toastNode}
 
-      <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
-        <View style={styles.overlay}>
+      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+        <View ref={overlayRef} style={styles.overlay}>
           <View style={styles.sheet}>
             <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 20, gap: 12 }}>
               <View style={styles.headerRow}>
@@ -155,7 +157,7 @@ const makeStyles = (c, scheme) => StyleSheet.create({
   toastError: { backgroundColor: c.error },
   toastText: { color: c.white, fontFamily: FONTS.bodySemiBold, fontSize: 13, textAlign: 'center' },
 
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
+  overlay: { ...WEB_OVERLAY_FIX, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
   sheet: {
     backgroundColor: c.bg, borderTopLeftRadius: RADII.lg, borderTopRightRadius: RADII.lg,
     maxHeight: '88%',
