@@ -281,7 +281,6 @@ const makeStyles = (c) => StyleSheet.create({
   timeText:         { fontSize: 16, fontFamily: FONTS.bodyBold },
   durationText:     { fontSize: 11, color: c.textMuted, fontFamily: FONTS.body },
   catChip:          { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 },
-  catEmoji:         { fontSize: 12 },
   catLabel:         { fontSize: 11, fontFamily: FONTS.bodySemiBold },
   stopName:         { fontSize: 17, color: c.textPrimary, fontFamily: FONTS.display },
   stopAddress:      { fontSize: 12, color: c.textMuted, lineHeight: 17 },
