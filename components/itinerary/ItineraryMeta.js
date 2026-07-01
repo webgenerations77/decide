@@ -42,16 +42,16 @@ export default function ItineraryMeta({ meta, stopCount, research, timeEditor = 
 
 const makeStyles = (c) => StyleSheet.create({
   itineraryMeta: {
-    alignItems: 'center', marginBottom: 28,
-    paddingBottom: 22, borderBottomWidth: 1, borderBottomColor: c.border,
+    alignItems: 'center', marginBottom: 16,
+    paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: c.border,
   },
   itineraryDay: {
-    fontSize: 28, color: c.textPrimary,
+    fontSize: 22, color: c.textPrimary,
     fontFamily: FONTS.displayHeavy,
   },
-  itineraryDate: { fontSize: 13, color: c.textMuted, marginTop: 4 },
-  itineraryCity: { fontSize: 13, color: c.primary, marginTop: 3 },
-  metaChips:     { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, marginTop: 12 },
+  itineraryDate: { fontSize: 13, color: c.textMuted, marginTop: 3 },
+  itineraryCity: { fontSize: 13, color: c.primary, marginTop: 2 },
+  metaChips:     { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, marginTop: 10 },
   metaChip: {
     paddingHorizontal: 10, paddingVertical: 5,
     borderRadius: 999, backgroundColor: c.surface,

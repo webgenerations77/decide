@@ -22,7 +22,7 @@ function Header({ onBack, children, weather }) {
         <Ionicons name="chevron-back" size={18} color={colors.primary} />
         <Text style={styles.backText}>Back</Text>
       </TouchableOpacity>
-      {weather ? <WeatherArt weather={weather} height={120} style={styles.headerArt} /> : null}
+      {weather ? <WeatherArt weather={weather} height={84} style={styles.headerArt} /> : null}
       {children}
     </View>
   );
@@ -87,7 +87,6 @@ export default function ItineraryDetailScreen() {
       <ScreenBackground variant="paper" style={styles.fill}>
         <ScrollView style={styles.fill} contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
           <Header onBack={() => router.back()} weather={weather}>
-            <Text style={styles.title}>Your day</Text>
             <WeatherPill weather={weather} timeWindow={meta?.time_window ?? ''} />
           </Header>
 
@@ -121,12 +120,11 @@ export default function ItineraryDetailScreen() {
 const makeStyles = (c) => StyleSheet.create({
   screen:     { flex: 1, backgroundColor: c.bg },
   fill:       { flex: 1 },
-  header:     { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 8 },
+  header:     { paddingHorizontal: 20, paddingTop: 6, paddingBottom: 4 },
   // Rounded weather illustration hero, inset by the header's horizontal padding.
-  headerArt:  { marginTop: 6, marginBottom: 12, borderRadius: 14 },
-  backRow:    { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  headerArt:  { marginTop: 4, marginBottom: 8, borderRadius: 14 },
+  backRow:    { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
   backText:   { fontFamily: FONTS.bodySemiBold, fontSize: 15, color: c.primary, marginLeft: 2 },
-  title:      { fontFamily: FONTS.display, fontSize: 26, color: c.textPrimary, marginBottom: 8 },
   body:       { paddingHorizontal: 20 },
   emptyWrap:  { alignItems: 'center', paddingHorizontal: 32, paddingTop: 60 },
   emptyTitle: { fontFamily: FONTS.display, fontSize: 19, color: c.textPrimary, textAlign: 'center' },
