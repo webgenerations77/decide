@@ -109,6 +109,14 @@ export default function AdminScreen() {
             </View>
             <Text style={styles.toolChevron}>›</Text>
           </Pressable>
+          <Pressable style={styles.toolRow} onPress={() => router.push('/beta-guide')}>
+            <Ionicons name="book-outline" size={20} color={colors.primary} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.toolLabel}>Beta tester guide</Text>
+              <Text style={styles.toolSub}>Open the welcome doc new testers see</Text>
+            </View>
+            <Text style={styles.toolChevron}>›</Text>
+          </Pressable>
         </Card>
 
         <SectionLabel tone="cobalt">API USAGE</SectionLabel>
