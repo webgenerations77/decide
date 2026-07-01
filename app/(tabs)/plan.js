@@ -527,7 +527,7 @@ export default function PlanScreen() {
 
   const handleClarifyContinue = () => {
     const combined = clarifyAnswer.trim()
-      ? `${tripNote}\n\nCheddar asked: "${clarifyQuestion}" — they answered: "${clarifyAnswer.trim()}"`
+      ? `${tripNote}\n\nFollow-up — asked: "${clarifyQuestion}" · they answered: "${clarifyAnswer.trim()}"`
       : tripNote;
     setClarifyQuestion(null);
     generate({ tripNoteOverride: combined });
@@ -723,7 +723,7 @@ export default function PlanScreen() {
 
             {clarifyQuestion ? (
               <Card style={styles.clarifyCard}>
-                <Text style={styles.clarifyLabel}>🧀 Cheddar</Text>
+                <Text style={styles.clarifyLabel}>Quick question</Text>
                 <Text style={styles.clarifyQuestionText}>{clarifyQuestion}</Text>
                 <TextInput
                   style={styles.clarifyInput}

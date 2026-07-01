@@ -39,7 +39,7 @@ export default function TermsOfService() {
             By creating an account or using the {APP_NAME} app, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the app.
           </Section>
 
-          <Section title="2. What Cheddar does">
+          <Section title={`2. What ${APP_NAME} does`}>
             {APP_NAME} uses AI-assisted recommendations, location data, and third-party data sources to suggest itineraries, restaurants, attractions, and activities. All recommendations are suggestions only — we do not guarantee accuracy, availability, or suitability for your specific situation.
           </Section>
 

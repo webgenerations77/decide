@@ -13,7 +13,7 @@ export default function BetaBanner({ onDismiss, topOffset = 0 }) {
     <View style={[styles.banner, { top: insets.top + topOffset }]} pointerEvents="box-none">
       <View style={styles.side} />
       <Text style={styles.text} numberOfLines={2}>
-        🧪 You're a Cheddar Beta Tester — thanks for helping us build something great!
+        🧪 You're a Decide Beta Tester — thanks for helping us build something great!
       </Text>
       <TouchableOpacity
         style={styles.side}

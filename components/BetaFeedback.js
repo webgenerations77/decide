@@ -128,7 +128,7 @@ export default function BetaFeedback({ topOffset = 0 }) {
               </View>
 
               <CTAButton
-                title="Send to Cheddar HQ" variant="cobalt" onPress={onSubmit}
+                title="Send to the team" variant="cobalt" onPress={onSubmit}
                 loading={submitting} disabled={!message.trim() || submitting} style={{ marginTop: 6 }}
               />
             </ScrollView>

@@ -175,7 +175,7 @@ function PlaceDetailModal({ visible, stop, onClose }) {
 
               {stop.reason ? (
                 <View style={styles.detailSection}>
-                  <SectionLabel tone="cobalt" style={{ marginBottom: 10 }}>Cheddar's take</SectionLabel>
+                  <SectionLabel tone="cobalt" style={{ marginBottom: 10 }}>Our take</SectionLabel>
                   <Text style={styles.detailReasonText}>{stop.reason}</Text>
                 </View>
               ) : null}

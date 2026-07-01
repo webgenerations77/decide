@@ -89,7 +89,10 @@ Brand primitives (`components/brand/`) — compose tokens; use these instead of 
 - Google Geocoding API is NOT used directly from the client — proxy through /api/geocode
 - Auto location uses expo-location.reverseGeocodeAsync() on native (no API call)
 - Manual location search uses Places Autocomplete + Place Details via /api/geocode?q=
-- AI assistant is named "Cheddar" in all user-facing text — never "AI" or "artificial intelligence"
+- "Cheddar" is the assistant's INTERNAL persona only (shapes voice via server-side system prompts in
+  lib/smart/synthesis.js, lib/clarify.js, api/itinerary-swap). It is NOT ready for public launch — the name
+  "Cheddar" must NEVER appear in user-facing text. In UI copy refer to the product as "Decide" or use "we".
+  Also never say "AI"/"artificial intelligence" in user-facing copy.
 - All new colors must come from constants/theme.js — no hardcoded hex values in components
 - Server API endpoints exist as mirrored twins: prod Vercel `api/*.js` (req/res) + dev Expo
   `app/api/*+api.js` (Request/Response). Keep both in sync when editing a handler.

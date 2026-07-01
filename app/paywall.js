@@ -82,7 +82,7 @@ export default function PaywallScreen() {
           <View style={styles.crownBadge}>
             <Ionicons name="star" size={28} color={colors.amber} />
           </View>
-          <Text style={styles.heroTitle}>Unlock Cheddar Pro</Text>
+          <Text style={styles.heroTitle}>Unlock Decide Pro</Text>
           <Text style={styles.heroSub}>Unlimited decisions. Every day.</Text>
         </View>
 

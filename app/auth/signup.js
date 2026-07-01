@@ -77,7 +77,7 @@ export default function SignupScreen() {
             <View style={styles.hero}>
               <BrandLogo variant="stacked" size={80} />
               <Text style={styles.heroTitle}>Create account</Text>
-              <Text style={styles.heroSub}>Let Cheddar plan your next great day.</Text>
+              <Text style={styles.heroSub}>Let Decide plan your next great day.</Text>
             </View>
 
             {!!error && (
@@ -89,7 +89,7 @@ export default function SignupScreen() {
             <Card>
               <View style={styles.form}>
                 <View style={styles.fieldBlock}>
-                  <Text style={styles.label}>What should Cheddar call you? <Text style={styles.optional}>(optional)</Text></Text>
+                  <Text style={styles.label}>What should we call you? <Text style={styles.optional}>(optional)</Text></Text>
                   <TextInput
                     style={styles.input}
                     value={displayName}

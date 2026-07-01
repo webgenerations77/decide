@@ -46,7 +46,7 @@ export default function DiscoveryAnchors({ research }) {
           {anchors.length === 0 ? null : (
             <View style={styles.wrap}>
               <TouchableOpacity style={styles.header} onPress={() => setExpanded((e) => !e)} activeOpacity={0.7}>
-                <Text style={styles.headerText}>✨ What Cheddar found this week ({anchors.length})</Text>
+                <Text style={styles.headerText}>✨ What we found this week ({anchors.length})</Text>
                 <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={14} color={colors.primary} />
               </TouchableOpacity>
 

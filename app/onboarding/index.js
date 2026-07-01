@@ -145,7 +145,7 @@ export default function OnboardingScreen() {
           {/* ── Hero ──────────────────────────────────────────────────────────── */}
           <View style={styles.hero}>
             <BrandLogo variant="stacked" size={80} />
-            <Text style={styles.heroTitle}>Meet Cheddar.</Text>
+            <Text style={styles.heroTitle}>Welcome to Decide.</Text>
             <Text style={styles.heroSub}>
               Your well-traveled friend who always knows the good spots.
               Tell me a bit about yourself and I'll take care of the rest.
@@ -181,7 +181,7 @@ export default function OnboardingScreen() {
           <View style={styles.toggleRow}>
             <View style={styles.toggleInfo}>
               <Text style={styles.toggleLabel}>Morning inspiration</Text>
-              <Text style={styles.toggleSub}>Cheddar can send you a daily nudge to plan your day</Text>
+              <Text style={styles.toggleSub}>Decide can send you a daily nudge to plan your day</Text>
             </View>
             <Switch
               value={notifications}
