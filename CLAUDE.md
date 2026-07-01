@@ -54,24 +54,28 @@ Brand primitives (`components/brand/`) — compose tokens; use these instead of 
 - app/terms.js                 — Terms of Service page
 - app/onboarding/index.js      — first-run preference setup
 - app/paywall.js               — subscription upsell
-- app/admin/index.js           — admin dashboard (API usage incl. per-user breakdown; user admin)
+- app/admin/index.js           — admin dashboard (API usage incl. per-user breakdown; user admin; tap a user → detail modal with last login/created/usage/activity counts; "Beta tester guide" button → /beta-guide)
 - app/itinerary/[id].js        — saved-itinerary detail view (reads history via loadHistory)
-- app/api/itinerary+api.js     — POST: generate full-day itinerary (Cheddar)
+- app/api/itinerary+api.js     — POST: generate full-day itinerary (Cheddar); ?mode=clarify → single follow-up question (lib/clarify.js)
+- app/api/admin/users+api.js   — GET: user list; GET ?uid= → that user's activity stats (lib/admin/userStats.js); POST: set role; prod twin api/admin/users.js
 - app/api/itinerary-swap+api.js— POST: swap a single stop
 - app/api/geocode+api.js       — GET: reverse geocode (?lat=&lng=) and forward search (?q=)
 - app/api/history+api.js       — GET/POST/DELETE: per-user history sync (auth-gated); prod twin api/history.js
 - app/api/admin/usage+api.js   — GET: API usage aggregate (totals + byModel/byRoute/byUser); prod twin api/admin/usage.js
 - screens/SettingsScreen.js    — full settings UI (collapsible sections; Itinerary Preferences default-expanded; DiceBear-generated avatar picker — stores a seed string, renders from DiceBear PNG API)
 - components/brand/            — brand primitives (BrandLogo, ScreenBackground, Card, CTAButton, SectionLabel, CollapsibleCard, VersionTag, GradientHeader)
-- components/itinerary/        — StopCard, PlaceDetailModal + PriceLegendModal (bottom sheets), WeatherArt (photo-backed weather band), ItineraryMeta, WeatherPill
+- components/itinerary/        — StopCard, PlaceDetailModal + PriceLegendModal (bottom sheets), WeatherArt (photo-backed weather band; `fill` prop = faded full-card background), ItineraryMeta (renders the WeatherPill centered below the date), WeatherPill. Stop icons/colors come from constants/categoryVisuals.js (not the legacy 4 CATEGORY_EMOJIS).
 - hooks/useViewportOverlay.js  — pins RN Modal overlays to the VISUAL viewport on web (fixes mobile-web sheet drift); exports useViewportOverlay(visible) + WEB_OVERLAY_FIX style. ALWAYS pair with Modal animationType="fade" (never "slide" — its transform traps position:fixed)
 - constants/theme.js           — COLORS + FONTS + RADII + SHADOWS + PRICE_LEGEND + CATEGORY_COLORS/EMOJIS
 - constants/localKnowledge.js  — Cheddar local tips (Delmarva/DE/MD beach region)
 - constants/weatherPhotos.js   — weather bucket → bundled photo (assets/weather/*.jpg, ~1200px optimized); WeatherArt falls back to its SVG scene for any bucket with no entry
+- constants/categoryVisuals.js  — categoryVisual(rawCategory) → {icon (Ionicons), color (theme token)}; normalizes the AI's FREE-FORM stop categories via word-boundary matching to distinct icons/colors, default = location-pin/gray (fixes the old "lightning bolt on every stop")
 - lib/bourdainQuotes.js        — rotating quote under the DECIDE button (once per app launch); food/drink/travel only, verified quotes
 - lib/history/                 — merge.js (pure mergeById) + store.js (Firestore admin, users/{uid}/{itineraries|decisions})
 - lib/usageContext.js          — request-scoped userId for usage attribution; AsyncLocalStorage anchored on globalThis (the module loads twice across the ESM/CJS graph — a plain module singleton mis-attributed every request as anonymous)
 - lib/admin/auth.js            — getUidFromAuth(header): verify ID token → uid or null (never throws)
+- lib/admin/userStats.js       — getUserStats(uid): counts itineraries/decisions/distinct cities from Firestore; served via /api/admin/users?uid=
+- lib/clarify.js               — getClarifyingQuestion(tripNote) → {skip} | {question} (haiku, Cheddar voice); fails open to {skip}; called via /api/itinerary?mode=clarify
 - services/settingsService.js  — AsyncStorage keys + load/save helpers
 - services/itineraryService.js — client-side POST to /api/itinerary (sends Firebase ID token)
 - services/historyService.js   — cross-device history: AsyncStorage cache + syncHistory() merge over /api/history
@@ -89,6 +93,16 @@ Brand primitives (`components/brand/`) — compose tokens; use these instead of 
 - All new colors must come from constants/theme.js — no hardcoded hex values in components
 - Server API endpoints exist as mirrored twins: prod Vercel `api/*.js` (req/res) + dev Expo
   `app/api/*+api.js` (Request/Response). Keep both in sync when editing a handler.
+- ⚠ VERCEL FUNCTION CAP: Hobby plan allows max 12 serverless functions per deploy, and EVERY `.js` under
+  `api/` counts. Adding files here freezes prod (hit 2026-07-01 — batch-4 added 2 → 13 → deploy failed).
+  DO NOT add files to `api/`. Add new server capability as a `?mode=`/query branch on an EXISTING endpoint
+  with logic in `lib/` (e.g. clarify → `api/itinerary?mode=clarify` via lib/clarify.js; admin user-stats →
+  `api/admin/users?uid=` via lib/admin/userStats.js). Check count: `find api -name '*.js' | wc -l` (keep ≤12).
+- ⚠ VERIFY BUILDS with `npx expo export --platform web` (success = "Exported: dist"). `node --check` is
+  USELESS here — on Node v24 it passes any file containing an `import`, including broken JSX. For a fast
+  single-file check use `@babel/core` + `babel-preset-expo`, not `node --check`.
+- Stop `category` values are FREE-FORM strings from the AI (no fixed enum) — always resolve icon/color via
+  constants/categoryVisuals.js; never assume the 4 legacy CATEGORY_EMOJIS/CATEGORY_COLORS keys.
 - Auth for server data: client sends `Authorization: Bearer <idToken>` (`auth.currentUser.getIdToken()`);
   server verifies via `getUidFromAuth` (lib/admin/auth.js). Itinerary endpoints stay public (log-only
   attribution); `/api/history` and `/api/admin/*` require a valid uid (401 otherwise).
