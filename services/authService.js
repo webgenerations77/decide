@@ -8,14 +8,21 @@ import {
   signInWithCredential,
 } from 'firebase/auth';
 import { auth } from './firebase';
+import { BETA_TESTERS } from '../constants/betaTesters';
+import { ADMINS } from '../constants/admins';
 
-const ALLOWED_EMAILS = [
-  'webgenerations77@gmail.com',
-  'thecindycooley@gmail.com',
-];
+// Sign-in / sign-up allowlist = every invited beta tester + every admin. Derived from the
+// single sources of truth (constants/betaTesters.js, constants/admins.js) so it can never
+// drift out of sync — a hand-maintained copy here previously locked out beta testers who
+// weren't also listed twice. Those constants are already keyed by lowercased email.
+const ALLOWED_EMAILS = new Set([...Object.keys(BETA_TESTERS), ...Object.keys(ADMINS)]);
+
+function isAllowed(email) {
+  return !!email && ALLOWED_EMAILS.has(email.toLowerCase().trim());
+}
 
 function checkAllowed(email) {
-  if (!ALLOWED_EMAILS.includes(email.toLowerCase())) {
+  if (!isAllowed(email)) {
     throw { code: 'auth/unauthorized', message: 'Sign-ups are currently limited to invited users only.' };
   }
 }
@@ -44,9 +51,9 @@ export function onAuthChange(callback) {
 export async function signInWithGoogleCredential(idToken) {
   const credential = GoogleAuthProvider.credential(idToken);
   const result = await signInWithCredential(auth, credential);
-  if (!ALLOWED_EMAILS.includes(result.user.email.toLowerCase())) {
+  if (!isAllowed(result.user.email)) {
     await firebaseSignOut(auth);
-    throw { code: 'auth/unauthorized', message: 'Sign-ups are currently limited to invited users only.' };
+    throw { code: 'auth/unauthorized', message: 'This Google account isn\'t on the invite list yet.' };
   }
   return result;
 }
