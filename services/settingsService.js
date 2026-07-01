@@ -24,7 +24,7 @@ export const KEYS = {
 
 const DEFAULTS = {
   displayName:    '',
-  avatar:         '🎯',
+  avatar:         'Explorer',
   locationMode:   'auto',
   manualLocation: null,
   cuisines:       [],
