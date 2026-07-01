@@ -451,8 +451,7 @@ export default function SettingsScreen() {
           <Text style={styles.screenTitle}>Settings</Text>
 
           {/* ── Profile ─────────────────────────────────────────────────────── */}
-          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>PROFILE</SectionLabel>
-          <Card style={styles.card}>
+          <CollapsibleCard title="PROFILE" sectionKey="profile" style={styles.collapsibleSpacing}>
             <Text style={styles.fieldLabel}>DISPLAY NAME</Text>
             <TextInput
               style={styles.textInput}
@@ -476,11 +475,10 @@ export default function SettingsScreen() {
                 </TouchableOpacity>
               ))}
             </View>
-          </Card>
+          </CollapsibleCard>
 
           {/* ── Appearance ──────────────────────────────────────────────────── */}
-          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>APPEARANCE</SectionLabel>
-          <Card style={styles.card}>
+          <CollapsibleCard title="APPEARANCE" sectionKey="appearance" style={styles.collapsibleSpacing}>
             <Text style={styles.fieldLabel}>THEME</Text>
             <View style={styles.modeRow}>
               {APPEARANCE_OPTIONS.map((o) => (
@@ -495,7 +493,7 @@ export default function SettingsScreen() {
               ))}
             </View>
             <Text style={[styles.demoSub, { marginTop: 10 }]}>Auto follows your device's appearance.</Text>
-          </Card>
+          </CollapsibleCard>
 
           {/* ── Preferences ───────────────────────────────────────────────── */}
           <CollapsibleCard title="PREFERENCES" sectionKey="preferences" defaultCollapsed={false} style={styles.collapsibleSpacing}>
@@ -533,9 +531,6 @@ export default function SettingsScreen() {
               selected={neurodivergent ? ['Neurodivergent-friendly'] : []}
               onToggle={toggleNeurodivergent}
             />
-            <Text style={styles.sensitivityNote}>
-              When on, Decide favors calmer, quieter, more predictable places and a less packed schedule.
-            </Text>
 
             <Text style={styles.sensitivityDisclaimer}>
               ⚠ These alerts are informational only. Always verify allergen information directly with the venue.
