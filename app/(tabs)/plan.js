@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView,
-  Linking, Animated, Modal,
+  Linking, Animated, Modal, Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -603,7 +603,11 @@ export default function PlanScreen() {
             </Card>
 
             <Text style={styles.landingSubtext}>“{quote}” — {QUOTE_ATTRIBUTION}</Text>
-            <VersionTag style={{ marginTop: 14 }} />
+            <View style={styles.poweredRow}>
+              <Text style={styles.poweredText}>Powered by</Text>
+              <Image source={require('../../assets/logo-stc.png')} style={styles.poweredLogo} resizeMode="contain" />
+            </View>
+            <VersionTag style={{ marginTop: 10 }} />
           </View>
         )}
 
@@ -870,6 +874,9 @@ const makeStyles = (c) => StyleSheet.create({
   decideBtnTitle: { color: c.primaryText, fontSize: 18, fontFamily: FONTS.displayHeavy },
   decideBtnSub:   { color: c.sky200, fontSize: 12, letterSpacing: 0.2 },
   landingSubtext: { fontSize: 12, color: c.textMuted, letterSpacing: 0.2, textAlign: 'center', marginTop: 20, paddingHorizontal: 32, lineHeight: 17, fontStyle: 'italic' },
+  poweredRow:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 16 },
+  poweredText: { fontSize: 12, color: c.textMuted, fontFamily: FONTS.body, letterSpacing: 0.2 },
+  poweredLogo: { width: 22, height: 22 },
 
   // ── Plan / Itinerary container ────────────────────────────────────────────
   planContainer: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 8 },
