@@ -3,12 +3,12 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Linking, Animated
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../context/ThemeContext';
 import { FONTS, RADII, SHADOWS } from '../constants/theme';
 import ScreenBackground from '../components/brand/ScreenBackground';
 import SectionLabel from '../components/brand/SectionLabel';
 import CTAButton from '../components/brand/CTAButton';
+import { saveDecision } from '../services/historyService';
 
 function deriveProsAndCons(rating, userRatingsTotal, isOpenNow) {
   const pros = [];
@@ -55,27 +55,22 @@ function PlaceCard({ place, rank }) {
       + (place.placeId ? `&query_place_id=${place.placeId}` : '');
 
     try {
-      const raw      = await AsyncStorage.getItem('@decide/decisions');
-      const existing = raw ? JSON.parse(raw) : [];
-      const entry    = {
-        id:             `decision_${Date.now()}`,
-        placeId:        place.placeId        ?? '',
-        name:           place.name           ?? '',
-        category:       place.category       ?? 'activity',
-        emoji:          place.emoji          ?? '⚡',
-        reason:         place.reason         ?? '',
-        address:        place.vicinity       ?? place.address ?? '',
-        rating:         place.rating         ?? 0,
-        distance:       place.distance       ?? '',
+      const entry = {
+        id:              `decision_${Date.now()}`,
+        placeId:         place.placeId        ?? '',
+        name:            place.name           ?? '',
+        category:        place.category       ?? 'activity',
+        emoji:           place.emoji          ?? '⚡',
+        reason:          place.reason         ?? '',
+        address:         place.vicinity       ?? place.address ?? '',
+        rating:          place.rating         ?? 0,
+        distance:        place.distance       ?? '',
         excitementScore: place.excitementScore ?? 0,
-        timestamp:      Date.now(),
-        feedback:       null,
-        feedbackReason: null,
+        timestamp:       Date.now(),
+        feedback:        null,
+        feedbackReason:  null,
       };
-      await AsyncStorage.setItem(
-        '@decide/decisions',
-        JSON.stringify([entry, ...existing.slice(0, 99)])
-      );
+      await saveDecision(entry);
     } catch (e) {
       console.warn('[history] save decision error', e);
     }

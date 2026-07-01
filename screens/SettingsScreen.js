@@ -9,6 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { loadAllSettings, save, KEYS } from '../services/settingsService';
 import { searchTextPlaces } from '../services/placesService';
+import { clearHistory } from '../services/historyService';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { isPro, getDecisionCount, getSpinCount, LIMITS } from '../services/subscriptionService';
@@ -844,8 +845,7 @@ export default function SettingsScreen() {
                   onPress={async () => {
                     setShowClearHistModal(false);
                     await Promise.all([
-                      AsyncStorage.removeItem('@decide/decisions'),
-                      AsyncStorage.removeItem('@decide/itineraries'),
+                      clearHistory(),
                     ]);
                     showToast('History cleared');
                   }}

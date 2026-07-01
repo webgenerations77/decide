@@ -99,6 +99,12 @@ load:  UI → loadHistory() → cache (instant render)
   The app already requires sign-in to reach these screens, so this is an edge case.
 - **Demo mode** → unchanged; uses `DEMO_HISTORY`, never calls the service or the cloud.
 - Merge conflict → last-write-wins by `updatedAt` (no conflict UI).
+- **Clear History is device-local in this version.** Because `syncHistory` is a union merge with
+  no deletion tracking, a clear does NOT reliably propagate across devices: another device's
+  stale cache re-pushes its items on the next sync and resurrects them (and an offline/failed
+  `DELETE` is repopulated on the next sync of the same device). Cross-device delete requires
+  tombstones — see Out of scope. Users should treat "Clear History" as clearing the current
+  device, not all devices.
 
 ## Testing
 - **Unit (pure):** `__tests__/history-merge.mjs` — `mergeById` union, newest-wins on `updatedAt`,
@@ -110,3 +116,7 @@ load:  UI → loadHistory() → cache (instant render)
 ## Out of scope (later)
 - Real-time push (`onSnapshot`), an explicit offline write-queue beyond merge-on-sync, and any
   conflict-resolution UI.
+- **Tombstone-based delete-sync** — track deletions with timestamps so "Clear History" (and
+  future per-item deletes) propagate across devices instead of being resurrected by a union
+  merge. Also mitigates the >cap-offline-creation edge case (oldest local-only items past the
+  cap can be dropped before being pushed). Queued as the next follow-up.
