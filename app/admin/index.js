@@ -36,6 +36,14 @@ export default function AdminScreen() {
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [previewCoords, setPreviewCoords] = useState(PREVIEW_FALLBACK_COORDS);
 
+  const emailByUid = useMemo(() => {
+    const m = {};
+    (users || []).forEach((u) => { m[u.uid] = u.email; });
+    return m;
+  }, [users]);
+
+  const userLabel = (uid) => (uid === 'anonymous' ? 'Anonymous' : (emailByUid[uid] || 'Anonymous'));
+
   async function openLoadingPreview() {
     let coords = PREVIEW_FALLBACK_COORDS;
     try {
@@ -123,6 +131,12 @@ export default function AdminScreen() {
               {Object.entries(usage.byModel).map(([m, b]) => <Row key={m} label={m} value={money(b.estCost)} />)}
               <Text style={styles.subhead}>By route</Text>
               {Object.entries(usage.byRoute).map(([r, b]) => <Row key={r} label={r} value={`${b.requests || (b.inputTokens + b.outputTokens > 0 ? '—' : 0)}`} />)}
+              <Text style={styles.subhead}>By user</Text>
+              {Object.entries(usage.byUser || {})
+                .sort((a, b) => (b[1].estCost || 0) - (a[1].estCost || 0))
+                .map(([uid, b]) => (
+                  <Row key={uid} label={userLabel(uid)} value={`${b.requests} req · ${money(b.estCost)}`} />
+                ))}
             </View>
           )}
         </Card>

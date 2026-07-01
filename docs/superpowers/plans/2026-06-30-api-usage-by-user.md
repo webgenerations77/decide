@@ -10,8 +10,13 @@
 
 ## Global Constraints
 
-- This project has **no test framework**. Automated tests are standalone `.mjs` files using Node's built-in `assert`, run with `node <file>`. Do not add jest/vitest.
+- This project has **no test framework**. Tests live in `__tests__/*.mjs` and use the repo's
+  assert-counter convention: `let passed=0, failed=0; const assert=(l,c,d='')=>c?(...passed++):(...failed++);`
+  ending with `console.log(\`\n${passed} passed, ${failed} failed\`); process.exit(failed?1:0);`.
+  Run with `node __tests__/<file>.mjs`. Do not add jest/vitest. Do not create `lib/*.test.mjs`.
 - ESM `.js` lib files run under plain `node` (a MODULE_TYPELESS_PACKAGE_JSON warning is expected and harmless).
+- Importing a lib that imports `firebaseAdmin.cjs` is fine as long as the test only exercises
+  paths that don't call `getAdminAuth()/getAdminDb()` (see `__tests__/require-admin.mjs`).
 - Two handler shapes exist and BOTH must be updated together: prod Vercel handlers `api/*.js` (`req.headers.authorization`, `res.json`) and dev Expo handlers `app/api/*+api.js` (`request.headers.get(...)`, `Response.json`). Vercel `api/` is production; the `+api.js` pair is inactive in dev but kept in sync.
 - All client→API auth uses `auth.currentUser?.getIdToken()` and an `Authorization: Bearer <token>` header (match `services/adminApi.js`).
 - Itinerary/swap endpoints MUST stay public — attribution never rejects a request. Unverifiable callers log `userId: null`, bucketed as `'anonymous'`.
@@ -23,7 +28,7 @@
 
 **Files:**
 - Modify: `lib/admin/usage.js` (function `aggregateUsage`, lines 20-30)
-- Test: `lib/admin/usage.test.mjs` (create)
+- Modify (test): `__tests__/usage-aggregate.mjs` (extend the existing harness)
 
 **Interfaces:**
 - Consumes: existing `emptyBucket()`, `add(bucket, row)` helpers in `lib/admin/usage.js`.
@@ -31,44 +36,29 @@
 
 - [ ] **Step 1: Write the failing test**
 
-Create `lib/admin/usage.test.mjs`:
+Extend `__tests__/usage-aggregate.mjs`. Add `userId` to the existing `rows` array — change the three rows to include `userId: 'u1'`, `userId: 'u1'`, `userId: null` respectively (the first two share a user, the third is anonymous):
 
 ```js
-import assert from 'node:assert/strict';
-import { aggregateUsage } from './usage.js';
-
 const rows = [
-  { userId: 'u1', route: 'synthesis', model: 'claude-sonnet-4-6', requests: 0, inputTokens: 100, outputTokens: 50, estCost: 0.30 },
-  { userId: 'u1', route: 'places-nearby', model: 'google-places', requests: 1, inputTokens: 0, outputTokens: 0, estCost: 0.02 },
-  { userId: 'u2', route: 'synthesis', model: 'claude-sonnet-4-6', requests: 0, inputTokens: 200, outputTokens: 80, estCost: 0.50 },
-  { userId: null, route: 'places-nearby', model: 'google-places', requests: 1, inputTokens: 0, outputTokens: 0, estCost: 0.02 },
+  { userId: 'u1', model: 'claude-haiku-4-5-20251001', route: 'scout',     inputTokens: 100, outputTokens: 50, requests: 0, estCost: 0.5 },
+  { userId: 'u1', model: 'claude-sonnet-4-6',         route: 'synthesis', inputTokens: 200, outputTokens: 80, requests: 0, estCost: 1.0 },
+  { userId: null, model: 'google-places',             route: 'places-nearby', inputTokens: 0, outputTokens: 0, requests: 3, estCost: 0.051 },
 ];
+```
 
-const { byUser } = aggregateUsage(rows);
+Then, after the existing `byRoute` assertion (line 18) and before the `rangeStartMs` block, add:
 
-// u1 aggregates both of its rows
-assert.equal(byUser.u1.requests, 1);
-assert.equal(byUser.u1.inputTokens, 100);
-assert.equal(byUser.u1.outputTokens, 50);
-assert.ok(Math.abs(byUser.u1.estCost - 0.32) < 1e-9, `u1 estCost was ${byUser.u1.estCost}`);
-
-// u2 is separate
-assert.equal(byUser.u2.estCost, 0.50);
-
-// null userId buckets under 'anonymous'
-assert.equal(byUser.anonymous.requests, 1);
-assert.equal(byUser.anonymous.estCost, 0.02);
-
-// exactly the three expected keys
-assert.deepEqual(Object.keys(byUser).sort(), ['anonymous', 'u1', 'u2']);
-
-console.log('usage.test.mjs: all assertions passed');
+```js
+assert('byUser aggregates u1 cost', close(agg.byUser['u1'].estCost, 1.5));
+assert('byUser aggregates u1 input tokens', agg.byUser['u1'].inputTokens === 300);
+assert('byUser buckets null under anonymous', agg.byUser['anonymous'].requests === 3);
+assert('byUser has exactly u1 and anonymous', JSON.stringify(Object.keys(agg.byUser).sort()) === JSON.stringify(['anonymous', 'u1']));
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `node lib/admin/usage.test.mjs`
-Expected: FAIL — `TypeError: Cannot read properties of undefined (reading 'requests')` (because `byUser` is undefined).
+Run: `node __tests__/usage-aggregate.mjs`
+Expected: FAIL — the four new `byUser` assertions error/fail (`agg.byUser` is undefined), exit code 1.
 
 - [ ] **Step 3: Implement the `byUser` bucket**
 
@@ -93,13 +83,13 @@ export function aggregateUsage(rows) {
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `node lib/admin/usage.test.mjs`
-Expected: PASS — `usage.test.mjs: all assertions passed`
+Run: `node __tests__/usage-aggregate.mjs`
+Expected: PASS — all assertions pass, `process.exit(0)`. Confirm the existing totals/byModel/byRoute assertions still pass (totals cost is now `1.551` unchanged).
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add lib/admin/usage.js lib/admin/usage.test.mjs
+git add lib/admin/usage.js __tests__/usage-aggregate.mjs
 git commit -m "Add byUser bucket to usage aggregation"
 ```
 
@@ -110,7 +100,7 @@ git commit -m "Add byUser bucket to usage aggregation"
 **Files:**
 - Create: `lib/usageContext.js`
 - Modify: `lib/usageLog.js` (function `logUsage`, lines 12-23)
-- Test: `lib/usageContext.test.mjs` (create)
+- Create (test): `__tests__/usage-context.mjs`
 
 **Interfaces:**
 - Produces: `lib/usageContext.js` exports `runWithUser(userId, fn)` — runs `fn` (sync or async) inside an `AsyncLocalStorage` store carrying `{ userId }`, returns `fn`'s result/promise — and `currentUserId()` — returns the store's `userId`, or `null` when called outside any `runWithUser`.
@@ -119,39 +109,37 @@ git commit -m "Add byUser bucket to usage aggregation"
 
 - [ ] **Step 1: Write the failing test**
 
-Create `lib/usageContext.test.mjs`:
+Create `__tests__/usage-context.mjs` (repo assert-counter convention):
 
 ```js
-import assert from 'node:assert/strict';
-import { runWithUser, currentUserId } from './usageContext.js';
+// __tests__/usage-context.mjs — run: node __tests__/usage-context.mjs
+import { runWithUser, currentUserId } from '../lib/usageContext.js';
+let passed = 0, failed = 0;
+const assert = (l, c, d = '') => c ? (console.log(`  ✓ ${l}`), passed++) : (console.error(`  ✗ ${l}${d ? ` — ${d}` : ''}`), failed++);
 
-// Outside any context → null
-assert.equal(currentUserId(), null);
+assert('null outside any context', currentUserId() === null);
 
-// Inside context → the uid, including across an await boundary
 const result = await runWithUser('user-123', async () => {
-  assert.equal(currentUserId(), 'user-123');
+  assert('uid visible inside context', currentUserId() === 'user-123');
   await Promise.resolve();
-  assert.equal(currentUserId(), 'user-123');
+  assert('uid survives await boundary', currentUserId() === 'user-123');
   return 'done';
 });
-assert.equal(result, 'done');
+assert('runWithUser returns fn result', result === 'done');
+assert('context does not leak after return', currentUserId() === null);
 
-// Context does not leak after it returns
-assert.equal(currentUserId(), null);
-
-// null uid is allowed and reads back as null
 await runWithUser(null, async () => {
-  assert.equal(currentUserId(), null);
+  assert('null uid reads back as null', currentUserId() === null);
 });
 
-console.log('usageContext.test.mjs: all assertions passed');
+console.log(`\n${passed} passed, ${failed} failed`);
+process.exit(failed ? 1 : 0);
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `node lib/usageContext.test.mjs`
-Expected: FAIL — `ERR_MODULE_NOT_FOUND` for `./usageContext.js`.
+Run: `node __tests__/usage-context.mjs`
+Expected: FAIL — `ERR_MODULE_NOT_FOUND` for `../lib/usageContext.js`.
 
 - [ ] **Step 3: Implement `lib/usageContext.js`**
 
@@ -174,8 +162,8 @@ export function currentUserId() {
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `node lib/usageContext.test.mjs`
-Expected: PASS — `usageContext.test.mjs: all assertions passed`
+Run: `node __tests__/usage-context.mjs`
+Expected: PASS — all assertions pass, `process.exit(0)`.
 
 - [ ] **Step 5: Wire the default into `logUsage`**
 
@@ -208,7 +196,7 @@ and inside the `try`, before `db.collection(...)`, resolve the effective user:
 - [ ] **Step 6: Commit**
 
 ```bash
-git add lib/usageContext.js lib/usageContext.test.mjs lib/usageLog.js
+git add lib/usageContext.js __tests__/usage-context.mjs lib/usageLog.js
 git commit -m "Add request-scoped user context; default logUsage userId from it"
 ```
 
@@ -218,7 +206,7 @@ git commit -m "Add request-scoped user context; default logUsage userId from it"
 
 **Files:**
 - Create: `lib/admin/auth.js`
-- Test: `lib/admin/auth.test.mjs` (create)
+- Create (test): `__tests__/usage-auth.mjs`
 
 **Interfaces:**
 - Consumes: `extractBearer` from `lib/admin/requireAdmin.js`; `getAdminAuth` from `lib/firebaseAdmin.cjs`.
@@ -226,24 +214,27 @@ git commit -m "Add request-scoped user context; default logUsage userId from it"
 
 - [ ] **Step 1: Write the failing test**
 
-Create `lib/admin/auth.test.mjs` (covers only the no-token path, which never touches Firebase):
+Create `__tests__/usage-auth.mjs` (covers only the no-token path, which never touches Firebase — mirrors how `require-admin.mjs` tests pure paths):
 
 ```js
-import assert from 'node:assert/strict';
-import { getUidFromAuth } from './auth.js';
+// __tests__/usage-auth.mjs — run: node __tests__/usage-auth.mjs
+import { getUidFromAuth } from '../lib/admin/auth.js';
+let passed = 0, failed = 0;
+const assert = (l, c, d = '') => c ? (console.log(`  ✓ ${l}`), passed++) : (console.error(`  ✗ ${l}${d ? ` — ${d}` : ''}`), failed++);
 
-assert.equal(await getUidFromAuth(undefined), null);
-assert.equal(await getUidFromAuth(null), null);
-assert.equal(await getUidFromAuth(''), null);
-assert.equal(await getUidFromAuth('NotBearer xyz'), null);
+assert('null for undefined header', (await getUidFromAuth(undefined)) === null);
+assert('null for null header', (await getUidFromAuth(null)) === null);
+assert('null for empty header', (await getUidFromAuth('')) === null);
+assert('null for non-bearer header', (await getUidFromAuth('NotBearer xyz')) === null);
 
-console.log('auth.test.mjs: all assertions passed');
+console.log(`\n${passed} passed, ${failed} failed`);
+process.exit(failed ? 1 : 0);
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `node lib/admin/auth.test.mjs`
-Expected: FAIL — `ERR_MODULE_NOT_FOUND` for `./auth.js`.
+Run: `node __tests__/usage-auth.mjs`
+Expected: FAIL — `ERR_MODULE_NOT_FOUND` for `../lib/admin/auth.js`.
 
 - [ ] **Step 3: Implement `lib/admin/auth.js`**
 
@@ -268,13 +259,13 @@ export async function getUidFromAuth(authHeader) {
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `node lib/admin/auth.test.mjs`
-Expected: PASS — `auth.test.mjs: all assertions passed`
+Run: `node __tests__/usage-auth.mjs`
+Expected: PASS — all assertions pass, `process.exit(0)`.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add lib/admin/auth.js lib/admin/auth.test.mjs
+git add lib/admin/auth.js __tests__/usage-auth.mjs
 git commit -m "Add getUidFromAuth: best-effort uid from bearer token"
 ```
 

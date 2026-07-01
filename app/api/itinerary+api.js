@@ -2,6 +2,8 @@ import { logUsage } from '../../lib/usageLog.js';
 import { runSmartEngine } from '../../lib/smart/index.js';
 import { computeCostSummary, pickForecastFromOpenMeteo, attachPriceLevels, fillFoodPriceLevels, shouldResolveContact } from '../../lib/itineraryHelpers.js';
 import { getUSHoliday } from '../../lib/smart/holidays.js';
+import { getUidFromAuth } from '../../lib/admin/auth.js';
+import { runWithUser } from '../../lib/usageContext.js';
 
 const GOOGLE_KEY    = process.env.GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 const NPS_KEY       = process.env.EXPO_PUBLIC_NPS_API_KEY;
@@ -352,120 +354,123 @@ export async function GET() {
 }
 
 export async function POST(request) {
-  try {
-    const {
-      latitude, longitude, date, preferences = {},
-      startTime = '11:00 AM', endTime = '8:00 PM',
-      feedback = {},
-      maxDistanceMiles = 25,
-      tripNote = '',
-    } = await request.json();
+  const uid = await getUidFromAuth(request.headers.get('authorization'));
+  return runWithUser(uid, async () => {
+    try {
+      const {
+        latitude, longitude, date, preferences = {},
+        startTime = '11:00 AM', endTime = '8:00 PM',
+        feedback = {},
+        maxDistanceMiles = 25,
+        tripNote = '',
+      } = await request.json();
 
-    if (!latitude || !longitude) {
-      return Response.json({ error: 'latitude and longitude are required' }, { status: 400 });
-    }
+      if (!latitude || !longitude) {
+        return Response.json({ error: 'latitude and longitude are required' }, { status: 400 });
+      }
 
-    const { pace = 'moderate', budget = '$$', group_type = 'couple', cuisines = [], sensitivities = [], activityStyles = [], dietary = [], neurodivergent = false } = preferences;
-    const searchRadiusMeters = Math.round(Math.min(maxDistanceMiles, 50) * 1609.34);
-    const { dislikedPlaces = [], likedPlaces = [], dislikedReasons = [] } = feedback;
+      const { pace = 'moderate', budget = '$$', group_type = 'couple', cuisines = [], sensitivities = [], activityStyles = [], dietary = [], neurodivergent = false } = preferences;
+      const searchRadiusMeters = Math.round(Math.min(maxDistanceMiles, 50) * 1609.34);
+      const { dislikedPlaces = [], likedPlaces = [], dislikedReasons = [] } = feedback;
 
-    const dateObj      = date ? new Date(date) : new Date();
-    const dayOfWeek    = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
-    const formattedDate = dateObj.toLocaleDateString('en-US', {
-      month: 'long', day: 'numeric', year: 'numeric',
-    });
-    const travelDateISO = dateObj.toISOString().slice(0, 10);
-
-    const [food, activity, shopping, outdoor, weather, geoInfo] = await Promise.all([
-      fetchPlaces(latitude, longitude, PLACE_TYPES.food,     searchRadiusMeters),
-      fetchPlaces(latitude, longitude, PLACE_TYPES.activity, searchRadiusMeters),
-      fetchPlaces(latitude, longitude, PLACE_TYPES.shopping, searchRadiusMeters),
-      fetchPlaces(latitude, longitude, PLACE_TYPES.outdoor,  searchRadiusMeters),
-      fetchWeather(latitude, longitude, travelDateISO),
-      reverseGeocode(latitude, longitude),
-    ]);
-
-    const { city, state } = geoInfo;
-
-    const cityStr = city ? `${city}${state ? `, ${state}` : ''}` : 'the local area';
-
-    const [npsParks, ridbFacilities] = await Promise.all([
-      fetchNPSParks(city, state),
-      fetchRIDB(latitude, longitude),
-    ]);
-
-    const allOutdoor = [...outdoor, ...npsParks, ...ridbFacilities];
-
-    const ctx = {
-      location: cityStr,
-      travelDates: { start: travelDateISO, end: travelDateISO },
-      coords: { latitude, longitude },
-      maxMiles: Math.min(maxDistanceMiles, 50),
-      weather,
-      prefs: { pace, budget, group_type, cuisines, activityStyles, dietary, neurodivergent },
-      feedback: { likedPlaces, dislikedPlaces, dislikedReasons },
-      tripNote,
-      startTime, endTime,
-      dayOfWeek,
-      formattedDate,
-      holiday: getUSHoliday(travelDateISO),
-    };
-    const smart = await runSmartEngine({ ctx, places: { food, activity, shopping, outdoor: allOutdoor } });
-
-    let itinerary, isFallback = false;
-    if (smart.itinerary && smart.itinerary.length) {
-      itinerary = smart.itinerary;
-    } else {
-      itinerary = buildFallbackItinerary({
-        food, activity, shopping, outdoor: allOutdoor,
-        startTime, endTime, pace, lat: latitude, lng: longitude,
+      const dateObj      = date ? new Date(date) : new Date();
+      const dayOfWeek    = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+      const formattedDate = dateObj.toLocaleDateString('en-US', {
+        month: 'long', day: 'numeric', year: 'numeric',
       });
-      isFallback = true;
-    }
+      const travelDateISO = dateObj.toISOString().slice(0, 10);
 
-    const withDistance = itinerary.map((stop) => {
-      if (!stop.lat || !stop.lng) return stop;
-      const distMiles = haversineDistance(latitude, longitude, stop.lat, stop.lng);
-      const driveMins = estimateDriveTime(distMiles);
-      const planMonth = dateObj.getMonth();
-      const trafficNote = (weather?.wind_speed_mph > 20 || (planMonth >= 5 && planMonth <= 8))
-        ? ' (traffic may vary)' : '';
-      return {
-        ...stop,
-        distance: `${distMiles.toFixed(1)} mi · ~${driveMins} min drive${trafficNote}`,
-        distance_miles: parseFloat(distMiles.toFixed(1)),
-        drive_mins: driveMins,
+      const [food, activity, shopping, outdoor, weather, geoInfo] = await Promise.all([
+        fetchPlaces(latitude, longitude, PLACE_TYPES.food,     searchRadiusMeters),
+        fetchPlaces(latitude, longitude, PLACE_TYPES.activity, searchRadiusMeters),
+        fetchPlaces(latitude, longitude, PLACE_TYPES.shopping, searchRadiusMeters),
+        fetchPlaces(latitude, longitude, PLACE_TYPES.outdoor,  searchRadiusMeters),
+        fetchWeather(latitude, longitude, travelDateISO),
+        reverseGeocode(latitude, longitude),
+      ]);
+
+      const { city, state } = geoInfo;
+
+      const cityStr = city ? `${city}${state ? `, ${state}` : ''}` : 'the local area';
+
+      const [npsParks, ridbFacilities] = await Promise.all([
+        fetchNPSParks(city, state),
+        fetchRIDB(latitude, longitude),
+      ]);
+
+      const allOutdoor = [...outdoor, ...npsParks, ...ridbFacilities];
+
+      const ctx = {
+        location: cityStr,
+        travelDates: { start: travelDateISO, end: travelDateISO },
+        coords: { latitude, longitude },
+        maxMiles: Math.min(maxDistanceMiles, 50),
+        weather,
+        prefs: { pace, budget, group_type, cuisines, activityStyles, dietary, neurodivergent },
+        feedback: { likedPlaces, dislikedPlaces, dislikedReasons },
+        tripNote,
+        startTime, endTime,
+        dayOfWeek,
+        formattedDate,
+        holiday: getUSHoliday(travelDateISO),
       };
-    });
-    const withLinks = await enrichWithContactLinks(withDistance);
-    const enriched = await enrichWithDrivingTimes(withLinks);
-    const allPlaces = [...food, ...activity, ...shopping, ...allOutdoor];
-    const priced = fillFoodPriceLevels(attachPriceLevels(enriched, allPlaces), budget);
-    const costSummary = computeCostSummary(priced);
+      const smart = await runSmartEngine({ ctx, places: { food, activity, shopping, outdoor: allOutdoor } });
 
-    return Response.json({
-      itinerary: priced,
-      weather,
-      meta: {
-        date:         formattedDate,
-        day_of_week:  dayOfWeek,
-        time_window:  `${startTime} – ${endTime}`,
-        preferences:  { pace, budget, group_type },
-        city:         cityStr,
-        cost_summary: costSummary?.label ?? null,
-      },
-      discovery: {
-        hadLiveData: smart.hadLiveData,
-        findCount: smart.finds.length,
-        anchorCount: smart.anchors.length,
-        anchors: smart.anchors.map((a) => ({ title: a.find?.title, interest: a.find?.interest, why: a.rationale, url: a.find?.url || null })),
-        localHappenings: smart.localHappenings ?? null,
-      },
-      generated_at: new Date().toISOString(),
-      isFallback,
-    });
-  } catch (err) {
-    console.error('[itinerary] error:', err);
-    return Response.json({ error: err.message }, { status: 500 });
-  }
+      let itinerary, isFallback = false;
+      if (smart.itinerary && smart.itinerary.length) {
+        itinerary = smart.itinerary;
+      } else {
+        itinerary = buildFallbackItinerary({
+          food, activity, shopping, outdoor: allOutdoor,
+          startTime, endTime, pace, lat: latitude, lng: longitude,
+        });
+        isFallback = true;
+      }
+
+      const withDistance = itinerary.map((stop) => {
+        if (!stop.lat || !stop.lng) return stop;
+        const distMiles = haversineDistance(latitude, longitude, stop.lat, stop.lng);
+        const driveMins = estimateDriveTime(distMiles);
+        const planMonth = dateObj.getMonth();
+        const trafficNote = (weather?.wind_speed_mph > 20 || (planMonth >= 5 && planMonth <= 8))
+          ? ' (traffic may vary)' : '';
+        return {
+          ...stop,
+          distance: `${distMiles.toFixed(1)} mi · ~${driveMins} min drive${trafficNote}`,
+          distance_miles: parseFloat(distMiles.toFixed(1)),
+          drive_mins: driveMins,
+        };
+      });
+      const withLinks = await enrichWithContactLinks(withDistance);
+      const enriched = await enrichWithDrivingTimes(withLinks);
+      const allPlaces = [...food, ...activity, ...shopping, ...allOutdoor];
+      const priced = fillFoodPriceLevels(attachPriceLevels(enriched, allPlaces), budget);
+      const costSummary = computeCostSummary(priced);
+
+      return Response.json({
+        itinerary: priced,
+        weather,
+        meta: {
+          date:         formattedDate,
+          day_of_week:  dayOfWeek,
+          time_window:  `${startTime} – ${endTime}`,
+          preferences:  { pace, budget, group_type },
+          city:         cityStr,
+          cost_summary: costSummary?.label ?? null,
+        },
+        discovery: {
+          hadLiveData: smart.hadLiveData,
+          findCount: smart.finds.length,
+          anchorCount: smart.anchors.length,
+          anchors: smart.anchors.map((a) => ({ title: a.find?.title, interest: a.find?.interest, why: a.rationale, url: a.find?.url || null })),
+          localHappenings: smart.localHappenings ?? null,
+        },
+        generated_at: new Date().toISOString(),
+        isFallback,
+      });
+    } catch (err) {
+      console.error('[itinerary] error:', err);
+      return Response.json({ error: err.message }, { status: 500 });
+    }
+  });
 }
