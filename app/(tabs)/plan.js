@@ -564,6 +564,8 @@ export default function PlanScreen() {
 
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
+      {/* Static paper + map-texture backdrop behind the scroll — stays fixed like the other tabs */}
+      <ScreenBackground variant="paper" style={StyleSheet.absoluteFill} />
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
@@ -571,7 +573,7 @@ export default function PlanScreen() {
       >
         {/* ─── LANDING ──────────────────────────────────────────────────────── */}
         {view === 'landing' && (
-          <ScreenBackground variant="paper" style={styles.landingContainer}>
+          <View style={styles.landingContainer}>
             {/* Hero — mirrors the sign-in screen (stacked logo + tagline) */}
             <Animated.View style={[styles.landingHero, { opacity: logoAnim, transform: [{ scale: logoScale }] }]}>
               <BrandLogo variant="stacked" size={80} />
@@ -615,7 +617,7 @@ export default function PlanScreen() {
 
             <Text style={styles.landingSubtext}>“{quote}” — {QUOTE_ATTRIBUTION}</Text>
             <VersionTag style={{ marginTop: 14 }} />
-          </ScreenBackground>
+          </View>
         )}
 
         {/* ─── CONFIGURING ──────────────────────────────────────────────────── */}
