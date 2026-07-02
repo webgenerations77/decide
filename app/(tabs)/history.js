@@ -139,7 +139,7 @@ function ItineraryEntry({ item, onFeedbackUp, onFeedbackDown, onOpen }) {
 
   return (
     <Card style={styles.itinCard}>
-      <WeatherArt weather={item.weather} aspectRatio={16 / 9} style={styles.cardBanner} />
+      <WeatherArt weather={item.weather} aspectRatio={32 / 9} style={styles.cardBanner} />
       <View style={styles.itinCardContent}>
         <TouchableOpacity
           activeOpacity={tappable ? 0.7 : 1}
@@ -511,8 +511,9 @@ const makeStyles = (c) => StyleSheet.create({
     marginBottom: 12, padding: 14, gap: 6, overflow: 'hidden',
     width: '100%', maxWidth: 480, alignSelf: 'center',
   },
-  // Weather photo as a rounded 16:9 banner across the top of the card. Because the box matches
-  // the photo's 16:9 shape, the image fills it edge-to-edge with NO cropping and no letterbox.
+  // Weather photo as a short, wide rounded banner across the top of the card. The box is 32:9
+  // (an ultra-wide letterbox strip — half the height of a 16:9 band); source images are authored
+  // at 32:9 (1600x450) so they fill it edge-to-edge with NO cropping and no letterbox.
   // item.weather may be absent — WeatherArt falls back to its default bundled photo.
   cardBanner: { borderRadius: 12, marginBottom: 4 },
   itinCardContent: { gap: 6 },
