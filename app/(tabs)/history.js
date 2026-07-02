@@ -139,7 +139,7 @@ function ItineraryEntry({ item, onFeedbackUp, onFeedbackDown, onOpen }) {
 
   return (
     <Card style={styles.itinCard}>
-      <WeatherArt weather={item.weather} fill resizeMode="contain" style={styles.cardArtBg} />
+      <WeatherArt weather={item.weather} aspectRatio={16 / 9} style={styles.cardBanner} />
       <View style={styles.itinCardContent}>
         <TouchableOpacity
           activeOpacity={tappable ? 0.7 : 1}
@@ -502,19 +502,20 @@ const makeStyles = (c) => StyleSheet.create({
   thumbTxt:     { fontSize: 15 },
   thumbDivider: { width: 1, height: 18, backgroundColor: c.border, marginHorizontal: 6 },
 
-  // Itinerary card
+  // Itinerary card — capped width + centered so the 16:9 weather banner (which scales with
+  // width) stays a sensible height on wide/desktop screens instead of becoming a giant strip.
+  // On phones the card is narrower than the cap, so it just fills the column as before.
   itinCard: {
     borderRadius: 16,
     borderWidth: 0.5, borderColor: c.border,
     marginBottom: 12, padding: 14, gap: 6, overflow: 'hidden',
+    width: '100%', maxWidth: 480, alignSelf: 'center',
   },
-  // Faded weather image behind all content, scaled with resizeMode="contain" so the WHOLE
-  // photo fits inside the card (no cropping; it may letterbox rather than bleed to the edges).
-  // item.weather may be absent — WeatherArt falls back to its default bundled photo in that
-  // case, so a faded default weather image still shows behind the card.
-  cardArtBg: { opacity: 0.2 },
-  // Foreground layer above the weather background so text stays fully readable.
-  itinCardContent: { zIndex: 1, gap: 6 },
+  // Weather photo as a rounded 16:9 banner across the top of the card. Because the box matches
+  // the photo's 16:9 shape, the image fills it edge-to-edge with NO cropping and no letterbox.
+  // item.weather may be absent — WeatherArt falls back to its default bundled photo.
+  cardBanner: { borderRadius: 12, marginBottom: 4 },
+  itinCardContent: { gap: 6 },
   itinHeader:  { gap: 2 },
   itinDate:    { fontSize: 17, fontFamily: FONTS.displayHeavy, color: c.textPrimary },
   itinCity:    { fontSize: 11, color: c.goldText },
