@@ -81,7 +81,9 @@ export default function ItineraryDetailView({ entry, sensitivities = [], onBack 
 }
 
 const makeStyles = (c) => StyleSheet.create({
-  screen:     { flex: 1, backgroundColor: c.bg },
+  // overflow hidden: this is a vertical-only screen — never let a stray too-wide child
+  // (e.g. an unwrapped long meta line) make the page pan left/right on mobile.
+  screen:     { flex: 1, backgroundColor: c.bg, overflow: 'hidden' },
   fill:       { flex: 1 },
   header:     { paddingHorizontal: 20, paddingTop: 6, paddingBottom: 4 },
   headerArt:  { marginTop: 4, marginBottom: 8, borderRadius: 14, zIndex: 0 },

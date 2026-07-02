@@ -37,6 +37,9 @@ const makeStyles = (c) => StyleSheet.create({
     marginTop: 10, paddingHorizontal: 12, paddingVertical: 6,
     borderRadius: 20, backgroundColor: c.surface,
     borderWidth: 1, borderColor: c.border,
+    // Cap to the parent width so a long message (e.g. the beyondForecast note) wraps
+    // instead of rendering as one line that overflows the screen horizontally.
+    maxWidth: '100%',
   },
-  headerPillText: { fontSize: 12, color: c.textSecondary, letterSpacing: 0.2 },
+  headerPillText: { fontSize: 12, color: c.textSecondary, letterSpacing: 0.2, textAlign: 'center' },
 });

@@ -62,6 +62,7 @@ const makeStyles = (c) => StyleSheet.create({
   metaChipTime:     { borderColor: c.border, backgroundColor: c.surfaceAlt },
   metaChipText:     { color: c.textSecondary, fontSize: 11, fontFamily: FONTS.bodySemiBold },
   metaChipTimeText: { color: c.textSecondary },
-  costSummaryRow:   { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
-  costSummaryTxt:   { fontFamily: FONTS.bodySemiBold, fontSize: 13, color: c.primary },
+  costSummaryRow:   { flexDirection: 'row', alignItems: 'center', marginTop: 8, maxWidth: '100%' },
+  // flexShrink so a long cost summary wraps within the row instead of overflowing the screen.
+  costSummaryTxt:   { flexShrink: 1, fontFamily: FONTS.bodySemiBold, fontSize: 13, color: c.primary },
 });
