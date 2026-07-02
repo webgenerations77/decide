@@ -140,18 +140,17 @@ export default function WeatherArt({ weather, height = 72, aspectRatio, fill = f
       ? { width: '100%', aspectRatio }
       : { height, width: '100%' };
 
-  // Photo path: size the Image ITSELF (width:'100%' + aspectRatio/height), rather than as an
-  // absoluteFill child of a wrapper. As an absolute child, RN-web let the photo's intrinsic
-  // pixel width (e.g. 1600px) drive layout, so the banner overflowed the card and the card's
-  // overflow:hidden clipped it to a slice — which looked like the image was cropped. An explicit
-  // width:'100%' on the Image constrains it to the parent's width instead. maxWidth caps any drift.
+  // Photo path: the wrapper View owns the shape and the Image fills it. Two RN-web quirks force
+  // this: (1) RN-web's Image ignores `aspectRatio` (it falls back to the source's natural height),
+  // and (2) an absoluteFill Image renders at the source's natural WIDTH. Either way the banner
+  // mis-sizes (too tall, or overflowing the card so overflow:hidden clips it to a slice = "cropped").
+  // A plain View DOES honor aspectRatio/height, and an Image with explicit width/height 100% fills
+  // that box, overriding the source's intrinsic size so nothing leaks.
   if (photo) {
     return (
-      <Image
-        source={photo}
-        resizeMode="cover"
-        style={[sizeStyle, { maxWidth: '100%', overflow: 'hidden' }, style]}
-      />
+      <View style={[sizeStyle, { overflow: 'hidden' }, style]}>
+        <Image source={photo} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+      </View>
     );
   }
 
