@@ -32,3 +32,10 @@ export async function getUserStats(uid) {
   if (!res.ok) throw new Error(`user_stats_${res.status}`);
   return res.json();
 }
+
+export async function getUserHistory(uid) {
+  const res = await fetch(`/api/admin/users?uid=${encodeURIComponent(uid)}&data=history`, { headers: await authHeader() });
+  if (!res.ok) throw new Error(`user_history_${res.status}`);
+  return res.json(); // { itineraries, decisions }
+}
+
