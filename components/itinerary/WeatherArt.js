@@ -120,7 +120,7 @@ function Scene({ bucket, c }) {
 // `fill` makes the band fill its parent (absolute, no fixed height) — used as a faded
 // full-card background. A fixed height would override absoluteFill's top/bottom, so fill
 // mode must NOT set height.
-export default function WeatherArt({ weather, height = 72, fill = false, style }) {
+export default function WeatherArt({ weather, height = 72, fill = false, resizeMode = 'cover', style }) {
   const { colors } = useTheme();
   const bucket = useMemo(() => weatherBucket(weather), [weather]);
   const wash   = useMemo(() => weatherWash(weather, colors), [weather, colors]);
@@ -134,7 +134,7 @@ export default function WeatherArt({ weather, height = 72, fill = false, style }
   return (
     <View style={[fill ? StyleSheet.absoluteFill : { height, width: '100%' }, { overflow: 'hidden' }, style]}>
       {photo ? (
-        <Image source={photo} style={StyleSheet.absoluteFill} resizeMode="cover" />
+        <Image source={photo} style={StyleSheet.absoluteFill} resizeMode={resizeMode} />
       ) : (
         <>
           {wash && (

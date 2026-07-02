@@ -139,7 +139,7 @@ function ItineraryEntry({ item, onFeedbackUp, onFeedbackDown, onOpen }) {
 
   return (
     <Card style={styles.itinCard}>
-      <WeatherArt weather={item.weather} fill style={styles.cardArtBg} />
+      <WeatherArt weather={item.weather} fill resizeMode="contain" style={styles.cardArtBg} />
       <View style={styles.itinCardContent}>
         <TouchableOpacity
           activeOpacity={tappable ? 0.7 : 1}
@@ -508,9 +508,10 @@ const makeStyles = (c) => StyleSheet.create({
     borderWidth: 0.5, borderColor: c.border,
     marginBottom: 12, padding: 14, gap: 6, overflow: 'hidden',
   },
-  // Faded full-card weather background, behind all content (item.weather may be absent —
-  // WeatherArt falls back to its default bundled photo in that case, so a faded default
-  // weather image still shows behind the card rather than the plain surface color).
+  // Faded weather image behind all content, scaled with resizeMode="contain" so the WHOLE
+  // photo fits inside the card (no cropping; it may letterbox rather than bleed to the edges).
+  // item.weather may be absent — WeatherArt falls back to its default bundled photo in that
+  // case, so a faded default weather image still shows behind the card.
   cardArtBg: { opacity: 0.2 },
   // Foreground layer above the weather background so text stays fully readable.
   itinCardContent: { zIndex: 1, gap: 6 },
