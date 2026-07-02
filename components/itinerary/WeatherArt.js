@@ -140,25 +140,35 @@ export default function WeatherArt({ weather, height = 72, aspectRatio, fill = f
       ? { width: '100%', aspectRatio }
       : { height, width: '100%' };
 
+  // Photo path: size the Image ITSELF (width:'100%' + aspectRatio/height), rather than as an
+  // absoluteFill child of a wrapper. As an absolute child, RN-web let the photo's intrinsic
+  // pixel width (e.g. 1600px) drive layout, so the banner overflowed the card and the card's
+  // overflow:hidden clipped it to a slice — which looked like the image was cropped. An explicit
+  // width:'100%' on the Image constrains it to the parent's width instead. maxWidth caps any drift.
+  if (photo) {
+    return (
+      <Image
+        source={photo}
+        resizeMode="cover"
+        style={[sizeStyle, { maxWidth: '100%', overflow: 'hidden' }, style]}
+      />
+    );
+  }
+
+  // No photo configured for this bucket → hand-drawn vector scene over the weather wash.
   return (
     <View style={[sizeStyle, { overflow: 'hidden' }, style]}>
-      {photo ? (
-        <Image source={photo} style={StyleSheet.absoluteFill} resizeMode="cover" />
-      ) : (
-        <>
-          {wash && (
-            <LinearGradient
-              colors={wash.colors}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={StyleSheet.absoluteFill}
-            />
-          )}
-          <Svg width="100%" height="100%" viewBox={`0 0 ${VB_W} ${VB_H}`} preserveAspectRatio="xMidYMid slice">
-            <Scene bucket={bucket} c={colors} />
-          </Svg>
-        </>
+      {wash && (
+        <LinearGradient
+          colors={wash.colors}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
       )}
+      <Svg width="100%" height="100%" viewBox={`0 0 ${VB_W} ${VB_H}`} preserveAspectRatio="xMidYMid slice">
+        <Scene bucket={bucket} c={colors} />
+      </Svg>
     </View>
   );
 }
