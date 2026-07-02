@@ -3,7 +3,6 @@ import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView, Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { DEMO_HISTORY } from '../../services/demoData';
