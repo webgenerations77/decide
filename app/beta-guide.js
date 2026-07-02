@@ -41,7 +41,7 @@ export default function BetaGuide() {
   return (
     <ScreenBackground variant="paper">
       <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
-        <ScrollView contentContainerStyle={styles.content}>
+        <ScrollView contentContainerStyle={styles.content} bounces={false} overScrollMode="never">
           <GradientHeader style={styles.header}>
             <Text style={styles.eyebrow}>BETA GUIDE</Text>
             <Text style={styles.headerTitle}>Welcome to Decide 🧭</Text>

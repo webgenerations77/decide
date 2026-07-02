@@ -22,6 +22,7 @@ import {
   SpaceMono_400Regular,
   SpaceMono_700Bold,
 } from '@expo-google-fonts/space-mono';
+import '../utils/webViewportFix';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import { ThemeProvider, useTheme } from '../context/ThemeContext';
 import OfflineBanner from '../components/OfflineBanner';
