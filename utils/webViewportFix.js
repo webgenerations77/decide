@@ -1,25 +1,34 @@
-// Dynamic-viewport-height fix for mobile web.
+// Web-only viewport/scroll fixes, injected at runtime.
 //
 // This app builds with web.output: "single" (SPA), where Expo Router ignores app/+html.js,
-// so we can't customize the document <head> that way. The default react-native-web reset
-// sizes html/body/#root with `height: 100%`. Mobile browsers resolve `100%` against the
-// *large* viewport (the height with the URL bar hidden), so while the URL bar is showing,
-// the scroll container is taller than the visible screen — letting you scroll a little past
-// the last element (reported on the beta guide: "keeps scrolling after the bottom button").
+// so we can't customize the document <head> that way — we inject a <style> at bootstrap.
+// The app mounts to <div id="root"> and the default react-native-web reset already sets
+// `body { overflow: hidden }` so RN <ScrollView>s own scrolling.
 //
-// `100dvh` (dynamic viewport height) tracks the visible viewport as the URL bar collapses/
-// expands, removing that extra scroll. We inject it at runtime, after the default reset, so
-// it wins where supported; `@supports` leaves the `100%` fallback untouched on older browsers.
-// On desktop there is no dynamic toolbar, so `100dvh` == the full window height (no change).
+// Two mobile-web problems this fixes:
+//
+// 1. Overscroll / rubber-band ("keeps scrolling after the bottom button"): mobile browsers
+//    apply elastic overscroll + scroll-chaining to the scrollable element. `body{overflow:hidden}`
+//    does NOT stop it because the real scroller is the inner RN-web ScrollView <div>, not the body.
+//    `overscroll-behavior: none` stops the bounce/chaining — applied to html/body/#root AND every
+//    element under #root (`#root *`) so it reaches whichever div is the scroller. It's a no-op on
+//    non-scrolling elements, so the broad selector is safe.
+//
+// 2. Dynamic viewport height: `height: 100%` resolves against the large viewport (URL bar hidden),
+//    so `100dvh` (tracks the visible viewport) keeps the app sized to what's actually on screen.
+//    Guarded by @supports so the 100% fallback is untouched on older browsers.
 
 import { Platform } from 'react-native';
 
 if (Platform.OS === 'web' && typeof document !== 'undefined') {
-  const STYLE_ID = 'decide-dvh-fix';
+  const STYLE_ID = 'decide-web-viewport-fix';
   if (!document.getElementById(STYLE_ID)) {
     const style = document.createElement('style');
     style.id = STYLE_ID;
-    style.textContent = '@supports (height: 100dvh){html,body,#root{height:100dvh;}}';
+    style.textContent =
+      'html,body,#root{overscroll-behavior:none;}' +
+      '#root *{overscroll-behavior:none;}' +
+      '@supports (height:100dvh){html,body,#root{height:100dvh;}}';
     document.head.appendChild(style);
   }
 }

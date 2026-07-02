@@ -70,7 +70,7 @@ export default function AdminUserDetailScreen() {
   if (user === undefined) {
     return (
       <ScreenBackground variant="paper">
-        <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+        <SafeAreaView style={{ flex: 1, overflow: 'hidden' }} edges={['top']}>
           <Header onBack={back} styles={styles} colors={colors} />
           <ActivityIndicator color={colors.primary} style={{ marginTop: 40 }} />
         </SafeAreaView>
@@ -81,7 +81,7 @@ export default function AdminUserDetailScreen() {
   if (user === null) {
     return (
       <ScreenBackground variant="paper">
-        <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+        <SafeAreaView style={{ flex: 1, overflow: 'hidden' }} edges={['top']}>
           <Header onBack={back} styles={styles} colors={colors} />
           <View style={styles.emptyWrap}>
             <Text style={styles.emptyTitle}>User not found</Text>
