@@ -1,14 +1,15 @@
 import { useState, useEffect, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Pressable, ActivityIndicator, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useTheme } from '../../../context/ThemeContext';
-import { getUsage, getUserStats, getUsers } from '../../../services/adminApi';
-import ScreenBackground from '../../../components/brand/ScreenBackground';
-import Card from '../../../components/brand/Card';
-import SectionLabel from '../../../components/brand/SectionLabel';
-import { FONTS, RADII } from '../../../constants/theme';
+import { useTheme } from '../../../../context/ThemeContext';
+import { getUsage, getUserHistory, getUsers } from '../../../../services/adminApi';
+import ScreenBackground from '../../../../components/brand/ScreenBackground';
+import Card from '../../../../components/brand/Card';
+import SectionLabel from '../../../../components/brand/SectionLabel';
+import DecisionCard from '../../../../components/history/DecisionCard';
+import { FONTS, RADII } from '../../../../constants/theme';
 
 const money = (n) => `$${(n || 0).toFixed(2)}`;
 const formatDate = (v, fallback = 'Unknown') => {
@@ -27,10 +28,18 @@ export default function AdminUserDetailScreen() {
 
   const [user, setUser] = useState(undefined); // undefined=loading, null=not found
   const [usageRow, setUsageRow] = useState(null);
-  const [stats, setStats] = useState(null);
-  const [statsLoading, setStatsLoading] = useState(true);
-  const [statsErr, setStatsErr] = useState(null);
+  const [history, setHistory] = useState(null);   // { itineraries, decisions } | null
+  const [historyErr, setHistoryErr] = useState(null);
   const [err, setErr] = useState(null);
+
+  const itineraries = history?.itineraries || [];
+  const decisions = history?.decisions || [];
+  const cityMap = new Map();
+  for (const it of itineraries) {
+    const city = typeof it?.meta?.city === 'string' ? it.meta.city.trim() : '';
+    if (city && !cityMap.has(city.toLowerCase())) cityMap.set(city.toLowerCase(), city);
+  }
+  const cities = Array.from(cityMap.values()).slice(0, 10);
 
   useEffect(() => {
     let alive = true;
@@ -50,12 +59,9 @@ export default function AdminUserDetailScreen() {
 
   useEffect(() => {
     let alive = true;
-    setStatsLoading(true);
-    setStatsErr(null);
-    getUserStats(uid)
-      .then((s) => { if (alive) setStats(s); })
-      .catch((e) => { if (alive) setStatsErr(e.message); })
-      .finally(() => { if (alive) setStatsLoading(false); });
+    getUserHistory(uid)
+      .then((h) => { if (alive) setHistory(h); })
+      .catch((e) => { if (alive) setHistoryErr(e.message); });
     return () => { alive = false; };
   }, [uid]);
 
@@ -117,19 +123,55 @@ export default function AdminUserDetailScreen() {
 
           <SectionLabel tone="cobalt">ACTIVITY</SectionLabel>
           <Card>
-            {statsLoading ? (
+            {!history && !historyErr ? (
               <ActivityIndicator color={colors.primary} />
-            ) : statsErr ? (
-              <Text style={styles.err}>{statsErr}</Text>
-            ) : stats ? (
+            ) : historyErr ? (
+              <Text style={styles.err}>{historyErr}</Text>
+            ) : (
               <>
-                <Row label="Itineraries" value={String(stats.itineraries)} styles={styles} />
-                <Row label="Decisions" value={String(stats.decisions)} styles={styles} />
-                <Row label="Locations" value={String(stats.locations)} styles={styles} />
-                {stats.cities?.length ? <Text style={styles.muted}>{stats.cities.join(', ')}</Text> : null}
+                <Row label="Itineraries" value={String(itineraries.length)} styles={styles} />
+                <Row label="Decisions" value={String(decisions.length)} styles={styles} />
+                <Row label="Locations" value={String(cityMap.size)} styles={styles} />
+                {cities.length ? <Text style={styles.muted}>{cities.join(', ')}</Text> : null}
               </>
-            ) : null}
+            )}
           </Card>
+
+          <SectionLabel tone="cobalt">ITINERARIES</SectionLabel>
+          <Card>
+            {!history && !historyErr ? (
+              <ActivityIndicator color={colors.primary} />
+            ) : itineraries.length === 0 ? (
+              <Text style={styles.muted}>No itineraries yet</Text>
+            ) : (
+              itineraries.map((it) => (
+                <Pressable
+                  key={it.id}
+                  style={styles.recordRow}
+                  onPress={() => router.push(`/admin/user/${encodeURIComponent(uid)}/itinerary/${encodeURIComponent(it.id)}`)}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.recordTitle}>
+                      {`${it.meta?.day_of_week ?? ''} ${it.meta?.date ?? ''}`.trim() || 'Itinerary'}
+                    </Text>
+                    <Text style={styles.recordSub}>
+                      {[it.meta?.city, `${it.itinerary?.length ?? it.stops?.length ?? 0} stops`].filter(Boolean).join(' · ')}
+                    </Text>
+                  </View>
+                  <Text style={styles.recordChevron}>›</Text>
+                </Pressable>
+              ))
+            )}
+          </Card>
+
+          <SectionLabel tone="cobalt">DECISIONS</SectionLabel>
+          {!history && !historyErr ? (
+            <Card><ActivityIndicator color={colors.primary} /></Card>
+          ) : decisions.length === 0 ? (
+            <Card><Text style={styles.muted}>No decisions yet</Text></Card>
+          ) : (
+            decisions.map((d) => <DecisionCard key={d.id} item={d} readOnly />)
+          )}
         </ScrollView>
       </SafeAreaView>
     </ScreenBackground>
@@ -172,4 +214,8 @@ const makeStyles = (c) => StyleSheet.create({
   emptyTitle: { fontFamily: FONTS.display, fontSize: 19, color: c.textPrimary, textAlign: 'center' },
   emptySub: { fontFamily: FONTS.body, fontSize: 14, color: c.textMuted, textAlign: 'center', marginTop: 8 },
   emptyRadius: { borderRadius: RADII.lg },
+  recordRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, gap: 10 },
+  recordTitle: { fontFamily: FONTS.bodySemiBold, color: c.textPrimary },
+  recordSub: { fontFamily: FONTS.body, color: c.textMuted, fontSize: 12, marginTop: 1 },
+  recordChevron: { fontFamily: FONTS.body, color: c.textMuted, fontSize: 22 },
 });

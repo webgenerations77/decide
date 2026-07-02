@@ -1,6 +1,7 @@
 import { verifyAdminRequest } from '../../lib/admin/requireAdmin.js';
 import { listUsersWithRoles, setUserRole } from '../../lib/admin/users.js';
 import { getUserStats } from '../../lib/admin/userStats.js';
+import { getUserHistory } from '../../lib/history/store.js';
 
 export default async function handler(req, res) {
   const auth = await verifyAdminRequest(req.headers.authorization);
@@ -17,6 +18,14 @@ export default async function handler(req, res) {
   }
   // GET ?uid=<uid> → that user's activity stats; GET (no uid) → full user list.
   // (Folded in from the former /api/admin/user-stats to stay under Vercel's 12-function cap.)
+  if (req.query.uid && req.query.data === 'history') {
+    try {
+      return res.json(await getUserHistory(req.query.uid));
+    } catch (e) {
+      console.error('[api/admin/users] user_history_failed:', e);
+      return res.status(500).json({ error: 'user_history_failed', message: e.message });
+    }
+  }
   if (req.query.uid) {
     try {
       return res.json(await getUserStats(req.query.uid));
