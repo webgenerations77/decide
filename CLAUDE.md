@@ -88,7 +88,10 @@ Brand primitives (`components/brand/`) — compose tokens; use these instead of 
 - ANTHROPIC_API_KEY is server-side only (never exposed to client)
 - Google Geocoding API is NOT used directly from the client — proxy through /api/geocode
 - Auto location uses expo-location.reverseGeocodeAsync() on native (no API call)
-- Manual location search uses Places Autocomplete + Place Details via /api/geocode?q=
+- Manual location search uses Places Autocomplete (New) + Place Details with a shared session token,
+  proxied via /api/places/autocomplete + /api/places/details (soft locationBias toward last-known coords).
+  The resolved label is sent to /api/itinerary as `locationLabel`/`locationShort` (backend prefers it over
+  reverse-geocoding). NOTE: the old /api/geocode?q= forward-search branch is now unused dead code.
 - "Cheddar" is the assistant's INTERNAL persona only (shapes voice via server-side system prompts in
   lib/smart/synthesis.js, lib/clarify.js, api/itinerary-swap). It is NOT ready for public launch — the name
   "Cheddar" must NEVER appear in user-facing text. In UI copy refer to the product as "Decide" or use "we".
@@ -98,7 +101,8 @@ Brand primitives (`components/brand/`) — compose tokens; use these instead of 
   `app/api/*+api.js` (Request/Response). Keep both in sync when editing a handler.
 - ⚠ VERCEL FUNCTION CAP: Hobby plan allows max 12 serverless functions per deploy, and EVERY `.js` under
   `api/` counts. Adding files here freezes prod (hit 2026-07-01 — batch-4 added 2 → 13 → deploy failed).
-  DO NOT add files to `api/`. Add new server capability as a `?mode=`/query branch on an EXISTING endpoint
+  DO NOT add files to `api/`. ⚠ We are now at EXACTLY 12/12 (added api/places/autocomplete.js on 2026-07-22) —
+  ZERO headroom. Any new endpoint MUST replace/fold into an existing one. Add new server capability as a `?mode=`/query branch on an EXISTING endpoint
   with logic in `lib/` (e.g. clarify → `api/itinerary?mode=clarify` via lib/clarify.js; admin user-stats →
   `api/admin/users?uid=` via lib/admin/userStats.js). Check count: `find api -name '*.js' | wc -l` (keep ≤12).
 - ⚠ VERIFY BUILDS with `npx expo export --platform web` (success = "Exported: dist"). `node --check` is

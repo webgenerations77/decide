@@ -169,8 +169,11 @@ export default function PlanScreen() {
   const [view, setView] = useState('landing');
   const [remainingDecisions, setRemainingDecisions] = useState(null);
 
-  const [locationLabel, setLocationLabel] = useState('Locating…');
-  const [isManual,      setIsManual]      = useState(false);
+  const [locationLabel,     setLocationLabel]     = useState('Locating…');
+  // Fullest human-readable label (e.g. manual formatted address) sent to the backend,
+  // which prefers it over reverse-geocoding. Distinct from the short pill display above.
+  const [locationLabelFull, setLocationLabelFull] = useState(null);
+  const [isManual,          setIsManual]          = useState(false);
   const [displayName,   setDisplayName]   = useState('');
   const [sensitivities, setSensitivities] = useState([]);
   const gpsLoadedRef  = useRef(false);
@@ -255,6 +258,8 @@ export default function PlanScreen() {
           if (loc?.latitude && loc?.longitude) {
             setIsManual(true);
             setLocationLabel(loc.short ?? loc.label ?? 'Manual location');
+            // Full human-readable label preferred by the backend over reverse-geocoding.
+            setLocationLabelFull(loc.label ?? loc.short ?? null);
             setCoords({ latitude: loc.latitude, longitude: loc.longitude });
             return;
           }
@@ -267,6 +272,7 @@ export default function PlanScreen() {
       if (gpsLoadedRef.current && gpsLabelRef.current) {
         setIsManual(false);
         setLocationLabel(gpsLabelRef.current);
+        setLocationLabelFull(null);
         setCoords(gpsCoordsRef.current);
         return;
       }
@@ -313,6 +319,7 @@ export default function PlanScreen() {
         gpsLoadedRef.current = true;
         gpsLabelRef.current = finalLabel;
         setLocationLabel(finalLabel);
+        setLocationLabelFull(null);
       } catch (e) {
         console.warn('[location] GPS acquisition failed:', e?.message ?? e);
         setLocationLabel('Location unavailable');
@@ -459,6 +466,10 @@ export default function PlanScreen() {
       const dietary = dietRaw ? JSON.parse(dietRaw) : [];
       const neurodivergent = ndRaw === 'true';
 
+      // Prefer a real human-readable label; drop transient placeholders.
+      const PLACEHOLDER_LABELS = ['Locating…', 'Location unavailable', 'Your location'];
+      const labelToSend = locationLabel && !PLACEHOLDER_LABELS.includes(locationLabel) ? locationLabel : null;
+
       const data = await generateItinerary({
         latitude:  coords.latitude,
         longitude: coords.longitude,
@@ -467,6 +478,8 @@ export default function PlanScreen() {
         feedback: feedbackCtx,
         maxDistanceMiles,
         tripNote: tripNoteOverride ?? tripNote, activityStyles, dietary, neurodivergent,
+        locationLabel: locationLabelFull ?? labelToSend,
+        locationShort: labelToSend,
       });
       setItinerary(data.itinerary);
       setWeather(data.weather);
@@ -542,9 +555,13 @@ export default function PlanScreen() {
     if (!coords) return;
     setSwappingIndex(index);
     try {
+      const PLACEHOLDER_LABELS = ['Locating…', 'Location unavailable', 'Your location'];
+      const labelToSend = locationLabel && !PLACEHOLDER_LABELS.includes(locationLabel) ? locationLabel : null;
       const updated = await swapStop({
         itinerary, stopIndex: index,
         latitude: coords.latitude, longitude: coords.longitude,
+        locationLabel: locationLabelFull ?? labelToSend,
+        locationShort: labelToSend,
       });
       setItinerary(updated);
     } catch (err) {

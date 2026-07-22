@@ -717,7 +717,7 @@ const DEMO_SPIN_POOL = {
     { name: 'Ocean City Boardwalk Shops',         address: 'Boardwalk, Ocean City, MD',             reason: 'Three miles of classic boardwalk retail — salt water taffy, fudge, and OC souvenirs done the old-fashioned way.',    excitement_score: 78 },
     { name: 'ShoreCraft Beer Company',            address: '605 S Salisbury Blvd, Salisbury, MD',   reason: "Salisbury's best taproom with an on-site bottle shop and a covered beer garden that fills up on Sunday evenings.",   excitement_score: 84 },
   ],
-  surprise: [
+  other: [
     { name: 'Annapolis Harbor Sunset Sail',       address: 'City Dock, Annapolis, MD 21401',         reason: 'Two-hour schooner sail at dusk from City Dock — Chesapeake Bay turns gold, BYO drinks, and TripAdvisor top-rated experience in Maryland.', excitement_score: 95 },
     { name: 'Ocean City Boardwalk Night Walk',    address: 'Boardwalk, Ocean City, MD 21842',        reason: 'Three miles of lit-up boardwalk after 9pm is completely different energy from daytime — Funnel cake, amusements, and ocean air.', excitement_score: 86 },
     { name: 'Ego Alley Yacht Parade, Annapolis',  address: 'City Dock, Annapolis, MD 21401',         reason: "Watching million-dollar yachts attempt U-turns to audience applause in a narrow inlet is free, absurd, and genuinely great.",       excitement_score: 85 },
@@ -755,7 +755,7 @@ export function getDemoItinerary({ startTime, endTime, preferences } = {}) {
 }
 
 export function getDemoSpinResult(category) {
-  const pool = DEMO_SPIN_POOL[category] ?? DEMO_SPIN_POOL.surprise;
+  const pool = DEMO_SPIN_POOL[category] ?? DEMO_SPIN_POOL.other;
   let idx;
   do {
     idx = Math.floor(Math.random() * pool.length);

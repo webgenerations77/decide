@@ -3,7 +3,7 @@ const GOOGLE_KEY = process.env.GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_
 // Places API (New) v1 field mask covering everything the client detail view reads.
 // The legacy Places Details API is not enabled for this project, so we call v1 and
 // translate the response into the legacy `{ status, result }` shape the client expects.
-const V1_FIELD_MASK = 'id,displayName,rating,userRatingCount,nationalPhoneNumber,websiteUri,regularOpeningHours,priceLevel,reviews';
+const V1_FIELD_MASK = 'id,displayName,location,formattedAddress,rating,userRatingCount,nationalPhoneNumber,websiteUri,regularOpeningHours,priceLevel,reviews';
 
 const PRICE_ENUM_TO_NUM = {
   PRICE_LEVEL_FREE: 0, PRICE_LEVEL_INEXPENSIVE: 1, PRICE_LEVEL_MODERATE: 2,
@@ -14,6 +14,8 @@ function toLegacyResult(p) {
   if (!p) return null;
   return {
     name: p.displayName?.text ?? null,
+    formatted_address: p.formattedAddress ?? null,
+    geometry: p.location ? { location: { lat: p.location.latitude, lng: p.location.longitude } } : undefined,
     rating: p.rating ?? null,
     user_ratings_total: p.userRatingCount ?? null,
     formatted_phone_number: p.nationalPhoneNumber ?? null,
@@ -39,9 +41,11 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const placeId = searchParams.get('place_id');
   if (!placeId) return Response.json({ error: 'missing_place_id' }, { status: 400 });
+  // sessionToken (optional): closes the autocomplete session that produced this placeId.
+  const sessionToken = searchParams.get('sessionToken');
   try {
     const r = await fetch(
-      `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?key=${GOOGLE_KEY}`,
+      `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?key=${GOOGLE_KEY}${sessionToken ? `&sessionToken=${encodeURIComponent(sessionToken)}` : ''}`,
       { headers: { 'X-Goog-FieldMask': V1_FIELD_MASK } },
     );
     const data = await r.json();

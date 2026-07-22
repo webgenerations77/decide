@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, Animated, Easing,
-  Linking, ActivityIndicator, ScrollView, Image,
+  Linking, ActivityIndicator, ScrollView, Image, TextInput,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,9 +19,9 @@ import CTAButton from '../components/brand/CTAButton';
 import SectionLabel from '../components/brand/SectionLabel';
 import BrandLogo from '../components/brand/BrandLogo';
 import VersionTag from '../components/brand/VersionTag';
-import { searchNearbyPlaces, placeDetails, placePhotoUrl } from '../services/placesService';
+import { searchNearbyPlaces, searchTextPlaces, placeDetails, placePhotoUrl } from '../services/placesService';
 
-const SURPRISE_SEEN_KEY = '@decide/spin_surprise_seen';
+const OTHER_SEEN_KEY = '@decide/spin_other_seen';
 
 // Cheddar-voiced "why this pick" built from real signals — no AI call, so it
 // never invents preferences we don't have. Demo picks keep their own reason.
@@ -49,7 +49,7 @@ const PRICE_ENUM_TO_NUM = {
 // Places API (New) v1 includedTypes only — every type below is drawn from the
 // vetted set in app/api/itinerary+api.js PLACE_TYPES, so all resolve on v1.
 const CATEGORIES = [
-  { id: 'surprise',  label: 'Surprise Me', emoji: '🎲', color: COLORS.primary, noun: 'spot',
+  { id: 'other',     label: 'Other',       emoji: '🔍', color: COLORS.primary, noun: 'spot',
     types: ['restaurant','cafe','bar','art_gallery','park','museum','movie_theater','bowling_alley','tourist_attraction','ice_cream_shop'] },
   { id: 'food',      label: 'Food',        emoji: '🍽️', color: COLORS.food, noun: 'place to eat',
     types: ['restaurant','seafood_restaurant','pizza_restaurant','american_restaurant','italian_restaurant','mexican_restaurant','steak_house','sushi_restaurant','barbecue_restaurant','diner','hamburger_restaurant'] },
@@ -88,6 +88,32 @@ async function fetchNearbyPlaces(lat, lng, types) {
   }));
 }
 
+// Free-text keyword path for the "Other" category — Google Places Text Search
+// (New) v1. Biased to the user's coords/radius; returns the same shape as
+// fetchNearbyPlaces so the existing weighted-random pick logic just works.
+async function fetchTextPlaces(lat, lng, textQuery) {
+  const data = await searchTextPlaces(
+    {
+      textQuery,
+      locationBias: { circle: { center: { latitude: lat, longitude: lng }, radius: 20000 } },
+      maxResultCount: 20,
+    },
+    'places.id,places.displayName,places.formattedAddress,places.rating,places.editorialSummary,places.location,places.priceLevel,places.photos,places.primaryTypeDisplayName',
+  );
+  return (data.places ?? []).map((p) => ({
+    name:          p.displayName?.text ?? '',
+    place_id:      p.id ?? '',
+    address:       p.formattedAddress ?? '',
+    rating:        p.rating ?? 0,
+    summary:       p.editorialSummary?.text ?? null,
+    lat:           p.location?.latitude ?? lat,
+    lng:           p.location?.longitude ?? lng,
+    price_level:   PRICE_ENUM_TO_NUM[p.priceLevel] ?? null,
+    photo:         p.photos?.[0]?.name ?? null,
+    categoryLabel: p.primaryTypeDisplayName?.text ?? null,
+  }));
+}
+
 export default function SpinScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
@@ -100,10 +126,12 @@ export default function SpinScreen() {
   const [locLoading,  setLocLoading]  = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
   const [remainingSpins, setRemainingSpins] = useState(null);
-  const [surpriseSeen, setSurpriseSeen] = useState(true); // assume seen until storage says otherwise
+  const [otherSeen,   setOtherSeen]   = useState(true); // assume seen until storage says otherwise
+  const [keyword,     setKeyword]     = useState('');
 
   const spinAnim   = useRef(new Animated.Value(0)).current;
   const bounceAnim = useRef(new Animated.Value(0)).current;
+  const pulseAnim  = useRef(new Animated.Value(1)).current;
 
   // Load coords on mount
   useEffect(() => {
@@ -136,14 +164,30 @@ export default function SpinScreen() {
       }
     })();
     getRemainingSpins().then(setRemainingSpins).catch(() => {});
-    AsyncStorage.getItem(SURPRISE_SEEN_KEY)
-      .then((v) => setSurpriseSeen(v === 'true'))
+    // New key defaults to unseen for everyone (graceful migration — the old
+    // '@decide/spin_surprise_seen' flag is simply ignored, so "Other" gets a
+    // fresh one-time explainer).
+    AsyncStorage.getItem(OTHER_SEEN_KEY)
+      .then((v) => setOtherSeen(v === 'true'))
       .catch(() => {});
   }, []);
 
-  const dismissSurpriseExplainer = () => {
-    setSurpriseSeen(true);
-    AsyncStorage.setItem(SURPRISE_SEEN_KEY, 'true').catch(() => {});
+  // Pulse the spin emoji while a pick resolves — a small, cheap shuffle beat.
+  useEffect(() => {
+    if (!spinning) return;
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, { toValue: 1.18, duration: 360, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 1,    duration: 360, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      ]),
+    );
+    loop.start();
+    return () => { loop.stop(); pulseAnim.setValue(1); };
+  }, [spinning]);
+
+  const dismissOtherExplainer = () => {
+    setOtherSeen(true);
+    AsyncStorage.setItem(OTHER_SEEN_KEY, 'true').catch(() => {});
   };
 
   const spin = async () => {
@@ -176,9 +220,13 @@ export default function SpinScreen() {
         return;
       }
 
-      const cat    = CATEGORIES.find((c) => c.id === category);
-      const places = await fetchNearbyPlaces(coords.latitude, coords.longitude, cat.types);
-      if (!places.length) throw new Error('No places found nearby');
+      const cat = CATEGORIES.find((c) => c.id === category);
+      const kw  = keyword.trim();
+      // "Other" + a keyword → free-text search; otherwise the grab-bag dice roll.
+      const places = (category === 'other' && kw)
+        ? await fetchTextPlaces(coords.latitude, coords.longitude, kw)
+        : await fetchNearbyPlaces(coords.latitude, coords.longitude, cat.types);
+      if (!places.length) throw new Error(kw ? `Nothing found for "${kw}" nearby` : 'No places found nearby');
 
       // Weighted random: higher-rated places more likely
       const pool = places.filter((p) => p.name);
@@ -282,20 +330,36 @@ export default function SpinScreen() {
             ))}
           </View>
 
-          {/* One-time Surprise Me explainer */}
-          {category === 'surprise' && !surpriseSeen && !result && (
+          {/* One-time "Other" explainer */}
+          {category === 'other' && !otherSeen && !result && (
             <View style={styles.explainerCard}>
-              <Text style={styles.explainerEmoji}>🎲</Text>
+              <Text style={styles.explainerEmoji}>🔍</Text>
               <View style={{ flex: 1 }}>
-                <Text style={styles.explainerTitle}>How Surprise Me works</Text>
+                <Text style={styles.explainerTitle}>How Other works</Text>
                 <Text style={styles.explainerBody}>
-                  One random spot near you — a single suggestion, not a full day plan. Don't love it? Just spin again.
+                  Type what you're after — billiards, live music, arcade — and we'll pull one spot near you.
+                  Leave it blank and spin for a totally random pick. Either way, don't love it? Just spin again.
                 </Text>
-                <TouchableOpacity onPress={dismissSurpriseExplainer} activeOpacity={0.7} style={styles.explainerDismiss}>
+                <TouchableOpacity onPress={dismissOtherExplainer} activeOpacity={0.7} style={styles.explainerDismiss}>
                   <Text style={styles.explainerDismissTxt}>Got it</Text>
                 </TouchableOpacity>
               </View>
             </View>
+          )}
+
+          {/* Free-text keyword for the "Other" category */}
+          {category === 'other' && (
+            <TextInput
+              style={styles.keywordInput}
+              value={keyword}
+              onChangeText={setKeyword}
+              placeholder="billiards, live music, arcade…"
+              placeholderTextColor={colors.textMuted}
+              returnKeyType="search"
+              onSubmitEditing={spin}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
           )}
 
           {/* Spin button */}
@@ -309,7 +373,7 @@ export default function SpinScreen() {
                 disabled={spinning || !coords}
                 activeOpacity={0.7}
               >
-                <Animated.Text style={[styles.spinEmoji, { transform: [{ rotate: spinRotation }] }]}>
+                <Animated.Text style={[styles.spinEmoji, { transform: [{ rotate: spinRotation }, { scale: pulseAnim }] }]}>
                   {spinning ? '🎲' : activeCat.emoji}
                 </Animated.Text>
                 <Text style={[styles.spinLabel, spinning && styles.spinLabelActive]}>
@@ -457,7 +521,7 @@ const makeStyles = (c) => StyleSheet.create({
   spinLabel:       { fontFamily: FONTS.bodyBold, fontSize: 12, color: c.primary, letterSpacing: 3 },
   spinLabelActive: { color: c.accent },
 
-  // One-time Surprise Me explainer
+  // One-time "Other" explainer
   explainerCard: {
     flexDirection: 'row', gap: 12, alignItems: 'flex-start',
     backgroundColor: c.sky100, borderRadius: RADII.md,
@@ -469,6 +533,15 @@ const makeStyles = (c) => StyleSheet.create({
   explainerBody:  { fontFamily: FONTS.body, fontSize: 13, color: c.textSecondary, lineHeight: 19 },
   explainerDismiss: { alignSelf: 'flex-start', marginTop: 10 },
   explainerDismissTxt: { fontFamily: FONTS.bodyBold, fontSize: 13, color: c.primary },
+
+  // Free-text keyword input ("Other" category)
+  keywordInput: {
+    width: '100%', marginBottom: 24,
+    backgroundColor: c.surface, borderRadius: RADII.lg,
+    borderWidth: 1, borderColor: c.border,
+    paddingHorizontal: 16, height: 50,
+    fontFamily: FONTS.body, fontSize: 15, color: c.textPrimary,
+  },
 
   // Result card styles (Card primitive handles bg/radius/shadow/padding)
   // Full-bleed place photo header (negate the Card's 16px padding)

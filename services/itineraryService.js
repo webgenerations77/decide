@@ -30,6 +30,7 @@ export async function generateItinerary({
   feedback = {},
   maxDistanceMiles = 25,
   tripNote = '', activityStyles = [], dietary = [], neurodivergent = false,
+  locationLabel = null, locationShort = null,
 }) {
   try {
     const demoRaw = await AsyncStorage.getItem('@decide/demo_mode');
@@ -43,7 +44,14 @@ export async function generateItinerary({
   const res  = await fetch(`${base}/api/itinerary`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
-    body: JSON.stringify({ latitude, longitude, date, preferences: { ...preferences, activityStyles, dietary, neurodivergent }, startTime, endTime, feedback, maxDistanceMiles, tripNote }),
+    body: JSON.stringify({
+      latitude, longitude, date,
+      preferences: { ...preferences, activityStyles, dietary, neurodivergent },
+      startTime, endTime, feedback, maxDistanceMiles, tripNote,
+      // Human-readable label wins over server-side reverse-geocoding when present.
+      ...(locationLabel ? { locationLabel } : {}),
+      ...(locationShort ? { locationShort } : {}),
+    }),
   });
 
   if (!res.ok) {
@@ -78,12 +86,16 @@ export async function getClarifyingQuestion(tripNote) {
   }
 }
 
-export async function swapStop({ itinerary, stopIndex, latitude, longitude }) {
+export async function swapStop({ itinerary, stopIndex, latitude, longitude, locationLabel = null, locationShort = null }) {
   const base = getApiBase();
   const res  = await fetch(`${base}/api/itinerary-swap`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
-    body: JSON.stringify({ itinerary, stopIndex, latitude, longitude }),
+    body: JSON.stringify({
+      itinerary, stopIndex, latitude, longitude,
+      ...(locationLabel ? { locationLabel } : {}),
+      ...(locationShort ? { locationShort } : {}),
+    }),
   });
 
   if (!res.ok) {

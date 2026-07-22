@@ -122,6 +122,18 @@ function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, 
             </View>
           </View>
 
+          {/* Honest hedging — soft, non-alarming. time_note wins; else a plain
+              "worth confirming" nudge when the stop is flagged unverified. */}
+          {stop.time_note ? (
+            <View style={styles.confirmChip}>
+              <Text style={styles.confirmChipTxt}>≈ {stop.time_note}</Text>
+            </View>
+          ) : stop.unverified ? (
+            <View style={styles.confirmChip}>
+              <Text style={styles.confirmChipTxt}>≈ Worth a quick call to confirm</Text>
+            </View>
+          ) : null}
+
           <Text style={styles.stopName} numberOfLines={1}>{stop.name}</Text>
           {stop.address ? <Text style={styles.stopAddress} numberOfLines={1}>{stop.address}</Text> : null}
 
@@ -155,7 +167,7 @@ function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, 
 
           {stop.provenance?.why && !stop.live_music?.note ? (
             <View style={styles.provenanceBadge}>
-              <Text style={styles.provenanceTxt} numberOfLines={1}>📰 Live find</Text>
+              <Text style={styles.provenanceTxt} numberOfLines={1}>✨ Found this week</Text>
             </View>
           ) : null}
 
@@ -163,6 +175,13 @@ function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, 
             <TouchableOpacity onPress={() => setShowLegend(true)} activeOpacity={0.7} style={styles.pricePill}>
               <Text style={styles.pricePillTxt}>{['', '$', '$$', '$$$', '$$$$'][stop.price_level] ?? ''} ⓘ</Text>
             </TouchableOpacity>
+          ) : null}
+
+          {stop.splurge ? (
+            <View style={styles.splurgeChip}>
+              <Ionicons name="sparkles-outline" size={11} color={colors.primary} style={{ marginRight: 4 }} />
+              <Text style={styles.splurgeChipTxt}>Splurge</Text>
+            </View>
           ) : null}
 
           {(stop.website || stop.phone) ? (
@@ -312,6 +331,22 @@ const makeStyles = (c) => StyleSheet.create({
   liveMusicTxt:   { flexShrink: 1, fontFamily: FONTS.bodyMedium, fontSize: 12, color: c.primary },
   provenanceBadge: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', marginTop: 6, paddingHorizontal: 8, paddingVertical: 4, borderRadius: RADII.sm, backgroundColor: c.sky100 },
   provenanceTxt:   { fontFamily: FONTS.bodyMedium, fontSize: 12, color: c.primary },
+
+  // Honest hedging chip (time_note / unverified) — muted, non-alarming
+  confirmChip: {
+    alignSelf: 'flex-start', maxWidth: '100%',
+    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999,
+    backgroundColor: c.surfaceAlt, borderWidth: 1, borderColor: c.border,
+  },
+  confirmChipTxt: { flexShrink: 1, fontSize: 12, color: c.textMuted, fontFamily: FONTS.bodyMedium, lineHeight: 16 },
+
+  // Splurge chip (above-budget pick) — cobalt-led, tasteful
+  splurgeChip: {
+    flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start',
+    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999,
+    backgroundColor: c.primary + '18', borderWidth: 1, borderColor: c.primary + '40',
+  },
+  splurgeChipTxt: { fontSize: 11, color: c.primary, fontFamily: FONTS.bodySemiBold, letterSpacing: 0.3 },
 
   // Price tier pill
   pricePill: {
