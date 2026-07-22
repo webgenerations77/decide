@@ -1,6 +1,6 @@
 import { logUsage } from '../lib/usageLog.js';
 import { runSmartEngine } from '../lib/smart/index.js';
-import { computeCostSummary, pickForecastFromOpenMeteo, attachPriceLevels, fillFoodPriceLevels, shouldResolveContact } from '../lib/itineraryHelpers.js';
+import { computeCostSummary, pickForecastFromOpenMeteo, attachPriceLevels, fillFoodPriceLevels, shouldResolveContact, withHours, parseLocationLabel } from '../lib/itineraryHelpers.js';
 import { getUSHoliday } from '../lib/smart/holidays.js';
 import { getUidFromAuth } from '../lib/admin/auth.js';
 import { runWithUser } from '../lib/usageContext.js';
@@ -52,7 +52,11 @@ function classifyPlace(p) {
 async function fetchPlacesRaw(lat, lng, types, maxResults = 10) {
   const res = await fetch(`${NEARBY_URL}?key=${GOOGLE_KEY}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.currentOpeningHours,places.location,places.priceLevel,places.editorialSummary,places.primaryType' },
+    headers: { 'Content-Type': 'application/json', 'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.currentOpeningHours,places.regularOpeningHours,places.location,places.priceLevel,places.editorialSummary,places.primaryType' },
+    // NOTE: intentionally NOT sending `priceLevels` here. In Places (New) v1 Nearby Search it
+    // acts as a hard exclusion filter, which would drop every unpriced/free venue (parks,
+    // beaches, many restaurants) and remove the pool synthesis needs to pick a "splurge".
+    // Budget is enforced softly in the synthesis prompt instead (see lib/smart/synthesis.js).
     body: JSON.stringify({ locationRestriction: { circle: { center: { latitude: lat, longitude: lng }, radius: 30000 } }, maxResultCount: maxResults, includedTypes: types }),
   });
   const data = await res.json();
@@ -61,6 +65,7 @@ async function fetchPlacesRaw(lat, lng, types, maxResults = 10) {
     name: p.displayName?.text ?? '', place_id: p.id ?? '', address: p.formattedAddress ?? '',
     rating: p.rating ?? 0, user_ratings_total: p.userRatingCount ?? 0, price_level: p.priceLevel ?? null,
     is_open: p.currentOpeningHours?.openNow ?? false, summary: p.editorialSummary?.text ?? null,
+    openingPeriods: p.regularOpeningHours?.periods ?? p.currentOpeningHours?.periods ?? null,
     lat: p.location?.latitude ?? 0, lng: p.location?.longitude ?? 0,
     primaryType: p.primaryType ?? '',
   }));
@@ -107,18 +112,18 @@ async function fetchWeather(lat, lng, dateISO) {
   if (cached) return cached;
   try {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}`
-      + `&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,wind_speed_10m_max,wind_direction_10m_dominant`
+      + `&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,wind_speed_10m_max,wind_direction_10m_dominant,sunrise,sunset`
       + `&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=7`;
     const res  = await fetch(url);
     const data = await res.json();
     const f = pickForecastFromOpenMeteo(data, dateISO);
     if (!f) return null;
     if (f.beyondForecast) {
-      const result = { beyondForecast: true, condition: null, emoji: '🗓', temp_f: null, feels_like_f: null, wind_speed_mph: null, wind_dir: null };
+      const result = { beyondForecast: true, condition: null, emoji: '🗓', temp_f: null, feels_like_f: null, wind_speed_mph: null, wind_dir: null, sunrise: null, sunset: null };
       cacheSet(weatherCache, key, result);
       return result;
     }
-    const result = { condition: f.condition, emoji: getWeatherEmoji(f.condition), temp_f: f.temp_f, feels_like_f: f.feels_like_f, wind_speed_mph: f.wind_speed_mph, wind_dir: f.wind_dir, beyondForecast: false };
+    const result = { condition: f.condition, emoji: getWeatherEmoji(f.condition), temp_f: f.temp_f, feels_like_f: f.feels_like_f, wind_speed_mph: f.wind_speed_mph, wind_dir: f.wind_dir, sunrise: f.sunrise, sunset: f.sunset, beyondForecast: false };
     cacheSet(weatherCache, key, result);
     return result;
   } catch { return null; }
@@ -263,7 +268,7 @@ export default async function handler(req, res) {
     }
 
     try {
-      const { latitude, longitude, date, preferences = {}, startTime = '11:00 AM', endTime = '8:00 PM', feedback = {}, tripNote = '' } = req.body;
+      const { latitude, longitude, date, preferences = {}, startTime = '11:00 AM', endTime = '8:00 PM', feedback = {}, tripNote = '', locationLabel = '', locationShort = '' } = req.body;
       if (!latitude || !longitude) return res.status(400).json({ error: 'latitude and longitude are required' });
 
       const { pace='moderate', budget='$$', group_type='couple', cuisines=[], activityStyles=[], dietary=[], neurodivergent=false } = preferences;
@@ -274,15 +279,17 @@ export default async function handler(req, res) {
       const formattedDate=dateObj.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
       const travelDateISO=dateObj.toISOString().slice(0,10);
 
+      // Prefer a client-supplied human label for locality; reverse-geocode is the fallback.
+      const hasLabel = !!(locationLabel && String(locationLabel).trim());
       const [places, weather, geoInfo] = await Promise.all([
         fetchAllPlaces(latitude, longitude),
         fetchWeather(latitude, longitude, travelDateISO),
-        reverseGeocode(latitude, longitude),
+        hasLabel ? Promise.resolve(null) : reverseGeocode(latitude, longitude),
       ]);
       const { food, activity, shopping, outdoor } = places;
-      const { city, state } = geoInfo;
+      const { city, state } = hasLabel ? parseLocationLabel(locationLabel, locationShort) : geoInfo;
 
-      const cityStr=city?`${city}${state?`, ${state}`:''}`:'the local area';
+      const cityStr = hasLabel ? locationLabel : (city?`${city}${state?`, ${state}`:''}`:'the local area');
 
       const [npsParks, ridbFacilities] = await Promise.all([
         fetchNPSParks(city, state),
@@ -291,12 +298,17 @@ export default async function handler(req, res) {
 
       const allOutdoor=[...outdoor,...npsParks,...ridbFacilities];
 
+      // Annotate each place with a compact "hours" string for the plan weekday (0=Sun..6=Sat).
+      const planWeekday = dateObj.getDay();
+      const annotate = (arr) => (arr || []).map((pl) => withHours(pl, planWeekday));
+
       const ctx = {
         location: cityStr,
         travelDates: { start: travelDateISO, end: travelDateISO },
         coords: { latitude, longitude },
         maxMiles: 25,
         weather,
+        sun: weather ? { sunrise: weather.sunrise ?? null, sunset: weather.sunset ?? null } : null,
         prefs: { pace, budget, group_type, cuisines, activityStyles, dietary, neurodivergent },
         feedback: { likedPlaces, dislikedPlaces, dislikedReasons },
         tripNote,
@@ -307,7 +319,7 @@ export default async function handler(req, res) {
       };
       const smart = await runSmartEngine({
         ctx,
-        places: { food, activity, shopping, outdoor: allOutdoor },
+        places: { food: annotate(food), activity: annotate(activity), shopping: annotate(shopping), outdoor: annotate(allOutdoor) },
       });
 
       let itinerary, isFallback = false;

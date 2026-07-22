@@ -94,7 +94,7 @@ export default function BetaGuide() {
             <Text style={styles.p}>• Try a weird combo on purpose (packed pace + tight budget + a picky note) and see if we hold up.</Text>
             <Text style={styles.p}>• Swap a stop or two — does the replacement actually make sense?</Text>
             <Text style={styles.p}>• Check each stop's details — the activity icon, the price for restaurants, and the day's weather up top. Flag anything that looks wrong.</Text>
-            <Text style={styles.p}>• Hit Surprise Me a few times — does the "why this pick" line make sense, and do the Directions / Website / Call buttons work?</Text>
+            <Text style={styles.p}>• Try Quick Spin's Other category — type a keyword (like "arcade" or "live music"), or leave it blank for a random pick. Does the "why this pick" line make sense, and do the Directions / Website / Call buttons work?</Text>
             <Text style={styles.p}>• Watch for the "what's happening right now" picks — events and specials tied to your real dates. Tell us when they land and when they're off.</Text>
             <Text style={styles.p}>• Push the edges. The stuff that breaks is exactly what we need to hear about.</Text>
           </Card>

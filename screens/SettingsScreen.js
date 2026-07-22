@@ -8,7 +8,7 @@ import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { loadAllSettings, save, KEYS } from '../services/settingsService';
-import { searchTextPlaces } from '../services/placesService';
+import { autocompletePlaces, getPlaceLocation, newSessionToken } from '../services/placesService';
 import { clearHistory } from '../services/historyService';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -85,24 +85,45 @@ function timeToMinutes(str) {
   return hours * 60;
 }
 
-async function searchLocation(text) {
+// Soft location bias circle. Autocomplete treats locationBias as a PREFERENCE only —
+// faraway places still resolve — so a generous radius is safe.
+const BIAS_RADIUS_M = 50000;
+const biasFromCoords = (latitude, longitude) =>
+  (latitude != null && longitude != null)
+    ? { circle: { center: { latitude, longitude }, radius: BIAS_RADIUS_M } }
+    : null;
+
+// Prefer the currently-saved manual location, else the app's last-known GPS coords
+// (written by the plan screen as `lastKnownCoords`), else no bias.
+async function computeLocationBias() {
+  try {
+    const raw = await AsyncStorage.getItem(KEYS.MANUAL_LOCATION);
+    if (raw) { const l = JSON.parse(raw); const b = biasFromCoords(l?.latitude, l?.longitude); if (b) return b; }
+  } catch {}
+  try {
+    const raw = await AsyncStorage.getItem('lastKnownCoords');
+    if (raw) { const l = JSON.parse(raw); const b = biasFromCoords(l?.latitude, l?.longitude); if (b) return b; }
+  } catch {}
+  return null;
+}
+
+// Places Autocomplete (New): returns prediction rows { placeId, label, main, secondary }.
+// Coordinates are resolved later via Place Details on selection (same session token).
+async function searchLocation(text, sessionToken, locationBias) {
   if (!text || text.length < 3) return null;
   try {
-    const data = await searchTextPlaces(
-      { textQuery: text, languageCode: 'en', pageSize: 5 },
-      'places.id,places.displayName,places.location,places.addressComponents,places.formattedAddress',
-    );
+    const data = await autocompletePlaces({ input: text, sessionToken, locationBias });
     if (data.error === 'api_key_missing' || data.error?.status === 'PERMISSION_DENIED') return { error: 'api_key' };
-    if (!data.places?.length) return { error: 'not_found' };
-    const results = data.places.map((p) => {
-      const parts = p.addressComponents ?? [];
-      const get   = (t) => parts.find((c) => c.types?.includes(t));
-      const city  = p.displayName?.text ?? get('locality')?.longText ?? get('sublocality')?.longText;
-      const state = get('administrative_area_level_1')?.shortText;
-      const short = city && state ? `${city}, ${state}`
-                  : p.formattedAddress?.split(',').slice(0, 2).join(',').trim();
-      return { label: p.formattedAddress ?? short, short, latitude: p.location?.latitude, longitude: p.location?.longitude };
-    }).filter((r) => r.latitude && r.longitude);
+    const suggestions = data.suggestions ?? [];
+    if (!suggestions.length) return { error: 'not_found' };
+    const results = suggestions.map((s) => {
+      const p = s.placePrediction;
+      if (!p?.placeId) return null;
+      const main      = p.structuredFormat?.mainText?.text;
+      const secondary = p.structuredFormat?.secondaryText?.text;
+      const label     = p.text?.text ?? main ?? '';
+      return { placeId: p.placeId, label, main: main ?? label, secondary };
+    }).filter(Boolean);
     return results.length ? results : { error: 'not_found' };
   } catch {
     return { error: 'network' };
@@ -278,6 +299,9 @@ export default function SettingsScreen() {
   const pulseLoop = useRef(null);
 
   const geocodeTimer = useRef(null);
+  // ONE autocomplete session token spans keystrokes for a single search; it's cleared
+  // (regenerated) after a selection is resolved or the field is cleared.
+  const sessionTokenRef = useRef(null);
 
   useEffect(() => {
     (async () => {
@@ -340,9 +364,12 @@ export default function SettingsScreen() {
     setGeocodeErr(null);
     clearTimeout(geocodeTimer.current);
     if (text.length < 3) return;
+    // One session token per search session — created lazily, reused across keystrokes.
+    if (!sessionTokenRef.current) sessionTokenRef.current = newSessionToken();
     geocodeTimer.current = setTimeout(async () => {
       setGeocoding(true);
-      const result = await searchLocation(text);
+      const bias   = await computeLocationBias();
+      const result = await searchLocation(text, sessionTokenRef.current, bias);
       setGeocoding(false);
       if (Array.isArray(result)) {
         setGeocodeSuggestions(result);
@@ -358,15 +385,40 @@ export default function SettingsScreen() {
       } else {
         setGeocodeErr('Could not find location — try again');
       }
-    }, 600);
+    }, 400);
   };
 
-  const handleSelectSuggestion = (suggestion) => {
-    const loc = { text: manualText, ...suggestion };
-    setGeocodedLoc(loc);
+  const handleSelectSuggestion = async (suggestion) => {
     setGeocodeSuggestions([]);
     setGeocodeErr(null);
-    save(KEYS.MANUAL_LOCATION, loc);
+    setGeocoding(true);
+    try {
+      // Resolve placeId → coords + address with the SAME token, then close the session.
+      const data = await getPlaceLocation(suggestion.placeId, sessionTokenRef.current);
+      sessionTokenRef.current = null;
+      const result = data?.result;
+      const lat = result?.geometry?.location?.lat;
+      const lng = result?.geometry?.location?.lng;
+      if (data?.status !== 'OK' || lat == null || lng == null) {
+        setGeocodeErr(data?.error === 'api_key_missing'
+          ? 'Location search not configured — contact support'
+          : 'Location not found — try being more specific');
+        return;
+      }
+      const label = result.formatted_address ?? suggestion.label;
+      const short = suggestion.main
+                 ?? label?.split(',').slice(0, 2).join(',').trim();
+      const displayText = suggestion.main ?? short ?? label;
+      // Storage shape kept identical: { text, label, short, latitude, longitude }.
+      const loc = { text: displayText, label, short, latitude: lat, longitude: lng };
+      setManualText(displayText);
+      setGeocodedLoc(loc);
+      save(KEYS.MANUAL_LOCATION, loc);
+    } catch {
+      setGeocodeErr('Connection error — check your internet');
+    } finally {
+      setGeocoding(false);
+    }
   };
 
   const handleClearManualLocation = () => {
@@ -374,6 +426,7 @@ export default function SettingsScreen() {
     setGeocodedLoc(null);
     setGeocodeSuggestions([]);
     setGeocodeErr(null);
+    sessionTokenRef.current = null;
     clearTimeout(geocodeTimer.current);
     AsyncStorage.removeItem(KEYS.MANUAL_LOCATION).catch(() => {});
     handleLocationMode('auto');
@@ -634,7 +687,10 @@ export default function SettingsScreen() {
                         onPress={() => handleSelectSuggestion(s)}
                         activeOpacity={0.7}
                       >
-                        <Text style={styles.suggestionText}>{s.label}</Text>
+                        <Text style={styles.suggestionText} numberOfLines={1}>{s.main ?? s.label}</Text>
+                        {!!s.secondary && (
+                          <Text style={styles.suggestionSecondary} numberOfLines={1}>{s.secondary}</Text>
+                        )}
                       </TouchableOpacity>
                     ))}
                   </View>
@@ -946,9 +1002,10 @@ const makeStyles = (c) => StyleSheet.create({
     backgroundColor: c.surfaceAlt, borderRadius: 12,
     borderWidth: 1, borderColor: c.border, overflow: 'hidden',
   },
-  suggestionRow:      { height: 48, justifyContent: 'center', paddingHorizontal: 14 },
+  suggestionRow:      { minHeight: 48, justifyContent: 'center', paddingHorizontal: 14, paddingVertical: 8, gap: 2 },
   suggestionRowBorder:{ borderBottomWidth: 1, borderBottomColor: c.border },
-  suggestionText:     { fontSize: 13, fontFamily: FONTS.bodyMedium, color: c.textSecondary },
+  suggestionText:     { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: c.textPrimary },
+  suggestionSecondary:{ fontSize: 11, fontFamily: FONTS.bodyMedium, color: c.textMuted },
 
   // Chips
   chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
