@@ -16,6 +16,17 @@ import PriceLegendModal from './PriceLegendModal';
 
 const FEEDBACK_REASONS = ['Closed', 'Too crowded', 'Not my style', 'Too far', 'Too expensive', 'Other'];
 
+// Defensive host derivation for the ✓ Verified chip's source-link suffix.
+// Never throws — falls back to null so the chip can render "Verified" alone.
+function verifiedHost(url) {
+  try {
+    const host = new URL(url).hostname;
+    return host.replace(/^www\./, '');
+  } catch {
+    return null;
+  }
+}
+
 // ─── FeedbackModal ────────────────────────────────────────────────────────────
 function FeedbackModal({ visible, placeName, onClose, onSelect }) {
   const { colors } = useTheme();
@@ -45,6 +56,33 @@ function FeedbackModal({ visible, placeName, onClose, onSelect }) {
           </View>
       </View>
     </Modal>
+  );
+}
+
+// ─── VerifiedChip ─────────────────────────────────────────────────────────────
+// Trust receipt for a stop whose event time was confirmed against a source page
+// (Tasks 1–3). Tappable when a source URL exists; opens it in the browser.
+function VerifiedChip({ stop, styles, colors }) {
+  if (!stop.verify_source) {
+    // verified=true but no source URL somehow — show a non-tappable receipt, don't crash.
+    return (
+      <View style={styles.verifiedChip}>
+        <Ionicons name="checkmark-circle" size={12} color={colors.success} />
+        <Text style={styles.verifiedChipTxt}>Verified</Text>
+      </View>
+    );
+  }
+  const host = verifiedHost(stop.verify_source);
+  return (
+    <TouchableOpacity
+      style={styles.verifiedChip}
+      onPress={() => Linking.openURL(stop.verify_source)}
+      activeOpacity={0.7}
+    >
+      <Ionicons name="checkmark-circle" size={12} color={colors.success} />
+      <Text style={styles.verifiedChipTxt}>Verified</Text>
+      {host ? <Text style={styles.verifiedHostTxt}> · {host}</Text> : null}
+    </TouchableOpacity>
   );
 }
 
@@ -122,9 +160,14 @@ function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, 
             </View>
           </View>
 
-          {/* Honest hedging — soft, non-alarming. time_note wins; else a plain
-              "worth confirming" nudge when the stop is flagged unverified. */}
-          {stop.time_note ? (
+          {/* Verified wins — a stop with a confirmed event time gets the ✓ receipt
+              chip instead of any hedge. (Server already suppresses time_note/unverified
+              on verified stops; this ordering is belt-and-suspenders.) Otherwise: honest
+              hedging — soft, non-alarming. time_note wins; else a plain "worth confirming"
+              nudge when the stop is flagged unverified. */}
+          {stop.verified ? (
+            <VerifiedChip stop={stop} styles={styles} colors={colors} />
+          ) : stop.time_note ? (
             <View style={styles.confirmChip}>
               <Text style={styles.confirmChipTxt}>≈ {stop.time_note}</Text>
             </View>
@@ -339,6 +382,16 @@ const makeStyles = (c) => StyleSheet.create({
     backgroundColor: c.surfaceAlt, borderWidth: 1, borderColor: c.border,
   },
   confirmChipTxt: { flexShrink: 1, fontSize: 12, color: c.textMuted, fontFamily: FONTS.bodyMedium, lineHeight: 16 },
+
+  // Verified chip (confirmed event time, tappable → source URL) — success-tinted trust receipt
+  verifiedChip: {
+    flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', maxWidth: '100%',
+    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999,
+    backgroundColor: c.success + '18', borderWidth: 1, borderColor: c.success + '40',
+    gap: 4,
+  },
+  verifiedChipTxt: { fontSize: 12, color: c.success, fontFamily: FONTS.bodySemiBold },
+  verifiedHostTxt: { flexShrink: 1, fontSize: 12, color: c.textSecondary, fontFamily: FONTS.bodyMedium },
 
   // Splurge chip (above-budget pick) — cobalt-led, tasteful
   splurgeChip: {
