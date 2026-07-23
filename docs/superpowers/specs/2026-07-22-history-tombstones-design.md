@@ -127,6 +127,12 @@ unchanged (existing). A failed DELETE leaves `localCleared` set, so the next suc
 - **Server GC of pruned-but-orphaned docs** — items older than `clearedAt` that a clearing device never
   held remain physically on the server until some device's prune sweeps them; harmless (clients filter),
   minor storage.
+- **Cross-device clock skew** — the strict-`<` rationale reasons about *same-device sequential* `Date.now()`
+  calls (a clear is strictly earlier than items created after it *on that device*). If device B's clock lags
+  device A's, B can create a genuinely-new item stamped `< clearedAt` and A's merge/prune will drop it. This
+  is inherent to any timestamp high-water design (the accepted tradeoff vs. per-id tombstones) and errs
+  toward "cleared" rather than "resurrected," but it is a real edge. A future per-id tombstone layer, or a
+  server-assigned clear timestamp, would remove it.
 
 ## Verify gate
 `npx expo export --platform web` → "Exported: dist". Lib tests: `node --test lib/history/*.test.mjs`.
