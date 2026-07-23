@@ -76,7 +76,7 @@ function VerifiedChip({ stop, styles, colors }) {
   return (
     <TouchableOpacity
       style={styles.verifiedChip}
-      onPress={() => Linking.openURL(stop.verify_source)}
+      onPress={() => Linking.openURL(stop.verify_source).catch(() => {})}
       activeOpacity={0.7}
     >
       <Ionicons name="checkmark-circle" size={12} color={colors.success} />
