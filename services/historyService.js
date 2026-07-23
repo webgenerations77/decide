@@ -24,6 +24,19 @@ async function writeCache(type, list) {
   try { await AsyncStorage.setItem(KEYS[type], JSON.stringify(list.slice(0, CAPS[type]))); } catch {}
 }
 
+const CLEARED_KEY = '@decide/history_cleared_at';
+
+async function readClearedAt() {
+  try {
+    const raw = await AsyncStorage.getItem(CLEARED_KEY);
+    const n = Number(raw);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  } catch { return 0; }
+}
+async function writeClearedAt(ms) {
+  try { await AsyncStorage.setItem(CLEARED_KEY, String(ms)); } catch {}
+}
+
 export async function loadHistory() {
   const [itineraries, decisions] = await Promise.all([readCache('itineraries'), readCache('decisions')]);
   return { itineraries, decisions };
@@ -73,15 +86,19 @@ export async function updateFeedback(type, id, feedback, feedbackReason) {
 }
 
 export async function clearHistory() {
+  const clearedAt = Date.now();
+  await writeClearedAt(clearedAt);
   await Promise.all([writeCache('itineraries', []), writeCache('decisions', [])]);
   try {
-    const headers = await authHeader();
-    if (headers.Authorization) await fetch(`${getApiBase()}/api/history`, { method: 'DELETE', headers });
+    const headers = { 'Content-Type': 'application/json', ...(await authHeader()) };
+    if (headers.Authorization) {
+      await fetch(`${getApiBase()}/api/history`, {
+        method: 'DELETE', headers, body: JSON.stringify({ clearedAt }),
+      });
+    }
   } catch {}
 }
 
-// Fetch server, merge with cache (newest wins), write merged to cache, push
-// local-only/newer items up. Signed-out or any failure → returns cache unchanged.
 export async function syncHistory() {
   const headers = await authHeader();
   if (!headers.Authorization) return loadHistory();
@@ -92,11 +109,16 @@ export async function syncHistory() {
     server = await res.json();
   } catch { return loadHistory(); }
 
+  const localCleared = await readClearedAt();
+  const serverCleared = Number(server?.clearedAt) || 0;
+  const effective = Math.max(localCleared, serverCleared);
+  await writeClearedAt(effective);
+
   const merged = {};
   for (const type of TYPES) {
     const local = await readCache(type);
     const remote = Array.isArray(server?.[type]) ? server[type] : [];
-    const m = mergeById(local, remote).slice(0, CAPS[type]);
+    const m = mergeById(local, remote, effective).slice(0, CAPS[type]);
     await writeCache(type, m);
     const remoteById = new Map(remote.map((r) => [r.id, r]));
     const toPush = m.filter((it) => {
@@ -106,6 +128,18 @@ export async function syncHistory() {
     });
     if (toPush.length) postUpsert(type, toPush);
     merged[type] = m;
+  }
+
+  // An offline/failed clear is ahead of the server — propagate it so the
+  // server prunes and other devices learn (idempotent; only deletes < localCleared).
+  if (localCleared > serverCleared) {
+    try {
+      await fetch(`${getApiBase()}/api/history`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', ...headers },
+        body: JSON.stringify({ clearedAt: localCleared }),
+      });
+    } catch {}
   }
   return merged;
 }
