@@ -14,7 +14,8 @@ export default async function handler(req, res) {
       return res.json({ ok: true });
     }
     if (req.method === 'DELETE') {
-      await clearUserHistory(uid);
+      const clearedAt = (req.body && typeof req.body === 'object') ? req.body.clearedAt : 0;
+      await clearUserHistory(uid, clearedAt);
       return res.json({ ok: true });
     }
     return res.status(405).json({ error: 'method_not_allowed' });
