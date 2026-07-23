@@ -32,7 +32,9 @@ export async function DELETE(request) {
   const uid = await requireUid(request);
   if (!uid) return Response.json({ error: 'unauthorized' }, { status: 401 });
   try {
-    await clearUserHistory(uid);
+    let clearedAt = 0;
+    try { ({ clearedAt } = await request.json()); } catch {}
+    await clearUserHistory(uid, clearedAt);
     return Response.json({ ok: true });
   } catch (e) {
     return Response.json({ error: 'history_failed', message: e.message }, { status: 500 });

@@ -7,6 +7,7 @@ const assert = (l, c, d = '') => c ? (console.log(`  ✓ ${l}`), passed++) : (co
 function makeFakeDb(seed = {}) {
   const store = seed; // { 'uid/itineraries': { id: data } }
   const ops = { sets: [], deletes: [] };
+  const userFields = {}; // { uid: { historyClearedAt, ... } }
   const colKey = (uid, type) => `${uid}/${type}`;
   const docRef = (uid, type, id) => ({ __key: colKey(uid, type), __id: id });
   const collection = (name) => ({
@@ -19,6 +20,13 @@ function makeFakeDb(seed = {}) {
         },
         doc: (id) => docRef(uid, type, id),
       }),
+      get: async () => {
+        const f = userFields[uid];
+        return { exists: f != null, data: () => f || {} };
+      },
+      set: async (data, opts) => {
+        userFields[uid] = opts?.merge ? { ...(userFields[uid] || {}), ...data } : { ...data };
+      },
     }),
   });
   const batch = () => ({
@@ -36,6 +44,7 @@ function makeFakeDb(seed = {}) {
   const out = await getUserHistory('u1', db);
   assert('returns both types', Array.isArray(out.itineraries) && Array.isArray(out.decisions));
   assert('itineraries sorted desc', out.itineraries[0].id === 'b' && out.itineraries[1].id === 'a');
+  assert('clearedAt defaults 0', out.clearedAt === 0);
 }
 
 // upsertItems writes each item by String(id) with merge
@@ -54,12 +63,17 @@ function makeFakeDb(seed = {}) {
   assert('empty no-op', (await upsertItems('u1', 'decisions', [], db)) === 0);
 }
 
-// clearUserHistory deletes everything
+// clearUserHistory prunes docs older than clearedAt + advances high-water
 {
-  const { db, store } = makeFakeDb({ 'u1/itineraries': { a: { id: 'a' } }, 'u1/decisions': { d: { id: 'd' } } });
-  await clearUserHistory('u1', db);
-  assert('itineraries cleared', Object.keys(store['u1/itineraries']).length === 0);
-  assert('decisions cleared', Object.keys(store['u1/decisions']).length === 0);
+  const { db, store } = makeFakeDb({
+    'u1/itineraries': { a: { id: 'a', timestamp: 100 }, b: { id: 'b', timestamp: 300 } },
+    'u1/decisions': { d: { id: 'd', timestamp: 100 } },
+  });
+  await clearUserHistory('u1', 200, db);
+  assert('prunes older than cutoff', store['u1/itineraries'].a === undefined && store['u1/itineraries'].b?.id === 'b');
+  assert('prunes across types', store['u1/decisions'].d === undefined);
+  const out = await getUserHistory('u1', db);
+  assert('high-water recorded', out.clearedAt === 200);
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);
