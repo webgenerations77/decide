@@ -29,6 +29,7 @@ import { isValidWindow, windowChanged, canRefresh } from '../../lib/refreshPolic
 import { pickLaunchQuote, currentQuote, QUOTE_ATTRIBUTION } from '../../lib/bourdainQuotes';
 import PlaceDetailModal from '../../components/itinerary/PlaceDetailModal';
 import useViewportOverlay, { WEB_OVERLAY_FIX } from '../../hooks/useViewportOverlay';
+import { useBackHandler } from '../../hooks/useBackHandler';
 import StopCard from '../../components/itinerary/StopCard';
 import ItineraryMeta from '../../components/itinerary/ItineraryMeta';
 
@@ -592,6 +593,14 @@ export default function PlanScreen() {
     setClarifyQuestion(null); setClarifyAnswer(''); setClarifyAsked(false); setClarifyLoading(false);
     setView('configuring');
   };
+
+  // Web: make the browser/hardware back button step through the DECIDE flow and
+  // close open modals first (LIFO). No-op on native. See hooks/useBackHandler.js.
+  useBackHandler(view !== 'landing',   goToLanding);          // configuring/itinerary -> landing
+  useBackHandler(view === 'itinerary', resetToConfiguring);   // itinerary -> configuring
+  useBackHandler(showWeekPicker,  () => setShowWeekPicker(false));
+  useBackHandler(showDatePicker,  () => setShowDatePicker(false));
+  useBackHandler(showDetailModal, () => setShowDetailModal(false));
 
   const locationPillText = `${isManual ? '📌 ' : '📍 '}${locationLabel}`;
   const hasItinerary     = Array.isArray(itinerary) && itinerary.length > 0;
