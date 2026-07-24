@@ -633,6 +633,9 @@ export default function SettingsScreen() {
             <Text style={[styles.demoSub, { marginTop: 10 }]}>Auto follows your device's appearance.</Text>
           </CollapsibleCard>
 
+          {/* ── Planning ─────────────────────────────────────────────────────── */}
+          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>PLANNING</SectionLabel>
+
           {/* ── Preferences ───────────────────────────────────────────────── */}
           <CollapsibleCard title="ITINERARY PREFERENCES" sectionKey="preferences" summary={prefsSummary} style={styles.collapsibleSpacing}>
             {/* MAX TRAVEL DISTANCE */}
@@ -792,6 +795,9 @@ export default function SettingsScreen() {
             )}
           </CollapsibleCard>
 
+          {/* ── App ──────────────────────────────────────────────────────────── */}
+          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>APP</SectionLabel>
+
           {/* ── Notifications ─────────────────────────────────────────────── */}
           <CollapsibleCard title="NOTIFICATIONS" sectionKey="notifications" summary="Coming soon" style={styles.collapsibleSpacing}>
             <View style={styles.appRow}>
@@ -895,35 +901,8 @@ export default function SettingsScreen() {
             </View>
           </CollapsibleCard>
 
-          {/* ── Demo Mode ──────────────────────────────────────────────────── */}
-          <CollapsibleCard title="DEVELOPER" sectionKey="developer" summary={demoMode ? 'Demo on' : 'Debug tools'} style={styles.collapsibleSpacing}>
-            <View style={styles.demoToggleRow}>
-              <View style={styles.demoLabelGroup}>
-                <View style={styles.demoLabelRow}>
-                  {demoMode && (
-                    <Animated.View style={[styles.demoDot, { opacity: pulseAnim }]} />
-                  )}
-                  <Text style={styles.demoLabel}>Demo Mode</Text>
-                </View>
-                <Text style={styles.demoSub}>Simulates a full day in Berlin, MD — no API calls</Text>
-              </View>
-              <Switch
-                value={demoMode}
-                onValueChange={handleDemoToggle}
-                trackColor={{ false: colors.border, true: colors.primary }}
-                thumbColor={demoMode ? colors.primary : colors.textMuted}
-              />
-            </View>
-            {demoMode && (
-              <View style={styles.demoInfoCard}>
-                <Text style={styles.demoInfoText}>
-                  🎭 All results are hardcoded sample data from the Eastern Shore of Maryland. Spin, plan, and explore the full app experience without spending any API credits.
-                </Text>
-              </View>
-            )}
-          </CollapsibleCard>
-
           {/* ── Account ─────────────────────────────────────────── */}
+          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>ACCOUNT</SectionLabel>
           <CollapsibleCard title="ACCOUNT" sectionKey="account" summary={user?.email || 'Signed in'} style={styles.collapsibleSpacing}>
             {user?.email && (
               <View style={styles.appRow}>
@@ -956,6 +935,34 @@ export default function SettingsScreen() {
               </Card>
             </>
           )}
+
+          {/* ── Developer (footer) — demoted to the very bottom ──────────────── */}
+          <CollapsibleCard title="DEVELOPER" sectionKey="developer" summary={demoMode ? 'Demo on' : 'Debug tools'} style={styles.collapsibleSpacing}>
+            <View style={styles.demoToggleRow}>
+              <View style={styles.demoLabelGroup}>
+                <View style={styles.demoLabelRow}>
+                  {demoMode && (
+                    <Animated.View style={[styles.demoDot, { opacity: pulseAnim }]} />
+                  )}
+                  <Text style={styles.demoLabel}>Demo Mode</Text>
+                </View>
+                <Text style={styles.demoSub}>Simulates a full day in Berlin, MD — no API calls</Text>
+              </View>
+              <Switch
+                value={demoMode}
+                onValueChange={handleDemoToggle}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                thumbColor={demoMode ? colors.primary : colors.textMuted}
+              />
+            </View>
+            {demoMode && (
+              <View style={styles.demoInfoCard}>
+                <Text style={styles.demoInfoText}>
+                  🎭 All results are hardcoded sample data from the Eastern Shore of Maryland. Spin, plan, and explore the full app experience without spending any API credits.
+                </Text>
+              </View>
+            )}
+          </CollapsibleCard>
 
           <View style={{ height: 48 }} />
         </ScrollView>
