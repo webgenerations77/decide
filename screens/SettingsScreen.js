@@ -552,6 +552,22 @@ export default function SettingsScreen() {
 
   const validWindow = timeToMinutes(endTime) - timeToMinutes(startTime) >= 180;
 
+  // One-line recaps shown on each collapsed card so the screen reads as a scannable summary
+  // of what's set, not a stack of mystery doors.
+  const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+  const prefsSummary = `${cap(pace)} · ${budget} · ${startTime}–${endTime}`;
+  const tasteSummary = (interests.length || lovedPlaces.length || avoidedPlaces.length)
+    ? [
+        interests.length && `${interests.length} interest${interests.length > 1 ? 's' : ''}`,
+        lovedPlaces.length && `${lovedPlaces.length} loved`,
+        avoidedPlaces.length && `${avoidedPlaces.length} avoided`,
+      ].filter(Boolean).join(' · ')
+    : 'Add your interests';
+  const locationSummary = locationMode === 'manual'
+    ? (geocodedLoc?.short || geocodedLoc?.label || manualText || 'Manual')
+    : 'Automatic';
+  const appearanceSummary = { auto: 'Auto', light: 'Light', dark: 'Dark' }[mode] || 'Auto';
+
   if (!loaded) {
     return (
       <ScreenBackground variant="paper">
@@ -573,7 +589,7 @@ export default function SettingsScreen() {
           <Text style={styles.screenTitle}>Settings</Text>
 
           {/* ── Profile ─────────────────────────────────────────────────────── */}
-          <CollapsibleCard title="PROFILE" sectionKey="profile" style={styles.collapsibleSpacing}>
+          <CollapsibleCard title="PROFILE" sectionKey="profile" summary={displayName || 'Add your name'} style={styles.collapsibleSpacing}>
             <Text style={styles.fieldLabel}>DISPLAY NAME</Text>
             <TextInput
               style={styles.textInput}
@@ -600,7 +616,7 @@ export default function SettingsScreen() {
           </CollapsibleCard>
 
           {/* ── Appearance ──────────────────────────────────────────────────── */}
-          <CollapsibleCard title="APPEARANCE" sectionKey="appearance" style={styles.collapsibleSpacing}>
+          <CollapsibleCard title="APPEARANCE" sectionKey="appearance" summary={appearanceSummary} style={styles.collapsibleSpacing}>
             <Text style={styles.fieldLabel}>THEME</Text>
             <View style={styles.modeRow}>
               {APPEARANCE_OPTIONS.map((o) => (
@@ -617,8 +633,11 @@ export default function SettingsScreen() {
             <Text style={[styles.demoSub, { marginTop: 10 }]}>Auto follows your device's appearance.</Text>
           </CollapsibleCard>
 
+          {/* ── Planning ─────────────────────────────────────────────────────── */}
+          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>PLANNING</SectionLabel>
+
           {/* ── Preferences ───────────────────────────────────────────────── */}
-          <CollapsibleCard title="ITINERARY PREFERENCES" sectionKey="preferences" defaultCollapsed={false} style={styles.collapsibleSpacing}>
+          <CollapsibleCard title="ITINERARY PREFERENCES" sectionKey="preferences" summary={prefsSummary} style={styles.collapsibleSpacing}>
             {/* MAX TRAVEL DISTANCE */}
             <View style={[styles.distanceHeader, { marginTop: 0 }]}>
               <Text style={[styles.fieldLabel, { marginTop: 0, marginBottom: 0 }]}>MAX TRAVEL DISTANCE</Text>
@@ -686,7 +705,7 @@ export default function SettingsScreen() {
           </CollapsibleCard>
 
           {/* ── Taste Profile ─────────────────────────────────────────────── */}
-          <CollapsibleCard title="TASTE PROFILE" sectionKey="taste" style={styles.collapsibleSpacing}>
+          <CollapsibleCard title="TASTE PROFILE" sectionKey="taste" summary={tasteSummary} style={styles.collapsibleSpacing}>
             <Text style={styles.sensitivityNote}>
               Teach Decide what you love — we lean on this to find spots you'll actually light up about, not a generic top-10 list.
             </Text>
@@ -707,7 +726,7 @@ export default function SettingsScreen() {
           </CollapsibleCard>
 
           {/* ── Location ───────────────────────────────────────────────────── */}
-          <CollapsibleCard title="LOCATION" sectionKey="location" style={[styles.collapsibleSpacing, { zIndex: 10 }]}>
+          <CollapsibleCard title="LOCATION" sectionKey="location" summary={locationSummary} style={[styles.collapsibleSpacing, { zIndex: 10 }]}>
             <View style={styles.modeRow}>
               {[
                 { id: 'auto',   label: '📍 Auto-Detect' },
@@ -776,8 +795,11 @@ export default function SettingsScreen() {
             )}
           </CollapsibleCard>
 
+          {/* ── App ──────────────────────────────────────────────────────────── */}
+          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>APP</SectionLabel>
+
           {/* ── Notifications ─────────────────────────────────────────────── */}
-          <CollapsibleCard title="NOTIFICATIONS" sectionKey="notifications" style={styles.collapsibleSpacing}>
+          <CollapsibleCard title="NOTIFICATIONS" sectionKey="notifications" summary="Coming soon" style={styles.collapsibleSpacing}>
             <View style={styles.appRow}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <Text style={styles.appRowLabel}>Notifications</Text>
@@ -795,7 +817,7 @@ export default function SettingsScreen() {
           </CollapsibleCard>
 
           {/* ── Subscription ─────────────────────────────────────────── */}
-          <CollapsibleCard title="SUBSCRIPTION" sectionKey="subscription" style={styles.collapsibleSpacing}>
+          <CollapsibleCard title="SUBSCRIPTION" sectionKey="subscription" summary={proStatus ? 'Pro' : 'Free'} style={styles.collapsibleSpacing}>
             <View style={styles.appRow}>
               <Text style={styles.appRowLabel}>Plan</Text>
               <Text style={[styles.appRowValue, proStatus && { color: colors.primary }]}>
@@ -842,7 +864,7 @@ export default function SettingsScreen() {
           )}
 
           {/* ── About & Data ──────────────────────────────────────────────── */}
-          <CollapsibleCard title="ABOUT & DATA" sectionKey="about" style={styles.collapsibleSpacing}>
+          <CollapsibleCard title="ABOUT & DATA" sectionKey="about" summary={`v${APP_VERSION}`} style={styles.collapsibleSpacing}>
             <TouchableOpacity
               style={styles.appRow}
               activeOpacity={0.7}
@@ -879,36 +901,9 @@ export default function SettingsScreen() {
             </View>
           </CollapsibleCard>
 
-          {/* ── Demo Mode ──────────────────────────────────────────────────── */}
-          <CollapsibleCard title="DEVELOPER" sectionKey="developer" style={styles.collapsibleSpacing}>
-            <View style={styles.demoToggleRow}>
-              <View style={styles.demoLabelGroup}>
-                <View style={styles.demoLabelRow}>
-                  {demoMode && (
-                    <Animated.View style={[styles.demoDot, { opacity: pulseAnim }]} />
-                  )}
-                  <Text style={styles.demoLabel}>Demo Mode</Text>
-                </View>
-                <Text style={styles.demoSub}>Simulates a full day in Berlin, MD — no API calls</Text>
-              </View>
-              <Switch
-                value={demoMode}
-                onValueChange={handleDemoToggle}
-                trackColor={{ false: colors.border, true: colors.primary }}
-                thumbColor={demoMode ? colors.primary : colors.textMuted}
-              />
-            </View>
-            {demoMode && (
-              <View style={styles.demoInfoCard}>
-                <Text style={styles.demoInfoText}>
-                  🎭 All results are hardcoded sample data from the Eastern Shore of Maryland. Spin, plan, and explore the full app experience without spending any API credits.
-                </Text>
-              </View>
-            )}
-          </CollapsibleCard>
-
           {/* ── Account ─────────────────────────────────────────── */}
-          <CollapsibleCard title="ACCOUNT" sectionKey="account" style={styles.collapsibleSpacing}>
+          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>ACCOUNT</SectionLabel>
+          <CollapsibleCard title="ACCOUNT" sectionKey="account" summary={user?.email || 'Signed in'} style={styles.collapsibleSpacing}>
             {user?.email && (
               <View style={styles.appRow}>
                 <Text style={styles.appRowLabel}>Email</Text>
@@ -940,6 +935,34 @@ export default function SettingsScreen() {
               </Card>
             </>
           )}
+
+          {/* ── Developer (footer) — demoted to the very bottom ──────────────── */}
+          <CollapsibleCard title="DEVELOPER" sectionKey="developer" summary={demoMode ? 'Demo on' : 'Debug tools'} style={styles.collapsibleSpacing}>
+            <View style={styles.demoToggleRow}>
+              <View style={styles.demoLabelGroup}>
+                <View style={styles.demoLabelRow}>
+                  {demoMode && (
+                    <Animated.View style={[styles.demoDot, { opacity: pulseAnim }]} />
+                  )}
+                  <Text style={styles.demoLabel}>Demo Mode</Text>
+                </View>
+                <Text style={styles.demoSub}>Simulates a full day in Berlin, MD — no API calls</Text>
+              </View>
+              <Switch
+                value={demoMode}
+                onValueChange={handleDemoToggle}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                thumbColor={demoMode ? colors.primary : colors.textMuted}
+              />
+            </View>
+            {demoMode && (
+              <View style={styles.demoInfoCard}>
+                <Text style={styles.demoInfoText}>
+                  🎭 All results are hardcoded sample data from the Eastern Shore of Maryland. Spin, plan, and explore the full app experience without spending any API credits.
+                </Text>
+              </View>
+            )}
+          </CollapsibleCard>
 
           <View style={{ height: 48 }} />
         </ScrollView>
