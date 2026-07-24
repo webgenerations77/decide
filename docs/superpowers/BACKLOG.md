@@ -222,8 +222,33 @@ sunset prompt rule, so timing is now validated in code, not just instructed.
 **Pending:** on-device eyeball on a real evening-outdoor itinerary (a coastal generate with a
 late-summer ~8 PM sunset).
 
-**⚠ Follow-up (sibling, separate spec — the OTHER half of the timing report):** venue/event
-start-time verification widening. The Ocean Downs case (harness racing scheduled 5 PM when first post
-is 6:40 PM) happens because `verifyTimes.js` only verifies Firecrawl *finds*, not Google Places
-venues with known schedules. Extend verification to venue-based events so their start times aren't
-guessed. Not yet spec'd.
+**✅ Follow-up shipped — see §9 below** (venue start-time verification, the other half of the report).
+
+---
+
+## 9. Venue start-time verification  ✅ CODE DONE (2026-07-24, on-device QA pending)
+Spec/plan: `docs/superpowers/{specs,plans}/2026-07-24-venue-start-times*`. The second half of the
+timing report — the Ocean Downs case (harness racing scheduled 5 PM when first post is 6:40 PM).
+
+**Root cause fixed:** `verifyTimes.js` only checked Firecrawl *finds*; a venue with a standing
+schedule arrives as a Google *Place* with no start time, so synthesis guessed. Plus a hidden second
+bug — the old verifier only accepted a time "confirmed for this specific date," so a racetrack's
+recurring "Saturdays, first post 6:40 PM" would have been *rejected*.
+
+**What shipped:**
+- `verifyTimes.js` refactored: shared `resolveAndScrape` + `extractConfirmedTime` core (Phase 0,
+  no behavior change — all 9 existing tests pass unchanged).
+- `lib/smart/verifyVenueTimes.js` — `selectEventVenues` (name/summary keyword, capped at
+  MAX_VENUE_VERIFY=2) + `verifyVenueTimes` reusing the shared core with a **venue-tuned acceptance
+  rule**: a recurring schedule matching the plan's weekday counts as confirmed. Confirmed venues
+  become synthetic verified finds; unconfirmed ones stay in places for the existing honest hedge.
+  12 `node:test` cases.
+- Wired into `lib/smart/index.js` verify phase (parallel with `verifyEventTimes`, same 8s bounded
+  race). Promoted venues are pushed to finds, stripped from places (no double-representation), and
+  join the anchor pool (eligible, not pinned). Both API twins inherit it; no twin edits, no new env
+  var, no new serverless function (12/12). Clean `npx expo export --platform web`.
+- Fully defensive/fail-open: nothing confirmed → byte-identical to prior behavior.
+
+**Pending:** on-device eyeball on a real itinerary containing a scheduled-event venue (a racetrack
+race night, or a cinema/theater with fixed showtimes) — confirm it lands at the real start time with
+a ✓ Verified chip, or hedges honestly, never a silent round-number guess.
