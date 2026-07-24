@@ -65,6 +65,12 @@ const CATEGORIES = [
     types: ['shopping_mall','market','department_store','clothing_store','book_store','gift_shop'] },
 ];
 
+// Types dropped when the per-spin "Sensory-friendly" toggle is on — loud, crowded, or
+// overstimulating venues. Filtering the fetch pool is the honest lever we have (Places has no
+// per-venue "quiet" signal), so this mainly calms the Activity and Drinks rolls; other categories
+// have none of these and are unaffected.
+const LOUD_TYPES = new Set(['night_club', 'amusement_park', 'water_park', 'karaoke', 'comedy_club']);
+
 async function fetchNearbyPlaces(lat, lng, types) {
   const data = await searchNearbyPlaces(
     {
@@ -128,6 +134,7 @@ export default function SpinScreen() {
   const [remainingSpins, setRemainingSpins] = useState(null);
   const [otherSeen,   setOtherSeen]   = useState(true); // assume seen until storage says otherwise
   const [keyword,     setKeyword]     = useState('');
+  const [sensory,     setSensory]     = useState(false); // per-spin sensory-friendly bias (not persisted)
 
   const spinAnim   = useRef(new Animated.Value(0)).current;
   const bounceAnim = useRef(new Animated.Value(0)).current;
@@ -169,6 +176,11 @@ export default function SpinScreen() {
     // fresh one-time explainer).
     AsyncStorage.getItem(OTHER_SEEN_KEY)
       .then((v) => setOtherSeen(v === 'true'))
+      .catch(() => {});
+    // Seed the per-spin toggle from the saved Sensory-friendly preference (read-only — toggling
+    // it here overrides just this session and never writes back to Settings).
+    AsyncStorage.getItem('@decide/neurodivergent')
+      .then((v) => setSensory(v === 'true'))
       .catch(() => {});
   }, []);
 
@@ -222,10 +234,14 @@ export default function SpinScreen() {
 
       const cat = CATEGORIES.find((c) => c.id === category);
       const kw  = keyword.trim();
+      // Sensory-friendly: drop loud/overstimulating types from the roll (fall back to the full
+      // set if that would empty it, so a spin always returns something).
+      const rollTypes = sensory ? cat.types.filter((t) => !LOUD_TYPES.has(t)) : cat.types;
+      const types = rollTypes.length ? rollTypes : cat.types;
       // "Other" + a keyword → free-text search; otherwise the grab-bag dice roll.
       const places = (category === 'other' && kw)
         ? await fetchTextPlaces(coords.latitude, coords.longitude, kw)
-        : await fetchNearbyPlaces(coords.latitude, coords.longitude, cat.types);
+        : await fetchNearbyPlaces(coords.latitude, coords.longitude, types);
       if (!places.length) throw new Error(kw ? `Nothing found for "${kw}" nearby` : 'No places found nearby');
 
       // Weighted random: higher-rated places more likely
@@ -329,6 +345,18 @@ export default function SpinScreen() {
               </TouchableOpacity>
             ))}
           </View>
+
+          {/* Per-spin Sensory-friendly toggle (applies to this spin only) */}
+          <View style={styles.envRow}>
+            <TouchableOpacity
+              style={[styles.envChip, sensory && styles.envChipActive]}
+              onPress={() => { setSensory((v) => !v); setResult(null); setError(null); }}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.envChipTxt, sensory && styles.envChipTxtActive]}>✨ Sensory-friendly</Text>
+            </TouchableOpacity>
+          </View>
+          {sensory && <Text style={styles.envHint}>Skipping loud, high-energy spots this spin</Text>}
 
           {/* One-time "Other" explainer */}
           {category === 'other' && !otherSeen && !result && (
@@ -501,7 +529,7 @@ const makeStyles = (c) => StyleSheet.create({
   remainingText: { fontFamily: FONTS.mono, fontSize: 11, color: c.textMuted, marginBottom: 16 },
 
   // Category pills
-  catRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginBottom: 32 },
+  catRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginBottom: 12 },
   catPill: {
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: RADII.lg,
     backgroundColor: c.surface, borderWidth: 1, borderColor: c.border,
@@ -509,8 +537,19 @@ const makeStyles = (c) => StyleSheet.create({
   catPillTxt:       { fontFamily: FONTS.bodySemiBold, fontSize: 13, color: c.textSecondary },
   catPillTxtActive: { color: c.surface },
 
+  // Per-spin Sensory-friendly toggle
+  envRow:  { alignItems: 'center' },
+  envChip: {
+    paddingHorizontal: 14, paddingVertical: 8, borderRadius: RADII.lg,
+    backgroundColor: c.surface, borderWidth: 1, borderColor: c.border,
+  },
+  envChipActive:    { backgroundColor: c.success, borderColor: c.success },
+  envChipTxt:       { fontFamily: FONTS.bodySemiBold, fontSize: 13, color: c.textSecondary },
+  envChipTxtActive: { color: c.surface },
+  envHint:          { fontFamily: FONTS.body, fontSize: 11, color: c.textMuted, marginTop: 8, textAlign: 'center' },
+
   // Spin button
-  spinWrap: { marginBottom: 32, alignItems: 'center' },
+  spinWrap: { marginTop: 20, marginBottom: 32, alignItems: 'center' },
   spinBtn: {
     width: 140, height: 140, borderRadius: 70,
     backgroundColor: c.surface, borderWidth: 2,
