@@ -20,7 +20,7 @@ async function readMap() {
   }
 }
 
-export default function CollapsibleCard({ title, sectionKey, defaultCollapsed = true, children, style }) {
+export default function CollapsibleCard({ title, sectionKey, summary = null, defaultCollapsed = true, children, style }) {
   const { colors, scheme } = useTheme();
   const styles = useMemo(() => makeStyles(colors, scheme), [colors, scheme]);
   const [collapsed, setCollapsed] = useState(defaultCollapsed);
@@ -44,7 +44,12 @@ export default function CollapsibleCard({ title, sectionKey, defaultCollapsed = 
     <View style={style}>
       <TouchableOpacity style={styles.header} onPress={toggle} activeOpacity={0.7}>
         <Text style={styles.title}>{title}</Text>
-        <Text style={[styles.chevron, !collapsed && styles.chevronOpen]}>▾</Text>
+        <View style={styles.headerRight}>
+          {collapsed && summary ? (
+            <Text style={styles.summary} numberOfLines={1}>{summary}</Text>
+          ) : null}
+          <Text style={[styles.chevron, !collapsed && styles.chevronOpen]}>▾</Text>
+        </View>
       </TouchableOpacity>
       {!collapsed && <View style={styles.body}>{children}</View>}
     </View>
@@ -56,7 +61,9 @@ const makeStyles = (c, scheme) => StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 4, paddingVertical: 6, marginBottom: 10,
   },
-  title: { fontFamily: FONTS.monoBold, fontSize: 11, letterSpacing: 1.6, textTransform: 'uppercase', color: c.primary },
+  title: { fontFamily: FONTS.monoBold, fontSize: 11, letterSpacing: 1.6, textTransform: 'uppercase', color: c.primary, flexShrink: 0 },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, justifyContent: 'flex-end', marginLeft: 12 },
+  summary: { fontFamily: FONTS.body, fontSize: 12.5, color: c.textSecondary, flexShrink: 1, textAlign: 'right' },
   chevron: { fontSize: 20, lineHeight: 20, color: c.textMuted },
   chevronOpen: { color: c.primary },
   body: {
