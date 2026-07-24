@@ -30,8 +30,18 @@ export async function generateItinerary({
   feedback = {},
   maxDistanceMiles = 25,
   tripNote = '', activityStyles = [], dietary = [], neurodivergent = false,
+  interests = [], lovedPlaces = [], avoidedPlaces = [],
   locationLabel = null, locationShort = null,
 }) {
+  // Taste Profile: union the standing curated lists with any per-trip (history-derived) feedback,
+  // then bound each list so the scout/synthesis prompts stay small.
+  const cap = (a, n = 15) => (Array.isArray(a) ? a.slice(0, n) : []);
+  const union = (a, b) => Array.from(new Set([...(Array.isArray(a) ? a : []), ...(Array.isArray(b) ? b : [])]));
+  const mergedFeedback = {
+    ...feedback,
+    likedPlaces:    cap(union(feedback.likedPlaces, lovedPlaces)),
+    dislikedPlaces: cap(union(feedback.dislikedPlaces, avoidedPlaces)),
+  };
   try {
     const demoRaw = await AsyncStorage.getItem('@decide/demo_mode');
     if (demoRaw === 'true') {
@@ -46,8 +56,8 @@ export async function generateItinerary({
     headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
     body: JSON.stringify({
       latitude, longitude, date,
-      preferences: { ...preferences, activityStyles, dietary, neurodivergent },
-      startTime, endTime, feedback, maxDistanceMiles, tripNote,
+      preferences: { ...preferences, activityStyles, dietary, neurodivergent, interests: cap(interests) },
+      startTime, endTime, feedback: mergedFeedback, maxDistanceMiles, tripNote,
       // Human-readable label wins over server-side reverse-geocoding when present.
       ...(locationLabel ? { locationLabel } : {}),
       ...(locationShort ? { locationShort } : {}),

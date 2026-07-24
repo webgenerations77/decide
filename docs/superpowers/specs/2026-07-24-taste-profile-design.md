@@ -18,11 +18,14 @@ There's no persistent picture of what a person actually loves. Two people who bo
 couple / foodie" get near-identical hunts. The scout can't surface "this person is obsessed with
 vintage arcades and third-wave coffee" because nobody ever told it — and there's nowhere to.
 
-**Notable:** the scout prompt *already* has the hook — line 15 reads
-`Liked before: ${ctx.feedback?.likedPlaces...}` — but nothing in the app ever populates
-`feedback.likedPlaces`. And `feedback.dislikedPlaces` rides the whole request contract
-(client → `ctx.feedback` in both API twins) yet is **consumed nowhere**. So part of this feature is
-*activating dormant plumbing*, which lowers its risk.
+**Notable (corrected against the call site, `plan.js` L439–454):** `feedback.likedPlaces`/
+`dislikedPlaces` are already populated — but only *implicitly*, from thumbs-up/down **history**
+(up-voted decision names → `likedPlaces`, capped 10; down-voted → `dislikedPlaces`, capped 20).
+`likedPlaces` is consumed by the scout (line 15); `dislikedPlaces` rides into `ctx.feedback` in both
+twins yet is **consumed nowhere**. So this feature (a) adds *explicit user curation* unioned with the
+implicit history signal, and (b) finally **activates the avoid constraint** — which makes the
+already-collected history down-votes count too, a free win. Part new surface, part activating
+half-wired plumbing → lower risk.
 
 ## 2. Goal
 
@@ -59,8 +62,8 @@ standing background context, not an override.
 | Prefs storage | `services/settingsService.js` — flat AsyncStorage keys (`@decide/*`), `save(key,val)`, `loadAllSettings()` / `loadPlanDefaults()`. Device-local only. |
 | Client → server | `services/itineraryService.js` POSTs `{ preferences:{...,activityStyles,dietary,neurodivergent}, feedback, tripNote, startTime, endTime, maxDistanceMiles }`. |
 | Server ctx build | `app/api/itinerary+api.js` (~L376–433) reads `preferences` → `ctx.prefs = {pace,budget,group_type,cuisines,activityStyles,dietary,neurodivergent}` and `feedback` → `ctx.feedback = {likedPlaces,dislikedPlaces,dislikedReasons}`. **Prod twin `api/itinerary.js` must mirror any change.** |
-| Scout fuel | `buildScoutPrompt(ctx)` uses `prefs.activityStyles/cuisines/group_type/pace`, `feedback.likedPlaces` (**hook exists, unfed**), `tripNote`. Pure + exportable → unit-testable. |
-| dislikedPlaces | present in the contract and `ctx.feedback`; **used nowhere** downstream. |
+| Scout fuel | `buildScoutPrompt(ctx)` uses `prefs.activityStyles/cuisines/group_type/pace`, `feedback.likedPlaces` (fed from thumbs-up history), `tripNote`. Pure + exportable → unit-testable. |
+| likedPlaces / dislikedPlaces | populated in `plan.js` from thumbs-up/down history (10/20 cap) → `ctx.feedback`. `likedPlaces` used by scout; **`dislikedPlaces` used nowhere** — activating it is part of this feature. |
 | Synthesis | `buildSynthesisPrompt` uses `ctx.prefs` (incl. `neurodivergent`) + `ctx.sun`; does **not** read `feedback`. |
 | Onboarding | `app/onboarding/index.js` — single scroll screen: pace/group pills, cuisine `ChipGrid`, notif toggle → `save(KEYS.*)`. Reusable `ChipGrid` + `PillRow` components already in-file. |
 | Settings | `screens/SettingsScreen.js` — collapsible sections via `components/brand/CollapsibleCard.js`; an Itinerary Preferences block already edits cuisines/dietary/activityStyles/etc. |
