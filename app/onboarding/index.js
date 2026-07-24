@@ -38,6 +38,12 @@ const CUISINES = [
   'Mediterranean', 'Korean', 'Vietnamese', 'BBQ', 'Seafood', 'Pizza',
 ];
 
+const INTERESTS = [
+  'Live Music', 'Arcades', 'Hiking', 'Coffee', 'Vinyl Records', 'Thrifting',
+  'Tide Pools', 'Breweries', 'Art Galleries', 'Farmers Markets', 'Kayaking',
+  'Bookstores', 'Street Food', 'Scenic Drives', 'Museums',
+];
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 function Question({ children }) {
   const { colors } = useTheme();
@@ -103,10 +109,14 @@ export default function OnboardingScreen() {
   const [startTime,     setStartTime]     = useState('11:00 AM');
   const [endTime,       setEndTime]       = useState('8:00 PM');
   const [cuisines,      setCuisines]      = useState([]);
+  const [interests,     setInterests]     = useState([]);
   const [notifications, setNotifications] = useState(false);
 
   const toggleCuisine = (c) =>
     setCuisines((prev) => prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]);
+
+  const toggleInterest = (i) =>
+    setInterests((prev) => prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i]);
 
   const complete = async () => {
     Location.requestForegroundPermissionsAsync().catch(() => {});
@@ -122,6 +132,7 @@ export default function OnboardingScreen() {
       save(KEYS.DEFAULT_START_TIME, startTime),
       save(KEYS.DEFAULT_END_TIME,   endTime),
       save(KEYS.CUISINES,           cuisines),
+      save(KEYS.INTERESTS,          interests),
       save(KEYS.NOTIFICATIONS,      notifGranted),
       AsyncStorage.setItem('@decide/onboardingComplete', 'true'),
     ]);
@@ -175,6 +186,11 @@ export default function OnboardingScreen() {
           <SectionLabel tone="cobalt" style={styles.sectionSpacing}>Food favorites</SectionLabel>
           <Question>Pick any cuisines you love (I'll lean into them)</Question>
           <ChipGrid options={CUISINES} selected={cuisines} onToggle={toggleCuisine} />
+
+          {/* ── Interests ─────────────────────────────────────────────────────── */}
+          <SectionLabel tone="cobalt" style={styles.sectionSpacing}>What lights you up?</SectionLabel>
+          <Question>Pick anything you're into — I'll hunt for it (add more later in Settings)</Question>
+          <ChipGrid options={INTERESTS} selected={interests} onToggle={toggleInterest} />
 
           {/* ── Notifications ─────────────────────────────────────────────────── */}
           <SectionLabel tone="cobalt" style={styles.sectionSpacing}>Stay in the know</SectionLabel>
