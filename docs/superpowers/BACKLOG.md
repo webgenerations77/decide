@@ -150,8 +150,7 @@ endpoint stays open (fail-open). And verify a Resend domain before emailing anyo
   web export/existing installed app won't show them.
 - Icons rendered via `sharp` from the BrandLogo SVG (one-off script in scratch; `sharp` installed
   `--no-save`, not a project dep).
-- **#2 Taste Profile** — onboarding additions + an always-editable "teach Cheddar" interests
-  screen + storage, to give the engine's scout richer fuel than the current saved prefs + per-trip note.
+- **#2 Taste Profile** ✅ SHIPPED (code done, on-device QA pending) → **§10 below**.
 - **#3 Discovery transparency** — surface *what* the engine found and *why* in the itinerary UI.
   (The engine already returns `discovery.{hadLiveData,findCount,anchors[]}` in the API response;
   the indicator line exists in `plan.js` but only shows the one-liner — #3 would surface the anchors.)
@@ -252,3 +251,27 @@ recurring "Saturdays, first post 6:40 PM" would have been *rejected*.
 **Pending:** on-device eyeball on a real itinerary containing a scheduled-event venue (a racetrack
 race night, or a cinema/theater with fixed showtimes) — confirm it lands at the real start time with
 a ✓ Verified chip, or hedges honestly, never a silent round-number guess.
+
+---
+
+## 10. Taste Profile  ✅ CODE DONE (2026-07-24, on-device QA pending)  [was §6 #2]
+Spec/plan: `docs/superpowers/{specs,plans}/2026-07-24-taste-profile*`. Persistent, always-editable
+standing signals for the discovery scout beyond the per-trip note.
+
+**What shipped:**
+- Storage: `@decide/interests`, `@decide/loved_places`, `@decide/avoided_places` + `loadTasteProfile()`
+  in `settingsService.js` (array-safe).
+- Wiring: `plan.js` loads the profile and unions loved/avoided into the existing history-derived
+  `feedback`; `interests` rides `preferences`. Both API twins map `preferences.interests` → `ctx.prefs`.
+  Scout prompt gains standing-interests + loved + avoid lines (trip note still leads); synthesis gains a
+  conditional **HARD AVOID** rule — which also finally activates the history down-votes that were
+  collected but consumed nowhere. Empty profile = byte-identical to prior behavior.
+- UI: Settings "Taste Profile" `CollapsibleCard` (TagEditor = suggestion chips + free-add + remove for
+  Interests / Loved / Avoid); skippable onboarding "What lights you up?" interests step.
+- Tests: `scout.test.mjs` + 2 synthesis cases (49 engine tests green). Clean web export; fn count 12/12.
+
+**Follow-ups (noted, not built):** Firestore sync of the profile (device-local today, like all prefs);
+auto-capture loved-places from thumbs-up history / an "＋ add to taste profile" affordance on a stop.
+
+**Pending:** on-device — add an interest → generate → confirm discovery visibly leans that way; add an
+avoid → confirm that place never appears as a stop.
