@@ -50,12 +50,16 @@ were left as gold.
   If it's a stale leftover, delete it; if intentional, ignore.
 - **Vercel:** if it auto-builds `main`, this is live — confirm `FIRECRAWL_API_KEY` (cloud `fc-` key)
   is set in the Vercel project env (it's in local `.env`, which is gitignored).
-- **⚠ SECURITY (deferred by user):** the live `FIRECRAWL_API_KEY` (`fc-110f…`) was committed to
-  history (commit `3d3056f`, pushed to `origin/main` on GitHub) via a stray skill block in
-  `CLAUDE.md`. Removed from the working tree (commit `27cb6ea`), but it remains in history and must
-  be treated as compromised. **TODO when ready: rotate the key at firecrawl.dev → update `.env` +
-  Vercel env.** Rotation neutralizes it; optional history scrub (filter-repo/BFG + force-push) only
-  if desired afterward.
+- **✅ SECURITY — RESOLVED (rotated 2026-07-24):** the old `FIRECRAWL_API_KEY` (`fc-110f…`) had been
+  committed to history (commit `3d3056f`, pushed to `origin/main` on GitHub) via a stray skill block in
+  `CLAUDE.md`, and removed from the working tree (commit `27cb6ea`). **Rotated 2026-07-24:** old key
+  revoked at firecrawl.dev; new key set in local `.env` and in Vercel env (Production + Preview) with a
+  production redeploy (prod 200-healthy on the new key). The old key is now a dead string, so the leak
+  is neutralized.
+  - **Optional remaining hygiene (not done):** the dead old key still appears in git history
+    (commit `3d3056f`) and as a truncated prefix in this file. A history scrub (`git filter-repo`/BFG +
+    force-push) would remove it entirely — cosmetic only now that the key is revoked; skipped to avoid a
+    force-push rewrite of `main`.
 
 ---
 
