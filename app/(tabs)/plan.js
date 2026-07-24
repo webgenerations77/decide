@@ -11,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { generateItinerary, swapStop, getClarifyingQuestion } from '../../services/itineraryService';
 import { saveItinerary } from '../../services/historyService';
-import { loadPlanDefaults, KEYS } from '../../services/settingsService';
+import { loadPlanDefaults, loadTasteProfile, KEYS } from '../../services/settingsService';
 import { isAtDecisionLimit, incrementDecisionCount, getRemainingDecisions, isPro, LIMITS } from '../../services/subscriptionService';
 import { scheduleItineraryAlerts, cancelItineraryAlerts } from '../../services/notificationService';
 import { FONTS, RADII } from '../../constants/theme';
@@ -466,6 +466,9 @@ export default function PlanScreen() {
       const dietary = dietRaw ? JSON.parse(dietRaw) : [];
       const neurodivergent = ndRaw === 'true';
 
+      // Taste Profile — standing curated signals for the discovery scout, unioned with history feedback.
+      const { interests, lovedPlaces, avoidedPlaces } = await loadTasteProfile();
+
       // Prefer a real human-readable label; drop transient placeholders.
       const PLACEHOLDER_LABELS = ['Locating…', 'Location unavailable', 'Your location'];
       const labelToSend = locationLabel && !PLACEHOLDER_LABELS.includes(locationLabel) ? locationLabel : null;
@@ -478,6 +481,7 @@ export default function PlanScreen() {
         feedback: feedbackCtx,
         maxDistanceMiles,
         tripNote: tripNoteOverride ?? tripNote, activityStyles, dietary, neurodivergent,
+        interests, lovedPlaces, avoidedPlaces,
         locationLabel: locationLabelFull ?? labelToSend,
         locationShort: labelToSend,
       });

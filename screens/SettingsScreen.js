@@ -45,6 +45,7 @@ const avatarUrl = (seed) => {
 const CUISINES        = ['Italian', 'Mexican', 'Japanese', 'Chinese', 'American', 'Thai', 'Indian', 'Mediterranean', 'Korean', 'Vietnamese', 'BBQ', 'Seafood', 'Pizza'];
 const DIETARY         = ['Vegetarian', 'Vegan', 'Gluten-Free', 'Halal', 'Kosher', 'Nut-Free'];
 const ACTIVITY_STYLES = ['Outdoor', 'Indoor', 'Cultural', 'Nightlife', 'Shopping', 'Sports', 'Wellness', 'Family-Friendly', 'Live Music', 'Arcades', 'Theme Parks', 'Mini-Golf'];
+const SUGGESTED_INTERESTS = ['Live Music', 'Arcades', 'Hiking', 'Coffee', 'Vinyl Records', 'Thrifting', 'Tide Pools', 'Breweries', 'Art Galleries', 'Farmers Markets', 'Kayaking', 'Bookstores', 'Street Food', 'Scenic Drives', 'Museums'];
 
 const FOOD_SENSITIVITIES = ['Peanuts', 'Shellfish', 'Gluten', 'Dairy', 'Eggs', 'Soy', 'Tree Nuts', 'Fish'];
 const ENV_SENSITIVITIES  = ['Bees/Stinging Insects', 'Pollen', 'Cut Grass', 'Pet Dander', 'Mold', 'Strong Fragrances'];
@@ -149,6 +150,46 @@ function ChipGrid({ options, selected, onToggle }) {
           </TouchableOpacity>
         );
       })}
+    </View>
+  );
+}
+
+// ─── TagEditor: suggestion chips + free-add + tap-to-remove (Taste Profile) ─────
+function TagEditor({ value, onChange, suggestions = [], placeholder, max = 20 }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const [draft, setDraft] = useState('');
+  const options = Array.from(new Set([...suggestions, ...value]));
+  const toggle = (opt) => {
+    const next = value.includes(opt)
+      ? value.filter((x) => x !== opt)
+      : (value.length >= max ? value : [...value, opt]);
+    onChange(next);
+  };
+  const add = () => {
+    const t = draft.trim();
+    if (t && value.length < max && !value.some((x) => x.toLowerCase() === t.toLowerCase())) {
+      onChange([...value, t]);
+    }
+    setDraft('');
+  };
+  return (
+    <View>
+      {options.length > 0 && <ChipGrid options={options} selected={value} onToggle={toggle} />}
+      <View style={[styles.inputRow, { marginTop: 10 }]}>
+        <TextInput
+          style={[styles.textInput, { flex: 1 }]}
+          value={draft}
+          onChangeText={setDraft}
+          onSubmitEditing={add}
+          placeholder={placeholder}
+          placeholderTextColor={colors.textMuted}
+          returnKeyType="done"
+        />
+        <TouchableOpacity style={styles.addBtn} onPress={add} activeOpacity={0.7}>
+          <Text style={styles.addBtnTxt}>Add</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -277,6 +318,9 @@ export default function SettingsScreen() {
   const [cuisines,       setCuisines]       = useState([]);
   const [dietary,        setDietary]        = useState([]);
   const [activityStyles, setActivityStyles] = useState([]);
+  const [interests,      setInterests]      = useState([]);
+  const [lovedPlaces,    setLovedPlaces]    = useState([]);
+  const [avoidedPlaces,  setAvoidedPlaces]  = useState([]);
   const [sensitivities,  setSensitivities]  = useState([]);
   const [neurodivergent, setNeurodivergent] = useState(false);
   const [maxDistance,    setMaxDistance]    = useState(10);
@@ -316,6 +360,9 @@ export default function SettingsScreen() {
       setCuisines(s.cuisines);
       setDietary(s.dietary);
       setActivityStyles(s.activityStyles);
+      setInterests(s.interests ?? []);
+      setLovedPlaces(s.lovedPlaces ?? []);
+      setAvoidedPlaces(s.avoidedPlaces ?? []);
       setSensitivities(s.sensitivities ?? []);
       setNeurodivergent(s.neurodivergent ?? false);
       setMaxDistance(s.maxDistance);
@@ -461,6 +508,9 @@ export default function SettingsScreen() {
   const toggleCuisine      = (id) => { const next = cuisines.includes(id) ? cuisines.filter((x) => x !== id) : [...cuisines, id]; setCuisines(next); save(KEYS.CUISINES, next); };
   const toggleDietary      = (id) => { const next = dietary.includes(id) ? dietary.filter((x) => x !== id) : [...dietary, id]; setDietary(next); save(KEYS.DIETARY, next); };
   const toggleActivity     = (id) => { const next = activityStyles.includes(id) ? activityStyles.filter((x) => x !== id) : [...activityStyles, id]; setActivityStyles(next); save(KEYS.ACTIVITY_STYLES, next); };
+  const updateInterests    = (next) => { setInterests(next); save(KEYS.INTERESTS, next); };
+  const updateLovedPlaces  = (next) => { setLovedPlaces(next); save(KEYS.LOVED_PLACES, next); };
+  const updateAvoidedPlaces= (next) => { setAvoidedPlaces(next); save(KEYS.AVOIDED_PLACES, next); };
   const toggleSensitivity  = (id) => { const next = sensitivities.includes(id) ? sensitivities.filter((x) => x !== id) : [...sensitivities, id]; setSensitivities(next); save(KEYS.SENSITIVITIES, next); };
   const toggleNeurodivergent = () => { const next = !neurodivergent; setNeurodivergent(next); save(KEYS.NEURODIVERGENT, next); };
 
@@ -633,6 +683,27 @@ export default function SettingsScreen() {
             {!validWindow && (
               <Text style={styles.timeValidationHint}>⚠ Please allow at least 3 hours</Text>
             )}
+          </CollapsibleCard>
+
+          {/* ── Taste Profile ─────────────────────────────────────────────── */}
+          <CollapsibleCard title="TASTE PROFILE" sectionKey="taste" style={styles.collapsibleSpacing}>
+            <Text style={styles.sensitivityNote}>
+              Teach Decide what you love — we lean on this to find spots you'll actually light up about, not a generic top-10 list.
+            </Text>
+
+            <Text style={[styles.fieldLabel, { marginTop: 8 }]}>INTERESTS</Text>
+            <TagEditor
+              value={interests}
+              onChange={updateInterests}
+              suggestions={SUGGESTED_INTERESTS}
+              placeholder="Add your own (e.g. pinball)"
+            />
+
+            <Text style={[styles.fieldLabel, { marginTop: 20 }]}>PLACES YOU LOVE</Text>
+            <TagEditor value={lovedPlaces} onChange={updateLovedPlaces} placeholder="Add a place you love" />
+
+            <Text style={[styles.fieldLabel, { marginTop: 20 }]}>PLACES TO AVOID</Text>
+            <TagEditor value={avoidedPlaces} onChange={updateAvoidedPlaces} placeholder="Add a place to skip" />
           </CollapsibleCard>
 
           {/* ── Location ───────────────────────────────────────────────────── */}
@@ -992,6 +1063,8 @@ const makeStyles = (c) => StyleSheet.create({
   inputRow:           { flexDirection: 'row', alignItems: 'center', gap: 8 },
   clearBtn:           { width: 36, height: 36, borderRadius: 18, backgroundColor: c.border, alignItems: 'center', justifyContent: 'center' },
   clearBtnTxt:        { color: c.textSecondary, fontSize: 14, fontFamily: FONTS.bodyBold },
+  addBtn:             { paddingHorizontal: 16, height: 40, borderRadius: 12, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' },
+  addBtnTxt:          { color: c.primaryText, fontSize: 13, fontFamily: FONTS.bodySemiBold },
   geocodeRow:         { flexDirection: 'row', alignItems: 'center', gap: 8 },
   geocodeStatus:      { fontSize: 13, color: c.textMuted },
   geocodeSuccess:     { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: c.success },

@@ -8,6 +8,9 @@ export const KEYS = {
   CUISINES:           '@decide/cuisines',
   DIETARY:            '@decide/dietary',
   ACTIVITY_STYLES:    '@decide/activity_styles',
+  INTERESTS:          '@decide/interests',        // Taste Profile: niche hunt-able tags
+  LOVED_PLACES:       '@decide/loved_places',      // Taste Profile: place names the traveler loves
+  AVOIDED_PLACES:     '@decide/avoided_places',    // Taste Profile: place names to never resurface
   SENSITIVITIES:      '@decide/sensitivities',    // array of sensitivity names (food + environmental)
   NEURODIVERGENT:     '@decide/neurodivergent',   // boolean — sensory-friendly itinerary bias
   MAX_DISTANCE:       '@decide/max_distance',
@@ -30,6 +33,9 @@ const DEFAULTS = {
   cuisines:       [],
   dietary:        [],
   activityStyles: [],
+  interests:      [],
+  lovedPlaces:    [],
+  avoidedPlaces:  [],
   sensitivities:  [],
   neurodivergent: false,
   maxDistance:    10,
@@ -59,6 +65,9 @@ export async function loadAllSettings() {
       cuisines:       map[KEYS.CUISINES]            ?? DEFAULTS.cuisines,
       dietary:        map[KEYS.DIETARY]             ?? DEFAULTS.dietary,
       activityStyles: map[KEYS.ACTIVITY_STYLES]     ?? DEFAULTS.activityStyles,
+      interests:      map[KEYS.INTERESTS]           ?? DEFAULTS.interests,
+      lovedPlaces:    map[KEYS.LOVED_PLACES]        ?? DEFAULTS.lovedPlaces,
+      avoidedPlaces:  map[KEYS.AVOIDED_PLACES]      ?? DEFAULTS.avoidedPlaces,
       sensitivities:  map[KEYS.SENSITIVITIES]       ?? DEFAULTS.sensitivities,
       neurodivergent: map[KEYS.NEURODIVERGENT]      ?? DEFAULTS.neurodivergent,
       maxDistance:    map[KEYS.MAX_DISTANCE]        ?? DEFAULTS.maxDistance,
@@ -90,6 +99,24 @@ export async function loadPlanDefaults() {
     };
   } catch {
     return { pace: DEFAULTS.pace, budget: DEFAULTS.budget, group: DEFAULTS.group, startTime: DEFAULTS.startTime, endTime: DEFAULTS.endTime, cuisines: DEFAULTS.cuisines };
+  }
+}
+
+// Standing signals the discovery scout uses as fuel beyond the per-trip note. Always array-safe:
+// coerces missing/malformed storage to []. See docs/superpowers/specs/2026-07-24-taste-profile-design.md
+export async function loadTasteProfile() {
+  const arr = (v) => (Array.isArray(v) ? v : []);
+  try {
+    const [[, i], [, l], [, a]] = await AsyncStorage.multiGet([
+      KEYS.INTERESTS, KEYS.LOVED_PLACES, KEYS.AVOIDED_PLACES,
+    ]);
+    return {
+      interests:     arr(parse(i)),
+      lovedPlaces:   arr(parse(l)),
+      avoidedPlaces: arr(parse(a)),
+    };
+  } catch {
+    return { interests: [], lovedPlaces: [], avoidedPlaces: [] };
   }
 }
 
