@@ -200,3 +200,30 @@ Verified with `npx expo export --platform web` (clean build). Not yet eyeballed 
 **Deploy:** pushed to `origin/main`; live `https://decide-app.vercel.app` returns 200 (serves app login redirect),
 so prod is not frozen. Confirm the `62ca6f7` deployment shows **Ready** in the Vercel dashboard (MCP token is
 SAML-blocked from reading deployments headlessly). See [[project-vercel-deploy-gotchas]].
+
+---
+
+## 8. Sunset Guard — deterministic timing correction  ✅ CODE DONE (2026-07-24, on-device QA pending)
+Spec/plan: `docs/superpowers/{specs,plans}/2026-07-24-sunset-guard*`. Fixes a real report: a "sunset
+walk" scheduled at 6 PM while its own copy said sunset was 8 PM — the synthesis model ignores the
+sunset prompt rule, so timing is now validated in code, not just instructed.
+
+**What shipped:**
+- `lib/smart/sunsetGuard.js` — pure `applySunsetGuard(stops, sun, ctx)`. Tier A (explicit
+  sunset/golden-hour stops) is **corrected when safe** (re-timed to end at sunset if no neighbor
+  overlap) or **flagged** with an honest `time_note` when it can't move (boxed-in, or sunset falls
+  at/after the day's end). Tier B (generic beach/park/walk running past dark) is **flag-only**.
+  Fully defensive — sunset-null safe, never throws, never reorders/removes a stop, never touches a
+  `verified` stop, idempotent. 12 `node:test` cases (`sunsetGuard.test.mjs`), all green.
+- Wired once in `lib/smart/index.js` right after `runSynthesis` → both API twins inherit it. No twin
+  edits, no new env var, no new serverless function (still 12/12). Clean `npx expo export --platform web`.
+- Posture chosen by user: **correct-when-safe, flag-otherwise**.
+
+**Pending:** on-device eyeball on a real evening-outdoor itinerary (a coastal generate with a
+late-summer ~8 PM sunset).
+
+**⚠ Follow-up (sibling, separate spec — the OTHER half of the timing report):** venue/event
+start-time verification widening. The Ocean Downs case (harness racing scheduled 5 PM when first post
+is 6:40 PM) happens because `verifyTimes.js` only verifies Firecrawl *finds*, not Google Places
+venues with known schedules. Extend verification to venue-based events so their start times aren't
+guessed. Not yet spec'd.
