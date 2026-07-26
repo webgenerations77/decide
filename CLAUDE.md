@@ -188,6 +188,7 @@ ANTHROPIC_API_KEY=                 (server-side only)
 EXPO_PUBLIC_NPS_API_KEY=           (National Park Service)
 EXPO_PUBLIC_RIDB_API_KEY=          (Recreation.gov)
 EXPO_PUBLIC_OPENROUTE_API_KEY=     (driving times — optional, haversine fallback used if empty)
+EXPO_PUBLIC_BETA_TESTER_EMAILS=    (optional, comma-separated emails granted beta_tester role — see constants/betaTesters.js; use this instead of editing that file when you don't want a tester's address committed to source)
 
 ## Cost Management
 - Prefer claude-haiku-4-5 for all AI calls in this project
