@@ -50,3 +50,4 @@ yarn-error.*
 # Per-user Claude artifacts (not shared)
 .claude/user-preferences.md
 .claude/sessions/
+.env*
