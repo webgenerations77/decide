@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, Animated, Easing,
-  Linking, ActivityIndicator, ScrollView, Image, TextInput,
+  Linking, ActivityIndicator, ScrollView, Image, TextInput, Switch,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -348,13 +348,13 @@ export default function SpinScreen() {
 
           {/* Per-spin Sensory-friendly toggle (applies to this spin only) */}
           <View style={styles.envRow}>
-            <TouchableOpacity
-              style={[styles.envChip, sensory && styles.envChipActive]}
-              onPress={() => { setSensory((v) => !v); setResult(null); setError(null); }}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.envChipTxt, sensory && styles.envChipTxtActive]}>✨ Sensory-friendly</Text>
-            </TouchableOpacity>
+            <Text style={styles.envLabel}>✨ Sensory-friendly</Text>
+            <Switch
+              value={sensory}
+              onValueChange={(v) => { setSensory(v); setResult(null); setError(null); }}
+              trackColor={{ false: colors.border, true: colors.success }}
+              thumbColor={colors.surface}
+            />
           </View>
           {sensory && <Text style={styles.envHint}>Skipping loud, high-energy spots this spin</Text>}
 
@@ -538,15 +538,11 @@ const makeStyles = (c) => StyleSheet.create({
   catPillTxtActive: { color: c.surface },
 
   // Per-spin Sensory-friendly toggle
-  envRow:  { alignItems: 'center' },
-  envChip: {
-    paddingHorizontal: 14, paddingVertical: 8, borderRadius: RADII.lg,
-    backgroundColor: c.surface, borderWidth: 1, borderColor: c.border,
+  envRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
   },
-  envChipActive:    { backgroundColor: c.success, borderColor: c.success },
-  envChipTxt:       { fontFamily: FONTS.bodySemiBold, fontSize: 13, color: c.textSecondary },
-  envChipTxtActive: { color: c.surface },
-  envHint:          { fontFamily: FONTS.body, fontSize: 11, color: c.textMuted, marginTop: 8, textAlign: 'center' },
+  envLabel: { fontFamily: FONTS.bodySemiBold, fontSize: 13, color: c.textSecondary },
+  envHint:  { fontFamily: FONTS.body, fontSize: 11, color: c.textMuted, marginTop: 8, textAlign: 'center' },
 
   // Spin button
   spinWrap: { marginTop: 20, marginBottom: 32, alignItems: 'center' },
