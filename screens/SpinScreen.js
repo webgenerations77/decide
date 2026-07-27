@@ -16,7 +16,7 @@ import { useTheme } from '../context/ThemeContext';
 import ScreenBackground from '../components/brand/ScreenBackground';
 import Card from '../components/brand/Card';
 import CTAButton from '../components/brand/CTAButton';
-import { haptic } from '../services/hapticsService';
+import { haptic, hapticSuccess, hapticError } from '../services/hapticsService';
 import SectionLabel from '../components/brand/SectionLabel';
 import BrandLogo from '../components/brand/BrandLogo';
 import VersionTag from '../components/brand/VersionTag';
@@ -227,6 +227,7 @@ export default function SpinScreen() {
         setTimeout(() => {
           setResult({ ...demo, place_id: `demo_${category}`, address: demo.address ?? 'Eastern Shore, MD', rating: (demo.excitement_score / 20).toFixed(1) * 1, categoryId: cat.id, categoryEmoji: cat.emoji, categoryColor: cat.color });
           setSpinning(false);
+          hapticSuccess();   // fires with the bounce — the moment the wheel lands
           bounceAnim.setValue(0);
           Animated.spring(bounceAnim, { toValue: 1, friction: 6, useNativeDriver: true }).start();
         }, 1000);
@@ -263,6 +264,7 @@ export default function SpinScreen() {
           categoryId: cat.id, categoryEmoji: cat.emoji, categoryColor: cat.color,
         });
         setSpinning(false);
+        hapticSuccess();   // fires with the bounce — the moment the wheel lands
         bounceAnim.setValue(0);
         Animated.spring(bounceAnim, { toValue: 1, friction: 6, useNativeDriver: true }).start();
         await incrementSpinCount().catch(() => {});
@@ -291,6 +293,7 @@ export default function SpinScreen() {
       setTimeout(() => {
         setError(e.message ?? 'Something went wrong');
         setSpinning(false);
+        hapticError();
       }, 1000);
     }
   };
