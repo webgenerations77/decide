@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react';
-import { View, Text, TouchableOpacity, TextInput, Modal, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Modal, ScrollView, StyleSheet } from 'react-native';
 import { usePathname } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { submitFeedback } from '../services/feedbackService';
 import CTAButton from './brand/CTAButton';
+import TextField from './brand/TextField';
 import { useTheme } from '../context/ThemeContext';
 import { FONTS, RADII } from '../constants/theme';
 import useViewportOverlay, { WEB_OVERLAY_FIX } from '../hooks/useViewportOverlay';
@@ -91,9 +92,8 @@ export default function BetaFeedback({ topOffset = 0 }) {
               </View>
 
               <Text style={styles.label}>PAGE / FEATURE</Text>
-              <TextInput
-                style={styles.input} value={page} onChangeText={setPage}
-                placeholder="Which screen?" placeholderTextColor={colors.textMuted}
+              <TextField value={page} onChangeText={setPage}
+                placeholder="Which screen?"
               />
 
               <Text style={styles.label}>FEEDBACK TYPE</Text>
@@ -109,9 +109,8 @@ export default function BetaFeedback({ topOffset = 0 }) {
               </View>
 
               <Text style={styles.label}>YOUR FEEDBACK</Text>
-              <TextInput
-                style={[styles.input, styles.textarea]} value={message} onChangeText={setMessage}
-                placeholder="Tell us what you're thinking..." placeholderTextColor={colors.textMuted}
+              <TextField value={message} onChangeText={setMessage}
+                placeholder="Tell us what you're thinking..."
                 multiline numberOfLines={4} textAlignVertical="top"
               />
 
@@ -169,12 +168,6 @@ const makeStyles = (c, scheme) => StyleSheet.create({
   close: { fontSize: 18, fontFamily: FONTS.bodyBold, color: c.textMuted },
 
   label: { fontSize: 10, fontFamily: FONTS.monoBold, color: c.goldText, letterSpacing: 1.5, textTransform: 'uppercase' },
-  input: {
-    backgroundColor: c.surface, borderRadius: RADII.md,
-    borderWidth: 1, borderColor: c.border,
-    paddingHorizontal: 14, height: 48, fontSize: 15, color: c.textPrimary, fontFamily: FONTS.body,
-  },
-  textarea: { height: 110, paddingTop: 12 },
 
   pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   pill: {

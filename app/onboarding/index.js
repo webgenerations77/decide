@@ -1,4 +1,4 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Switch, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Switch, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -10,6 +10,7 @@ import { FONTS } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
 import ScreenBackground from '../../components/brand/ScreenBackground';
 import CTAButton from '../../components/brand/CTAButton';
+import TextField from '../../components/brand/TextField';
 import SectionLabel from '../../components/brand/SectionLabel';
 import BrandLogo from '../../components/brand/BrandLogo';
 
@@ -297,12 +298,11 @@ export default function OnboardingScreen() {
 
               <SectionLabel tone="cobalt" style={styles.sectionSpacing}>Who you are</SectionLabel>
               <Question>What should I call you?</Question>
-              <TextInput
-                style={styles.textInput}
+              <TextField
+                style={{ marginBottom: 20 }}
                 value={displayName}
                 onChangeText={setDisplayName}
                 placeholder="Your name"
-                placeholderTextColor={colors.textMuted}
                 returnKeyType="done"
               />
 
@@ -532,12 +532,6 @@ const makeStyles = (c) => StyleSheet.create({
   spacedQuestion: { marginTop: 16 },
 
   // Name input
-  textInput: {
-    backgroundColor: c.surface, borderWidth: 1, borderColor: c.border,
-    borderRadius: 16, paddingHorizontal: 16, paddingVertical: 13,
-    fontSize: 15, color: c.textPrimary, fontFamily: FONTS.body,
-    marginBottom: 20,
-  },
 
   // Avatar picker
   avatarRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 4 },

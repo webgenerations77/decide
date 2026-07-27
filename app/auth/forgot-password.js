@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet,
+  View, Text, TouchableOpacity, StyleSheet,
   KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,6 +10,7 @@ import { FONTS } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
 import ScreenBackground from '../../components/brand/ScreenBackground';
 import CTAButton from '../../components/brand/CTAButton';
+import TextField from '../../components/brand/TextField';
 import Card from '../../components/brand/Card';
 
 export default function ForgotPasswordScreen() {
@@ -74,12 +75,10 @@ export default function ForgotPasswordScreen() {
               <Card>
                 <View style={styles.form}>
                   <Text style={styles.label}>Email</Text>
-                  <TextInput
-                    style={styles.input}
+                  <TextField
                     value={email}
                     onChangeText={setEmail}
                     placeholder="you@example.com"
-                    placeholderTextColor={colors.textMuted}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoComplete="email"
@@ -129,9 +128,4 @@ const makeStyles = (c) => StyleSheet.create({
   successText: { color: c.success, fontSize: 15, textAlign: 'center', fontFamily: FONTS.bodySemiBold },
   form: { gap: 12 },
   label: { color: c.textSecondary, fontSize: 13, fontFamily: FONTS.bodySemiBold },
-  input: {
-    backgroundColor: c.surface, borderWidth: 1, borderColor: c.border,
-    borderRadius: 14, paddingHorizontal: 16, height: 52,
-    fontSize: 16, color: c.textPrimary,
-  },
 });

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, Animated, Easing,
-  Linking, ActivityIndicator, ScrollView, Image, TextInput, Switch,
+  Linking, ActivityIndicator, ScrollView, Image, Switch,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -16,6 +16,7 @@ import { useTheme } from '../context/ThemeContext';
 import ScreenBackground from '../components/brand/ScreenBackground';
 import Card from '../components/brand/Card';
 import CTAButton from '../components/brand/CTAButton';
+import TextField from '../components/brand/TextField';
 import { haptic, hapticSuccess, hapticError } from '../services/hapticsService';
 import SectionLabel from '../components/brand/SectionLabel';
 import BrandLogo from '../components/brand/BrandLogo';
@@ -396,12 +397,11 @@ export default function SpinScreen() {
 
           {/* Free-text keyword for the "Other" category */}
           {category === 'other' && (
-            <TextInput
-              style={styles.keywordInput}
+            <TextField
+              style={{ width: '100%', marginBottom: 24 }}
               value={keyword}
               onChangeText={setKeyword}
               placeholder="billiards, live music, arcade…"
-              placeholderTextColor={colors.textMuted}
               returnKeyType="search"
               onSubmitEditing={spin}
               autoCapitalize="none"
@@ -595,13 +595,6 @@ const makeStyles = (c) => StyleSheet.create({
   explainerDismissTxt: { fontFamily: FONTS.bodyBold, fontSize: 13, color: c.primary },
 
   // Free-text keyword input ("Other" category)
-  keywordInput: {
-    width: '100%', marginBottom: 24,
-    backgroundColor: c.surface, borderRadius: RADII.lg,
-    borderWidth: 1, borderColor: c.border,
-    paddingHorizontal: 16, height: 50,
-    fontFamily: FONTS.body, fontSize: 15, color: c.textPrimary,
-  },
 
   // Result card styles (Card primitive handles bg/radius/shadow/padding)
   // Full-bleed place photo header (negate the Card's 16px padding)

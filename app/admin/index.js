@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { View, Text, ScrollView, Pressable, ActivityIndicator, Modal, StyleSheet, TextInput, Alert } from 'react-native';
+import { View, Text, ScrollView, Pressable, ActivityIndicator, Modal, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -12,6 +12,7 @@ import {
 } from '../../services/adminApi';
 import ScreenBackground from '../../components/brand/ScreenBackground';
 import Card from '../../components/brand/Card';
+import TextField from '../../components/brand/TextField';
 import SectionLabel from '../../components/brand/SectionLabel';
 import LoadingAnimation from '../../components/LoadingAnimation';
 import { FONTS, RADII } from '../../constants/theme';
@@ -233,12 +234,11 @@ export default function AdminScreen() {
             be this exact address.
           </Text>
           <View style={styles.inviteRow}>
-            <TextInput
-              style={styles.inviteInput}
+            <TextField
+              style={{ flex: 1 }}
               value={inviteEmail}
               onChangeText={setInviteEmail}
               placeholder="tester@example.com"
-              placeholderTextColor={colors.textMuted}
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
@@ -376,11 +376,6 @@ const makeStyles = (c) => StyleSheet.create({
   restoreBtn: { backgroundColor: c.sky100 },
   inviteHelp: { fontFamily: FONTS.body, color: c.textMuted, fontSize: 12, lineHeight: 17, marginBottom: 10 },
   inviteRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  inviteInput: {
-    flex: 1, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border,
-    borderRadius: RADII.md, paddingHorizontal: 12, paddingVertical: 10,
-    fontFamily: FONTS.body, fontSize: 14, color: c.textPrimary,
-  },
   inviteBtn: {
     paddingVertical: 11, paddingHorizontal: 16, borderRadius: RADII.md,
     backgroundColor: c.primary, minWidth: 72, alignItems: 'center',

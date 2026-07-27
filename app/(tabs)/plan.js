@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView,
+  View, Text, TouchableOpacity, StyleSheet, ScrollView,
   Linking, Animated, Modal, Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -20,6 +20,7 @@ import { useTheme } from '../../context/ThemeContext';
 import ScreenBackground from '../../components/brand/ScreenBackground';
 import Card from '../../components/brand/Card';
 import CTAButton from '../../components/brand/CTAButton';
+import TextField from '../../components/brand/TextField';
 import SectionLabel from '../../components/brand/SectionLabel';
 import BrandLogo from '../../components/brand/BrandLogo';
 import VersionTag from '../../components/brand/VersionTag';
@@ -739,10 +740,8 @@ export default function PlanScreen() {
               )}
 
               <SectionLabel tone="cobalt">Into anything specific this trip?</SectionLabel>
-              <TextInput
-                style={styles.tripNoteInput}
+              <TextField
                 placeholder="e.g. pinball, vinyl, breweries, surf"
-                placeholderTextColor={colors.textMuted}
                 value={tripNote}
                 onChangeText={setTripNote}
               />
@@ -752,10 +751,8 @@ export default function PlanScreen() {
               <Card style={styles.clarifyCard}>
                 <Text style={styles.clarifyLabel}>Quick question</Text>
                 <Text style={styles.clarifyQuestionText}>{clarifyQuestion}</Text>
-                <TextInput
-                  style={styles.clarifyInput}
+                <TextField
                   placeholder="Type your answer…"
-                  placeholderTextColor={colors.textMuted}
                   value={clarifyAnswer}
                   onChangeText={setClarifyAnswer}
                   autoFocus
@@ -1032,13 +1029,11 @@ const makeStyles = (c) => StyleSheet.create({
   timePillValue:   { fontSize: 14, fontFamily: FONTS.bodyBold, color: c.primary },
   timeValidationHint: { fontSize: 11, color: c.error, marginTop: 2 },
   resultsTimeEditor: { marginTop: 4, marginBottom: 12 },
-  tripNoteInput: { backgroundColor: c.surface, borderColor: c.border, borderWidth: 1, borderRadius: RADII.md, color: c.textPrimary, paddingHorizontal: 14, paddingVertical: 10, fontSize: 15, fontFamily: FONTS.body },
 
   // Cheddar's clarifying follow-up (chat-style)
   clarifyCard: { marginTop: 14, borderWidth: 1, borderColor: c.borderLight, backgroundColor: c.sky100, gap: 10 },
   clarifyLabel: { fontSize: 11, fontFamily: FONTS.monoBold, color: c.primary, letterSpacing: 0.5, textTransform: 'uppercase' },
   clarifyQuestionText: { fontSize: 15, fontFamily: FONTS.bodyMedium, color: c.textPrimary, lineHeight: 21 },
-  clarifyInput: { backgroundColor: c.surface, borderColor: c.border, borderWidth: 1, borderRadius: RADII.md, color: c.textPrimary, paddingHorizontal: 14, paddingVertical: 10, fontSize: 15, fontFamily: FONTS.body },
   clarifyBtnRow: { flexDirection: 'row', gap: 10 },
 
   // Time picker modal

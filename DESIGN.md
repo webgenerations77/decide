@@ -22,6 +22,7 @@ colors:
   ink: "#16243B"
   slate: "#2C3E5C"
   muted: "#7E8BA3"
+  input-placeholder: "#69768E"
   success-green: "#2E9E7B"
   alert-red: "#D6453C"
   alert-red-deep: "#A8362E"
@@ -106,10 +107,17 @@ components:
     rounded: "{rounded.lg}"
     padding: "8px 14px"
   input:
-    backgroundColor: "{colors.cream-alt}"
+    backgroundColor: "{colors.card-white}"
     textColor: "{colors.ink}"
     typography: "{typography.body}"
-    padding: "10px 14px"
+    rounded: "{rounded.md}"
+    padding: "0 14px"
+    height: "52px"
+  input-focus:
+    backgroundColor: "{colors.card-white}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.md}"
+    height: "52px"
   section-label:
     textColor: "{colors.muted}"
     typography: "{typography.label}"
@@ -235,8 +243,19 @@ Decisive and tactile. Buttons look pressable and commit to the action; cards con
 - **Internal Padding:** 16px.
 
 ### Inputs / Fields
-- **Style:** Cream Alt fill, 1px warm hairline, 14px horizontal padding. Recessed rather than raised — inputs sit *into* the paper.
-- **Focus:** Currently undifferentiated. This is the largest gap in the system and the next thing worth designing.
+There is exactly one input in the product: `components/brand/TextField`. It replaced five near-identical style blocks that carried four different radii, three heights, and no focus state at all.
+
+- **Style:** Card White fill, 1.5px Muted border, `10px` radius, 52px tall, 14px horizontal padding, 16px Hanken.
+- **Resting border is Muted, not the hairline `border` token.** At 1.40:1 the hairline left the field indistinguishable from the page — the boundary has to carry 3:1 or the control isn't identifiable.
+- **Focus:** the border goes Cobalt Stamp *and* a 2px Cobalt ring appears outside it. The ring's space is reserved by a transparent border at rest, so focusing shifts layout by exactly zero pixels.
+- **Placeholder:** Input Placeholder (`#69768E` light / `#8B8475` dark) — 4.58:1 and 4.51:1. Muted was the obvious choice and fails at 3.44:1.
+- **Multiline:** 110px minimum, top-aligned, 12px vertical padding.
+
+### Named Rules
+
+**The Two-Signal Focus Rule.** Focus changes colour *and* thickness, never colour alone. In dark mode Cobalt Stamp and Muted sit at 1.02:1 — effectively identical luminance — so a colour-only focus change is invisible to anyone not resolving hue.
+
+**The 16px Field Rule.** Input text is 16px and never smaller. Below 16px, mobile Safari zooms the viewport on focus, and this ships as an installed web app.
 
 ### Navigation
 - **Tab bar:** 65px, white (`#1C1813` dark), 1px top hairline, no elevation or shadow. Active tint cobalt, inactive muted. A 20×2px cobalt indicator bar sits above the active icon; icons swap from outline to filled on selection. Labels are 11px Hanken Medium.
@@ -256,6 +275,8 @@ Decisive and tactile. Buttons look pressable and commit to the action; cards con
 - **Do** use Ochre Ink (`#8C6010`) whenever gold needs to carry text.
 - **Do** make the whole row the touch target for a labelled control, not just the control itself.
 - **Do** pick the matching `FONTS.*` variant instead of setting `fontWeight`.
+- **Do** use `components/brand/TextField` for every text input. There is one input in this system.
+- **Do** reserve a focus ring's space with a transparent border at rest, so focusing never shifts layout.
 
 ### Don't:
 - **Don't** build **a search results page**. No ranked lists of ten options with no opinion. A plan that reads as a list has already failed.
@@ -268,3 +289,6 @@ Decisive and tactile. Buttons look pressable and commit to the action; cards con
 - **Don't** put Space Mono in prose. It carries labels, times and codes only.
 - **Don't** exceed 28px type outside the brand wordmark.
 - **Don't** rely on a pale track or hairline to carry a control's state — it fails contrast against Desk Paper and disappears entirely.
+- **Don't** signal focus with colour alone, and never with a soft halo — a Sky-tinted ring measures 1.74:1 against the page and is decoration, not an indicator.
+- **Don't** hand-roll a `TextInput` with local styles. That is exactly how the system ended up with four input radii and no focus state.
+- **Don't** set input text below 16px.

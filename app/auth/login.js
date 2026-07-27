@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet,
+  View, Text, TouchableOpacity, StyleSheet,
   KeyboardAvoidingView, Platform, ScrollView, Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,6 +15,7 @@ import { useTheme } from '../../context/ThemeContext';
 import BrandLogo from '../../components/brand/BrandLogo';
 import ScreenBackground from '../../components/brand/ScreenBackground';
 import CTAButton from '../../components/brand/CTAButton';
+import TextField from '../../components/brand/TextField';
 import Card from '../../components/brand/Card';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -133,12 +134,10 @@ export default function LoginScreen() {
                   <>
                     <View style={styles.fieldBlock}>
                       <Text style={styles.label}>Email</Text>
-                      <TextInput
-                        style={styles.input}
+                      <TextField
                         value={email}
                         onChangeText={setEmail}
                         placeholder="you@example.com"
-                        placeholderTextColor={colors.textMuted}
                         keyboardType="email-address"
                         autoCapitalize="none"
                         autoComplete="email"
@@ -148,12 +147,10 @@ export default function LoginScreen() {
 
                     <View style={styles.fieldBlock}>
                       <Text style={styles.label}>Password</Text>
-                      <TextInput
-                        style={styles.input}
+                      <TextField
                         value={password}
                         onChangeText={setPassword}
                         placeholder="Your password"
-                        placeholderTextColor={colors.textMuted}
                         secureTextEntry
                         autoComplete="password"
                         returnKeyType="done"
@@ -230,11 +227,6 @@ const makeStyles = (c) => StyleSheet.create({
   fieldBlock: { gap: 6 },
   label: {
     color: c.textSecondary, fontSize: 13, fontFamily: FONTS.bodySemiBold,
-  },
-  input: {
-    backgroundColor: c.surface, borderWidth: 1, borderColor: c.border,
-    borderRadius: 14, paddingHorizontal: 16, height: 52,
-    fontSize: 16, color: c.textPrimary,
   },
   links: {
     flexDirection: 'row', justifyContent: 'space-between',

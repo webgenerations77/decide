@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet,
+  View, Text, TouchableOpacity, StyleSheet,
   KeyboardAvoidingView, Platform, ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -12,6 +12,7 @@ import { useTheme } from '../../context/ThemeContext';
 import BrandLogo from '../../components/brand/BrandLogo';
 import ScreenBackground from '../../components/brand/ScreenBackground';
 import CTAButton from '../../components/brand/CTAButton';
+import TextField from '../../components/brand/TextField';
 import Card from '../../components/brand/Card';
 
 export default function SignupScreen() {
@@ -90,12 +91,10 @@ export default function SignupScreen() {
               <View style={styles.form}>
                 <View style={styles.fieldBlock}>
                   <Text style={styles.label}>What should we call you? <Text style={styles.optional}>(optional)</Text></Text>
-                  <TextInput
-                    style={styles.input}
+                  <TextField
                     value={displayName}
                     onChangeText={setDisplayName}
                     placeholder="Your name"
-                    placeholderTextColor={colors.textMuted}
                     autoCapitalize="words"
                     returnKeyType="next"
                   />
@@ -103,12 +102,10 @@ export default function SignupScreen() {
 
                 <View style={styles.fieldBlock}>
                   <Text style={styles.label}>Email <Text style={styles.required}>*</Text></Text>
-                  <TextInput
-                    style={styles.input}
+                  <TextField
                     value={email}
                     onChangeText={setEmail}
                     placeholder="you@example.com"
-                    placeholderTextColor={colors.textMuted}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoComplete="email"
@@ -118,12 +115,10 @@ export default function SignupScreen() {
 
                 <View style={styles.fieldBlock}>
                   <Text style={styles.label}>Password <Text style={styles.required}>*</Text></Text>
-                  <TextInput
-                    style={styles.input}
+                  <TextField
                     value={password}
                     onChangeText={setPassword}
                     placeholder="At least 6 characters"
-                    placeholderTextColor={colors.textMuted}
                     secureTextEntry
                     autoComplete="new-password"
                     returnKeyType="next"
@@ -132,12 +127,10 @@ export default function SignupScreen() {
 
                 <View style={styles.fieldBlock}>
                   <Text style={styles.label}>Confirm password <Text style={styles.required}>*</Text></Text>
-                  <TextInput
-                    style={styles.input}
+                  <TextField
                     value={confirm}
                     onChangeText={setConfirm}
                     placeholder="Re-enter your password"
-                    placeholderTextColor={colors.textMuted}
                     secureTextEntry
                     autoComplete="new-password"
                     returnKeyType="done"
@@ -210,11 +203,6 @@ const makeStyles = (c) => StyleSheet.create({
   label: { color: c.textSecondary, fontSize: 13, fontFamily: FONTS.bodySemiBold },
   optional: { color: c.textMuted, fontFamily: FONTS.body },
   required: { color: c.primary },
-  input: {
-    backgroundColor: c.surface, borderWidth: 1, borderColor: c.border,
-    borderRadius: 14, paddingHorizontal: 16, height: 52,
-    fontSize: 16, color: c.textPrimary,
-  },
 
   tosRow: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 12,

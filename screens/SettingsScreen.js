@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, Pressable, StyleSheet, ScrollView,
+  View, Text, TouchableOpacity, Pressable, StyleSheet, ScrollView,
   Switch, ActivityIndicator, Modal, PanResponder, Animated, Alert, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,6 +18,7 @@ import { setHapticsEnabled, hapticPreview, haptic, hapticsSupported as deviceSup
 import { FONTS } from '../constants/theme';
 import ScreenBackground from '../components/brand/ScreenBackground';
 import Card from '../components/brand/Card';
+import TextField from '../components/brand/TextField';
 import SectionLabel from '../components/brand/SectionLabel';
 import Badge from '../components/brand/Badge';
 import CollapsibleCard from '../components/brand/CollapsibleCard';
@@ -178,13 +179,12 @@ function TagEditor({ value, onChange, suggestions = [], placeholder, max = 20 })
     <View>
       {options.length > 0 && <ChipGrid options={options} selected={value} onToggle={toggle} />}
       <View style={[styles.inputRow, { marginTop: 10 }]}>
-        <TextInput
-          style={[styles.textInput, { flex: 1 }]}
+        <TextField
+          style={{ flex: 1 }}
           value={draft}
           onChangeText={setDraft}
           onSubmitEditing={add}
           placeholder={placeholder}
-          placeholderTextColor={colors.textMuted}
           returnKeyType="done"
         />
         <TouchableOpacity style={styles.addBtn} onPress={haptic.tap(add)} activeOpacity={0.7}>
@@ -613,12 +613,10 @@ export default function SettingsScreen() {
           {/* ── Profile ─────────────────────────────────────────────────────── */}
           <CollapsibleCard title="PROFILE" sectionKey="profile" summary={displayName || 'Add your name'} style={styles.collapsibleSpacing}>
             <Text style={styles.fieldLabel}>DISPLAY NAME</Text>
-            <TextInput
-              style={styles.textInput}
+            <TextField
               value={displayName}
               onChangeText={handleDisplayName}
               placeholder="Your name"
-              placeholderTextColor={colors.textMuted}
               returnKeyType="done"
             />
 
@@ -770,12 +768,11 @@ export default function SettingsScreen() {
             {locationMode === 'manual' && (
               <View style={styles.manualBlock}>
                 <View style={styles.inputRow}>
-                  <TextInput
-                    style={[styles.textInput, { flex: 1 }]}
+                  <TextField
+                    style={{ flex: 1 }}
                     value={manualText}
                     onChangeText={handleManualText}
                     placeholder="City, address, or zip code"
-                    placeholderTextColor={colors.textMuted}
                     returnKeyType="search"
                   />
                   {(manualText.length > 0 || geocodedLoc) && (
@@ -1103,13 +1100,6 @@ const makeStyles = (c) => StyleSheet.create({
 
   fieldLabel: { fontSize: 11, fontFamily: FONTS.monoBold, color: c.textMuted, letterSpacing: 0.8, marginBottom: 10, textTransform: 'uppercase' },
 
-  textInput: {
-    backgroundColor: c.surfaceAlt, borderRadius: 12,
-    borderWidth: 1, borderColor: c.border,
-    paddingHorizontal: 14,
-    height: 48,
-    fontSize: 15, color: c.textPrimary,
-  },
 
   // Profile
   avatarRow:        { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },

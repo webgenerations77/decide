@@ -40,6 +40,9 @@ export const LIGHT = {
   textPrimary:   '#16243B',  // ink
   textSecondary: '#2C3E5C',  // slate
   textMuted:     '#7E8BA3',  // muted
+  // Placeholder text is TEXT, so it needs 4.5:1 — textMuted only reaches 3.44:1 on a
+  // white field. This is textMuted's hue walked darker until it clears AA (4.58:1).
+  inputPlaceholder: '#69768E',
 
   // ── Status ────────────────────────────────────────────────────────────────
   success:   '#2E9E7B',  // brand-adjacent green
@@ -93,6 +96,7 @@ export const DARK = {
   textPrimary:   '#F3EEE3',
   textSecondary: '#C7C0B2',
   textMuted:     '#8B8475',
+  inputPlaceholder: '#8B8475',   // already 4.51:1 on the dark field — no adjustment needed
 
   success:   '#3FB892',
   error:     '#FF6B61',
