@@ -7,6 +7,7 @@ import { useTheme } from '../../context/ThemeContext';
 import ScreenBackground from '../brand/ScreenBackground';
 import WeatherArt from './WeatherArt';
 import ItineraryMeta from './ItineraryMeta';
+import RouteMap from './RouteMap';
 import StopCard from './StopCard';
 import PlaceDetailModal from './PlaceDetailModal';
 
@@ -56,6 +57,7 @@ export default function ItineraryDetailView({ entry, sensitivities = [], onBack 
           <Header onBack={onBack} weather={weather} />
           <View style={styles.body}>
             <ItineraryMeta meta={meta} stopCount={itinerary.length} research={null} weather={weather} />
+            <RouteMap stops={itinerary} />
             {itinerary.map((stop, i) => (
               <StopCard
                 key={`${stop.place_id}-${i}`}

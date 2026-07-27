@@ -31,6 +31,7 @@ import PlaceDetailModal from '../../components/itinerary/PlaceDetailModal';
 import useViewportOverlay, { WEB_OVERLAY_FIX } from '../../hooks/useViewportOverlay';
 import StopCard from '../../components/itinerary/StopCard';
 import ItineraryMeta from '../../components/itinerary/ItineraryMeta';
+import RouteMap from '../../components/itinerary/RouteMap';
 
 // ─── Date helpers ─────────────────────────────────────────────────────────────
 function getNextSevenDays() {
@@ -794,6 +795,7 @@ export default function PlanScreen() {
                 </View>
               )}
               <ItineraryMeta meta={meta} stopCount={itinerary.length} research={research} timeEditor={timeEditor} weather={weather} />
+              <RouteMap stops={itinerary} />
 
               {itinerary.map((stop, i) => (
                 <StopCard

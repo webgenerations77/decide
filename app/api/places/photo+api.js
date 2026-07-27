@@ -1,3 +1,5 @@
+import { fetchStaticMap } from '../../../lib/staticMap.js';
+
 const GOOGLE_KEY = process.env.GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 
 // Proxies a Google Places (New) v1 photo so the API key never reaches the client.
@@ -10,6 +12,18 @@ export async function GET(request) {
   if (!GOOGLE_KEY) return Response.json({ error: 'api_key_missing' }, { status: 500 });
 
   const { searchParams } = new URL(request.url);
+
+  // ?type=staticmap → itinerary route map. Folded onto this endpoint (rather than a new
+  // api/ file) to stay under Vercel's 12-function cap; see CLAUDE.md.
+  if (searchParams.get('type') === 'staticmap') {
+    const r = await fetchStaticMap((k) => searchParams.get(k), (k) => searchParams.getAll(k));
+    if (!r.ok) return Response.json({ error: r.error, message: r.message }, { status: r.status });
+    return new Response(r.body, {
+      status: 200,
+      headers: { 'Content-Type': r.contentType, 'Cache-Control': 'public, max-age=86400' },
+    });
+  }
+
   const name = searchParams.get('name');
   if (!name || !PHOTO_NAME_RE.test(name)) return Response.json({ error: 'invalid_name' }, { status: 400 });
 

@@ -588,6 +588,10 @@ export default function SettingsScreen() {
         >
           <Text style={styles.screenTitle}>Settings</Text>
 
+          {/* Profile/Appearance previously sat above the first group header, so the screen
+              opened ungrouped and only became grouped further down. */}
+          <SectionLabel tone="cobalt" rule style={styles.sectionHeaderSpacing}>YOU</SectionLabel>
+
           {/* ── Profile ─────────────────────────────────────────────────────── */}
           <CollapsibleCard title="PROFILE" sectionKey="profile" summary={displayName || 'Add your name'} style={styles.collapsibleSpacing}>
             <Text style={styles.fieldLabel}>DISPLAY NAME</Text>
@@ -634,7 +638,7 @@ export default function SettingsScreen() {
           </CollapsibleCard>
 
           {/* ── Planning ─────────────────────────────────────────────────────── */}
-          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>PLANNING</SectionLabel>
+          <SectionLabel tone="cobalt" rule style={styles.sectionHeaderSpacing}>PLANNING</SectionLabel>
 
           {/* ── Preferences ───────────────────────────────────────────────── */}
           <CollapsibleCard title="ITINERARY PREFERENCES" sectionKey="preferences" summary={prefsSummary} style={styles.collapsibleSpacing}>
@@ -796,7 +800,7 @@ export default function SettingsScreen() {
           </CollapsibleCard>
 
           {/* ── App ──────────────────────────────────────────────────────────── */}
-          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>APP</SectionLabel>
+          <SectionLabel tone="cobalt" rule style={styles.sectionHeaderSpacing}>APP</SectionLabel>
 
           {/* ── Notifications ─────────────────────────────────────────────── */}
           <CollapsibleCard title="NOTIFICATIONS" sectionKey="notifications" summary="Coming soon" style={styles.collapsibleSpacing}>
@@ -849,7 +853,7 @@ export default function SettingsScreen() {
           {/* ── Beta ───────────────────────────────────────────────────────── */}
           {isBetaTester && (
             <>
-              <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>BETA</SectionLabel>
+              <SectionLabel tone="cobalt" rule style={styles.sectionHeaderSpacing}>BETA</SectionLabel>
               <Card style={styles.card}>
                 <TouchableOpacity
                   style={styles.appRow}
@@ -902,7 +906,7 @@ export default function SettingsScreen() {
           </CollapsibleCard>
 
           {/* ── Account ─────────────────────────────────────────── */}
-          <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>ACCOUNT</SectionLabel>
+          <SectionLabel tone="cobalt" rule style={styles.sectionHeaderSpacing}>ACCOUNT</SectionLabel>
           <CollapsibleCard title="ACCOUNT" sectionKey="account" summary={user?.email || 'Signed in'} style={styles.collapsibleSpacing}>
             {user?.email && (
               <View style={styles.appRow}>
@@ -923,7 +927,7 @@ export default function SettingsScreen() {
           {/* ── Admin (admin-only) — kept at the very bottom ───────────────── */}
           {isAdmin && (
             <>
-              <SectionLabel tone="cobalt" style={styles.sectionHeaderSpacing}>ADMIN</SectionLabel>
+              <SectionLabel tone="cobalt" rule style={styles.sectionHeaderSpacing}>ADMIN</SectionLabel>
               <Card style={styles.card}>
                 <Pressable style={styles.appRow} onPress={() => router.push('/admin')}>
                   <View>
