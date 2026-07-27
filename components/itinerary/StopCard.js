@@ -14,6 +14,7 @@ import { hapticTap } from '../../services/hapticsService';
 import { placePhotoUrl } from '../../services/placesService';
 import { openMaps } from './helpers';
 import PriceLegendModal from './PriceLegendModal';
+import LegOptionsSheet from './LegOptionsSheet';
 
 const FEEDBACK_REASONS = ['Closed', 'Too crowded', 'Not my style', 'Too far', 'Too expensive', 'Other'];
 
@@ -92,6 +93,7 @@ function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, 
   const [feedback,          setFeedback]          = useState(null);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [showLegend,        setShowLegend]        = useState(false);
+  const [showLegOptions,    setShowLegOptions]    = useState(false);
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { icon: catIcon, color } = categoryVisual(stop.category);  // data-layer: category → icon/color
@@ -125,7 +127,9 @@ function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, 
     setFeedback(type);
   };
 
-  const localTips    = getLocalKnowledge({ stopName: stop.name, stopAddress: stop.address ?? '', category: stop.category, weather, date: planDate });
+  // lat/lng are required — without them local knowledge is geographically ungated and leaks
+  // regional advice into other states. A coordless stop correctly gets no local tips.
+  const localTips    = getLocalKnowledge({ stopName: stop.name, stopAddress: stop.address ?? '', category: stop.category, weather, date: planDate, lat: stop.lat, lng: stop.lng });
   const allergyAlerts = getAllergyAlerts({ category: stop.category, stopName: stop.name, stopAddress: stop.address ?? '', sensitivities });
 
   return (
@@ -137,14 +141,21 @@ function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, 
           repeat "drive 12 min" five times. */}
       {leg?.chip ? (
         <View style={styles.legChipRow}>
-          <View style={styles.legChip}>
+          <TouchableOpacity
+            style={styles.legChip}
+            activeOpacity={0.7}
+            onPress={() => { hapticTap(); setShowLegOptions(true); }}
+            accessibilityRole="button"
+            accessibilityLabel={`${leg.chip}. Other ways to cover this stretch.`}
+          >
             <Ionicons
               name={leg.mode === 'walk' ? 'walk-outline' : leg.mode === 'bike' ? 'bicycle-outline' : 'car-outline'}
               size={11}
               color={colors.primary}
             />
             <Text style={styles.legChipTxt}>{leg.chip}</Text>
-          </View>
+            <Ionicons name="chevron-forward" size={10} color={colors.primary} />
+          </TouchableOpacity>
         </View>
       ) : null}
 
@@ -340,6 +351,7 @@ function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, 
         onSelect={(reason) => { saveFeedback('down', reason); setShowFeedbackModal(false); }}
       />
       <PriceLegendModal visible={showLegend} onClose={() => setShowLegend(false)} />
+      <LegOptionsSheet visible={showLegOptions} leg={leg} onClose={() => setShowLegOptions(false)} />
     </>
   );
 }

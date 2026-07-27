@@ -96,6 +96,30 @@ export async function getClarifyingQuestion(tripNote) {
   }
 }
 
+// Other ways to cover ONE leg. Fired only when the traveller taps a leg chip, never during
+// generation — paying for every mode on every leg of every itinerary is exactly the spend the
+// ambiguous-band design avoids. Fails soft to an empty list: a sheet that says "couldn't work
+// this one out" is honest; a spinner that never resolves is not.
+export async function getLegAlternatives({ from, to }) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
+  try {
+    const base = getApiBase();
+    const res = await fetch(`${base}/api/itinerary?mode=transport-leg`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
+      body: JSON.stringify({ from, to }),
+      signal: controller.signal,
+    });
+    if (!res.ok) return { options: [] };
+    return await res.json();
+  } catch {
+    return { options: [] };
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 export async function swapStop({ itinerary, stopIndex, latitude, longitude, locationLabel = null, locationShort = null }) {
   const base = getApiBase();
   const res  = await fetch(`${base}/api/itinerary-swap`, {
