@@ -109,6 +109,13 @@ a generic AI chat product, or an enterprise dashboard.
   ⚠ HONESTY — `local.js` entries are curated pointers with source URLs, NOT live feeds: they
   must never state a departure time or current price as fact. Rideshare has no public API
   (Uber and Lyft both retired theirs), so it is a deep link with no ETA/price claim.
+  ⚠ Transit is decided by COMPETITIVENESS, not distance: `transitIsCompetitive()` compares the
+  probe's transit duration against its drive duration (tolerance 1.75, because a routing API's
+  drive estimate hides parking). This replaced a flat "day under 15 miles" ceiling that got
+  cities backwards — a 22-mile Brooklyn→Queens day was told to DRIVE. `legAlternatives` uses
+  computeRoutes (not the matrix) so it can NAME the line — "via R Line → 1 Line"; the day-level
+  probe uses the matrix and so can only say "Take transit", not which train.
+  📄 Unvalidated thresholds and known gaps: `docs/transport-open-questions.md`.
   `gettingAround.js` is the single source of truth for the 'car'|'walk'|'transit' constraint,
   shared by the picker, the synthesis prompt and the day verdict so the three cannot drift on
   what 'walk' means. ⚠ dayVerdict must NEVER return 'drive' for a carless traveller — when the

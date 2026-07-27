@@ -20,9 +20,10 @@ import { rideshareLink } from '../../lib/transport/local';
 // animationType="fade" — "slide" traps position:fixed and the sheet drifts on mobile web.
 
 const MODE_META = {
-  walk:  { icon: 'walk-outline',    label: 'Walk' },
-  bike:  { icon: 'bicycle-outline', label: 'Bike' },
-  drive: { icon: 'car-outline',     label: 'Drive' },
+  walk:    { icon: 'walk-outline',    label: 'Walk' },
+  bike:    { icon: 'bicycle-outline', label: 'Bike' },
+  drive:   { icon: 'car-outline',     label: 'Drive' },
+  transit: { icon: 'bus-outline',     label: 'Transit' },
 };
 
 export default function LegOptionsSheet({ visible, leg, onClose }) {
@@ -70,9 +71,15 @@ export default function LegOptionsSheet({ visible, leg, onClose }) {
               return (
                 <View key={opt.mode} style={styles.row}>
                   <Ionicons name={meta.icon} size={17} color={isCurrent ? colors.primary : colors.textSecondary} />
-                  <Text style={[styles.rowLabel, isCurrent && styles.rowLabelCurrent]}>
-                    {meta.label}
-                  </Text>
+                  <View style={styles.rowLabelCol}>
+                    <Text style={[styles.rowLabel, isCurrent && styles.rowLabelCurrent]}>
+                      {meta.label}
+                    </Text>
+                    {/* Which train, not just "transit". A friend names the line. */}
+                    {opt.lines?.length ? (
+                      <Text style={styles.rowLines} numberOfLines={1}>via {opt.lines.join(' → ')}</Text>
+                    ) : null}
+                  </View>
                   <Text style={styles.rowMeta}>
                     {opt.mins} min{opt.miles != null ? ` · ${opt.miles} mi` : ''}
                   </Text>
@@ -133,8 +140,10 @@ const makeStyles = (c) => StyleSheet.create({
     paddingVertical: 12,
     borderTopWidth: 1, borderTopColor: c.surfaceAlt,
   },
-  rowLabel:        { flex: 1, fontSize: 15, color: c.textSecondary, fontFamily: FONTS.bodyMedium },
+  rowLabelCol:     { flex: 1 },
+  rowLabel:        { fontSize: 15, color: c.textSecondary, fontFamily: FONTS.bodyMedium },
   rowLabelCurrent: { color: c.textPrimary, fontFamily: FONTS.bodySemiBold },
+  rowLines:        { fontSize: 11, color: c.textMuted, fontFamily: FONTS.bodyMedium, marginTop: 1 },
   // Space Mono for the duration — a time, so it follows the Mono Is Structural rule.
   rowMeta:    { fontSize: 12, color: c.textMuted, fontFamily: FONTS.mono },
   currentTag: {

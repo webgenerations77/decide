@@ -1,6 +1,7 @@
 // __tests__/transport-modes.mjs — run: node __tests__/transport-modes.mjs
 import {
   classifyLeg, ambiguousLegIndexes, dayVerdict, isNotableLeg, legChipText,
+  transitIsCompetitive, TRANSIT_TOLERANCE,
 } from '../lib/transport/modes.js';
 import { getLocalTransport, rideshareLink } from '../lib/transport/local.js';
 import {
@@ -89,6 +90,33 @@ assert('seasonal entries drop out in January', ocWinter.length < oc.length);
 assert('year-round Beach Bus survives winter', ocWinter.some((e) => e.id === 'oc_beach_bus'));
 assert('uncovered region returns empty (renders as nothing)', getLocalTransport(40.71, -74.00, '2026-07-15').length === 0);
 assert('bad coords return empty', getLocalTransport(null, null).length === 0);
+
+console.log('big-city behaviour — transit vs driving');
+// The bug this replaced: a flat "under 15 miles" ceiling sent a 22-mile Brooklyn → Manhattan
+// → Queens day to "Drive it", which is bad advice in New York, while a 6-mile suburban day
+// squeaked under it and got recommended transit that barely runs.
+assert('transit wins when it beats driving', transitIsCompetitive(30, 40, 22) === true);
+assert('transit wins when only modestly slower', transitIsCompetitive(50, 40, 22) === true);
+assert('driving wins when transit is far slower', transitIsCompetitive(120, 40, 6) === false);
+assert('tolerance boundary holds', transitIsCompetitive(40 * TRANSIT_TOLERANCE, 40, 6) === true);
+assert('just past tolerance flips to driving', transitIsCompetitive(40 * TRANSIT_TOLERANCE + 1, 40, 6) === false);
+assert('falls back to mileage when durations are unknown', transitIsCompetitive(null, null, 6) === true);
+assert('mileage fallback rejects a long day', transitIsCompetitive(null, null, 40) === false);
+assert('zero drive time does not divide-by-zero into transit', transitIsCompetitive(30, 0, 40) === false);
+
+// The city case, end to end: a long day where transit genuinely beats driving.
+const bigCity = dayVerdict(
+  [{ mode: 'drive', miles: 9, mins: 20 }, { mode: 'drive', miles: 13, mins: 26 }],
+  { transit: 'yes', transitMins: 38, driveMins: 46 },
+);
+assert('a 22-mile transit-competitive day says transit, not drive', bigCity.mode === 'transit', bigCity.mode);
+
+// The suburban case: transit exists on paper but is three times slower.
+const sprawl = dayVerdict(
+  [{ mode: 'drive', miles: 3, mins: 8 }, { mode: 'drive', miles: 3, mins: 8 }],
+  { transit: 'yes', transitMins: 75, driveMins: 16 },
+);
+assert('a short day with unusable transit still says drive', sprawl.mode === 'drive', sprawl.mode);
 
 console.log('getting-around constraint — the plan-vs-fantasy guard');
 // The whole point of phase 2: never tell someone without a car to drive.
