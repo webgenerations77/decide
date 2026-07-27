@@ -102,11 +102,20 @@ assert('unreachable leg is flagged, not hidden', typeof carlessBadPlan.reachWarn
 assert('warning counts the bad legs', /One stretch/.test(carlessBadPlan.reachWarning), carlessBadPlan.reachWarning);
 assert('carless transit copy does not say "car day"', !/car day/i.test(carlessBadPlan.transitNote ?? ''));
 
+// The warning was right but the summary beside it was claiming a whole-day walking time for
+// a day containing a 14-mile leg. A correct caveat next to a nonsense number is still wrong.
+assert('unreachable day states no walking time',
+  !/on foot/.test(carlessBadPlan.detail), carlessBadPlan.detail);
+assert('unreachable day still states the distance',
+  /mi across the day/.test(carlessBadPlan.detail), carlessBadPlan.detail);
+
 const carlessGoodPlan = dayVerdict(
   [{ mode: 'walk', miles: 0.3, mins: 6 }, { mode: 'walk', miles: 0.4, mins: 8 }],
   { transit: 'no', gettingAround: 'walk' },
 );
 assert('a genuinely walkable day raises no warning', carlessGoodPlan.reachWarning === null);
+assert('a genuinely walkable day DOES state its walking time',
+  /on foot/.test(carlessGoodPlan.detail), carlessGoodPlan.detail);
 
 const noCarWithTransit = dayVerdict(
   [{ mode: 'drive', miles: 4, mins: 9 }],

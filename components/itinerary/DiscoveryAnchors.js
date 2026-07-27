@@ -45,8 +45,12 @@ export default function DiscoveryAnchors({ research }) {
         <>
           {anchors.length === 0 ? null : (
             <View style={styles.wrap}>
+              {/* Ionicon, not ✨ — DESIGN.md bans sparkle iconography as the generic-AI-chat
+                  anti-reference, and emoji render differently across Android launchers and
+                  can't take a theme colour. */}
               <TouchableOpacity style={styles.header} onPress={() => setExpanded((e) => !e)} activeOpacity={0.7}>
-                <Text style={styles.headerText}>✨ What we found this week ({anchors.length})</Text>
+                <Ionicons name="calendar-outline" size={13} color={colors.primary} />
+                <Text style={styles.headerText}>What we found this week ({anchors.length})</Text>
                 <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={14} color={colors.primary} />
               </TouchableOpacity>
 

@@ -5,10 +5,13 @@ const assert = (l, c, d = '') => c ? (console.log(`  ✓ ${l}`), passed++) : (co
 process.env.GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY || 'test-key';
 
 // Mock Google. Capture the last call so we can assert on URL + init.
+// `ok: true` matters — api/places/details.js branches on `r.ok`, so a mock without it sent
+// every request down the error path and the success-path assertions were never really run.
 let lastUrl, lastInit;
+let nextBody = { ok: true, result: { website: 'x' }, places: [] };
 global.fetch = async (url, init) => {
   lastUrl = String(url); lastInit = init;
-  return { status: 200, json: async () => ({ ok: true, result: { website: 'x' }, places: [] }) };
+  return { ok: true, status: 200, json: async () => nextBody };
 };
 
 const { default: searchText }   = await import('../api/places/search-text.js');
@@ -41,13 +44,46 @@ const mockRes = () => ({ _status: 200, _json: null,
   await searchNearby({ method: 'POST', headers: {}, body: { maxResultCount: 5 } }, res);
   assert('search-nearby hits searchNearby endpoint', lastUrl.includes('places:searchNearby'));
 }
-// details: GET forwards place_id + fields, hits legacy endpoint
+// details: hits Places API (NEW) v1 and translates the response to the legacy shape.
+//
+// These assertions previously targeted the legacy /place/details/json endpoint with
+// `place_id=` and `fields=` query params. That endpoint is not enabled for this project and
+// Google no longer lets new projects enable it, so details.js was migrated to v1 — which
+// takes the id in the PATH and the field list in an X-Goog-FieldMask HEADER. The test was
+// never updated, so it failed against a perfectly correct implementation.
+{
+  nextBody = {
+    id: 'abc',
+    displayName: { text: 'Test Place' },
+    formattedAddress: '1 Main St',
+    location: { latitude: 38.3, longitude: -75.1 },
+    nationalPhoneNumber: '555-0100',
+    websiteUri: 'https://example.com',
+    priceLevel: 'PRICE_LEVEL_MODERATE',
+    regularOpeningHours: { openNow: true, weekdayDescriptions: ['Mon: 9–5'] },
+  };
+  const res = mockRes();
+  await details({ method: 'GET', query: { place_id: 'abc' }, headers: {} }, res);
+
+  assert('details hits Places v1 endpoint', lastUrl.includes('places.googleapis.com/v1/places/'));
+  assert('details puts place_id in the path, not a query param', lastUrl.includes('/v1/places/abc'));
+  assert('details injects key', lastUrl.includes('key='));
+  assert('details sends the field mask as a header',
+    typeof lastInit.headers['X-Goog-FieldMask'] === 'string' && lastInit.headers['X-Goog-FieldMask'].includes('displayName'));
+
+  // The client still expects the legacy { status, result } envelope — the whole point of the
+  // translation layer. If this breaks, PlaceDetailModal renders nothing.
+  assert('details returns the legacy OK envelope', res._json?.status === 'OK');
+  assert('details translates displayName → name', res._json?.result?.name === 'Test Place');
+  assert('details translates websiteUri → website', res._json?.result?.website === 'https://example.com');
+  assert('details translates the price enum to a number', res._json?.result?.price_level === 2);
+  assert('details translates location → geometry', res._json?.result?.geometry?.location?.lat === 38.3);
+}
+// details: forwards the autocomplete session token so Google bills the session correctly
 {
   const res = mockRes();
-  await details({ method: 'GET', query: { place_id: 'abc', fields: 'name,website' }, headers: {} }, res);
-  assert('details hits place/details endpoint', lastUrl.includes('/place/details/json'));
-  assert('details forwards place_id', lastUrl.includes('place_id=abc'));
-  assert('details forwards fields', decodeURIComponent(lastUrl).includes('fields=name,website'));
+  await details({ method: 'GET', query: { place_id: 'abc', sessionToken: 'tok123' }, headers: {} }, res);
+  assert('details forwards sessionToken when present', lastUrl.includes('sessionToken=tok123'));
 }
 // details: 400 without place_id
 {

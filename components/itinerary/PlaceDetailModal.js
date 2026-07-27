@@ -197,7 +197,9 @@ function PlaceDetailModal({ visible, stop, onClose }) {
                     const cfg = highlightConfig[h.type] ?? highlightConfig.feature;
                     return (
                       <View key={i} style={[styles.highlightRow, { borderLeftColor: cfg.borderColor }]}>
-                        <Text style={styles.highlightIcon}>{cfg.icon}</Text>
+                        {/* Ionicon rather than an emoji glyph — takes the theme colour and
+                            renders identically across Android launchers. */}
+                        <Ionicons name={cfg.icon} size={15} color={cfg.borderColor} style={styles.highlightIcon} />
                         <Text style={styles.highlightText}>{h.text}</Text>
                       </View>
                     );
@@ -366,7 +368,9 @@ const makeStyles = (c) => StyleSheet.create({
     backgroundColor: c.surfaceAlt, borderRadius: 8, padding: 10,
     borderLeftWidth: 3, marginBottom: 6,
   },
-  highlightIcon: { fontSize: 16, lineHeight: 20 },
+  // Ionicons takes its size from the `size` prop, so this only handles alignment.
+  // marginTop nudges the glyph onto the first text baseline.
+  highlightIcon: { marginTop: 2 },
   highlightText: { flex: 1, fontSize: 14, color: c.textPrimary, lineHeight: 20, fontFamily: FONTS.body },
 
   reviewCard: {
