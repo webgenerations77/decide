@@ -4,6 +4,7 @@ import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { FONTS } from '../../constants/theme';
+import { hapticSelect } from '../../services/hapticsService';
 
 function TabIcon({ active, inactive, focused, color }) {
   const { colors } = useTheme();
@@ -21,6 +22,8 @@ export default function TabLayout() {
   const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <Tabs
+      // One listener covers every tab, including re-taps on the active one.
+      screenListeners={{ tabPress: () => hapticSelect() }}
       screenOptions={{
         headerShown: false,
         tabBarStyle: styles.tabBar,

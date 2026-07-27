@@ -92,6 +92,22 @@ export function hapticError() {
   fire(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error), [30, 60, 30, 60, 30]);
 }
 
+/**
+ * Wrap a press/change handler so it fires a haptic first:
+ *
+ *   onPress={haptic.tap(() => router.push('/terms'))}
+ *   onValueChange={haptic.select(setSensory)}
+ *
+ * Reserve `press` for actions that kick off real work, `select` for moving between
+ * options, `tap` for everything else. Don't wrap modal backdrops or no-op stoppers —
+ * a buzz when dismissing a sheet by tapping outside it reads as a misfire.
+ */
+export const haptic = {
+  tap:    (fn) => (...args) => { hapticTap();    return fn?.(...args); },
+  press:  (fn) => (...args) => { hapticPress();  return fn?.(...args); },
+  select: (fn) => (...args) => { hapticSelect(); return fn?.(...args); },
+};
+
 /** Used by the Settings toggle so the user feels the setting they just enabled. */
 export function hapticPreview() {
   if (!hapticsSupported()) return;

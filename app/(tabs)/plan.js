@@ -10,7 +10,7 @@ import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { generateItinerary, swapStop, getClarifyingQuestion } from '../../services/itineraryService';
-import { hapticSuccess, hapticError } from '../../services/hapticsService';
+import { hapticSuccess, hapticError, haptic } from '../../services/hapticsService';
 import { saveItinerary } from '../../services/historyService';
 import { loadPlanDefaults, loadTasteProfile, KEYS } from '../../services/settingsService';
 import { isAtDecisionLimit, incrementDecisionCount, getRemainingDecisions, isPro, LIMITS } from '../../services/subscriptionService';
@@ -655,7 +655,7 @@ export default function PlanScreen() {
               </Animated.View>
 
               <Animated.View style={{ opacity: btn1Anim, transform: [{ translateY: btn1Slide }], width: '100%' }}>
-                <TouchableOpacity style={styles.landingBtnTouch} onPress={handleToday} activeOpacity={0.88}>
+                <TouchableOpacity style={styles.landingBtnTouch} onPress={haptic.press(handleToday)} activeOpacity={0.88}>
                   <LinearGradient
                     colors={[colors.primary, colors.primaryDark]}
                     start={{ x: 0, y: 0 }}
@@ -669,7 +669,7 @@ export default function PlanScreen() {
               </Animated.View>
 
               <Animated.View style={{ opacity: btn2Anim, transform: [{ translateY: btn2Slide }], width: '100%' }}>
-                <TouchableOpacity style={styles.landingBtnTouch} onPress={() => setShowWeekPicker(true)} activeOpacity={0.75}>
+                <TouchableOpacity style={styles.landingBtnTouch} onPress={haptic.press(() => setShowWeekPicker(true))} activeOpacity={0.75}>
                   <View style={[styles.decideBtn, styles.decideBtnSecondary]}>
                     <Text style={[styles.decideBtnTitle, { color: colors.primary }]}>Plan another day</Text>
                     <Text style={[styles.decideBtnSub, { color: colors.textMuted }]}>Choose a day this week</Text>

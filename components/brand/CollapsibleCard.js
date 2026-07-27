@@ -5,6 +5,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FONTS, RADII, SHADOWS } from '../../constants/theme';
 import { KEYS } from '../../services/settingsService';
+import { haptic } from '../../services/hapticsService';
 import { useTheme } from '../../context/ThemeContext';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -42,7 +43,7 @@ export default function CollapsibleCard({ title, sectionKey, summary = null, def
 
   return (
     <View style={style}>
-      <TouchableOpacity style={styles.header} onPress={toggle} activeOpacity={0.7}>
+      <TouchableOpacity style={styles.header} onPress={haptic.tap(toggle)} activeOpacity={0.7}>
         <Text style={styles.title}>{title}</Text>
         <View style={styles.headerRight}>
           {collapsed && summary ? (

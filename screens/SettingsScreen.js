@@ -14,7 +14,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { isPro, getDecisionCount, getSpinCount, LIMITS } from '../services/subscriptionService';
 import { scheduleDailyReminder, cancelDailyReminder, loadReminderTime } from '../services/notificationService';
-import { setHapticsEnabled, hapticPreview, hapticsSupported as deviceSupportsHaptics } from '../services/hapticsService';
+import { setHapticsEnabled, hapticPreview, haptic, hapticsSupported as deviceSupportsHaptics } from '../services/hapticsService';
 import { FONTS } from '../constants/theme';
 import ScreenBackground from '../components/brand/ScreenBackground';
 import Card from '../components/brand/Card';
@@ -144,7 +144,7 @@ function ChipGrid({ options, selected, onToggle }) {
           <TouchableOpacity
             key={opt}
             style={[styles.chip, active && styles.chipActive]}
-            onPress={() => onToggle(opt)}
+            onPress={haptic.select(() => onToggle(opt))}
             activeOpacity={0.7}
           >
             <Text style={[styles.chipText, active && styles.chipTextActive]}>{opt}</Text>
@@ -187,7 +187,7 @@ function TagEditor({ value, onChange, suggestions = [], placeholder, max = 20 })
           placeholderTextColor={colors.textMuted}
           returnKeyType="done"
         />
-        <TouchableOpacity style={styles.addBtn} onPress={add} activeOpacity={0.7}>
+        <TouchableOpacity style={styles.addBtn} onPress={haptic.tap(add)} activeOpacity={0.7}>
           <Text style={styles.addBtnTxt}>Add</Text>
         </TouchableOpacity>
       </View>
@@ -205,7 +205,7 @@ function PillRow({ options, selected, onSelect }) {
         <TouchableOpacity
           key={o.id}
           style={[styles.prefPill, selected === o.id && styles.prefPillActive]}
-          onPress={() => onSelect(o.id)}
+          onPress={haptic.select(() => onSelect(o.id))}
           activeOpacity={0.7}
         >
           <Text style={[styles.prefPillText, selected === o.id && styles.prefPillTextActive]}>
@@ -224,7 +224,7 @@ function TimePickerPill({ label, value, options, onChange }) {
   const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <>
-      <TouchableOpacity style={styles.timePill} onPress={() => setOpen(true)} activeOpacity={0.7}>
+      <TouchableOpacity style={styles.timePill} onPress={haptic.tap(() => setOpen(true))} activeOpacity={0.7}>
         <Text style={styles.timePillLabel}>{label.toUpperCase()}</Text>
         <View style={styles.timePillInner}>
           <Text style={styles.timePillValue}>{value}</Text>
@@ -245,7 +245,7 @@ function TimePickerPill({ label, value, options, onChange }) {
                     opt === value && styles.modalOptionActive,
                     i === options.length - 1 && { borderBottomWidth: 0 },
                   ]}
-                  onPress={() => { onChange(opt); setOpen(false); }}
+                  onPress={haptic.select(() => { onChange(opt); setOpen(false); })}
                   activeOpacity={0.7}
                 >
                   <Text style={[styles.modalOptionText, opt === value && styles.modalOptionTextActive]}>
@@ -628,7 +628,7 @@ export default function SettingsScreen() {
                 <TouchableOpacity
                   key={o.seed}
                   style={[styles.avatarPill, avatar === o.seed && styles.avatarPillActive]}
-                  onPress={() => handleAvatar(o.seed)}
+                  onPress={haptic.select(() => handleAvatar(o.seed))}
                   activeOpacity={0.7}
                 >
                   <Image source={{ uri: avatarUrl(o.seed) }} style={styles.avatarImg} />
@@ -645,7 +645,7 @@ export default function SettingsScreen() {
                 <TouchableOpacity
                   key={o.id}
                   style={[styles.modePill, mode === o.id && styles.modePillActive]}
-                  onPress={() => setMode(o.id)}
+                  onPress={haptic.select(() => setMode(o.id))}
                   activeOpacity={0.7}
                 >
                   <Text style={[styles.modePillText, mode === o.id && styles.modePillTextActive]}>{o.label}</Text>
@@ -757,7 +757,7 @@ export default function SettingsScreen() {
                 <TouchableOpacity
                   key={m.id}
                   style={[styles.modePill, locationMode === m.id && styles.modePillActive]}
-                  onPress={() => handleLocationMode(m.id)}
+                  onPress={haptic.select(() => handleLocationMode(m.id))}
                   activeOpacity={0.7}
                 >
                   <Text style={[styles.modePillText, locationMode === m.id && styles.modePillTextActive]}>
@@ -779,7 +779,7 @@ export default function SettingsScreen() {
                     returnKeyType="search"
                   />
                   {(manualText.length > 0 || geocodedLoc) && (
-                    <TouchableOpacity style={styles.clearBtn} onPress={handleClearManualLocation} activeOpacity={0.7}>
+                    <TouchableOpacity style={styles.clearBtn} onPress={haptic.tap(handleClearManualLocation)} activeOpacity={0.7}>
                       <Text style={styles.clearBtnTxt}>✕</Text>
                     </TouchableOpacity>
                   )}
@@ -796,7 +796,7 @@ export default function SettingsScreen() {
                       <TouchableOpacity
                         key={i}
                         style={[styles.suggestionRow, i < geocodeSuggestions.length - 1 && styles.suggestionRowBorder]}
-                        onPress={() => handleSelectSuggestion(s)}
+                        onPress={haptic.select(() => handleSelectSuggestion(s))}
                         activeOpacity={0.7}
                       >
                         <Text style={styles.suggestionText} numberOfLines={1}>{s.main ?? s.label}</Text>
@@ -886,7 +886,7 @@ export default function SettingsScreen() {
                 <TouchableOpacity
                   style={[styles.appRow, styles.appRowBorder]}
                   activeOpacity={0.7}
-                  onPress={() => router.push('/paywall')}
+                  onPress={haptic.tap(() => router.push('/paywall'))}
                 >
                   <Text style={[styles.appRowLabel, { color: colors.primary }]}>Upgrade to Pro</Text>
                   <Text style={styles.appRowChevron}>›</Text>
@@ -903,7 +903,7 @@ export default function SettingsScreen() {
                 <TouchableOpacity
                   style={styles.appRow}
                   activeOpacity={0.7}
-                  onPress={() => router.push('/beta-guide')}
+                  onPress={haptic.tap(() => router.push('/beta-guide'))}
                 >
                   <Text style={styles.appRowLabel}>📖 Beta Tester Guide</Text>
                   <Text style={styles.appRowChevron}>›</Text>
@@ -917,7 +917,7 @@ export default function SettingsScreen() {
             <TouchableOpacity
               style={styles.appRow}
               activeOpacity={0.7}
-              onPress={() => setShowClearHistModal(true)}
+              onPress={haptic.tap(() => setShowClearHistModal(true))}
             >
               <Text style={[styles.appRowLabel, { color: colors.error }]}>Clear History</Text>
               <Text style={styles.appRowChevron}>›</Text>
@@ -926,10 +926,10 @@ export default function SettingsScreen() {
             <TouchableOpacity
               style={[styles.appRow, styles.appRowBorder]}
               activeOpacity={0.7}
-              onPress={async () => {
+              onPress={haptic.tap(async () => {
                 await AsyncStorage.removeItem('@decide/onboardingComplete');
                 router.replace('/onboarding');
-              }}
+              })}
             >
               <Text style={[styles.appRowLabel, { color: colors.primary }]}>Reset Onboarding</Text>
               <Text style={styles.appRowChevron}>›</Text>
@@ -938,7 +938,7 @@ export default function SettingsScreen() {
             <TouchableOpacity
               style={[styles.appRow, styles.appRowBorder]}
               activeOpacity={0.7}
-              onPress={() => router.push('/terms')}
+              onPress={haptic.tap(() => router.push('/terms'))}
             >
               <Text style={styles.appRowLabel}>Terms of Service</Text>
               <Text style={styles.appRowChevron}>›</Text>
@@ -962,7 +962,7 @@ export default function SettingsScreen() {
             <TouchableOpacity
               style={[styles.appRow, user?.email ? styles.appRowBorder : null]}
               activeOpacity={0.7}
-              onPress={() => setShowSignOutModal(true)}
+              onPress={haptic.tap(() => setShowSignOutModal(true))}
             >
               <Text style={[styles.appRowLabel, { color: colors.error }]}>Sign Out</Text>
               <Text style={styles.appRowChevron}>›</Text>
@@ -974,7 +974,7 @@ export default function SettingsScreen() {
             <>
               <SectionLabel tone="cobalt" rule style={styles.sectionHeaderSpacing}>ADMIN</SectionLabel>
               <Card style={styles.card}>
-                <Pressable style={styles.appRow} onPress={() => router.push('/admin')}>
+                <Pressable style={styles.appRow} onPress={haptic.tap(() => router.push('/admin'))}>
                   <View>
                     <Text style={styles.appRowLabel}>Admin Dashboard</Text>
                     <Text style={styles.demoSub}>API usage & user administration</Text>
@@ -999,7 +999,7 @@ export default function SettingsScreen() {
               </View>
               <Switch
                 value={demoMode}
-                onValueChange={handleDemoToggle}
+                onValueChange={haptic.select(handleDemoToggle)}
                 trackColor={{ false: colors.border, true: colors.primary }}
                 thumbColor={demoMode ? colors.primary : colors.textMuted}
               />
@@ -1032,17 +1032,17 @@ export default function SettingsScreen() {
                 <TouchableOpacity
                   style={styles.confirmDestructive}
                   activeOpacity={0.7}
-                  onPress={async () => {
+                  onPress={haptic.press(async () => {
                     setShowSignOutModal(false);
                     try { await signOut(); } catch { showToast('Sign out failed — try again'); }
-                  }}
+                  })}
                 >
                   <Text style={styles.confirmDestructiveTxt}>Sign Out</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.confirmCancel}
                   activeOpacity={0.7}
-                  onPress={() => setShowSignOutModal(false)}
+                  onPress={haptic.tap(() => setShowSignOutModal(false))}
                 >
                   <Text style={styles.confirmCancelTxt}>Cancel</Text>
                 </TouchableOpacity>
@@ -1061,20 +1061,20 @@ export default function SettingsScreen() {
                 <TouchableOpacity
                   style={styles.confirmDestructive}
                   activeOpacity={0.7}
-                  onPress={async () => {
+                  onPress={haptic.press(async () => {
                     setShowClearHistModal(false);
                     await Promise.all([
                       clearHistory(),
                     ]);
                     showToast('History cleared');
-                  }}
+                  })}
                 >
                   <Text style={styles.confirmDestructiveTxt}>Clear History</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.confirmCancel}
                   activeOpacity={0.7}
-                  onPress={() => setShowClearHistModal(false)}
+                  onPress={haptic.tap(() => setShowClearHistModal(false))}
                 >
                   <Text style={styles.confirmCancelTxt}>Cancel</Text>
                 </TouchableOpacity>

@@ -16,6 +16,7 @@ import { useTheme } from '../context/ThemeContext';
 import ScreenBackground from '../components/brand/ScreenBackground';
 import Card from '../components/brand/Card';
 import CTAButton from '../components/brand/CTAButton';
+import { haptic } from '../services/hapticsService';
 import SectionLabel from '../components/brand/SectionLabel';
 import BrandLogo from '../components/brand/BrandLogo';
 import VersionTag from '../components/brand/VersionTag';
@@ -336,7 +337,7 @@ export default function SpinScreen() {
               <TouchableOpacity
                 key={cat.id}
                 style={[styles.catPill, category === cat.id && { backgroundColor: cat.color, borderColor: cat.color }]}
-                onPress={() => { setCategory(cat.id); setResult(null); setError(null); }}
+                onPress={haptic.select(() => { setCategory(cat.id); setResult(null); setError(null); })}
                 activeOpacity={0.7}
               >
                 <Text style={[styles.catPillTxt, category === cat.id && styles.catPillTxtActive]}>
@@ -351,7 +352,7 @@ export default function SpinScreen() {
             <Text style={styles.envLabel}>✨ Sensory-friendly</Text>
             <Switch
               value={sensory}
-              onValueChange={(v) => { setSensory(v); setResult(null); setError(null); }}
+              onValueChange={haptic.select((v) => { setSensory(v); setResult(null); setError(null); })}
               trackColor={{ false: colors.border, true: colors.success }}
               thumbColor={colors.surface}
             />
@@ -368,7 +369,7 @@ export default function SpinScreen() {
                   Type what you're after — billiards, live music, arcade — and we'll pull one spot near you.
                   Leave it blank and spin for a totally random pick. Either way, don't love it? Just spin again.
                 </Text>
-                <TouchableOpacity onPress={dismissOtherExplainer} activeOpacity={0.7} style={styles.explainerDismiss}>
+                <TouchableOpacity onPress={haptic.tap(dismissOtherExplainer)} activeOpacity={0.7} style={styles.explainerDismiss}>
                   <Text style={styles.explainerDismissTxt}>Got it</Text>
                 </TouchableOpacity>
               </View>
@@ -397,7 +398,7 @@ export default function SpinScreen() {
             ) : (
               <TouchableOpacity
                 style={[styles.spinBtn, { borderColor: activeCat.color + '88', shadowColor: activeCat.color }]}
-                onPress={spin}
+                onPress={haptic.press(spin)}
                 disabled={spinning || !coords}
                 activeOpacity={0.7}
               >
@@ -471,13 +472,13 @@ export default function SpinScreen() {
                 {(result.website || result.phone) && (
                   <View style={styles.secRow}>
                     {result.website ? (
-                      <TouchableOpacity style={styles.secBtn} onPress={handleWebsite} activeOpacity={0.7}>
+                      <TouchableOpacity style={styles.secBtn} onPress={haptic.tap(handleWebsite)} activeOpacity={0.7}>
                         <Ionicons name="globe-outline" size={16} color={colors.primary} style={{ marginRight: 6 }} />
                         <Text style={styles.secBtnTxt}>Website</Text>
                       </TouchableOpacity>
                     ) : null}
                     {result.phone ? (
-                      <TouchableOpacity style={styles.secBtn} onPress={handleCall} activeOpacity={0.7}>
+                      <TouchableOpacity style={styles.secBtn} onPress={haptic.tap(handleCall)} activeOpacity={0.7}>
                         <Ionicons name="call-outline" size={16} color={colors.primary} style={{ marginRight: 6 }} />
                         <Text style={styles.secBtnTxt}>Call</Text>
                       </TouchableOpacity>
@@ -488,7 +489,7 @@ export default function SpinScreen() {
                 {detailLoading && <ActivityIndicator color={colors.primary} size="small" style={{ marginTop: 2 }} />}
 
                 {/* Spin again */}
-                <TouchableOpacity style={styles.againBtn} onPress={spin} activeOpacity={0.7}>
+                <TouchableOpacity style={styles.againBtn} onPress={haptic.press(spin)} activeOpacity={0.7}>
                   <Text style={styles.againBtnTxt}>🎲 Spin Again</Text>
                 </TouchableOpacity>
               </Card>
@@ -499,7 +500,7 @@ export default function SpinScreen() {
           {error && !spinning && (
             <View style={styles.errorBox}>
               <Text style={styles.errorTxt}>{error}</Text>
-              <TouchableOpacity style={styles.retryBtn} onPress={spin} activeOpacity={0.7}>
+              <TouchableOpacity style={styles.retryBtn} onPress={haptic.tap(spin)} activeOpacity={0.7}>
                 <Text style={styles.retryBtnTxt}>Try Again</Text>
               </TouchableOpacity>
             </View>
