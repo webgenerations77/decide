@@ -1,12 +1,15 @@
 import { useEffect, useState, useMemo } from 'react';
-import { View, Text, ScrollView, Pressable, ActivityIndicator, Modal, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, Pressable, ActivityIndicator, Modal, StyleSheet, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
-import { getUsage, getUsers, setUserRole } from '../../services/adminApi';
+import {
+  getUsage, getUsers, setUserRole,
+  getInvites, inviteUser, resendInvite, deleteInvite, removeUser, enableUser,
+} from '../../services/adminApi';
 import ScreenBackground from '../../components/brand/ScreenBackground';
 import Card from '../../components/brand/Card';
 import SectionLabel from '../../components/brand/SectionLabel';
@@ -35,6 +38,10 @@ export default function AdminScreen() {
   const [err, setErr] = useState(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [previewCoords, setPreviewCoords] = useState(PREVIEW_FALLBACK_COORDS);
+  const [invites, setInvites] = useState(null);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviting, setInviting] = useState(false);
+  const [inviteMsg, setInviteMsg] = useState(null);
 
   const emailByUid = useMemo(() => {
     const m = {};
@@ -67,6 +74,7 @@ export default function AdminScreen() {
   useEffect(() => {
     if (loading || !isAdmin) return;
     getUsers().then(setUsers).catch((e) => setErr(e.message));
+    getInvites().then(setInvites).catch(() => setInvites([]));
   }, [loading, isAdmin]);
 
   if (loading || !isAdmin) {
@@ -81,6 +89,74 @@ export default function AdminScreen() {
       setUsers((list) => list.map((x) => (x.uid === u.uid ? { ...x, role: prev } : x)));
       setErr(e.message);
     }
+  }
+
+  const refreshInvites = () => getInvites().then(setInvites).catch(() => {});
+
+  async function submitInvite() {
+    const email = inviteEmail.trim();
+    if (!email || inviting) return;
+    setInviting(true);
+    setInviteMsg(null);
+    try {
+      const r = await inviteUser(email);
+      setInviteEmail('');
+      // The invite row is saved even when the send fails — say which happened rather
+      // than implying the tester got an email they never received.
+      setInviteMsg(
+        r.emailed
+          ? { text: `Invited ${r.email}${r.existingUser ? ' — they already had an account, beta granted now.' : ' — email sent.'}` }
+          : { text: `Saved ${r.email}, but the email did NOT send: ${r.emailError || 'unknown error'}`, bad: true },
+      );
+      refreshInvites();
+      getUsers().then(setUsers).catch(() => {});
+    } catch (e) {
+      setInviteMsg({ text: e.message, bad: true });
+    } finally {
+      setInviting(false);
+    }
+  }
+
+  async function doResend(email) {
+    setInviteMsg(null);
+    try {
+      await resendInvite(email);
+      setInviteMsg({ text: `Invite resent to ${email}.` });
+    } catch (e) {
+      setInviteMsg({ text: `Resend failed: ${e.message}`, bad: true });
+    }
+  }
+
+  async function doDeleteInvite(email) {
+    try { await deleteInvite(email); refreshInvites(); } catch (e) { setErr(e.message); }
+  }
+
+  function confirmRemove(u) {
+    Alert.alert(
+      'Remove access?',
+      `${u.email} will lose beta access and won't be able to sign in. Their account and history stay intact — you can restore them later.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await removeUser({ uid: u.uid, email: u.email });
+              setUsers((list) => list.map((x) => (x.uid === u.uid ? { ...x, role: null, status: 'disabled' } : x)));
+              refreshInvites();
+            } catch (e) { setErr(e.message); }
+          },
+        },
+      ],
+    );
+  }
+
+  async function doRestore(u) {
+    try {
+      await enableUser(u.uid);
+      setUsers((list) => list.map((x) => (x.uid === u.uid ? { ...x, status: 'active' } : x)));
+    } catch (e) { setErr(e.message); }
   }
 
   return (
@@ -149,10 +225,59 @@ export default function AdminScreen() {
           )}
         </Card>
 
+        <SectionLabel tone="cobalt">INVITE A BETA TESTER</SectionLabel>
+        <Card>
+          <Text style={styles.inviteHelp}>
+            Pre-authorises an email before they've ever signed in. They get an invite and the
+            beta role attaches automatically the first time they Continue with Google — it must
+            be this exact address.
+          </Text>
+          <View style={styles.inviteRow}>
+            <TextInput
+              style={styles.inviteInput}
+              value={inviteEmail}
+              onChangeText={setInviteEmail}
+              placeholder="tester@example.com"
+              placeholderTextColor={colors.textMuted}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              onSubmitEditing={submitInvite}
+              returnKeyType="send"
+            />
+            <Pressable
+              onPress={submitInvite}
+              disabled={inviting || !inviteEmail.trim()}
+              style={[styles.inviteBtn, (inviting || !inviteEmail.trim()) && styles.inviteBtnOff]}
+            >
+              <Text style={styles.inviteBtnText}>{inviting ? '…' : 'Invite'}</Text>
+            </Pressable>
+          </View>
+          {inviteMsg ? <Text style={[styles.inviteMsg, inviteMsg.bad && styles.inviteMsgBad]}>{inviteMsg.text}</Text> : null}
+
+          {(invites || []).length > 0 && (
+            <>
+              <Text style={styles.pendingLabel}>PENDING ({invites.length})</Text>
+              {invites.map((iv) => (
+                <View key={iv.email} style={styles.pendingRow}>
+                  <Text style={styles.pendingEmail} numberOfLines={1}>{iv.email}</Text>
+                  <Pressable onPress={() => doResend(iv.email)} style={styles.pendingAction}>
+                    <Text style={styles.pendingActionText}>Resend</Text>
+                  </Pressable>
+                  <Pressable onPress={() => doDeleteInvite(iv.email)} style={styles.pendingAction}>
+                    <Text style={[styles.pendingActionText, styles.dangerText]}>Cancel</Text>
+                  </Pressable>
+                </View>
+              ))}
+            </>
+          )}
+        </Card>
+
         <SectionLabel tone="cobalt">USER ADMINISTRATION</SectionLabel>
         <Card>
           {!users ? <ActivityIndicator color={colors.primary} /> : users.map((u) => {
             const rowIsAdmin = getAdminRole({ email: u.email }) === 'admin';
+            const disabled = u.status === 'disabled';
             return (
               <Pressable
                 key={u.uid}
@@ -160,18 +285,27 @@ export default function AdminScreen() {
                 onPress={() => router.push(`/admin/user/${encodeURIComponent(u.uid)}?range=${range}`)}
               >
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.userEmail}>{u.email}</Text>
+                  <Text style={[styles.userEmail, disabled && styles.userEmailOff]}>{u.email}</Text>
                   <Text style={styles.userMeta}>{u.role || 'user'} · {u.status}</Text>
                   <Text style={styles.tapDetailHint}>View details →</Text>
                 </View>
                 {rowIsAdmin ? (
                   <Text style={styles.adminLabel}>Admin</Text>
-                ) : (
-                  <Pressable onPress={() => toggleBeta(u)} style={[styles.betaBtn, u.role === 'beta_tester' && styles.betaBtnOn]}>
-                    <Text style={[styles.betaBtnText, u.role === 'beta_tester' && styles.betaBtnTextOn]}>
-                      {u.role === 'beta_tester' ? 'Beta ✓' : 'Grant beta'}
-                    </Text>
+                ) : disabled ? (
+                  <Pressable onPress={() => doRestore(u)} style={[styles.betaBtn, styles.restoreBtn]}>
+                    <Text style={styles.betaBtnText}>Restore</Text>
                   </Pressable>
+                ) : (
+                  <View style={styles.rowActions}>
+                    <Pressable onPress={() => toggleBeta(u)} style={[styles.betaBtn, u.role === 'beta_tester' && styles.betaBtnOn]}>
+                      <Text style={[styles.betaBtnText, u.role === 'beta_tester' && styles.betaBtnTextOn]}>
+                        {u.role === 'beta_tester' ? 'Beta ✓' : 'Grant beta'}
+                      </Text>
+                    </Pressable>
+                    <Pressable onPress={() => confirmRemove(u)} style={styles.removeBtn} hitSlop={6}>
+                      <Ionicons name="person-remove-outline" size={16} color={colors.error} />
+                    </Pressable>
+                  </View>
                 )}
               </Pressable>
             );
@@ -234,6 +368,33 @@ const makeStyles = (c) => StyleSheet.create({
   betaBtnTextOn: { color: c.primaryText },
   pricingNote: { fontFamily: FONTS.body, color: c.textMuted, fontSize: 11, marginTop: 4 },
   adminLabel: { fontFamily: FONTS.bodySemiBold, color: c.textMuted, fontSize: 13 },
+
+  // Invite / remove
+  userEmailOff: { textDecorationLine: 'line-through', color: c.textMuted },
+  rowActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  removeBtn: { padding: 6, borderRadius: RADII.sm6 },
+  restoreBtn: { backgroundColor: c.sky100 },
+  inviteHelp: { fontFamily: FONTS.body, color: c.textMuted, fontSize: 12, lineHeight: 17, marginBottom: 10 },
+  inviteRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  inviteInput: {
+    flex: 1, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border,
+    borderRadius: RADII.md10, paddingHorizontal: 12, paddingVertical: 10,
+    fontFamily: FONTS.body, fontSize: 14, color: c.textPrimary,
+  },
+  inviteBtn: {
+    paddingVertical: 11, paddingHorizontal: 16, borderRadius: RADII.md10,
+    backgroundColor: c.primary, minWidth: 72, alignItems: 'center',
+  },
+  inviteBtnOff: { opacity: 0.5 },
+  inviteBtnText: { fontFamily: FONTS.bodySemiBold, color: c.primaryText, fontSize: 14 },
+  inviteMsg: { fontFamily: FONTS.body, fontSize: 12, lineHeight: 17, color: c.success, marginTop: 8 },
+  inviteMsgBad: { color: c.error },
+  pendingLabel: { fontFamily: FONTS.monoBold, fontSize: 10, letterSpacing: 1.2, color: c.textMuted, marginTop: 14 },
+  pendingRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
+  pendingEmail: { flex: 1, fontFamily: FONTS.body, fontSize: 13, color: c.textSecondary },
+  pendingAction: { paddingVertical: 2, paddingHorizontal: 4 },
+  pendingActionText: { fontFamily: FONTS.bodySemiBold, fontSize: 12, color: c.primary },
+  dangerText: { color: c.error },
   toolRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 4 },
   toolLabel: { fontFamily: FONTS.bodySemiBold, color: c.textPrimary, fontSize: 15 },
   toolSub: { fontFamily: FONTS.body, color: c.textMuted, fontSize: 12, marginTop: 1 },

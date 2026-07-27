@@ -66,24 +66,51 @@ export default function BetaGuide() {
             </Text>
             <Text style={styles.h}>🎯 Quick Spin</Text>
             <Text style={styles.p}>
-              Can't even commit to planning? Hit Spin and we'll throw you one solid pick on the spot —
-              with a quick reason for why, plus one-tap Directions, Website, and Call.
-              Perfect for "just tell me where to eat."
+              Can't even commit to planning? Pick a lane — Food, Coffee &amp; Sweets, Drinks, Activity,
+              Outdoor, Shopping, or 🔍 Other, where you can type a keyword like "arcade" or leave it
+              blank for a random pick. We'll throw you one solid spot with a quick reason for why,
+              plus one-tap Directions, Website, and Call. Perfect for "just tell me where to eat."
             </Text>
             <Text style={styles.h}>📜 History</Text>
             <Text style={styles.p}>
               Every day we've planned and every spin lands here — and it syncs across your devices — so
-              you can pull up that great taco place from last week.
+              you can pull up that great taco place from last week. Tap any saved day to reopen the
+              whole itinerary. One known rough edge: "Clear History" only clears the device you're on,
+              so it can reappear from another device. We know — no need to report it.
             </Text>
           </Card>
 
-          <SectionLabel tone="cobalt" style={styles.section}>SET YOURSELF UP FIRST (2 MIN)</SectionLabel>
+          <SectionLabel tone="cobalt" style={styles.section}>GETTING IN &amp; SETTING UP</SectionLabel>
+          <Card style={styles.card}>
+            <Text style={styles.h}>🔑 Signing in</Text>
+            <Text style={styles.p}>
+              Sign-in is Google-only for now — tap "Continue with Google" and you're in. Email and
+              password sign-in is switched off during the beta, so don't go hunting for it.
+            </Text>
+            <Text style={styles.h}>👋 The welcome questions</Text>
+            <Text style={styles.p}>
+              First time in, we walk you through a few quick steps — your name and avatar, who you
+              usually travel with, budget, pace, when your day starts and ends, how far you'll drive,
+              the food you love, what you don't eat, the kinds of places you like, and anything we
+              should watch out for. Takes about two minutes and every answer shapes your days from
+              then on. You can skip it, but the plans get noticeably better if you don't.
+            </Text>
+            <Text style={styles.h}>⚙️ Changing your mind</Text>
+            <Text style={styles.p}>
+              Everything above lives in Settings under Itinerary Preferences, and nothing is locked in.
+              The ones that matter most: allergens and sensitivities — tell us shellfish or bees and
+              we'll flag the risk right on the card — plus max travel distance, and the
+              sensory-friendly option if crowds and noise are a problem. While you're in there, pick a
+              new avatar and try light or dark mode.
+            </Text>
+          </Card>
+
+          <SectionLabel tone="cobalt" style={styles.section}>ONE THING TO EXPECT</SectionLabel>
           <Card style={styles.card}>
             <Text style={styles.p}>
-              The more we know, the better the day. In Settings, set your location, your default pace
-              and budget, and — this one matters — your dietary needs and sensitivities. Tell us you're
-              vegetarian or allergic to shellfish and we'll plan around it every single time. While
-              you're there, pick a profile avatar and try light or dark mode.
+              You get 5 planned days and 3 spins per day during the beta. Hit the ceiling and you'll
+              see the upgrade screen — that's expected, not a bug. It resets at midnight. If you're
+              mid-test and need more, tell us and we'll sort you out.
             </Text>
           </Card>
 
@@ -95,6 +122,9 @@ export default function BetaGuide() {
             <Text style={styles.p}>• Swap a stop or two — does the replacement actually make sense?</Text>
             <Text style={styles.p}>• Check each stop's details — the activity icon, the price for restaurants, and the day's weather up top. Flag anything that looks wrong.</Text>
             <Text style={styles.p}>• Try Quick Spin's Other category — type a keyword (like "arcade" or "live music"), or leave it blank for a random pick. Does the "why this pick" line make sense, and do the Directions / Website / Call buttons work?</Text>
+            <Text style={styles.p}>• Set an allergen or sensitivity in Settings, then plan a day around it — do the warnings actually show up where they should?</Text>
+            <Text style={styles.p}>• Tighten max travel distance right down, then plan again — do the stops genuinely stay inside it?</Text>
+            <Text style={styles.p}>• Turn on the sensory-friendly option and see whether the day calms down the way you'd expect.</Text>
             <Text style={styles.p}>• Watch for the "what's happening right now" picks — events and specials tied to your real dates. Tell us when they land and when they're off.</Text>
             <Text style={styles.p}>• Push the edges. The stuff that breaks is exactly what we need to hear about.</Text>
           </Card>

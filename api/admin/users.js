@@ -1,5 +1,6 @@
 import { verifyAdminRequest } from '../../lib/admin/requireAdmin.js';
-import { listUsersWithRoles, setUserRole } from '../../lib/admin/users.js';
+import { listUsersWithRoles } from '../../lib/admin/users.js';
+import { handleGet, handlePost } from '../../lib/admin/usersActions.js';
 import { getUserStats } from '../../lib/admin/userStats.js';
 import { getUserHistory } from '../../lib/history/store.js';
 
@@ -8,16 +9,17 @@ export default async function handler(req, res) {
   if (!auth.ok) return res.status(auth.status).json({ error: auth.error });
   if (req.method === 'POST') {
     try {
-      const { uid, role } = req.body || {};
-      if (!uid) return res.status(400).json({ error: 'uid_required' });
-      await setUserRole(uid, role);
-      return res.json({ ok: true });
+      const { status, body } = await handlePost(req.body || {}, { adminEmail: auth.email ?? null });
+      return res.status(status).json(body);
     } catch (e) {
-      return res.status(500).json({ error: 'set_role_failed', message: e.message });
+      return res.status(500).json({ error: 'admin_action_failed', message: e.message });
     }
   }
-  // GET ?uid=<uid> → that user's activity stats; GET (no uid) → full user list.
+  // GET ?uid=<uid> → that user's activity stats; ?data=invites → pending invites;
+  // GET (no uid) → full user list.
   // (Folded in from the former /api/admin/user-stats to stay under Vercel's 12-function cap.)
+  const shared = await handleGet({ uid: req.query.uid, data: req.query.data });
+  if (shared) return res.status(shared.status).json(shared.body);
   if (req.query.uid && req.query.data === 'history') {
     try {
       return res.json(await getUserHistory(req.query.uid));

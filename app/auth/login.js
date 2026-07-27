@@ -21,6 +21,12 @@ WebBrowser.maybeCompleteAuthSession();
 
 const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '';
 
+// Email/password sign-in is hidden for now — Google is the only supported entry point.
+// Flip to `true` to restore the email fields, the "Sign in" CTA, and the
+// forgot-password / create-account links. The handler and routes are left intact
+// so nothing else has to change when it comes back.
+const EMAIL_AUTH_ENABLED = false;
+
 export default function LoginScreen() {
   const router = useRouter();
   const { signIn } = useAuth();
@@ -106,62 +112,76 @@ export default function LoginScreen() {
 
             <Card>
               <View style={styles.form}>
-                <View style={styles.fieldBlock}>
-                  <Text style={styles.label}>Email</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={email}
-                    onChangeText={setEmail}
-                    placeholder="you@example.com"
-                    placeholderTextColor={colors.textMuted}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoComplete="email"
-                    returnKeyType="next"
-                  />
-                </View>
+                {EMAIL_AUTH_ENABLED && (
+                  <>
+                    <View style={styles.fieldBlock}>
+                      <Text style={styles.label}>Email</Text>
+                      <TextInput
+                        style={styles.input}
+                        value={email}
+                        onChangeText={setEmail}
+                        placeholder="you@example.com"
+                        placeholderTextColor={colors.textMuted}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        autoComplete="email"
+                        returnKeyType="next"
+                      />
+                    </View>
 
-                <View style={styles.fieldBlock}>
-                  <Text style={styles.label}>Password</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={password}
-                    onChangeText={setPassword}
-                    placeholder="Your password"
-                    placeholderTextColor={colors.textMuted}
-                    secureTextEntry
-                    autoComplete="password"
-                    returnKeyType="done"
-                    onSubmitEditing={handleEmailSignIn}
-                  />
-                </View>
+                    <View style={styles.fieldBlock}>
+                      <Text style={styles.label}>Password</Text>
+                      <TextInput
+                        style={styles.input}
+                        value={password}
+                        onChangeText={setPassword}
+                        placeholder="Your password"
+                        placeholderTextColor={colors.textMuted}
+                        secureTextEntry
+                        autoComplete="password"
+                        returnKeyType="done"
+                        onSubmitEditing={handleEmailSignIn}
+                      />
+                    </View>
 
+                    <CTAButton
+                      variant="cobalt"
+                      title="Sign in →"
+                      onPress={handleEmailSignIn}
+                      loading={loading}
+                      disabled={loading}
+                    />
+                  </>
+                )}
+
+                {/* Google is the sole CTA while email auth is hidden, so it leads in cobalt. */}
                 <CTAButton
-                  variant="cobalt"
-                  title="Sign in →"
-                  onPress={handleEmailSignIn}
-                  loading={loading}
-                  disabled={loading}
-                />
-
-                <CTAButton
-                  variant="secondary"
+                  variant={EMAIL_AUTH_ENABLED ? 'secondary' : 'cobalt'}
                   title="Continue with Google"
                   onPress={handleGoogleSignIn}
+                  loading={!EMAIL_AUTH_ENABLED && loading}
                   disabled={loading || !request}
-                  leftIcon={<Ionicons name="logo-google" size={18} color={colors.textPrimary} />}
+                  leftIcon={
+                    <Ionicons
+                      name="logo-google"
+                      size={18}
+                      color={EMAIL_AUTH_ENABLED ? colors.textPrimary : colors.primaryText}
+                    />
+                  }
                 />
               </View>
             </Card>
 
-            <View style={styles.links}>
-              <TouchableOpacity onPress={() => router.push('/auth/forgot-password')} activeOpacity={0.7}>
-                <Text style={styles.linkText}>Forgot password?</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => router.push('/auth/signup')} activeOpacity={0.7}>
-                <Text style={styles.linkText}>Create account</Text>
-              </TouchableOpacity>
-            </View>
+            {EMAIL_AUTH_ENABLED && (
+              <View style={styles.links}>
+                <TouchableOpacity onPress={() => router.push('/auth/forgot-password')} activeOpacity={0.7}>
+                  <Text style={styles.linkText}>Forgot password?</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => router.push('/auth/signup')} activeOpacity={0.7}>
+                  <Text style={styles.linkText}>Create account</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
