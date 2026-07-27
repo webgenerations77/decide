@@ -30,6 +30,7 @@ import BetaBanner from '../components/BetaBanner';
 import BetaFeedback from '../components/BetaFeedback';
 import { isPublicRoute } from '../utils/betaRoutes';
 import { isQaResetAccount, shouldShowBetaGuide } from '../lib/firstLogin';
+import { initHaptics } from '../services/hapticsService';
 import { FONTS } from '../constants/theme';
 import ScreenBackground from '../components/brand/ScreenBackground';
 import BrandLogo from '../components/brand/BrandLogo';
@@ -111,6 +112,9 @@ function RootLayoutInner() {
       if (shouldShowBetaGuide({ onboarded, guideAlways })) router.push('/beta-guide');
     })();
   }, [ready, isBetaTester, isAdmin, pathname]);
+
+  // Hydrate the cached haptics flag once, so tap handlers never touch AsyncStorage.
+  useEffect(() => { initHaptics(); }, []);
 
   useEffect(() => {
     const sub = Notifications.addNotificationResponseReceivedListener(response => {

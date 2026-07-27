@@ -81,6 +81,10 @@ Brand primitives (`components/brand/`) — compose tokens; use these instead of 
 - services/historyService.js   — cross-device history: AsyncStorage cache + syncHistory() merge over /api/history
 - services/subscriptionService.js — free tier limits, decision/spin counters
 - services/notificationService.js — daily reminder scheduling
+- services/hapticsService.js   — haptic feedback; enabled flag cached on globalThis, hydrated once by
+  `initHaptics()` in app/_layout.js so tap handlers never hit AsyncStorage. Native-only (no-ops on web).
+  Use `hapticTap/hapticPress/hapticSelect/hapticSuccess/hapticError` — never call expo-haptics directly,
+  or the toggle won't be respected. CTAButton already fires a press haptic for all 15 of its call sites.
 
 ## Key Decisions & Conventions
 - All screens mobile-first; `--legacy-peer-deps` required for all npm installs
@@ -179,7 +183,7 @@ Client never calls Anthropic directly.
 - @decide/cuisines, @decide/dietary, @decide/activity_styles
 - @decide/sensitivities (food allergens + environmental triggers)
 - @decide/max_distance (1–50 miles)
-- @decide/notifications, @decide/tos_accepted
+- @decide/notifications, @decide/haptics (default true), @decide/tos_accepted
 - @decide/demo_mode (uses Berlin, MD sample data)
 
 ## Environment Variables

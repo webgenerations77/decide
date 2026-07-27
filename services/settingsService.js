@@ -20,6 +20,7 @@ export const KEYS = {
   DEFAULT_START_TIME: '@decide/default_start_time',
   DEFAULT_END_TIME:   '@decide/default_end_time',
   NOTIFICATIONS:      '@decide/notifications',
+  HAPTICS:            '@decide/haptics',         // boolean — vibration feedback on taps + itinerary ready
   TOS_ACCEPTED:       '@decide/tos_accepted',     // ISO timestamp of acceptance
   THEME_MODE:         '@decide/theme_mode',          // 'auto' | 'light' | 'dark'
   COLLAPSED_SECTIONS: '@decide/collapsed_sections',  // JSON map { [sectionKey]: boolean }
@@ -45,6 +46,7 @@ const DEFAULTS = {
   startTime:      '11:00 AM',
   endTime:        '8:00 PM',
   notifications:  false,
+  haptics:        true,
   tosAccepted:    null,
 };
 
@@ -77,6 +79,7 @@ export async function loadAllSettings() {
       startTime:      map[KEYS.DEFAULT_START_TIME]  ?? DEFAULTS.startTime,
       endTime:        map[KEYS.DEFAULT_END_TIME]    ?? DEFAULTS.endTime,
       notifications:  map[KEYS.NOTIFICATIONS]       ?? DEFAULTS.notifications,
+      haptics:        map[KEYS.HAPTICS]             ?? DEFAULTS.haptics,
     };
   } catch {
     return { ...DEFAULTS };

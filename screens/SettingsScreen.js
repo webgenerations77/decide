@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, Pressable, StyleSheet, ScrollView,
-  Switch, ActivityIndicator, Modal, PanResponder, Animated, Alert, Image,
+  Switch, ActivityIndicator, Modal, PanResponder, Animated, Alert, Image, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -14,6 +14,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { isPro, getDecisionCount, getSpinCount, LIMITS } from '../services/subscriptionService';
 import { scheduleDailyReminder, cancelDailyReminder, loadReminderTime } from '../services/notificationService';
+import { setHapticsEnabled, hapticPreview } from '../services/hapticsService';
 import { FONTS } from '../constants/theme';
 import ScreenBackground from '../components/brand/ScreenBackground';
 import Card from '../components/brand/Card';
@@ -330,6 +331,7 @@ export default function SettingsScreen() {
   const [startTime,      setStartTime]      = useState('11:00 AM');
   const [endTime,        setEndTime]        = useState('8:00 PM');
   const [notifications,  setNotifications]  = useState(false);
+  const [haptics,        setHaptics]        = useState(true);
   const [demoMode,       setDemoMode]       = useState(false);
   const [toastMsg,       setToastMsg]       = useState(null);
   const [proStatus,        setProStatus]        = useState(false);
@@ -372,6 +374,7 @@ export default function SettingsScreen() {
       setStartTime(s.startTime);
       setEndTime(s.endTime);
       setNotifications(s.notifications);
+      setHaptics(s.haptics);
       const demoRaw = await AsyncStorage.getItem('@decide/demo_mode').catch(() => null);
       setDemoMode(demoRaw === 'true');
       setLoaded(true);
@@ -520,6 +523,15 @@ export default function SettingsScreen() {
   const handleGroup    = (v) => { setGroup(v);       save(KEYS.DEFAULT_GROUP, v); };
   const handleStart    = (v) => { setStartTime(v);   save(KEYS.DEFAULT_START_TIME, v); };
   const handleEnd      = (v) => { setEndTime(v);     save(KEYS.DEFAULT_END_TIME, v); };
+
+  // Updates the in-memory flag as well as storage, so the change takes effect on the very
+  // next tap without waiting for an app restart to re-run initHaptics().
+  const handleHaptics = (v) => {
+    setHaptics(v);
+    setHapticsEnabled(v);
+    save(KEYS.HAPTICS, v);
+    if (v) hapticPreview();   // let them feel what they just turned on
+  };
   // Notifications are "Coming Soon" (Switch is hard-disabled below). These handlers are
   // intentionally retained, inert, for when the feature is re-enabled — not dead code.
   // eslint-disable-next-line no-unused-vars
@@ -549,6 +561,9 @@ export default function SettingsScreen() {
       scheduleDailyReminder(hour, minute).catch(() => {});
     }
   };
+
+  // Haptics are native-only; on web the toggle renders inert rather than lying about it.
+  const hapticsSupported = Platform.OS === 'ios' || Platform.OS === 'android';
 
   const validWindow = timeToMinutes(endTime) - timeToMinutes(startTime) >= 180;
 
@@ -801,6 +816,33 @@ export default function SettingsScreen() {
 
           {/* ── App ──────────────────────────────────────────────────────────── */}
           <SectionLabel tone="cobalt" rule style={styles.sectionHeaderSpacing}>APP</SectionLabel>
+
+          {/* ── Haptics ───────────────────────────────────────────────────── */}
+          <CollapsibleCard
+            title="HAPTICS"
+            sectionKey="haptics"
+            summary={hapticsSupported ? (haptics ? 'On' : 'Off') : 'Unavailable'}
+            style={styles.collapsibleSpacing}
+          >
+            <View style={styles.demoToggleRow}>
+              <View style={styles.demoLabelGroup}>
+                <Text style={styles.demoLabel}>Vibration Feedback</Text>
+                <Text style={styles.demoSub}>
+                  {hapticsSupported
+                    ? 'A tap when you press a button, and a nudge when your day is ready.'
+                    : 'Your device doesn’t support vibration feedback.'}
+                </Text>
+              </View>
+              <Switch
+                value={hapticsSupported && haptics}
+                disabled={!hapticsSupported}
+                onValueChange={handleHaptics}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                thumbColor={hapticsSupported && haptics ? colors.primary : colors.textMuted}
+                style={!hapticsSupported && { opacity: 0.5 }}
+              />
+            </View>
+          </CollapsibleCard>
 
           {/* ── Notifications ─────────────────────────────────────────────── */}
           <CollapsibleCard title="NOTIFICATIONS" sectionKey="notifications" summary="Coming soon" style={styles.collapsibleSpacing}>

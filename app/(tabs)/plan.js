@@ -10,6 +10,7 @@ import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { generateItinerary, swapStop, getClarifyingQuestion } from '../../services/itineraryService';
+import { hapticSuccess, hapticError } from '../../services/hapticsService';
 import { saveItinerary } from '../../services/historyService';
 import { loadPlanDefaults, loadTasteProfile, KEYS } from '../../services/settingsService';
 import { isAtDecisionLimit, incrementDecisionCount, getRemainingDecisions, isPro, LIMITS } from '../../services/subscriptionService';
@@ -492,6 +493,7 @@ export default function PlanScreen() {
       setIsFallback(data.isFallback ?? false);
       setResearch(data.discovery ?? null);
       setView('itinerary');
+      hapticSuccess();   // the build is what the user was waiting on — land it with a thump
 
       try {
         const summary = (data.itinerary ?? []).map((s) => ({ name: s.name, category: s.category }));
@@ -521,6 +523,7 @@ export default function PlanScreen() {
       }
     } catch (err) {
       console.error('[plan] generate error:', err);
+      hapticError();
       setError(err.message ?? "Hmm, something didn't go through. Try again?");
     } finally {
       setLoading(false);
@@ -569,8 +572,10 @@ export default function PlanScreen() {
         locationShort: labelToSend,
       });
       setItinerary(updated);
+      hapticSuccess();   // swap round-trips to the API, so the user is waiting on this too
     } catch (err) {
       console.error('[plan] swap error:', err);
+      hapticError();
       setError(err.message ?? "Couldn't find a swap. Try again.");
     } finally {
       setSwappingIndex(null);

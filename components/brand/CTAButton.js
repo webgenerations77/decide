@@ -2,8 +2,11 @@ import { TouchableOpacity, Text, ActivityIndicator, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { RADII, FONTS } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
+import { hapticTap, hapticPress } from '../../services/hapticsService';
 
-export default function CTAButton({ title, onPress, variant = 'go', disabled = false, loading = false, style, leftIcon = null }) {
+// `haptic` picks the weight: 'auto' gives filled CTAs a Medium thump and secondary
+// buttons a Light tap; pass false to silence a button (e.g. one that fires rapidly).
+export default function CTAButton({ title, onPress, variant = 'go', disabled = false, loading = false, style, leftIcon = null, haptic = 'auto' }) {
   const { colors: COLORS } = useTheme();
   const isDisabled = disabled || loading;
   const isSecondary = variant === 'secondary';
@@ -11,6 +14,11 @@ export default function CTAButton({ title, onPress, variant = 'go', disabled = f
     ? [COLORS.primary, COLORS.primaryDark]
     : [COLORS.accent, COLORS.accentDark];    // orange "go"
   const labelColor = isSecondary ? COLORS.primary : COLORS.white;
+
+  const handlePress = (e) => {
+    if (haptic !== false) (haptic === 'light' || isSecondary ? hapticTap : hapticPress)();
+    onPress?.(e);
+  };
 
   const inner = loading
     ? <ActivityIndicator color={labelColor} size="small" />
@@ -20,13 +28,13 @@ export default function CTAButton({ title, onPress, variant = 'go', disabled = f
 
   const body = isSecondary ? (
     <TouchableOpacity
-      onPress={onPress} disabled={isDisabled} accessibilityRole="button"
+      onPress={handlePress} disabled={isDisabled} accessibilityRole="button"
       style={[{ height: 56, borderRadius: RADII.pill, alignItems: 'center', justifyContent: 'center',
                 backgroundColor: COLORS.surface, borderWidth: 1.5, borderColor: COLORS.primary, opacity: isDisabled ? 0.5 : 1 }, style]}>
       {inner}
     </TouchableOpacity>
   ) : (
-    <TouchableOpacity onPress={onPress} disabled={isDisabled} accessibilityRole="button" activeOpacity={0.9} style={[{ opacity: isDisabled ? 0.5 : 1 }, style]}>
+    <TouchableOpacity onPress={handlePress} disabled={isDisabled} accessibilityRole="button" activeOpacity={0.9} style={[{ opacity: isDisabled ? 0.5 : 1 }, style]}>
       <LinearGradient colors={colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
         style={{ height: 56, borderRadius: RADII.pill, alignItems: 'center', justifyContent: 'center' }}>
         {inner}

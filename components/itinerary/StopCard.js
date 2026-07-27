@@ -10,6 +10,7 @@ import { categoryVisual } from '../../constants/categoryVisuals';
 import useViewportOverlay, { WEB_OVERLAY_FIX } from '../../hooks/useViewportOverlay';
 import { useTheme } from '../../context/ThemeContext';
 import { getLocalKnowledge, getAllergyAlerts } from '../../constants/localKnowledge';
+import { hapticTap } from '../../services/hapticsService';
 import { placePhotoUrl } from '../../services/placesService';
 import { openMaps } from './helpers';
 import PriceLegendModal from './PriceLegendModal';
@@ -277,7 +278,7 @@ function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, 
               : <View />
             }
             {onSwap ? (
-              <TouchableOpacity style={styles.swapBtn} onPress={onSwap} disabled={isSwapping} activeOpacity={0.7}>
+              <TouchableOpacity style={styles.swapBtn} onPress={() => { hapticTap(); onSwap(); }} disabled={isSwapping} activeOpacity={0.7}>
                 {isSwapping
                   ? <View style={styles.swapLoadingRow}>
                       <ActivityIndicator size="small" color={colors.textMuted} style={{ marginRight: 5 }} />
