@@ -82,7 +82,9 @@ Brand primitives (`components/brand/`) — compose tokens; use these instead of 
 - services/subscriptionService.js — free tier limits, decision/spin counters
 - services/notificationService.js — daily reminder scheduling
 - services/hapticsService.js   — haptic feedback; enabled flag cached on globalThis, hydrated once by
-  `initHaptics()` in app/_layout.js so tap handlers never hit AsyncStorage. Native-only (no-ops on web).
+  `initHaptics()` in app/_layout.js so tap handlers never hit AsyncStorage. expo-haptics on native,
+  Vibration API fallback on web (works in the installed PWA on Android; iOS Safari has no Vibration
+  API, so `hapticsSupported()` is false there and the Settings toggle hides itself).
   Use `hapticTap/hapticPress/hapticSelect/hapticSuccess/hapticError` — never call expo-haptics directly,
   or the toggle won't be respected. CTAButton already fires a press haptic for all 15 of its call sites.
 
@@ -101,6 +103,18 @@ Brand primitives (`components/brand/`) — compose tokens; use these instead of 
   "Cheddar" must NEVER appear in user-facing text. In UI copy refer to the product as "Decide" or use "we".
   Also never say "AI"/"artificial intelligence" in user-facing copy.
 - All new colors must come from constants/theme.js — no hardcoded hex values in components
+- ⚠ THE SHIPPING PRODUCT IS THE PWA. The app is used by installing the Vercel-hosted web build to the
+  home screen — NOT via an EAS native build. Consequences that are easy to get wrong:
+  · app.json `icon` / `splash` / `android.adaptiveIcon` are consumed by EAS at build time and are
+    INVISIBLE to the installed web app. PWA icons live in `public/manifest.json` + `public/icons/`.
+    Regenerate every icon with `npm i -D sharp --legacy-peer-deps && node scripts/generate-icons.js`.
+  · `web.output` is "single", so `app/+html.js` is IGNORED (it only applies to "static"/"server").
+    Custom `<head>` tags go in `public/index.html` — scaffold it via `npx expo customize public/index.html`.
+    Keep the `%WEB_TITLE%` / `%LANG_ISO_CODE%` placeholders and the `#root` div; Expo injects the bundle
+    script and favicon link into that template.
+  · Anything in `public/` is copied verbatim to `dist/` on export.
+  · Native-only modules (expo-haptics, etc.) silently do nothing in the PWA — always pair them with a
+    web fallback and a real capability probe, never a bare `Platform.OS` check.
 - Server API endpoints exist as mirrored twins: prod Vercel `api/*.js` (req/res) + dev Expo
   `app/api/*+api.js` (Request/Response). Keep both in sync when editing a handler.
 - ⚠ VERCEL FUNCTION CAP: Hobby plan allows max 12 serverless functions per deploy, and EVERY `.js` under
