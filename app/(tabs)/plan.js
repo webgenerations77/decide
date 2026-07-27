@@ -34,6 +34,7 @@ import useViewportOverlay, { WEB_OVERLAY_FIX } from '../../hooks/useViewportOver
 import StopCard from '../../components/itinerary/StopCard';
 import ItineraryMeta from '../../components/itinerary/ItineraryMeta';
 import RouteMap from '../../components/itinerary/RouteMap';
+import { GETTING_AROUND_OPTIONS, DEFAULT_GETTING_AROUND } from '../../lib/transport/gettingAround';
 
 // ─── Date helpers ─────────────────────────────────────────────────────────────
 function getNextSevenDays() {
@@ -191,6 +192,7 @@ export default function PlanScreen() {
   const [startTime, setStartTime] = useState('11:00 AM');
   const [endTime,   setEndTime]   = useState('8:00 PM');
   const [cuisines,  setCuisines]  = useState([]);
+  const [gettingAround, setGettingAround] = useState(DEFAULT_GETTING_AROUND);
   const [tripNote,  setTripNote]  = useState('');
   const [maxDistance, setMaxDistance] = useState(25);
 
@@ -203,6 +205,7 @@ export default function PlanScreen() {
   const [itinerary,      setItinerary]      = useState(null);
   const [weather,        setWeather]        = useState(null);
   const [meta,           setMeta]           = useState(null);
+  const [transport,      setTransport]      = useState(null);
   const [loading,        setLoading]        = useState(false);
   const [swappingIndex,  setSwappingIndex]  = useState(null);
   const [error,          setError]          = useState(null);
@@ -336,6 +339,7 @@ export default function PlanScreen() {
       setPace(d.pace); setBudget(d.budget); setGroupType(d.group);
       setStartTime(d.startTime); setEndTime(d.endTime);
       setCuisines(d.cuisines ?? []);
+      setGettingAround(d.gettingAround ?? DEFAULT_GETTING_AROUND);
     });
     AsyncStorage.getItem('@decide/display_name').then((n) => {
       if (n) setDisplayName(n);
@@ -348,6 +352,13 @@ export default function PlanScreen() {
   const handleMaxDistance = (v) => {
     setMaxDistance(v);
     AsyncStorage.setItem('@decide/max_distance', String(v)).catch(() => {});
+  };
+
+  // Persisted like max_distance: how you get around is rarely a one-off, so the choice
+  // sticks as the default for the next plan rather than resetting to "Driving" each time.
+  const handleGettingAround = (v) => {
+    setGettingAround(v);
+    AsyncStorage.setItem(KEYS.GETTING_AROUND, String(v)).catch(() => {});
   };
 
   useEffect(() => {
@@ -416,7 +427,7 @@ export default function PlanScreen() {
   };
 
   const goToLanding = () => {
-    setItinerary(null); setWeather(null); setMeta(null); setError(null); setIsFallback(false); setResearch(null);
+    setItinerary(null); setWeather(null); setMeta(null); setTransport(null); setError(null); setIsFallback(false); setResearch(null);
     setTripNote('');
     setClarifyQuestion(null); setClarifyAnswer(''); setClarifyAsked(false); setClarifyLoading(false);
     setView('landing');
@@ -479,7 +490,7 @@ export default function PlanScreen() {
       const data = await generateItinerary({
         latitude:  coords.latitude,
         longitude: coords.longitude,
-        preferences: { pace, budget, group_type: groupType, cuisines, sensitivities },
+        preferences: { pace, budget, group_type: groupType, cuisines, sensitivities, gettingAround },
         startTime, endTime, date: planDate,
         feedback: feedbackCtx,
         maxDistanceMiles,
@@ -491,6 +502,7 @@ export default function PlanScreen() {
       setItinerary(data.itinerary);
       setWeather(data.weather);
       setMeta(data.meta);
+      setTransport(data.transport ?? null);
       setIsFallback(data.isFallback ?? false);
       setResearch(data.discovery ?? null);
       setView('itinerary');
@@ -502,6 +514,9 @@ export default function PlanScreen() {
         const entry = {
           id, timestamp: Date.now(), meta: data.meta, weather: data.weather,
           stops: summary, itinerary: data.itinerary ?? [], v: 2,
+          // Saved so a reopened plan still knows how the day moves. It's a small object
+          // (one verdict + one entry per leg), not per-stop duplication.
+          transport: data.transport ?? null,
           feedback: null, feedbackReason: null,
         };
         setCurrentItineraryId(id);
@@ -598,7 +613,7 @@ export default function PlanScreen() {
   };
 
   const resetToConfiguring = () => {
-    setItinerary(null); setWeather(null); setMeta(null); setError(null); setIsFallback(false); setResearch(null);
+    setItinerary(null); setWeather(null); setMeta(null); setTransport(null); setError(null); setIsFallback(false); setResearch(null);
     setTripNote('');
     setClarifyQuestion(null); setClarifyAnswer(''); setClarifyAsked(false); setClarifyLoading(false);
     setView('configuring');
@@ -707,6 +722,24 @@ export default function PlanScreen() {
             </View>
 
             <Card style={styles.prefsCard}>
+              {/* Sits above the distance slider deliberately: it governs what that slider can
+                  even mean. Choosing "On foot" clamps the effective search radius, so showing
+                  a 25-mile slider underneath an unclamped one would be a lie. */}
+              <SectionLabel tone="cobalt">Getting around</SectionLabel>
+              <PillRow
+                options={GETTING_AROUND_OPTIONS}
+                selected={gettingAround}
+                onSelect={handleGettingAround}
+                disabled={loading}
+              />
+              {gettingAround !== 'car' ? (
+                <Text style={styles.constraintHint}>
+                  {gettingAround === 'walk'
+                    ? 'We’ll keep the whole day inside one walkable stretch — fewer stops, all close together.'
+                    : 'We’ll keep stops close and near main roads, so you’re never stranded somewhere with no way back.'}
+                </Text>
+              ) : null}
+
               <DistanceSlider value={maxDistance} onChange={handleMaxDistance} />
 
               <SectionLabel tone="cobalt">Date</SectionLabel>
@@ -797,7 +830,7 @@ export default function PlanScreen() {
                 </View>
               )}
               <ItineraryMeta meta={meta} stopCount={itinerary.length} research={research} timeEditor={timeEditor} weather={weather} />
-              <RouteMap stops={itinerary} />
+              <RouteMap stops={itinerary} transport={transport} />
 
               {itinerary.map((stop, i) => (
                 <StopCard
@@ -811,6 +844,7 @@ export default function PlanScreen() {
                   weather={weather}
                   planDate={planDate}
                   sensitivities={sensitivities}
+                  leg={transport?.legs?.find((l) => l.index === i) ?? null}
                 />
               ))}
 
@@ -1028,6 +1062,12 @@ const makeStyles = (c) => StyleSheet.create({
   timePillInner:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   timePillValue:   { fontSize: 14, fontFamily: FONTS.bodyBold, color: c.primary },
   timeValidationHint: { fontSize: 11, color: c.error, marginTop: 2 },
+  // Explains what the constraint will actually do to the plan, so choosing "On foot" and
+  // getting four stops instead of six reads as intent rather than as the app underdelivering.
+  constraintHint: {
+    fontSize: 12, lineHeight: 17, color: c.textSecondary,
+    fontFamily: FONTS.body, marginTop: 2, marginBottom: 2,
+  },
   resultsTimeEditor: { marginTop: 4, marginBottom: 12 },
 
   // Cheddar's clarifying follow-up (chat-style)

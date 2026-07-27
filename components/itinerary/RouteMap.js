@@ -6,6 +6,7 @@ import { FONTS, RADII } from '../../constants/theme';
 import { KEYS } from '../../services/settingsService';
 import { haptic } from '../../services/hapticsService';
 import { useTheme } from '../../context/ThemeContext';
+import TransportSummary from './TransportSummary';
 
 // Collapsible route preview. Matches the DiscoveryAnchors disclosure pattern so the
 // itinerary keeps one visual language for optional supplementary content.
@@ -44,21 +45,35 @@ export function buildStaticMapPath(stops) {
   return `/api/places/photo?type=staticmap&size=${MAP_W}x${MAP_H}&scale=2&${markerParams(pts)}&${path}`;
 }
 
+// Google Maps travel modes. Our internal 'bike' is Google's 'bicycling'.
+const GMAPS_TRAVEL_MODE = {
+  walk: 'walking',
+  bike: 'bicycling',
+  transit: 'transit',
+  drive: 'driving',
+};
+
 // Multi-stop Google Maps directions: first stop is origin, last is destination,
 // everything between becomes a waypoint.
-export function buildDirectionsUrl(stops) {
+//
+// travelMode follows the day's verdict rather than being hardcoded to driving — handing a
+// carless traveller a driving route is exactly the "plan you can't execute" this feature
+// exists to prevent. Defaults to driving when there's no verdict.
+export function buildDirectionsUrl(stops, mode = 'drive') {
   const pts = stopsWithCoords(stops);
   if (pts.length === 0) return null;
   const coord = (s) => `${s.lat},${s.lng}`;
   const origin = coord(pts[0]);
   const destination = coord(pts[pts.length - 1]);
   const waypoints = pts.slice(1, -1).map(coord).join('|');
+  const travelmode = GMAPS_TRAVEL_MODE[mode] ?? 'driving';
   const params = [
     'api=1',
     `origin=${encodeURIComponent(origin)}`,
     `destination=${encodeURIComponent(destination)}`,
-    waypoints ? `waypoints=${encodeURIComponent(waypoints)}` : '',
-    'travelmode=driving',
+    // Google Maps ignores waypoints on transit directions — it only routes point to point.
+    waypoints && travelmode !== 'transit' ? `waypoints=${encodeURIComponent(waypoints)}` : '',
+    `travelmode=${travelmode}`,
   ].filter(Boolean);
   return `https://www.google.com/maps/dir/?${params.join('&')}`;
 }
@@ -67,7 +82,7 @@ export function buildDirectionsUrl(stops) {
 // introducing a second persistence mechanism for the same idea.
 const SECTION_KEY = 'itineraryRouteMap';
 
-export default function RouteMap({ stops = [] }) {
+export default function RouteMap({ stops = [], transport = null }) {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   // Open by default: seeing the day's shape IS the "a sequence, not a set" claim, and
@@ -101,7 +116,8 @@ export default function RouteMap({ stops = [] }) {
 
   const mapped = useMemo(() => stopsWithCoords(stops), [stops]);
   const src = useMemo(() => buildStaticMapPath(stops), [stops]);
-  const dirUrl = useMemo(() => buildDirectionsUrl(stops), [stops]);
+  const verdictMode = transport?.verdict?.mode ?? 'drive';
+  const dirUrl = useMemo(() => buildDirectionsUrl(stops, verdictMode), [stops, verdictMode]);
 
   // Nothing to plot, or a single point with no route to show.
   if (mapped.length < 2 || !src) return null;
@@ -155,6 +171,10 @@ export default function RouteMap({ stops = [] }) {
               {dropped} stop{dropped === 1 ? '' : 's'} had no location and {dropped === 1 ? 'is' : 'are'} not shown.
             </Text>
           )}
+
+          {/* The day's travel verdict sits with the map so the two read as one
+              "how the day moves" block rather than two competing cards. */}
+          <TransportSummary transport={transport} />
 
           <TouchableOpacity onPress={openDirections} style={styles.dirBtn} activeOpacity={0.7}>
             <Ionicons name="navigate-outline" size={15} color={colors.primary} />

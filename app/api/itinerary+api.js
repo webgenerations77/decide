@@ -6,11 +6,12 @@ import { getUidFromAuth } from '../../lib/admin/auth.js';
 import { runWithUser } from '../../lib/usageContext.js';
 import { getClarifyingQuestion } from '../../lib/clarify.js';
 import { annotateRoute } from '../../lib/smart/routing.js';
+import { buildTransport, legAlternatives } from '../../lib/transport/index.js';
+import { clampSearchMiles } from '../../lib/transport/gettingAround.js';
 
 const GOOGLE_KEY    = process.env.GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 const NPS_KEY       = process.env.EXPO_PUBLIC_NPS_API_KEY;
 const RIDB_KEY      = process.env.EXPO_PUBLIC_RIDB_API_KEY;
-const OPENROUTE_KEY = process.env.EXPO_PUBLIC_OPENROUTE_API_KEY;
 const NEARBY_URL    = 'https://places.googleapis.com/v1/places:searchNearby';
 
 const PLACE_TYPES = {
@@ -181,35 +182,10 @@ async function fetchRIDB(lat, lng) {
   }
 }
 
-async function enrichWithDrivingTimes(itinerary) {
-  if (!OPENROUTE_KEY || itinerary.length < 2) return itinerary;
-  const pairs = [];
-  for (let i = 0; i < itinerary.length - 1; i++) {
-    const a = itinerary[i], b = itinerary[i + 1];
-    if (a.lat && a.lng && b.lat && b.lng) {
-      pairs.push({ i, coords: [[a.lng, a.lat], [b.lng, b.lat]] });
-    }
-  }
-  if (pairs.length === 0) return itinerary;
-  const results = await Promise.allSettled(
-    pairs.map(async ({ i, coords }) => {
-      const res  = await fetch('https://api.openrouteservice.org/v2/directions/driving-car', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: OPENROUTE_KEY },
-        body: JSON.stringify({ coordinates: coords }),
-      });
-      const data = await res.json();
-      return { i, drive_mins: Math.round((data.routes?.[0]?.summary?.duration ?? 0) / 60) };
-    })
-  );
-  const updated = [...itinerary];
-  results.forEach((r) => {
-    if (r.status === 'fulfilled') {
-      updated[r.value.i] = { ...updated[r.value.i], drive_to_next_mins: r.value.drive_mins };
-    }
-  });
-  return updated;
-}
+// REMOVED: enrichWithDrivingTimes. It fired one OpenRouteService request per leg on every
+// generate and wrote `drive_to_next_mins`, which nothing in the app ever rendered — pure cost
+// and latency for a dead field. Real per-leg travel now comes from lib/transport/, which pays
+// only for the legs where the answer is genuinely uncertain.
 
 async function fetchStopDetails(placeId) {
   if (!GOOGLE_KEY || !placeId || /^(demo_|nps_|ridb_|fallback_|find_|stop_)/.test(placeId)) return null;
@@ -353,9 +329,20 @@ export async function POST(request) {
   return runWithUser(uid, async () => {
     // Cheddar's single follow-up clarifying question (folded in from /api/clarify to stay under
     // Vercel's 12-function cap). Fails open to { skip: true }; never blocks generation.
-    if (new URL(request.url).searchParams.get('mode') === 'clarify') {
+    const mode = new URL(request.url).searchParams.get('mode');
+    if (mode === 'clarify') {
       const { tripNote = '' } = await request.json().catch(() => ({}));
       return Response.json(await getClarifyingQuestion(tripNote));
+    }
+
+    // Alternative modes for ONE leg — the escape hatch behind a tap on the timeline chip.
+    // Folded onto this endpoint (same reason as clarify) to stay under the 12-function cap.
+    // Deliberately not part of generation: 3 elements per leg is exactly the spend the
+    // ambiguous-band design exists to avoid paying on every itinerary.
+    if (mode === 'transport-leg') {
+      const { from, to } = await request.json().catch(() => ({}));
+      const alts = await legAlternatives(from, to);
+      return Response.json(alts ?? { options: [] });
     }
     try {
       const {
@@ -372,8 +359,11 @@ export async function POST(request) {
         return Response.json({ error: 'latitude and longitude are required' }, { status: 400 });
       }
 
-      const { pace = 'moderate', budget = '$$', group_type = 'couple', cuisines = [], sensitivities = [], activityStyles = [], dietary = [], neurodivergent = false, interests = [] } = preferences;
-      const searchRadiusMeters = Math.round(Math.min(maxDistanceMiles, 50) * 1609.34);
+      const { pace = 'moderate', budget = '$$', group_type = 'couple', cuisines = [], sensitivities = [], activityStyles = [], dietary = [], neurodivergent = false, interests = [], gettingAround = 'car' } = preferences;
+      // Clamp BEFORE Places is queried. Searching a 25-mile radius for a walking day mostly
+      // surfaces places the traveller cannot reach, which then crowd out the ones they can.
+      const effectiveMiles = clampSearchMiles(gettingAround, Math.min(maxDistanceMiles, 50));
+      const searchRadiusMeters = Math.round(effectiveMiles * 1609.34);
       const { dislikedPlaces = [], likedPlaces = [], dislikedReasons = [] } = feedback;
 
       const dateObj      = date ? new Date(date) : new Date();
@@ -413,10 +403,10 @@ export async function POST(request) {
         location: cityStr,
         travelDates: { start: travelDateISO, end: travelDateISO },
         coords: { latitude, longitude },
-        maxMiles: Math.min(maxDistanceMiles, 50),
+        maxMiles: effectiveMiles,
         weather,
         sun: weather ? { sunrise: weather.sunrise ?? null, sunset: weather.sunset ?? null } : null,
-        prefs: { pace, budget, group_type, cuisines, activityStyles, dietary, neurodivergent, interests },
+        prefs: { pace, budget, group_type, cuisines, activityStyles, dietary, neurodivergent, interests, gettingAround },
         feedback: { likedPlaces, dislikedPlaces, dislikedReasons },
         tripNote,
         startTime, endTime,
@@ -444,14 +434,22 @@ export async function POST(request) {
         ? ' (traffic may vary)' : '';
       const withDistance = annotateRoute(itinerary, latitude, longitude, { trafficNote });
       const withLinks = await enrichWithContactLinks(withDistance);
-      const enriched = await enrichWithDrivingTimes(withLinks);
       const allPlaces = [...food, ...activity, ...shopping, ...allOutdoor];
-      const priced = fillFoodPriceLevels(attachPriceLevels(enriched, allPlaces), budget);
+      const priced = fillFoodPriceLevels(attachPriceLevels(withLinks, allPlaces), budget);
       const costSummary = computeCostSummary(priced);
+
+      // How the traveller actually moves between these stops. Reads the leg distances
+      // annotateRoute just produced; never throws — a null transport block renders nothing
+      // rather than costing anyone their plan.
+      const transport = await buildTransport({
+        stops: priced, originLat: latitude, originLng: longitude, dateISO: travelDateISO,
+        gettingAround,
+      });
 
       return Response.json({
         itinerary: priced,
         weather,
+        transport,
         meta: {
           date:         formattedDate,
           day_of_week:  dayOfWeek,

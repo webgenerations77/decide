@@ -72,7 +72,7 @@ a generic AI chat product, or an enterprise dashboard.
 - app/paywall.js               — subscription upsell
 - app/admin/index.js           — admin dashboard (API usage incl. per-user breakdown; user admin; tap a user → detail modal with last login/created/usage/activity counts; "Beta tester guide" button → /beta-guide)
 - app/itinerary/[id].js        — saved-itinerary detail view (reads history via loadHistory)
-- app/api/itinerary+api.js     — POST: generate full-day itinerary (Cheddar); ?mode=clarify → single follow-up question (lib/clarify.js)
+- app/api/itinerary+api.js     — POST: generate full-day itinerary (Cheddar); ?mode=clarify → single follow-up question (lib/clarify.js); ?mode=transport-leg → alternative modes for one leg (lib/transport/routes.js)
 - app/api/admin/users+api.js   — GET: user list; GET ?uid= → that user's activity stats (lib/admin/userStats.js); POST: set role; prod twin api/admin/users.js
 - app/api/itinerary-swap+api.js— POST: swap a single stop
 - app/api/geocode+api.js       — GET: reverse geocode (?lat=&lng=) and forward search (?q=)
@@ -80,6 +80,11 @@ a generic AI chat product, or an enterprise dashboard.
 - app/api/admin/usage+api.js   — GET: API usage aggregate (totals + byModel/byRoute/byUser); prod twin api/admin/usage.js
 - screens/SettingsScreen.js    — full settings UI (collapsible sections; Itinerary Preferences default-expanded; DiceBear-generated avatar picker — stores a seed string, renders from DiceBear PNG API)
 - components/brand/            — brand primitives (BrandLogo, ScreenBackground, Card, CTAButton, SectionLabel, CollapsibleCard, VersionTag, GradientHeader)
+- components/itinerary/TransportSummary.js — the day's ONE travel verdict ("Drive it — 31 mi…"),
+  rendered inside RouteMap's body. Deliberately not a mode picker: four modes side by side is the
+  search-results anti-reference. Alternatives live behind a tap on a leg chip. StopCard's leg chip
+  renders in the timeline GUTTER, not the card body (that card is already at its badge ceiling),
+  and only when the leg differs from the day verdict — see isNotableLeg.
 - components/itinerary/        — StopCard, PlaceDetailModal + PriceLegendModal (bottom sheets), WeatherArt (photo-backed weather band; `fill` prop = faded full-card background), ItineraryMeta (renders the WeatherPill centered below the date), WeatherPill. Stop icons/colors come from constants/categoryVisuals.js (not the legacy 4 CATEGORY_EMOJIS).
 - hooks/useViewportOverlay.js  — pins RN Modal overlays to the VISUAL viewport on web (fixes mobile-web sheet drift); exports useViewportOverlay(visible) + WEB_OVERLAY_FIX style. ALWAYS pair with Modal animationType="fade" (never "slide" — its transform traps position:fixed)
 - constants/theme.js           — COLORS + FONTS + RADII + SHADOWS + PRICE_LEGEND + CATEGORY_COLORS/EMOJIS
@@ -92,6 +97,23 @@ a generic AI chat product, or an enterprise dashboard.
 - lib/admin/auth.js            — getUidFromAuth(header): verify ID token → uid or null (never throws)
 - lib/admin/userStats.js       — getUserStats(uid): counts itineraries/decisions/distinct cities from Firestore; served via /api/admin/users?uid=
 - lib/clarify.js               — getClarifyingQuestion(tripNote) → {skip} | {question} (haiku, Cheddar voice); fails open to {skip}; called via /api/itinerary?mode=clarify
+- lib/transport/               — how the traveller moves BETWEEN stops. `index.js` buildTransport()
+  is the single entry point both itinerary twins call, after annotateRoute. `modes.js` is pure
+  (classifyLeg/dayVerdict/isNotableLeg — no I/O, unit-tested in __tests__/transport-modes.mjs);
+  `routes.js` is the Google Routes client; `local.js` is curated regional options.
+  ⚠ COST DESIGN — do not "simplify" this: only legs in the 0.3–3 mi band get a real API call
+  (walkability is genuinely uncertain there; a 22-mi leg needs no API to be a drive), and each
+  request is ONE origin × ONE destination because Route Matrix bills per element — batching N
+  pairs to read the diagonal bills N² for N answers. Transit is ONE cached day-level probe,
+  never per leg. Budget ~2–4 elements/itinerary against a 10k/month free tier.
+  ⚠ HONESTY — `local.js` entries are curated pointers with source URLs, NOT live feeds: they
+  must never state a departure time or current price as fact. Rideshare has no public API
+  (Uber and Lyft both retired theirs), so it is a deep link with no ETA/price claim.
+  `gettingAround.js` is the single source of truth for the 'car'|'walk'|'transit' constraint,
+  shared by the picker, the synthesis prompt and the day verdict so the three cannot drift on
+  what 'walk' means. ⚠ dayVerdict must NEVER return 'drive' for a carless traveller — when the
+  route still contains an unreachable leg it sets `reachWarning` instead, which the UI shows
+  before departure rather than letting them discover it at stop three.
 - services/settingsService.js  — AsyncStorage keys + load/save helpers
 - services/itineraryService.js — client-side POST to /api/itinerary (sends Firebase ID token)
 - services/historyService.js   — cross-device history: AsyncStorage cache + syncHistory() merge over /api/history
@@ -223,6 +245,11 @@ Client never calls Anthropic directly.
 - @decide/cuisines, @decide/dietary, @decide/activity_styles
 - @decide/sensitivities (food allergens + environmental triggers)
 - @decide/max_distance (1–50 miles)
+- @decide/getting_around ('car' | 'walk' | 'transit', default 'car') — ⚠ this is a CONSTRAINT on
+  generation, not a display filter. It clamps the Places search radius BEFORE stops are chosen
+  (lib/transport/gettingAround.js → clampSearchMiles) and injects a hard rule into the synthesis
+  prompt. 'car' emits no constraint, so driver behaviour is byte-identical to before the feature.
+  Settable per-trip in plan.js and as a default in Settings; the per-trip choice persists.
 - @decide/notifications, @decide/haptics (default true), @decide/tos_accepted
 - @decide/demo_mode (uses Berlin, MD sample data)
 
@@ -231,7 +258,14 @@ GOOGLE_PLACES_API_KEY=             (server-only; Places Nearby, Autocomplete, De
 ANTHROPIC_API_KEY=                 (server-side only)
 EXPO_PUBLIC_NPS_API_KEY=           (National Park Service)
 EXPO_PUBLIC_RIDB_API_KEY=          (Recreation.gov)
-EXPO_PUBLIC_OPENROUTE_API_KEY=     (driving times — optional, haversine fallback used if empty)
+GOOGLE_ROUTES_API_KEY=             (server-only; Google Routes API for walk/bike/drive/transit legs.
+                                    Falls back to GOOGLE_PLACES_API_KEY if unset — but Routes is a
+                                    SEPARATE API that must be enabled on the GCP project, and it has
+                                    its own billing SKU. Transport degrades to distance-only
+                                    estimates when absent; nothing breaks.)
+EXPO_PUBLIC_OPENROUTE_API_KEY=     (UNUSED as of the transport feature — enrichWithDrivingTimes was
+                                    deleted from both twins. It cost one ORS call per leg per
+                                    generate and wrote drive_to_next_mins, which nothing rendered.)
 EXPO_PUBLIC_BETA_TESTER_EMAILS=    (optional, comma-separated emails granted beta_tester role — see constants/betaTesters.js; use this instead of editing that file when you don't want a tester's address committed to source)
 
 ## Cost Management

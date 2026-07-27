@@ -88,7 +88,7 @@ function VerifiedChip({ stop, styles, colors }) {
 }
 
 // ─── StopCard ─────────────────────────────────────────────────────────────────
-function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, weather, planDate, sensitivities }) {
+function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, weather, planDate, sensitivities, leg = null }) {
   const [feedback,          setFeedback]          = useState(null);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [showLegend,        setShowLegend]        = useState(false);
@@ -130,6 +130,24 @@ function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, 
 
   return (
     <>
+      {/* How you get TO this stop. Rendered ABOVE the card in the timeline gutter rather
+          than inside it — this card already carries fourteen conditional badges, and another
+          row in the body walks straight into the badge-wall anti-reference. Only appears when
+          the leg differs from the day's verdict (see isNotableLeg), so a driving day doesn't
+          repeat "drive 12 min" five times. */}
+      {leg?.chip ? (
+        <View style={styles.legChipRow}>
+          <View style={styles.legChip}>
+            <Ionicons
+              name={leg.mode === 'walk' ? 'walk-outline' : leg.mode === 'bike' ? 'bicycle-outline' : 'car-outline'}
+              size={11}
+              color={colors.primary}
+            />
+            <Text style={styles.legChipTxt}>{leg.chip}</Text>
+          </View>
+        </View>
+      ) : null}
+
       <Animated.View style={[styles.stopRow, { opacity: enterAnim, transform: [{ translateY: slideAnim }] }]}>
         <View style={styles.timelineCol}>
           <View style={[styles.timelineDot, { backgroundColor: color }]} />
@@ -329,6 +347,20 @@ function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, 
 export default StopCard;
 
 const makeStyles = (c) => StyleSheet.create({
+  // Leg chip — sits in the 28px timeline gutter above the card it describes.
+  // Indented to align with the timeline rail rather than the card edge, so it reads as
+  // part of the connector rather than as another badge belonging to the stop.
+  legChipRow: { paddingLeft: 6, marginBottom: 6 },
+  legChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 9, paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: c.sky100,
+    borderWidth: 1, borderColor: c.borderLight,
+  },
+  legChipTxt: { fontSize: 11, color: c.primary, fontFamily: FONTS.bodySemiBold },
+
   // Stop card + timeline
   stopRow:     { flexDirection: 'row', marginBottom: 14 },
   timelineCol: { width: 28, alignItems: 'center' },
