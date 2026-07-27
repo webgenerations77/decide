@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, Pressable, StyleSheet, ScrollView,
-  Switch, ActivityIndicator, Modal, PanResponder, Animated, Alert, Image, Platform,
+  Switch, ActivityIndicator, Modal, PanResponder, Animated, Alert, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -14,7 +14,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { isPro, getDecisionCount, getSpinCount, LIMITS } from '../services/subscriptionService';
 import { scheduleDailyReminder, cancelDailyReminder, loadReminderTime } from '../services/notificationService';
-import { setHapticsEnabled, hapticPreview } from '../services/hapticsService';
+import { setHapticsEnabled, hapticPreview, hapticsSupported as deviceSupportsHaptics } from '../services/hapticsService';
 import { FONTS } from '../constants/theme';
 import ScreenBackground from '../components/brand/ScreenBackground';
 import Card from '../components/brand/Card';
@@ -562,8 +562,11 @@ export default function SettingsScreen() {
     }
   };
 
-  // Haptics are native-only; on web the toggle renders inert rather than lying about it.
-  const hapticsSupported = Platform.OS === 'ios' || Platform.OS === 'android';
+  // Native devices always support haptics; on web it depends on the Vibration API
+  // (Chrome/Android yes, iOS Safari no). Resolved once — the answer can't change
+  // mid-session, and `navigator` isn't readable during the static render pass.
+  const [hapticsSupported, setHapticsSupported] = useState(false);
+  useEffect(() => { setHapticsSupported(deviceSupportsHaptics()); }, []);
 
   const validWindow = timeToMinutes(endTime) - timeToMinutes(startTime) >= 180;
 
@@ -830,7 +833,7 @@ export default function SettingsScreen() {
                 <Text style={styles.demoSub}>
                   {hapticsSupported
                     ? 'A tap when you press a button, and a nudge when your day is ready.'
-                    : 'Your device doesn’t support vibration feedback.'}
+                    : 'Not available on this device — iPhone browsers can’t vibrate.'}
                 </Text>
               </View>
               <Switch
