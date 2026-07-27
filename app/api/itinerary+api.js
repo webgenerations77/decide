@@ -5,6 +5,7 @@ import { getUSHoliday } from '../../lib/smart/holidays.js';
 import { getUidFromAuth } from '../../lib/admin/auth.js';
 import { runWithUser } from '../../lib/usageContext.js';
 import { getClarifyingQuestion } from '../../lib/clarify.js';
+import { annotateRoute } from '../../lib/smart/routing.js';
 
 const GOOGLE_KEY    = process.env.GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 const NPS_KEY       = process.env.EXPO_PUBLIC_NPS_API_KEY;
@@ -40,19 +41,6 @@ const PLACE_TYPES = {
     'park', 'hiking_area', 'botanical_garden', 'national_park', 'zoo',
   ],
 };
-
-function haversineDistance(lat1, lng1, lat2, lng2) {
-  const R    = 3958.8;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a    = Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-function estimateDriveTime(distanceMiles) {
-  return Math.max(3, Math.round(distanceMiles / 0.5));
-}
 
 async function fetchPlaces(lat, lng, types, radius = 30000) {
   const res = await fetch(`${NEARBY_URL}?key=${GOOGLE_KEY}`, {
@@ -449,20 +437,12 @@ export async function POST(request) {
         isFallback = true;
       }
 
-      const withDistance = itinerary.map((stop) => {
-        if (!stop.lat || !stop.lng) return stop;
-        const distMiles = haversineDistance(latitude, longitude, stop.lat, stop.lng);
-        const driveMins = estimateDriveTime(distMiles);
-        const planMonth = dateObj.getMonth();
-        const trafficNote = (weather?.wind_speed_mph > 20 || (planMonth >= 5 && planMonth <= 8))
-          ? ' (traffic may vary)' : '';
-        return {
-          ...stop,
-          distance: `${distMiles.toFixed(1)} mi · ~${driveMins} min drive${trafficNote}`,
-          distance_miles: parseFloat(distMiles.toFixed(1)),
-          drive_mins: driveMins,
-        };
-      });
+      // Leg distances are measured from the PREVIOUS stop, not the origin — an
+      // origin-relative number hides a stop that doubles back. See lib/smart/routing.js.
+      const planMonth = dateObj.getMonth();
+      const trafficNote = (weather?.wind_speed_mph > 20 || (planMonth >= 5 && planMonth <= 8))
+        ? ' (traffic may vary)' : '';
+      const withDistance = annotateRoute(itinerary, latitude, longitude, { trafficNote });
       const withLinks = await enrichWithContactLinks(withDistance);
       const enriched = await enrichWithDrivingTimes(withLinks);
       const allPlaces = [...food, ...activity, ...shopping, ...allOutdoor];

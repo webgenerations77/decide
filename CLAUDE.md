@@ -170,8 +170,18 @@ a generic AI chat product, or an enterprise dashboard.
 - Time window: configurable (default 11am–8pm), minimum 3 hours
 - Stop count: relaxed=4–5, moderate=5–6, packed=7–8
 - Each stop: time, duration_mins, category, name, place_id, address, lat, lng,
-  reason, excitement_score, admission_cost, distance, distance_miles, drive_mins
-- Distance/drive time calculated server-side via haversine + 30mph estimate
+  reason, excitement_score, admission_cost, distance, distance_miles, drive_mins,
+  leg_miles, leg_mins, leg_from, and (when off-route) detour / detour_miles / detour_note
+- ⚠ TWO DISTANCE MEANINGS — don't mix them up. `distance_miles`/`drive_mins` are
+  ORIGIN-relative (kept for saved history). `leg_miles`/`leg_mins`/`leg_from` are measured
+  from the PREVIOUS stop, and the `distance` display string is now leg-based. Origin-relative
+  numbers hide a stop that doubles back: a detour reads as a small, reassuring number and the
+  traveller only discovers it on the road. Always show leg values in the UI.
+- Routing lives in `lib/smart/routing.js` (`annotateRoute`), shared by both itinerary twins.
+  It also flags a stop whose prev→stop→next path exceeds prev→next by ≥8 miles as a `detour`;
+  StopCard renders `detour_note` as a gold caveat. Geographic coherence is also now an explicit
+  ROUTE rule in the synthesis prompt — the model has lat/lng for every candidate but previously
+  had no instruction to keep the day on a coherent path.
 - Weather-aware: Open-Meteo provides up-to-7-day daily conditions; wind >20mph or Jun–Aug adds traffic note
 - Fallback itinerary runs locally if Cheddar (Claude) is unavailable
 

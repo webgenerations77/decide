@@ -5,6 +5,7 @@ import { getUSHoliday } from '../lib/smart/holidays.js';
 import { getUidFromAuth } from '../lib/admin/auth.js';
 import { runWithUser } from '../lib/usageContext.js';
 import { getClarifyingQuestion } from '../lib/clarify.js';
+import { annotateRoute } from '../lib/smart/routing.js';
 
 const GOOGLE_KEY    = process.env.GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 const NPS_KEY       = process.env.EXPO_PUBLIC_NPS_API_KEY;
@@ -329,7 +330,12 @@ export default async function handler(req, res) {
         itinerary = buildFallbackItinerary({ food, activity, shopping, outdoor: allOutdoor, startTime, endTime, pace, lat: latitude, lng: longitude });
         isFallback = true;
       }
-      const withLinks = await enrichWithContactLinks(itinerary);
+      // Leg distances + detour flags. This step was missing entirely from the prod twin,
+      // so distance never rendered in production at all — see lib/smart/routing.js.
+      const planMonth = dateObj.getMonth();
+      const trafficNote = (weather?.wind_speed_mph > 20 || (planMonth >= 5 && planMonth <= 8)) ? ' (traffic may vary)' : '';
+      const routed = annotateRoute(itinerary, latitude, longitude, { trafficNote });
+      const withLinks = await enrichWithContactLinks(routed);
       const enriched=await enrichWithDrivingTimes(withLinks);
       const allPlaces = [...food, ...activity, ...shopping, ...allOutdoor];
       const priced = fillFoodPriceLevels(attachPriceLevels(enriched, allPlaces), budget);

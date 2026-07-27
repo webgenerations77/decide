@@ -188,6 +188,15 @@ function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, 
             </TouchableOpacity>
           ) : null}
 
+          {/* A stop that sits well off the route. Stated plainly with the cost, so it's a
+              decision the traveller can make rather than a surprise on the road. */}
+          {stop.detour && stop.detour_note ? (
+            <View style={styles.detourNote}>
+              <Ionicons name="git-branch-outline" size={12} color={colors.gold} style={{ marginRight: 5, marginTop: 1 }} />
+              <Text style={styles.detourNoteTxt}>{stop.detour_note}</Text>
+            </View>
+          ) : null}
+
           {stop.admission_cost && (
             <View style={styles.admissionBadge}>
               <Ionicons name="ticket-outline" size={12} color={colors.gold} style={{ marginRight: 4 }} />
@@ -355,6 +364,16 @@ const makeStyles = (c) => StyleSheet.create({
     borderWidth: 1, borderColor: c.border,
   },
   distancePillTxt: { fontSize: 12, color: c.primary, fontFamily: FONTS.bodySemiBold },
+
+  // Gold, not error red — an out-of-the-way stop is a tradeoff worth flagging, not a fault.
+  // goldText carries the AA-passing warm text value; gold itself is too light on paper.
+  detourNote: {
+    flexDirection: 'row', alignItems: 'flex-start',
+    alignSelf: 'flex-start', marginTop: 6,
+    paddingHorizontal: 10, paddingVertical: 6,
+    borderRadius: RADII.sm, backgroundColor: c.gold + '22',
+  },
+  detourNoteTxt: { flex: 1, fontSize: 11, lineHeight: 15, color: c.goldText, fontFamily: FONTS.body },
 
   // Admission badge
   admissionBadge: {
