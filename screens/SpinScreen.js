@@ -350,16 +350,31 @@ export default function SpinScreen() {
             ))}
           </View>
 
-          {/* Per-spin Sensory-friendly toggle (applies to this spin only) */}
-          <View style={styles.envRow}>
+          {/* Per-spin Sensory-friendly toggle (applies to this spin only).
+              The whole pill is the target — the bare Switch was a ~50pt hit area
+              floating on paper. Switch is presentational (pointerEvents none) so the
+              row owns the press and can't double-toggle. */}
+          <TouchableOpacity
+            style={[styles.envRow, sensory && styles.envRowActive]}
+            onPress={haptic.select(() => { setSensory(!sensory); setResult(null); setError(null); })}
+            activeOpacity={0.8}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: sensory }}
+            accessibilityLabel="Sensory-friendly"
+            accessibilityHint="Skips loud, high-energy spots for this spin"
+          >
             <Text style={styles.envLabel}>✨ Sensory-friendly</Text>
             <Switch
               value={sensory}
-              onValueChange={haptic.select((v) => { setSensory(v); setResult(null); setError(null); })}
-              trackColor={{ false: colors.border, true: colors.success }}
+              pointerEvents="none"
+              // The off track must carry the affordance on its own: a pale track left
+              // the control at ~1.2:1 against the paper background, effectively
+              // invisible. textMuted clears 3:1 in both appearances.
+              trackColor={{ false: colors.textMuted, true: colors.success }}
               thumbColor={colors.surface}
+              ios_backgroundColor={colors.textMuted}
             />
-          </View>
+          </TouchableOpacity>
           {sensory && <Text style={styles.envHint}>Skipping loud, high-energy spots this spin</Text>}
 
           {/* One-time "Other" explainer */}
@@ -541,11 +556,17 @@ const makeStyles = (c) => StyleSheet.create({
   catPillTxt:       { fontFamily: FONTS.bodySemiBold, fontSize: 13, color: c.textSecondary },
   catPillTxtActive: { color: c.surface },
 
-  // Per-spin Sensory-friendly toggle
+  // Per-spin Sensory-friendly toggle — a pill, matching the category row's shape
+  // language, so the control reads as a control instead of floating on the paper.
   envRow: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    alignSelf: 'center',
+    paddingLeft: 16, paddingRight: 8, paddingVertical: 7,
+    borderRadius: RADII.lg,
+    backgroundColor: c.surface, borderWidth: 1, borderColor: c.border,
   },
-  envLabel: { fontFamily: FONTS.bodySemiBold, fontSize: 13, color: c.textSecondary },
+  envRowActive: { borderColor: c.success },
+  envLabel: { fontFamily: FONTS.bodySemiBold, fontSize: 14, color: c.textPrimary },
   envHint:  { fontFamily: FONTS.body, fontSize: 11, color: c.textMuted, marginTop: 8, textAlign: 'center' },
 
   // Spin button
