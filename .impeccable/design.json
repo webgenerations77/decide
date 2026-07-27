@@ -1,0 +1,207 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-27T00:00:00.000Z",
+  "title": "Design System: Decide",
+  "extensions": {
+    "colorMeta": {
+      "cobalt-stamp": {
+        "role": "primary",
+        "displayName": "Cobalt Stamp",
+        "canonical": "#2563C9",
+        "tonalRamp": ["#0C2041", "#153770", "#1D4E9F", "#2666CF", "#4E85DE", "#7EA6E7", "#ADC6F0", "#DDE7F9"]
+      },
+      "go-orange": {
+        "role": "secondary",
+        "displayName": "Go Orange",
+        "canonical": "#FF8A3D",
+        "tonalRamp": ["#4D1E00", "#853500", "#BD4B00", "#F56100", "#FF812E", "#FFA366", "#FFC59E", "#FFE6D6"]
+      },
+      "ticket-gold": {
+        "role": "tertiary",
+        "displayName": "Ticket Gold",
+        "canonical": "#F4B63A",
+        "tonalRamp": ["#483204", "#7E5607", "#B37A0A", "#E89F0D", "#F4B639", "#F7C96E", "#FADDA3", "#FDF1D8"]
+      },
+      "desk-paper": {
+        "role": "neutral",
+        "displayName": "Desk Paper",
+        "canonical": "#F6EEDF",
+        "tonalRamp": ["#3C2D11", "#674E1D", "#936E29", "#BF8F36", "#D1A85C", "#DDC088", "#EAD7B3", "#F6EEDF"]
+      },
+      "harbour-navy": {
+        "role": "neutral",
+        "displayName": "Harbour Navy",
+        "canonical": "#102A4C",
+        "tonalRamp": ["#0D233F", "#173D6E", "#21569C", "#2B70CA", "#528DDB", "#81ACE4", "#AFCAEE", "#DDE9F8"]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted",
+        "canonical": "#7E8BA3",
+        "tonalRamp": ["#20242D", "#373F4D", "#4F5A6E", "#66748F", "#8591A8", "#A6AFBF", "#C6CCD7", "#E7EAEE"]
+      },
+      "success-green": {
+        "role": "status",
+        "displayName": "Success Green",
+        "canonical": "#2E9E7B",
+        "tonalRamp": ["#113B2E", "#1E6750", "#2B9272", "#37BE94", "#5DD0AC", "#89DCC2", "#B4E9D9", "#DFF6EF"]
+      },
+      "alert-red": {
+        "role": "status",
+        "displayName": "Alert Red",
+        "canonical": "#D6453C",
+        "tonalRamp": ["#3F100D", "#6E1C17", "#9C2821", "#CA342B", "#DB5A52", "#E48681", "#EEB3AF", "#F8DFDD"]
+      }
+    },
+    "darkPalette": {
+      "note": "Dark is a warm brown-black, not a grey or blue-black inversion. Canonical map is DARK in constants/theme.js.",
+      "bg": "#15120E",
+      "surface": "#211D17",
+      "surfaceAlt": "#2B2620",
+      "border": "#3A352B",
+      "cobalt-stamp": "#4A82E0",
+      "go-orange": "#FF9A52",
+      "ticket-gold": "#F4C04A",
+      "success-green": "#3FB892",
+      "alert-red": "#FF6B61",
+      "textPrimary": "#F3EEE3",
+      "textSecondary": "#C7C0B2",
+      "muted": "#8B8475",
+      "tabBar": "#1C1813"
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Screen titles. The ceiling of the system — nothing goes larger." },
+      "headline": { "displayName": "Headline", "purpose": "Section and card headings within a screen." },
+      "title": { "displayName": "Title", "purpose": "Button labels and strongest inline emphasis." },
+      "body": { "displayName": "Body", "purpose": "Reading text — reasons, descriptions, explanatory copy." },
+      "body-compact": { "displayName": "Body Compact", "purpose": "The workhorse: chips, rows, metadata. Most-used size in the app." },
+      "label": { "displayName": "Label", "purpose": "Space Mono eyebrows, times and codes. Never prose." }
+    },
+    "shadows": [
+      {
+        "name": "card-lift",
+        "value": "0 8px 20px rgba(16, 42, 76, 0.10)",
+        "purpose": "The only shadow in the system. Cards only. Navy-tinted so it reads as warm shade on paper rather than a grey drop. Dropped entirely in dark mode in favour of a hairline border."
+      }
+    ],
+    "motion": [
+      { "name": "collapse", "value": "LayoutAnimation.Presets.easeInEaseOut", "purpose": "CollapsibleCard section open/close." },
+      { "name": "result-land", "value": "Animated.spring friction 6", "purpose": "Spin result card arriving; paired with a success haptic." },
+      { "name": "spin", "value": "Easing.out(Easing.cubic), 1200ms", "purpose": "Quick Spin wheel rotation." },
+      { "name": "modal", "value": "Modal animationType=\"fade\"", "purpose": "All transparent overlays. Never \"slide\" — its transform traps position:fixed on mobile web." }
+    ],
+    "breakpoints": [
+      { "name": "mobile", "value": "0px", "purpose": "The only target. Mobile-first throughout; installed as a PWA on a phone." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Cobalt Button",
+      "kind": "button",
+      "refersTo": "button-cobalt",
+      "description": "The default action. Used for essentially every CTA in the product.",
+      "html": "<button class=\"ds-btn-cobalt\">Build my day →</button>",
+      "css": ".ds-btn-cobalt { height: 56px; padding: 0 32px; border: none; border-radius: 999px; color: #FFFFFF; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 17px; letter-spacing: 0.2px; background: linear-gradient(135deg, #2563C9 0%, #1B3F86 100%); cursor: pointer; transition: opacity 0.15s ease-out, transform 0.15s ease-out; } .ds-btn-cobalt:hover { transform: translateY(-1px); } .ds-btn-cobalt:focus-visible { outline: 2px solid #2563C9; outline-offset: 3px; } .ds-btn-cobalt:active { transform: translateY(0); opacity: 0.9; } .ds-btn-cobalt:disabled { opacity: 0.5; cursor: default; transform: none; }"
+    },
+    {
+      "name": "Go Button",
+      "kind": "button",
+      "refersTo": "button-go",
+      "description": "The single decisive action. At most one per screen — never a second orange fill.",
+      "html": "<button class=\"ds-btn-go\">Let's go</button>",
+      "css": ".ds-btn-go { height: 56px; padding: 0 32px; border: none; border-radius: 999px; color: #FFFFFF; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 17px; letter-spacing: 0.2px; background: linear-gradient(135deg, #FF8A3D 0%, #E0662A 100%); cursor: pointer; transition: opacity 0.15s ease-out, transform 0.15s ease-out; } .ds-btn-go:hover { transform: translateY(-1px); } .ds-btn-go:focus-visible { outline: 2px solid #E0662A; outline-offset: 3px; } .ds-btn-go:disabled { opacity: 0.5; cursor: default; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Outlined alternative. No gradient, no shadow — it must not compete with the cobalt lead.",
+      "html": "<button class=\"ds-btn-secondary\">Skip</button>",
+      "css": ".ds-btn-secondary { height: 56px; padding: 0 32px; border: 1.5px solid #2563C9; border-radius: 999px; background: #FFFFFF; color: #2563C9; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 17px; letter-spacing: 0.2px; cursor: pointer; transition: background 0.15s ease-out; } .ds-btn-secondary:hover { background: #E6EDFB; } .ds-btn-secondary:focus-visible { outline: 2px solid #2563C9; outline-offset: 3px; } .ds-btn-secondary:disabled { opacity: 0.5; cursor: default; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "The container primitive. The only element permitted to lift off the paper.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-title\">Thrasher's French Fries</div><div class=\"ds-card-body\">Boardwalk institution. Go before 6pm or the queue eats your afternoon.</div></div>",
+      "css": ".ds-card { background: #FFFFFF; border-radius: 10px; padding: 16px; box-shadow: 0 8px 20px rgba(16, 42, 76, 0.10); } .ds-card-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 20px; line-height: 1.2; color: #16243B; margin-bottom: 6px; } .ds-card-body { font-family: 'Hanken Grotesk', sans-serif; font-weight: 400; font-size: 15px; line-height: 1.45; color: #2C3E5C; }"
+    },
+    {
+      "name": "Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Selection primitive. Wider radius than cards on purpose — chips select, cards contain.",
+      "html": "<button class=\"ds-chip\">🍽️ Food</button><button class=\"ds-chip ds-chip-selected\">🎭 Activity</button>",
+      "css": ".ds-chip { padding: 8px 14px; border-radius: 24px; background: #FFFFFF; border: 1px solid #E4D9C4; color: #2C3E5C; font-family: 'Hanken Grotesk', sans-serif; font-weight: 600; font-size: 13px; cursor: pointer; transition: background 0.15s ease-out, border-color 0.15s ease-out; } .ds-chip:hover { border-color: #9DB8E8; } .ds-chip:focus-visible { outline: 2px solid #2563C9; outline-offset: 2px; } .ds-chip-selected { background: #2563C9; border-color: #2563C9; color: #FFFFFF; }"
+    },
+    {
+      "name": "Input Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Recessed rather than raised — inputs sit into the paper. Focus treatment is currently undefined in the product and is the system's largest gap.",
+      "html": "<input class=\"ds-input\" placeholder=\"City, address, or zip code\" />",
+      "css": ".ds-input { width: 100%; background: #ECE3D1; border: 1px solid #E4D9C4; border-radius: 12px; padding: 10px 14px; font-family: 'Hanken Grotesk', sans-serif; font-size: 15px; color: #16243B; } .ds-input::placeholder { color: #7E8BA3; } .ds-input:focus { outline: none; border-color: #2563C9; box-shadow: 0 0 0 3px rgba(37, 99, 201, 0.18); }"
+    },
+    {
+      "name": "Section Label",
+      "kind": "custom",
+      "refersTo": "section-label",
+      "description": "Space Mono eyebrow with a trailing hairline, so label and divider read as one unit rather than a rule floating between cards.",
+      "html": "<div class=\"ds-section-label\"><span>APP</span><i></i></div>",
+      "css": ".ds-section-label { display: flex; align-items: center; gap: 10px; } .ds-section-label span { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 11px; letter-spacing: 1.6px; text-transform: uppercase; color: #7E8BA3; white-space: nowrap; } .ds-section-label i { flex: 1; height: 1px; background: #E4D9C4; }"
+    },
+    {
+      "name": "Tab Bar Item",
+      "kind": "nav",
+      "refersTo": "tab-item",
+      "description": "Active state is carried by a cobalt indicator bar plus an outline-to-filled icon swap, not by colour alone.",
+      "html": "<div class=\"ds-tabbar\"><button class=\"ds-tab ds-tab-active\"><i></i><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"currentColor\"><path d=\"M12 2a10 10 0 100 20 10 10 0 000-20zm3.5 6.5l-2 5-5 2 2-5 5-2z\"/></svg><span>Decide</span></button><button class=\"ds-tab\"><i></i><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M15.5 8.5l-2 5-5 2 2-5 5-2z\"/></svg><span>Spin</span></button></div>",
+      "css": ".ds-tabbar { display: flex; height: 65px; padding-bottom: 8px; background: #FFFFFF; border-top: 1px solid #E4D9C4; } .ds-tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 2px; background: none; border: none; color: #7E8BA3; cursor: pointer; } .ds-tab i { width: 20px; height: 2px; border-radius: 1px; background: transparent; margin-bottom: 5px; } .ds-tab span { font-family: 'Hanken Grotesk', sans-serif; font-weight: 500; font-size: 11px; } .ds-tab-active { color: #2563C9; } .ds-tab-active i { background: #2563C9; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Travel Desk",
+    "overview": "Warm paper stock, a typeset plan, and one confident stamp of ink. Decide does not present a search; it presents a document — a day already worked out, laid on the desk, ready to be picked up and acted on. The paper ground is the desk blotter. Cobalt is the stamp that says this is settled. Orange is the single \"go\" moment, and Space Mono carries times and codes the way a timetable does.\n\nThe system is warm but not soft. Density is moderate and deliberately unequal: the plan itself gets air, while the controls that produce it compress into pills and chips that stay out of the way. Type does the structural work — an extra-bold grotesque for the things that matter and a quiet humanist sans for everything else — so colour can stay scarce enough to mean something when it appears.\n\nThis explicitly rejects the four things Decide must never be. It is not a search results page: no ranked lists, no ten options with no opinion. It is not a booking or OTA site: no star-rating clutter, no badges, no sponsored placements, no upsell furniture. It is not a generic AI chat product: no chat bubbles, no sparkle iconography, no \"powered by AI\" badging. It is not an enterprise dashboard: no chart grids, no toolbars, no dense operational panels.",
+    "keyCharacteristics": [
+      "Warm paper ground with white cards lifted just off it",
+      "Cobalt leads every action; orange appears once per screen at most",
+      "Mono used only for structural labels and times, never for prose",
+      "Flat by default, with exactly one shadow in the entire system",
+      "Full-width pill CTAs that look pressable and commit to the action",
+      "Light and dark are peers, not an inversion — dark is a warm brown-black, not grey"
+    ],
+    "rules": [
+      { "name": "The One Orange Rule", "body": "Go Orange appears at most once per screen, and never as a button fill outside the primary \"go\" action. Cobalt leads all other CTAs. Orange everywhere is orange nowhere.", "section": "colors" },
+      { "name": "The Gold Is Not A Control Rule", "body": "Ticket Gold fills badges, edges and category marks. It is never a button, never a link, and never carries text at its own value — use Ochre Ink for that.", "section": "colors" },
+      { "name": "The Token Rule", "body": "No hardcoded hex in components, ever. Every colour resolves from constants/theme.js through useTheme(). A raw hex in a component is a defect regardless of how correct the value looks.", "section": "colors" },
+      { "name": "The Both-Appearances Rule", "body": "Contrast is verified in light and dark before a control ships. The observed failure mode in this codebase is a control that is legible in one appearance and effectively invisible in the other.", "section": "colors" },
+      { "name": "The Baked Weight Rule", "body": "@expo-google-fonts bakes weight into the family name. Never set fontWeight alongside fontFamily: FONTS.* — the weight will not apply. Choose the matching FONTS.* variant instead.", "section": "typography" },
+      { "name": "The Mono Is Structural Rule", "body": "Space Mono carries labels, times and codes. It never carries prose, never a sentence, never a description. Mono in a paragraph reads as a terminal, which is the dashboard anti-reference.", "section": "typography" },
+      { "name": "The 28 Ceiling Rule", "body": "28px is the largest type in the product. The brand wordmark scales independently via BrandLogo; nothing else may exceed the ceiling.", "section": "typography" },
+      { "name": "The One-Shadow Rule", "body": "There is one shadow token and only Card may use it. Adding a second elevation tier is prohibited without an explicit decision to extend the system. If a sheet or modal needs separation, it gets a scrim or a border, not a new shadow.", "section": "elevation" },
+      { "name": "The 2014 Test", "body": "If the shadow reads as a distinct dark edge rather than ambient shade, the opacity is too high and the blur too small.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do resolve every colour from constants/theme.js via useTheme(). A hardcoded hex in a component is a defect.",
+      "Do lead with Cobalt Stamp (#2563C9) for actions, active states and selection.",
+      "Do verify contrast in both light and dark before shipping a control: 4.5:1 for body text, 3:1 for UI components and large text.",
+      "Do keep the radius vocabulary intact — pills (999px) command, cards (10px) contain, chips (24px) select.",
+      "Do use Ochre Ink (#8C6010) whenever gold needs to carry text.",
+      "Do make the whole row the touch target for a labelled control, not just the control itself.",
+      "Do pick the matching FONTS.* variant instead of setting fontWeight."
+    ],
+    "donts": [
+      "Don't build a search results page. No ranked lists of ten options with no opinion. A plan that reads as a list has already failed.",
+      "Don't borrow from a booking or OTA site. No star-rating clutter, no badge walls, no sponsored placements, no upsell furniture.",
+      "Don't look like a generic AI chat product. No chat bubbles, no sparkle icons, no \"powered by AI\" badging — and never the word \"AI\" in user-facing copy.",
+      "Don't drift toward an enterprise dashboard. No chart grids, no dense operational panels, no toolbars.",
+      "Don't use Go Orange as a button fill outside the single primary \"go\" action, and never more than once per screen.",
+      "Don't use Ticket Gold as a control, a link, or as text at its own value.",
+      "Don't add a second shadow token. Flat by default; only Card lifts.",
+      "Don't put Space Mono in prose. It carries labels, times and codes only.",
+      "Don't exceed 28px type outside the brand wordmark.",
+      "Don't rely on a pale track or hairline to carry a control's state — it fails contrast against Desk Paper and disappears entirely."
+    ]
+  }
+}

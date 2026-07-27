@@ -42,6 +42,22 @@ Brand primitives (`components/brand/`) — compose tokens; use these instead of 
 - `CollapsibleCard` (title + persisted collapse state via KEYS.COLLAPSED_SECTIONS; `defaultCollapsed`)
 - `VersionTag` (app version from `expo-constants`; `APP_VERSION` export — single source of truth)
 
+## Design Context
+
+Two root files govern design decisions. Read them before changing anything visual.
+
+- **PRODUCT.md** — strategy. Register (`product`), platform (`web` — the PWA is what ships),
+  users, positioning, brand personality, anti-references, design principles, WCAG 2.2 AA target.
+  The positioning line is the one to hold onto: *Decide commits to a plan so you don't have to choose.*
+- **DESIGN.md** — the visual system, extracted from `constants/theme.js` and `components/brand/`.
+  North star "The Travel Desk". Carries the named rules: One Orange, Gold Is Not A Control,
+  Token Rule, Both-Appearances, Baked Weight, Mono Is Structural, 28 Ceiling, One-Shadow.
+- `.impeccable/design.json` is the machine-readable sidecar (tonal ramps, motion, component
+  snippets). Regenerate it alongside DESIGN.md, never by hand.
+
+The four anti-references are binding: never a search results page, an OTA/booking site,
+a generic AI chat product, or an enterprise dashboard.
+
 ## App Structure
 - app/_layout.js               — root layout, auth guard, demo banner, offline banner
 - app/(tabs)/_layout.js        — tab navigator

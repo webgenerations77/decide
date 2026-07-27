@@ -51,3 +51,6 @@ yarn-error.*
 .claude/user-preferences.md
 .claude/sessions/
 .env*
+
+# impeccable — local live-mode session state (config.json and design.json ARE tracked)
+.impeccable/live/sessions/
