@@ -22,10 +22,14 @@ WebBrowser.maybeCompleteAuthSession();
 const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '';
 
 // Email/password sign-in is hidden for now — Google is the only supported entry point.
-// Flip to `true` to restore the email fields, the "Sign in" CTA, and the
-// forgot-password / create-account links. The handler and routes are left intact
-// so nothing else has to change when it comes back.
+// Flip to `true` to show it to everyone again.
 const EMAIL_AUTH_ENABLED = false;
+
+// Escape hatch: tapping the period in "Decide." reveals the email form even when the
+// above is false, so QA/test accounts (TEST_ACCOUNT_* in .env) can still sign in.
+// Deliberately undiscoverable rather than secure — it only reveals a form, and Firebase
+// still enforces credentials.
+const DOT_TAPS_TO_UNLOCK = 3;
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -40,6 +44,19 @@ export default function LoginScreen() {
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
     clientId: GOOGLE_WEB_CLIENT_ID,
   });
+
+  const [dotTaps,     setDotTaps]     = useState(0);
+  const [emailUnlock, setEmailUnlock] = useState(false);
+  const showEmailAuth = EMAIL_AUTH_ENABLED || emailUnlock;
+
+  const tapDot = () => {
+    if (showEmailAuth) return;
+    setDotTaps((n) => {
+      const next = n + 1;
+      if (next >= DOT_TAPS_TO_UNLOCK) { setEmailUnlock(true); return 0; }
+      return next;
+    });
+  };
 
   const heroAnim  = useRef(new Animated.Value(0)).current;
   const heroSlide = useRef(new Animated.Value(20)).current;
@@ -100,7 +117,7 @@ export default function LoginScreen() {
         >
           <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
             <Animated.View style={[styles.hero, { opacity: heroAnim, transform: [{ translateY: heroSlide }] }]}>
-              <BrandLogo variant="stacked" size={80} />
+              <BrandLogo variant="stacked" size={80} onDotPress={tapDot} />
               <Text style={styles.heroTag}>Your day, decided.</Text>
             </Animated.View>
 
@@ -112,7 +129,7 @@ export default function LoginScreen() {
 
             <Card>
               <View style={styles.form}>
-                {EMAIL_AUTH_ENABLED && (
+                {showEmailAuth && (
                   <>
                     <View style={styles.fieldBlock}>
                       <Text style={styles.label}>Email</Text>
@@ -156,23 +173,23 @@ export default function LoginScreen() {
 
                 {/* Google is the sole CTA while email auth is hidden, so it leads in cobalt. */}
                 <CTAButton
-                  variant={EMAIL_AUTH_ENABLED ? 'secondary' : 'cobalt'}
+                  variant={showEmailAuth ? 'secondary' : 'cobalt'}
                   title="Continue with Google"
                   onPress={handleGoogleSignIn}
-                  loading={!EMAIL_AUTH_ENABLED && loading}
+                  loading={!showEmailAuth && loading}
                   disabled={loading || !request}
                   leftIcon={
                     <Ionicons
                       name="logo-google"
                       size={18}
-                      color={EMAIL_AUTH_ENABLED ? colors.textPrimary : colors.primaryText}
+                      color={showEmailAuth ? colors.textPrimary : colors.primaryText}
                     />
                   }
                 />
               </View>
             </Card>
 
-            {EMAIL_AUTH_ENABLED && (
+            {showEmailAuth && (
               <View style={styles.links}>
                 <TouchableOpacity onPress={() => router.push('/auth/forgot-password')} activeOpacity={0.7}>
                   <Text style={styles.linkText}>Forgot password?</Text>

@@ -23,7 +23,9 @@ function Mark({ size, ring, needleLo, hub, accent }) {
   );
 }
 
-export default function BrandLogo({ variant = 'full', size = 80 }) {
+// `onDotPress` makes ONLY the accent period tappable. Opt-in, so every other screen's
+// logo stays inert — the login screen uses it as a hidden unlock for email/password sign-in.
+export default function BrandLogo({ variant = 'full', size = 80, onDotPress = null }) {
   const { colors, scheme } = useTheme();
   const onDark = scheme === 'dark';
   const reversed = variant === 'reversed';
@@ -39,7 +41,16 @@ export default function BrandLogo({ variant = 'full', size = 80 }) {
 
   const Wordmark = (
     <Text style={{ fontFamily: FONTS.displayHeavy, fontSize: wordSize, color: wordColor, letterSpacing: -0.5, lineHeight: wordSize * 1.05 }}>
-      Decide<Text style={{ color: colors.accent }}>.</Text>
+      Decide
+      <Text
+        style={{ color: colors.accent }}
+        onPress={onDotPress ?? undefined}
+        suppressHighlighting
+        // Generous target — the glyph itself is only a few px wide.
+        hitSlop={onDotPress ? { top: 16, bottom: 16, left: 12, right: 24 } : undefined}
+      >
+        .
+      </Text>
     </Text>
   );
 

@@ -372,17 +372,17 @@ const makeStyles = (c) => StyleSheet.create({
   // Invite / remove
   userEmailOff: { textDecorationLine: 'line-through', color: c.textMuted },
   rowActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  removeBtn: { padding: 6, borderRadius: RADII.sm6 },
+  removeBtn: { padding: 6, borderRadius: RADII.sm },
   restoreBtn: { backgroundColor: c.sky100 },
   inviteHelp: { fontFamily: FONTS.body, color: c.textMuted, fontSize: 12, lineHeight: 17, marginBottom: 10 },
   inviteRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   inviteInput: {
     flex: 1, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border,
-    borderRadius: RADII.md10, paddingHorizontal: 12, paddingVertical: 10,
+    borderRadius: RADII.md, paddingHorizontal: 12, paddingVertical: 10,
     fontFamily: FONTS.body, fontSize: 14, color: c.textPrimary,
   },
   inviteBtn: {
-    paddingVertical: 11, paddingHorizontal: 16, borderRadius: RADII.md10,
+    paddingVertical: 11, paddingHorizontal: 16, borderRadius: RADII.md,
     backgroundColor: c.primary, minWidth: 72, alignItems: 'center',
   },
   inviteBtnOff: { opacity: 0.5 },
