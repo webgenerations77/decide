@@ -6,11 +6,12 @@ import { getUidFromAuth } from '../lib/admin/auth.js';
 import { runWithUser } from '../lib/usageContext.js';
 import { getClarifyingQuestion } from '../lib/clarify.js';
 import { annotateRoute } from '../lib/smart/routing.js';
+import { buildTransport, legAlternatives } from '../lib/transport/index.js';
+import { clampSearchMiles } from '../lib/transport/gettingAround.js';
 
 const GOOGLE_KEY    = process.env.GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 const NPS_KEY       = process.env.EXPO_PUBLIC_NPS_API_KEY;
 const RIDB_KEY      = process.env.EXPO_PUBLIC_RIDB_API_KEY;
-const OPENROUTE_KEY = process.env.EXPO_PUBLIC_OPENROUTE_API_KEY;
 const NEARBY_URL    = 'https://places.googleapis.com/v1/places:searchNearby';
 const CACHE_TTL     = 3600000;
 
@@ -50,7 +51,7 @@ function classifyPlace(p) {
   return 'activity';
 }
 
-async function fetchPlacesRaw(lat, lng, types, maxResults = 10) {
+async function fetchPlacesRaw(lat, lng, types, maxResults = 10, radiusMeters = 30000) {
   const res = await fetch(`${NEARBY_URL}?key=${GOOGLE_KEY}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.currentOpeningHours,places.regularOpeningHours,places.location,places.priceLevel,places.editorialSummary,places.primaryType' },
@@ -58,7 +59,7 @@ async function fetchPlacesRaw(lat, lng, types, maxResults = 10) {
     // acts as a hard exclusion filter, which would drop every unpriced/free venue (parks,
     // beaches, many restaurants) and remove the pool synthesis needs to pick a "splurge".
     // Budget is enforced softly in the synthesis prompt instead (see lib/smart/synthesis.js).
-    body: JSON.stringify({ locationRestriction: { circle: { center: { latitude: lat, longitude: lng }, radius: 30000 } }, maxResultCount: maxResults, includedTypes: types }),
+    body: JSON.stringify({ locationRestriction: { circle: { center: { latitude: lat, longitude: lng }, radius: radiusMeters } }, maxResultCount: maxResults, includedTypes: types }),
   });
   const data = await res.json();
   logUsage({ route: 'places-nearby', model: 'google-places', requests: 1 });
@@ -72,14 +73,17 @@ async function fetchPlacesRaw(lat, lng, types, maxResults = 10) {
   }));
 }
 
-async function fetchAllPlaces(lat, lng) {
-  const key = cacheKey(lat, lng);
+async function fetchAllPlaces(lat, lng, radiusMeters = 30000) {
+  // Radius is part of the cache key: a walking day's 3-mile search and a driving day's
+  // 25-mile search at the same coordinates are different result sets, and sharing one
+  // entry between them would hand a walker places they cannot reach.
+  const key = `${cacheKey(lat, lng)}@${radiusMeters}`;
   const cached = cacheGet(placesCache, key);
   if (cached) return cached;
 
   const [foodRaw, nonFoodRaw] = await Promise.all([
-    fetchPlacesRaw(lat, lng, PLACE_TYPES.food, 10),
-    fetchPlacesRaw(lat, lng, NON_FOOD_TYPES, 20),
+    fetchPlacesRaw(lat, lng, PLACE_TYPES.food, 10, radiusMeters),
+    fetchPlacesRaw(lat, lng, NON_FOOD_TYPES, 20, radiusMeters),
   ]);
 
   const food = foodRaw;
@@ -169,16 +173,10 @@ async function fetchRIDB(lat, lng) {
   } catch { return []; }
 }
 
-async function enrichWithDrivingTimes(itinerary) {
-  if (!OPENROUTE_KEY || itinerary.length < 2) return itinerary;
-  const pairs = [];
-  for (let i = 0; i < itinerary.length - 1; i++) { const a = itinerary[i], b = itinerary[i+1]; if (a.lat && a.lng && b.lat && b.lng) pairs.push({ i, coords: [[a.lng,a.lat],[b.lng,b.lat]] }); }
-  if (!pairs.length) return itinerary;
-  const results = await Promise.allSettled(pairs.map(async ({i,coords}) => { const res = await fetch('https://api.openrouteservice.org/v2/directions/driving-car', { method:'POST', headers:{'Content-Type':'application/json',Authorization:OPENROUTE_KEY}, body:JSON.stringify({coordinates:coords}) }); const data = await res.json(); return {i, drive_mins: Math.round((data.routes?.[0]?.summary?.duration??0)/60)}; }));
-  const updated = [...itinerary];
-  results.forEach((r) => { if (r.status==='fulfilled') updated[r.value.i] = {...updated[r.value.i], drive_to_next_mins: r.value.drive_mins}; });
-  return updated;
-}
+// REMOVED: enrichWithDrivingTimes. It fired one OpenRouteService request per leg on every
+// generate and wrote `drive_to_next_mins`, which nothing in the app ever rendered — pure cost
+// and latency for a dead field. Real per-leg travel now comes from lib/transport/, which pays
+// only for the legs where the answer is genuinely uncertain.
 
 async function fetchStopDetails(placeId) {
   if (!GOOGLE_KEY || !placeId || /^(demo_|nps_|ridb_|fallback_|find_|stop_)/.test(placeId)) return null;
@@ -268,11 +266,24 @@ export default async function handler(req, res) {
       return res.json(await getClarifyingQuestion(tripNote));
     }
 
+    // Alternative modes for ONE leg — the escape hatch behind a tap on the timeline chip.
+    // Folded onto this endpoint (same reason as clarify) to stay under the 12-function cap.
+    // Deliberately not part of generation: 3 elements per leg is exactly the spend the
+    // ambiguous-band design exists to avoid paying on every itinerary.
+    if (req.query.mode === 'transport-leg') {
+      const { from, to } = req.body || {};
+      const alts = await legAlternatives(from, to);
+      return res.json(alts ?? { options: [] });
+    }
+
     try {
       const { latitude, longitude, date, preferences = {}, startTime = '11:00 AM', endTime = '8:00 PM', feedback = {}, tripNote = '', locationLabel = '', locationShort = '' } = req.body;
       if (!latitude || !longitude) return res.status(400).json({ error: 'latitude and longitude are required' });
 
-      const { pace='moderate', budget='$$', group_type='couple', cuisines=[], activityStyles=[], dietary=[], neurodivergent=false, interests=[] } = preferences;
+      const { pace='moderate', budget='$$', group_type='couple', cuisines=[], activityStyles=[], dietary=[], neurodivergent=false, interests=[], gettingAround='car' } = preferences;
+      // Clamp BEFORE Places is queried. Searching a wide radius for a walking day mostly
+      // surfaces places the traveller cannot reach, which then crowd out the ones they can.
+      const effectiveMiles = clampSearchMiles(gettingAround, 25);
       const { dislikedPlaces=[], likedPlaces=[], dislikedReasons=[] } = feedback;
 
       const dateObj=date?new Date(date):new Date();
@@ -283,7 +294,7 @@ export default async function handler(req, res) {
       // Prefer a client-supplied human label for locality; reverse-geocode is the fallback.
       const hasLabel = !!(locationLabel && String(locationLabel).trim());
       const [places, weather, geoInfo] = await Promise.all([
-        fetchAllPlaces(latitude, longitude),
+        fetchAllPlaces(latitude, longitude, Math.round(effectiveMiles * 1609.34)),
         fetchWeather(latitude, longitude, travelDateISO),
         hasLabel ? Promise.resolve(null) : reverseGeocode(latitude, longitude),
       ]);
@@ -307,10 +318,10 @@ export default async function handler(req, res) {
         location: cityStr,
         travelDates: { start: travelDateISO, end: travelDateISO },
         coords: { latitude, longitude },
-        maxMiles: 25,
+        maxMiles: effectiveMiles,
         weather,
         sun: weather ? { sunrise: weather.sunrise ?? null, sunset: weather.sunset ?? null } : null,
-        prefs: { pace, budget, group_type, cuisines, activityStyles, dietary, neurodivergent, interests },
+        prefs: { pace, budget, group_type, cuisines, activityStyles, dietary, neurodivergent, interests, gettingAround },
         feedback: { likedPlaces, dislikedPlaces, dislikedReasons },
         tripNote,
         startTime, endTime,
@@ -336,11 +347,14 @@ export default async function handler(req, res) {
       const trafficNote = (weather?.wind_speed_mph > 20 || (planMonth >= 5 && planMonth <= 8)) ? ' (traffic may vary)' : '';
       const routed = annotateRoute(itinerary, latitude, longitude, { trafficNote });
       const withLinks = await enrichWithContactLinks(routed);
-      const enriched=await enrichWithDrivingTimes(withLinks);
       const allPlaces = [...food, ...activity, ...shopping, ...allOutdoor];
-      const priced = fillFoodPriceLevels(attachPriceLevels(enriched, allPlaces), budget);
+      const priced = fillFoodPriceLevels(attachPriceLevels(withLinks, allPlaces), budget);
       const costSummary = computeCostSummary(priced);
-      return res.json({itinerary:priced,weather,meta:{date:formattedDate,day_of_week:dayOfWeek,time_window:`${startTime} – ${endTime}`,preferences:{pace,budget,group_type},city:cityStr,cost_summary:costSummary?.label??null},discovery:{hadLiveData:smart.hadLiveData,findCount:smart.finds.length,anchorCount:smart.anchors.length,anchors:smart.anchors.map((a)=>({title:a.find?.title,interest:a.find?.interest,why:a.rationale,url:a.find?.url||null})),localHappenings:smart.localHappenings??null},generated_at:new Date().toISOString(),isFallback});
+      // How the traveller actually moves between these stops. Reads the leg distances
+      // annotateRoute just produced; never throws — a null transport block renders nothing
+      // rather than costing anyone their plan.
+      const transport = await buildTransport({ stops: priced, originLat: latitude, originLng: longitude, dateISO: travelDateISO, gettingAround });
+      return res.json({itinerary:priced,weather,transport,meta:{date:formattedDate,day_of_week:dayOfWeek,time_window:`${startTime} – ${endTime}`,preferences:{pace,budget,group_type},city:cityStr,cost_summary:costSummary?.label??null},discovery:{hadLiveData:smart.hadLiveData,findCount:smart.finds.length,anchorCount:smart.anchors.length,anchors:smart.anchors.map((a)=>({title:a.find?.title,interest:a.find?.interest,why:a.rationale,url:a.find?.url||null})),localHappenings:smart.localHappenings??null},generated_at:new Date().toISOString(),isFallback});
     } catch(err) {
       console.error('[itinerary] error:',err);
       return res.status(500).json({error:err.message});

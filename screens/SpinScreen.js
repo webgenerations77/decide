@@ -364,7 +364,9 @@ export default function SpinScreen() {
             accessibilityLabel="Sensory-friendly"
             accessibilityHint="Skips loud, high-energy spots for this spin"
           >
-            <Text style={styles.envLabel}>✨ Sensory-friendly</Text>
+            {/* No ✨ — banned iconography per DESIGN.md, and a sparkle is the wrong signal
+                for an accessibility control: this is an accommodation, not a flourish. */}
+            <Text style={styles.envLabel}>Sensory-friendly</Text>
             <Switch
               value={sensory}
               pointerEvents="none"

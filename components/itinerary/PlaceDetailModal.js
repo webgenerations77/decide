@@ -197,7 +197,9 @@ function PlaceDetailModal({ visible, stop, onClose }) {
                     const cfg = highlightConfig[h.type] ?? highlightConfig.feature;
                     return (
                       <View key={i} style={[styles.highlightRow, { borderLeftColor: cfg.borderColor }]}>
-                        <Text style={styles.highlightIcon}>{cfg.icon}</Text>
+                        {/* Ionicon rather than an emoji glyph — takes the theme colour and
+                            renders identically across Android launchers. */}
+                        <Ionicons name={cfg.icon} size={15} color={cfg.borderColor} style={styles.highlightIcon} />
                         <Text style={styles.highlightText}>{h.text}</Text>
                       </View>
                     );
@@ -238,21 +240,19 @@ function PlaceDetailModal({ visible, stop, onClose }) {
                 </View>
               )}
 
-              {(stop.distance || stop.excitement_score > 0) && (
+              {/* The excitement score ("⚡ 7") was removed from here as well as the card.
+                  It is an internal ranking number wearing a costume — no friend says "this
+                  restaurant is a 7", and a bare score is both exposed machinery and OTA
+                  rating-clutter. The field still exists server-side and still influences
+                  ordering; it is simply never shown. */}
+              {stop.distance ? (
                 <View style={styles.detailStatsRow}>
-                  {stop.distance ? (
-                    <TouchableOpacity onPress={() => openMaps(stop)} activeOpacity={0.7} style={styles.distanceLink}>
-                      <Ionicons name="location-outline" size={14} color={colors.primary} style={{ marginRight: 4 }} />
-                      <Text style={styles.distanceLinkTxt}>{stop.distance}</Text>
-                    </TouchableOpacity>
-                  ) : <View />}
-                  {stop.excitement_score > 0 && (
-                    <View style={styles.detailExciteBadge}>
-                      <Text style={styles.detailExciteTxt}>⚡ {stop.excitement_score}</Text>
-                    </View>
-                  )}
+                  <TouchableOpacity onPress={() => openMaps(stop)} activeOpacity={0.7} style={styles.distanceLink}>
+                    <Ionicons name="location-outline" size={14} color={colors.primary} style={{ marginRight: 4 }} />
+                    <Text style={styles.distanceLinkTxt}>{stop.distance}</Text>
+                  </TouchableOpacity>
                 </View>
-              )}
+              ) : null}
 
               <TouchableOpacity style={styles.detailNavBtn} onPress={() => openMaps(stop)} activeOpacity={0.7}>
                 <Ionicons name="navigate" size={18} color={colors.primaryText} style={{ marginRight: 8 }} />
@@ -368,7 +368,9 @@ const makeStyles = (c) => StyleSheet.create({
     backgroundColor: c.surfaceAlt, borderRadius: 8, padding: 10,
     borderLeftWidth: 3, marginBottom: 6,
   },
-  highlightIcon: { fontSize: 16, lineHeight: 20 },
+  // Ionicons takes its size from the `size` prop, so this only handles alignment.
+  // marginTop nudges the glyph onto the first text baseline.
+  highlightIcon: { marginTop: 2 },
   highlightText: { flex: 1, fontSize: 14, color: c.textPrimary, lineHeight: 20, fontFamily: FONTS.body },
 
   reviewCard: {
