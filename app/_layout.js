@@ -29,6 +29,7 @@ import OfflineBanner from '../components/OfflineBanner';
 import BetaBanner from '../components/BetaBanner';
 import BetaFeedback from '../components/BetaFeedback';
 import { isPublicRoute } from '../utils/betaRoutes';
+import { isQaResetAccount, shouldShowBetaGuide } from '../lib/firstLogin';
 import { FONTS } from '../constants/theme';
 import ScreenBackground from '../components/brand/ScreenBackground';
 import BrandLogo from '../components/brand/BrandLogo';
@@ -74,7 +75,7 @@ function RootLayoutInner() {
   const [betaBannerDismissed, setBetaBannerDismissed] = useState(false);
   const [demoMode, setDemoMode] = useState(false);
   const [ready, setReady] = useState(false);
-  const guideCheckedRef = useRef(false);
+  const guideShownRef = useRef(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -83,26 +84,33 @@ function RootLayoutInner() {
       setReady(true);
       return;
     }
-    AsyncStorage.getItem('@decide/onboardingComplete')
-      .catch(() => null)
-      .then((onboarded) => {
-        router.replace(onboarded === 'true' ? '/(tabs)/plan' : '/onboarding');
-        setReady(true);
-      });
+    (async () => {
+      if (isQaResetAccount(user.email)) {
+        // Internal QA account: wipe first-run flags before routing so this login always
+        // replays onboarding -> beta guide -> home, no matter what a prior session left behind.
+        await AsyncStorage.multiRemove(['@decide/onboardingComplete', '@decide/beta_guide_always']).catch(() => null);
+        guideShownRef.current = false;
+      }
+      const onboarded = await AsyncStorage.getItem('@decide/onboardingComplete').catch(() => null);
+      router.replace(onboarded === 'true' ? '/(tabs)/plan' : '/onboarding');
+      setReady(true);
+    })();
   }, [authLoading, user]);
 
   useEffect(() => {
-    if (!ready || !(isBetaTester || isAdmin) || guideCheckedRef.current) return;
-    guideCheckedRef.current = true;
+    // Re-runs on every navigation (pathname changes) until it fires once. This is what lets
+    // a brand-new beta tester see the guide right after onboarding completes this same
+    // session, instead of only on their second login: onboarding isn't done at the login-time
+    // check, so we keep re-checking until @decide/onboardingComplete flips to 'true'.
+    if (!ready || !(isBetaTester || isAdmin) || guideShownRef.current) return;
     (async () => {
-      // Default: show the beta guide on every login for beta testers AND admins. Only skip if
-      // they unchecked "show every time" (persisted as @decide/beta_guide_always='false').
-      const always = await AsyncStorage.getItem('@decide/beta_guide_always').catch(() => null);
-      if (always === 'false') return;
       const onboarded = await AsyncStorage.getItem('@decide/onboardingComplete').catch(() => null);
-      if (onboarded === 'true') router.push('/beta-guide');
+      if (onboarded !== 'true') return;
+      guideShownRef.current = true;
+      const guideAlways = await AsyncStorage.getItem('@decide/beta_guide_always').catch(() => null);
+      if (shouldShowBetaGuide({ onboarded, guideAlways })) router.push('/beta-guide');
     })();
-  }, [ready, isBetaTester, isAdmin]);
+  }, [ready, isBetaTester, isAdmin, pathname]);
 
   useEffect(() => {
     const sub = Notifications.addNotificationResponseReceivedListener(response => {
