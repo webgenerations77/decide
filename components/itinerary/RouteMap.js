@@ -1,7 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { View, Text, Image, TouchableOpacity, Linking, StyleSheet, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FONTS, RADII } from '../../constants/theme';
+import { KEYS } from '../../services/settingsService';
+import { haptic } from '../../services/hapticsService';
 import { useTheme } from '../../context/ThemeContext';
 
 // Collapsible route preview. Matches the DiscoveryAnchors disclosure pattern so the
@@ -60,12 +63,41 @@ export function buildDirectionsUrl(stops) {
   return `https://www.google.com/maps/dir/?${params.join('&')}`;
 }
 
+// Shares the CollapsibleCard collapse map so "closed" survives a reload, rather than
+// introducing a second persistence mechanism for the same idea.
+const SECTION_KEY = 'itineraryRouteMap';
+
 export default function RouteMap({ stops = [] }) {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const [expanded, setExpanded] = useState(false);
+  // Open by default: seeing the day's shape IS the "a sequence, not a set" claim, and
+  // collapsed-behind-a-caption meant nobody found it. Closing it is remembered.
+  const [expanded, setExpanded] = useState(true);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    AsyncStorage.getItem(KEYS.COLLAPSED_SECTIONS)
+      .then((raw) => {
+        if (!alive || !raw) return;
+        const map = JSON.parse(raw);
+        if (typeof map[SECTION_KEY] === 'boolean') setExpanded(!map[SECTION_KEY]);
+      })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
+
+  const toggle = async () => {
+    const next = !expanded;
+    setExpanded(next);
+    try {
+      const raw = await AsyncStorage.getItem(KEYS.COLLAPSED_SECTIONS);
+      const map = raw ? JSON.parse(raw) : {};
+      map[SECTION_KEY] = !next;          // stored as "collapsed", matching CollapsibleCard
+      await AsyncStorage.setItem(KEYS.COLLAPSED_SECTIONS, JSON.stringify(map));
+    } catch { /* a lost preference is not worth surfacing */ }
+  };
 
   const mapped = useMemo(() => stopsWithCoords(stops), [stops]);
   const src = useMemo(() => buildStaticMapPath(stops), [stops]);
@@ -79,7 +111,14 @@ export default function RouteMap({ stops = [] }) {
 
   return (
     <View style={styles.wrap}>
-      <TouchableOpacity style={styles.header} onPress={() => setExpanded((e) => !e)} activeOpacity={0.7}>
+      <TouchableOpacity
+        style={styles.header}
+        onPress={haptic.tap(toggle)}
+        activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityState={{ expanded }}
+        accessibilityLabel={`The route, ${mapped.length} stops`}
+      >
         <Text style={styles.headerText}>🗺 The route ({mapped.length} stops)</Text>
         <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={14} color={colors.primary} />
       </TouchableOpacity>
@@ -129,7 +168,8 @@ export default function RouteMap({ stops = [] }) {
 
 const makeStyles = (c) => StyleSheet.create({
   wrap:       { marginTop: 10, alignSelf: 'stretch' },
-  header:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
+  // minHeight, not padding: the label is 12px, so the row was a ~16pt target.
+  header:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: 44 },
   headerText: { color: c.primary, fontSize: 12, fontFamily: FONTS.bodySemiBold, fontStyle: 'italic' },
   body: {
     marginTop: 10, gap: 8,
