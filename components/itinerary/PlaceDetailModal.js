@@ -238,21 +238,19 @@ function PlaceDetailModal({ visible, stop, onClose }) {
                 </View>
               )}
 
-              {(stop.distance || stop.excitement_score > 0) && (
+              {/* The excitement score ("⚡ 7") was removed from here as well as the card.
+                  It is an internal ranking number wearing a costume — no friend says "this
+                  restaurant is a 7", and a bare score is both exposed machinery and OTA
+                  rating-clutter. The field still exists server-side and still influences
+                  ordering; it is simply never shown. */}
+              {stop.distance ? (
                 <View style={styles.detailStatsRow}>
-                  {stop.distance ? (
-                    <TouchableOpacity onPress={() => openMaps(stop)} activeOpacity={0.7} style={styles.distanceLink}>
-                      <Ionicons name="location-outline" size={14} color={colors.primary} style={{ marginRight: 4 }} />
-                      <Text style={styles.distanceLinkTxt}>{stop.distance}</Text>
-                    </TouchableOpacity>
-                  ) : <View />}
-                  {stop.excitement_score > 0 && (
-                    <View style={styles.detailExciteBadge}>
-                      <Text style={styles.detailExciteTxt}>⚡ {stop.excitement_score}</Text>
-                    </View>
-                  )}
+                  <TouchableOpacity onPress={() => openMaps(stop)} activeOpacity={0.7} style={styles.distanceLink}>
+                    <Ionicons name="location-outline" size={14} color={colors.primary} style={{ marginRight: 4 }} />
+                    <Text style={styles.distanceLinkTxt}>{stop.distance}</Text>
+                  </TouchableOpacity>
                 </View>
-              )}
+              ) : null}
 
               <TouchableOpacity style={styles.detailNavBtn} onPress={() => openMaps(stop)} activeOpacity={0.7}>
                 <Ionicons name="navigate" size={18} color={colors.primaryText} style={{ marginRight: 8 }} />
