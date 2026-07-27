@@ -155,9 +155,13 @@ endpoint stays open (fail-open). And verify a Resend domain before emailing anyo
 - Icons rendered via `sharp` from the BrandLogo SVG (one-off script in scratch; `sharp` installed
   `--no-save`, not a project dep).
 - **#2 Taste Profile** ✅ SHIPPED (code done, on-device QA pending) → **§10 below**.
-- **#3 Discovery transparency** — surface *what* the engine found and *why* in the itinerary UI.
-  (The engine already returns `discovery.{hadLiveData,findCount,anchors[]}` in the API response;
-  the indicator line exists in `plan.js` but only shows the one-liner — #3 would surface the anchors.)
+- **#3 Discovery transparency**  ✅ SHIPPED (on `main` @ `5f95ee8` and earlier — commits `6e0ec81`,
+  `f35b793`, `5f95ee8`). Spec/plan: `docs/superpowers/{specs,plans}/2026-06-30-discovery-transparency*`.
+  All 3 planned tasks done and then some: `url` added to the anchor mapping in both handlers;
+  new `components/itinerary/DiscoveryAnchors.js` (collapsible "What we found this week" + a bonus
+  "Local Happenings" block) wired into `ItineraryMeta.js`; stop-level `📰 Live find` chip in
+  `StopCard.js` + "Why it's here" section in `PlaceDetailModal.js`. Copy corrected to never say
+  "Cheddar". The backlog just hadn't been updated — verified in the tree 2026-07-23, no work remained.
 - **#4 Loading screen** — Lottie `loading.json` + rotating widgets (3-day weather [already in the
   wttr.in response], famous-birthday [free Wikimedia API], motivational quote [bundle locally]).
   ~$0 API cost. Needs `lottie-react-native` (not yet installed).
