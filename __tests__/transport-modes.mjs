@@ -1,7 +1,7 @@
 // __tests__/transport-modes.mjs — run: node __tests__/transport-modes.mjs
 import {
-  classifyLeg, ambiguousLegIndexes, dayVerdict, isNotableLeg, legChipText,
-  transitIsCompetitive, TRANSIT_TOLERANCE,
+  classifyLeg, ambiguousLegIndexes, dayVerdict, isNotableLeg, legChipText, legHintText,
+  transitIsCompetitive, transitViaText, TRANSIT_TOLERANCE,
 } from '../lib/transport/modes.js';
 import { getLocalTransport, rideshareLink } from '../lib/transport/local.js';
 import {
@@ -185,6 +185,64 @@ const link = rideshareLink({ lat: 38.34, lng: -75.07, name: 'B' });
 assert('builds a deep link', typeof link === 'string' && link.includes('m.uber.com'));
 assert('claims no price or ETA', !/price|eta|minutes|available/i.test(link));
 assert('null target returns null', rideshareLink(null) === null);
+
+console.log('reach warning carries a way to act on it');
+// The gap a real Brooklyn day exposed: the ONE moment the app is certain a car is needed, it
+// said "plan a ride" and offered no way to plan one. A count cannot be turned into a link.
+const strandedLeg = {
+  mode: 'drive', miles: 3.1, mins: 9,
+  leg: { from: { lat: 40.71, lng: -73.95 }, to: { lat: 40.70, lng: -73.99 }, toName: 'DUMBO' },
+};
+const stranded = dayVerdict(
+  [{ mode: 'walk', miles: 0.3, mins: 6, leg: { to: { lat: 40.72, lng: -73.96 }, toName: 'A' } }, strandedLeg],
+  { transit: 'yes', gettingAround: 'transit', transitMins: 30, driveMins: 26 },
+);
+assert('unreachable stretch is actionable, not just counted', stranded.unreachable.length === 1);
+assert('ride target names the stop', stranded.unreachable[0].name === 'DUMBO');
+assert('ride target carries coords a deep link can use',
+  rideshareLink(stranded.unreachable[0])?.includes('m.uber.com') === true);
+assert('warning and ride target agree on the count',
+  /One stretch/.test(stranded.reachWarning) && stranded.unreachable.length === 1);
+
+// A driver is never offered a ride out of a problem they do not have.
+const driverRide = dayVerdict([{ mode: 'drive', miles: 12, mins: 20, leg: { to: { lat: 38.3, lng: -75.1 } } }], { transit: 'no' });
+assert('driver gets no ride targets', driverRide.unreachable.length === 0);
+assert('a walkable carless day offers no ride', carlessGoodPlan.unreachable.length === 0);
+
+// modes.js is called with bare {mode,miles} objects all over this file — it must not assume
+// buildLegs attached endpoints, and a coordless leg must not become a button going nowhere.
+assert('coordless unreachable leg is dropped, not rendered as a dead link',
+  dayVerdict([{ mode: 'drive', miles: 14, mins: 24 }], { transit: 'no', gettingAround: 'walk' }).unreachable.length === 0);
+
+console.log('legHintText — the quiet volume');
+// Every leg must be tappable; the loud chip must stay rare. So both must produce copy, and
+// they must not sound alike — the chip commands, the hint states.
+assert('hint states rather than commands', legHintText({ mode: 'walk', miles: 0.4, mins: 8 }) === '0.4 mi on foot · 8 min',
+  legHintText({ mode: 'walk', miles: 0.4, mins: 8 }));
+assert('hint covers driving', /by car/.test(legHintText({ mode: 'drive', miles: 3.1 })));
+assert('hint covers biking', /by bike/.test(legHintText({ mode: 'bike', miles: 1.2 })));
+assert('hint survives missing distance', typeof legHintText({ mode: 'walk' }) === 'string');
+assert('unknown mode invents nothing', legHintText({ mode: 'teleport' }) === null);
+assert('no leg, no hint', legHintText(null) === null);
+assert('hint never borrows the chip’s imperative',
+  !/Walk it|Drive it|Bike it/.test(legHintText({ mode: 'walk', miles: 0.4, mins: 8 })));
+
+console.log('transitViaText — naming the train');
+assert('names a single line', transitViaText({ fromName: 'Birdy’s', toName: 'DUMBO', lines: ['R Line'] })
+  === 'Birdy’s → DUMBO runs via the R Line');
+assert('names a transfer', /the R Line, then the 1 Line/.test(
+  transitViaText({ fromName: 'A', toName: 'B', lines: ['R Line', '1 Line'] })));
+// It describes ONE leg. Naming both endpoints is what stops it reading as the whole day.
+assert('scopes itself to the stretch it measured',
+  transitViaText({ fromName: 'A', toName: 'B', lines: ['R'] }).startsWith('A → B'));
+assert('falls back without inventing stop names',
+  /^The longest stretch/.test(transitViaText({ lines: ['R'] })));
+assert('no lines means silence, not a dangling "via the"',
+  transitViaText({ fromName: 'A', toName: 'B', lines: [] }) === null);
+assert('blank line labels are not names', transitViaText({ lines: ['', '  '] }) === null);
+assert('caps a pathological route',
+  (transitViaText({ lines: ['A', 'B', 'C', 'D', 'E'] }).match(/then the/g) || []).length === 2);
+assert('missing input is safe', transitViaText() === null);
 
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

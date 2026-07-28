@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, Linking, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons';
 import { FONTS, RADII } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
+import { rideshareLink } from '../../lib/transport/local';
 
 // The day's travel verdict — one stated call, not a comparison of options.
 //
@@ -25,6 +26,23 @@ export default function TransportSummary({ transport }) {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
+  // One ride per stretch we know they cannot cover. Built above the early return because hooks
+  // cannot live below one; `unreachable` is empty for anyone with a car, so this is [] for them.
+  const rideTargets = useMemo(() => {
+    const targets = transport?.verdict?.unreachable ?? [];
+    return targets
+      .map((t, i) => {
+        const url = rideshareLink(t);
+        if (!url) return null;
+        return {
+          key: `${t.lat},${t.lng},${i}`,
+          url,
+          label: t.name ? `Ride to ${t.name}` : 'Plan a ride for this stretch',
+        };
+      })
+      .filter(Boolean);
+  }, [transport?.verdict?.unreachable]);
+
   if (!transport?.verdict) return null;
   const { verdict, local = [], measured } = transport;
 
@@ -37,15 +55,50 @@ export default function TransportSummary({ transport }) {
         <View style={styles.verdictText}>
           <Text style={styles.verdictLabel}>{verdict.label}</Text>
           <Text style={styles.verdictDetail}>{verdict.detail}</Text>
+          {/* Which train, not just "transit" — "Take transit" without a line named is close to
+              useless in a city. Names the two stops it measured, because it describes the day's
+              longest leg and must not be read as the whole day's route. */}
+          {verdict.transitVia ? (
+            <Text style={styles.viaTxt} numberOfLines={2}>{verdict.transitVia}</Text>
+          ) : null}
         </View>
       </View>
 
       {/* A carless traveller holding a plan with a leg they cannot cover needs to know now,
-          not at stop three. Gold, not red — it's a tradeoff to resolve, not a fault. */}
+          not at stop three. Gold, not red — it's a tradeoff to resolve, not a fault.
+          The warning tells them to plan a ride, so it carries the way to plan one: this is the
+          single moment the app is CERTAIN a car is needed, and it used to offer nothing. */}
       {verdict.reachWarning ? (
-        <View style={styles.warnRow}>
-          <Ionicons name="alert-circle-outline" size={13} color={colors.gold} style={{ marginTop: 1 }} />
-          <Text style={styles.warnTxt}>{verdict.reachWarning}</Text>
+        <View style={styles.warnBlock}>
+          <View style={styles.warnRow}>
+            <Ionicons name="alert-circle-outline" size={13} color={colors.gold} style={{ marginTop: 1 }} />
+            <Text style={styles.warnTxt}>{verdict.reachWarning}</Text>
+          </View>
+
+          {rideTargets.length ? (
+            <View style={styles.rideBlock}>
+              {rideTargets.map((t) => (
+                <TouchableOpacity
+                  key={t.key}
+                  style={styles.rideBtn}
+                  activeOpacity={0.7}
+                  onPress={() => Linking.openURL(t.url).catch(() => {})}
+                  accessibilityRole="link"
+                  accessibilityLabel={`${t.label}. Opens a rideshare app with the drop-off set.`}
+                >
+                  <Ionicons name="car-sport-outline" size={14} color={colors.primary} />
+                  <Text style={styles.rideBtnTxt} numberOfLines={1}>{t.label}</Text>
+                  <Ionicons name="chevron-forward" size={12} color={colors.primary} />
+                </TouchableOpacity>
+              ))}
+              {/* Uber and Lyft both retired the public APIs that could supply a wait time or a
+                  fare, so we claim neither. Saying we cannot see them is the honest version of
+                  a button that would otherwise imply we can. */}
+              <Text style={styles.rideNote}>
+                Opens a rideshare app with the drop-off set. We can’t see prices or wait times.
+              </Text>
+            </View>
+          ) : null}
         </View>
       ) : null}
 
@@ -98,14 +151,32 @@ const makeStyles = (c) => StyleSheet.create({
 
   note:         { fontFamily: FONTS.body, fontSize: 12, color: c.textSecondary, lineHeight: 17 },
 
+  // Named line under the verdict — muted, so it informs the call without competing with it.
+  viaTxt: { fontFamily: FONTS.bodyMedium, fontSize: 11, color: c.textMuted, marginTop: 3 },
+
   // Gold tint, goldText for the copy — gold itself is too light to carry text on paper.
   // Matches StopCard's detourNote: an honest tradeoff, not an error state.
-  warnRow: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: 6,
-    paddingHorizontal: 10, paddingVertical: 7,
+  // The warning and its ride buttons share one tinted block so the fix reads as part of the
+  // problem rather than as an unrelated control that happens to sit underneath it.
+  warnBlock: {
+    paddingHorizontal: 10, paddingVertical: 7, gap: 8,
     borderRadius: RADII.sm, backgroundColor: c.gold + '22',
   },
+  warnRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6 },
   warnTxt: { flex: 1, fontFamily: FONTS.body, fontSize: 12, lineHeight: 16, color: c.goldText },
+
+  rideBlock: { gap: 6 },
+  // Cobalt on surface, not gold: this is the CTA out of the problem, and gold is never a
+  // control (DESIGN.md, "Gold Is Not A Control").
+  rideBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 7,
+    paddingHorizontal: 10, paddingVertical: 8,
+    borderRadius: RADII.sm,
+    backgroundColor: c.surface, borderWidth: 1, borderColor: c.borderLight,
+  },
+  rideBtnTxt: { flex: 1, fontFamily: FONTS.bodySemiBold, fontSize: 12, color: c.primary },
+  rideNote: { fontFamily: FONTS.body, fontSize: 11, lineHeight: 15, color: c.goldText },
+
   estimateNote: { fontFamily: FONTS.body, fontSize: 11, color: c.textMuted, lineHeight: 15 },
 
   localBlock: {
