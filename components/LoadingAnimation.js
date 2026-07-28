@@ -170,8 +170,15 @@ const makeStyles = (c) => StyleSheet.create({
   // alignSelf stretch + flex so the three zones can spread across the overlay. Both call sites
   // (the plan screen overlay and the admin preview) centre their children, which would otherwise
   // shrink this to its content width and collapse the layout back to a stack.
+  //
+  // ⚠ minHeight is NOT decoration. `flex: 1` resolves to ZERO height in a parent that has no
+  // definite height of its own, and this component renders inside an RN Modal — a context where
+  // that is easy to get wrong. Before the three-zone rework this was content-sized and so drew
+  // itself anywhere; now it can be laid out to nothing and render as an empty background. The
+  // floor guarantees it is always visible; wherever the parent does give real height, flex wins
+  // and this never applies.
   wrap: {
-    flex: 1, alignSelf: 'stretch', width: '100%',
+    flex: 1, alignSelf: 'stretch', width: '100%', minHeight: 480,
     alignItems: 'center', justifyContent: 'space-between',
     paddingVertical: 20, paddingHorizontal: 16,
   },
