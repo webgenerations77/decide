@@ -4,13 +4,13 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FONTS, RADII } from '../../constants/theme';
 import { categoryVisual } from '../../constants/categoryVisuals';
 import useViewportOverlay, { WEB_OVERLAY_FIX } from '../../hooks/useViewportOverlay';
 import { useTheme } from '../../context/ThemeContext';
 import { getLocalKnowledge, getAllergyAlerts } from '../../constants/localKnowledge';
 import { hapticTap } from '../../services/hapticsService';
+import { savePlaceFeedback, loadPlaceFeedback } from '../../services/placeFeedback';
 import { placePhotoUrl } from '../../services/placesService';
 import LegOptionsSheet from './LegOptionsSheet';
 
@@ -122,17 +122,19 @@ function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, 
   const handleCardPressIn  = () => Animated.spring(pressScale, { toValue: 0.98, useNativeDriver: true, damping: 22, stiffness: 320 }).start();
   const handleCardPressOut = () => Animated.spring(pressScale, { toValue: 1,    useNativeDriver: true, damping: 16, stiffness: 260 }).start();
 
+  // Reads and writes go through services/placeFeedback so the storage key has ONE owner. It
+  // used to be a template literal right here, which is how this store went write-only without
+  // anyone noticing: nothing searching for a data source would ever find it.
   useEffect(() => {
     if (!stop.place_id) return;
-    AsyncStorage.getItem(`@decide/feedback_${stop.place_id}`)
-      .then((raw) => { if (raw) { try { setFeedback(JSON.parse(raw).feedback); } catch {} } })
+    loadPlaceFeedback(stop.place_id)
+      .then((saved) => { if (saved?.feedback) setFeedback(saved.feedback); })
       .catch(() => {});
   }, [stop.place_id]);
 
   const saveFeedback = (type, reason = null) => {
     if (!stop.place_id) return;
-    const data = { placeId: stop.place_id, placeName: stop.name, feedback: type, reason, timestamp: Date.now() };
-    AsyncStorage.setItem(`@decide/feedback_${stop.place_id}`, JSON.stringify(data)).catch(() => {});
+    savePlaceFeedback({ placeId: stop.place_id, placeName: stop.name, feedback: type, reason });
     setFeedback(type);
   };
 

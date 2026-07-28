@@ -120,9 +120,14 @@ timeline gutter was empty. If it ever starts reading as a badge wall, the lever 
 - `getLocalKnowledge` requires lat/lng. Without the geographic gate, regional advice leaks
   worldwide — this shipped once, with Delmarva mosquito warnings appearing on outdoor stops
   anywhere on the planet.
-- `StopCard` is the only writer of `@decide/feedback_*`, which `plan.js` reads to build the
-  synthesis prompt's HARD AVOID list. If the swap flow's reason capture is ever removed, the
-  app silently stops learning what a traveller rejects.
+- `StopCard`'s swap flow is the only writer of per-stop feedback. It now goes through
+  `services/placeFeedback.js`, and `plan.js` folds it into the synthesis prompt's HARD AVOID list
+  via `lib/feedbackContext.js`. **This claim used to be false**: the key was written and read by
+  nothing for as long as it existed, because `plan.js` built its avoid list from
+  `@decide/decisions` and `@decide/itineraries` — different keys — while this doc asserted the
+  connection. Fixed 2026-07-28, and `__tests__/feedback-context.mjs` now fails if any source
+  stops reaching the prompt. If the swap flow's reason capture is ever removed, the app silently
+  stops learning what a traveller rejects.
 - Both itinerary twins (`api/itinerary.js` and `app/api/itinerary+api.js`) must stay in sync.
 
 ## What to do first

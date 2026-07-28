@@ -13,12 +13,13 @@ carries the risk here rather than leaving it to be discovered mid-build.
 **The ask:** a gamification layer that encourages travellers to come back and record what they
 actually thought of a plan — and, if possible, push those reviews out to Google.
 
-**Why it is worth more than it looks.** `StopCard` is already the only writer of
-`@decide/feedback_*`, which `plan.js` reads to build the synthesis prompt's HARD AVOID list. So
-review capture is not a vanity feature: it is the app's only channel for learning what a
-traveller rejects, and right now it only fires when someone swaps a stop. A traveller who
-finished the day and hated stop four tells us nothing. Closing that loop improves the actual
-recommendations, which is the product.
+**Why it is worth more than it looks.** Per-stop feedback now genuinely reaches the synthesis
+prompt's HARD AVOID list (`services/placeFeedback.js` → `lib/feedbackContext.js` → `plan.js`).
+Until 2026-07-28 it did not: StopCard wrote it and nothing read it. So review capture is not a
+vanity feature — it is the app's only channel for learning what a traveller rejects, and right
+now it still only fires when someone swaps a stop *during* planning. A traveller who finished the
+day and hated stop four tells us nothing. Closing that loop improves the actual recommendations,
+which is the product.
 
 ### ⚠ The Google half needs reshaping before it is built
 

@@ -35,6 +35,8 @@ import StopCard from '../../components/itinerary/StopCard';
 import ItineraryMeta from '../../components/itinerary/ItineraryMeta';
 import RouteMap from '../../components/itinerary/RouteMap';
 import { GETTING_AROUND_OPTIONS, DEFAULT_GETTING_AROUND } from '../../lib/transport/gettingAround';
+import { buildFeedbackContext } from '../../lib/feedbackContext';
+import { allPlaceFeedback } from '../../services/placeFeedback';
 import { getTransitOptions, defaultTransitPref, onlyRideshare } from '../../lib/transport/availability';
 
 // ─── Date helpers ─────────────────────────────────────────────────────────────
@@ -544,20 +546,19 @@ export default function PlanScreen() {
     try {
       let feedbackCtx = {};
       try {
-        const [dRaw, iRaw] = await Promise.all([
+        // ⚠ placeFeedback is the source this was MISSING. StopCard's swap flow has always
+        // recorded which stop was rejected and why, and nothing read it back — the most
+        // specific signal the app collects was written and discarded on every swap.
+        const [dRaw, iRaw, placeFeedback] = await Promise.all([
           AsyncStorage.getItem('@decide/decisions'),
           AsyncStorage.getItem('@decide/itineraries'),
+          allPlaceFeedback(),
         ]);
-        const decisions   = dRaw ? JSON.parse(dRaw) : [];
-        const itineraries = iRaw ? JSON.parse(iRaw) : [];
-        const dislikedPlaces  = decisions.filter((d) => d.feedback === 'down').map((d) => d.name).filter(Boolean);
-        const likedPlaces     = decisions.filter((d) => d.feedback === 'up').map((d) => d.name).filter(Boolean);
-        const allReasons      = [
-          ...decisions.filter((d) => d.feedback === 'down' && d.feedbackReason).map((d) => d.feedbackReason),
-          ...itineraries.filter((it) => it.feedback === 'down' && it.feedbackReason).map((it) => it.feedbackReason),
-        ];
-        const dislikedReasons = [...new Set(allReasons)];
-        feedbackCtx = { dislikedPlaces: dislikedPlaces.slice(0, 20), likedPlaces: likedPlaces.slice(0, 10), dislikedReasons };
+        feedbackCtx = buildFeedbackContext({
+          decisions:   dRaw ? JSON.parse(dRaw) : [],
+          itineraries: iRaw ? JSON.parse(iRaw) : [],
+          placeFeedback,
+        });
       } catch {}
 
       const maxDistRaw = await AsyncStorage.getItem('@decide/max_distance').catch(() => null);
