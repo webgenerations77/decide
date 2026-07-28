@@ -610,6 +610,26 @@ export default function SettingsScreen() {
         >
           <Text style={styles.screenTitle}>Settings</Text>
 
+          {/* ── Admin (admin-only) ──────────────────────────────────────────────
+              Moved from the very bottom to the top. It is a jumping-off point to a different
+              screen rather than a setting, and the person who sees it is the one who reaches
+              for it constantly — burying it under nine collapsed cards taxed every visit.
+              Invisible to everyone else, so it costs a normal traveller nothing. */}
+          {isAdmin && (
+            <>
+              <SectionLabel tone="cobalt" rule style={styles.sectionHeaderSpacing}>ADMIN</SectionLabel>
+              <Card style={styles.card}>
+                <Pressable style={styles.appRow} onPress={haptic.tap(() => router.push('/admin'))}>
+                  <View>
+                    <Text style={styles.appRowLabel}>Admin Dashboard</Text>
+                    <Text style={styles.demoSub}>API usage & user administration</Text>
+                  </View>
+                  <Text style={styles.appRowChevron}>›</Text>
+                </Pressable>
+              </Card>
+            </>
+          )}
+
           {/* Profile/Appearance previously sat above the first group header, so the screen
               opened ungrouped and only became grouped further down. */}
           <SectionLabel tone="cobalt" rule style={styles.sectionHeaderSpacing}>YOU</SectionLabel>
@@ -974,22 +994,6 @@ export default function SettingsScreen() {
               <Text style={styles.appRowChevron}>›</Text>
             </TouchableOpacity>
           </CollapsibleCard>
-
-          {/* ── Admin (admin-only) — kept at the very bottom ───────────────── */}
-          {isAdmin && (
-            <>
-              <SectionLabel tone="cobalt" rule style={styles.sectionHeaderSpacing}>ADMIN</SectionLabel>
-              <Card style={styles.card}>
-                <Pressable style={styles.appRow} onPress={haptic.tap(() => router.push('/admin'))}>
-                  <View>
-                    <Text style={styles.appRowLabel}>Admin Dashboard</Text>
-                    <Text style={styles.demoSub}>API usage & user administration</Text>
-                  </View>
-                  <Text style={styles.appRowChevron}>›</Text>
-                </Pressable>
-              </Card>
-            </>
-          )}
 
           {/* ── Developer (footer) — demoted to the very bottom ──────────────── */}
           <CollapsibleCard title="DEVELOPER" sectionKey="developer" summary={demoMode ? 'Demo on' : 'Debug tools'} style={styles.collapsibleSpacing}>

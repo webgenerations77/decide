@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { View, Text, ScrollView, Pressable, ActivityIndicator, Modal, StyleSheet, Alert } from 'react-native';
+import { View, Text, ScrollView, Pressable, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -337,14 +337,22 @@ export default function AdminScreen() {
         </Card>
         </ScrollView>
 
-        <Modal visible={loadingPreview} animationType="fade" onRequestClose={() => setLoadingPreview(false)}>
-          <ScreenBackground variant="paper">
-            <Pressable style={styles.previewOverlay} onPress={() => setLoadingPreview(false)}>
-              <LoadingAnimation coords={previewCoords} />
-              <Text style={styles.previewHint}>Preview · tap anywhere to close</Text>
-            </Pressable>
-          </ScreenBackground>
-        </Modal>
+        {/* ⚠ NOT an RN Modal. This used to be one and rendered as an empty background on
+            mobile web — RN's Modal does not pin its content to the VISUAL viewport there,
+            which is the same defect hooks/useViewportOverlay.js exists to work around. It
+            reproduced on a phone and not on a desktop browser, which is exactly the shape of
+            that bug.
+
+            This is instead the absolutely-positioned overlay that plan.js already uses for the
+            real loading state — the one code path in the app where this component is known to
+            render correctly in production. Preview and reality now go through the same
+            mechanism, so the preview cannot silently disagree with what travellers see. */}
+        {loadingPreview && (
+          <Pressable style={styles.previewOverlay} onPress={() => setLoadingPreview(false)}>
+            <LoadingAnimation coords={previewCoords} />
+            <Text style={styles.previewHint}>Preview · tap anywhere to close</Text>
+          </Pressable>
+        )}
       </SafeAreaView>
     </ScreenBackground>
   );
@@ -418,6 +426,13 @@ const makeStyles = (c) => StyleSheet.create({
   toolLabel: { fontFamily: FONTS.bodySemiBold, color: c.textPrimary, fontSize: 15 },
   toolSub: { fontFamily: FONTS.body, color: c.textMuted, fontSize: 12, marginTop: 1 },
   toolChevron: { fontFamily: FONTS.body, color: c.textMuted, fontSize: 22 },
-  previewOverlay: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 },
+  // Mirrors plan.js's loadingOverlay exactly. Absolute inset-0 gives LoadingAnimation a parent
+  // with real height, which `flex: 1` needs and which an RN Modal on mobile web did not supply.
+  previewOverlay: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: c.bg,
+    alignItems: 'center', justifyContent: 'center', gap: 16,
+    zIndex: 50, elevation: 50,
+  },
   previewHint: { fontFamily: FONTS.mono, color: c.textMuted, fontSize: 11, letterSpacing: 0.5 },
 });
