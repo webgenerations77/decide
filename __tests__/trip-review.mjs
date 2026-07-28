@@ -7,7 +7,7 @@
 
 import {
   isTripOver, isReviewed, reviewableTrips, rewardForReview, googleReviewUrl,
-  REVIEW_REWARD, MAX_DAILY_REVIEW_BONUS,
+  tripsToPrompt, REVIEW_REWARD, MAX_DAILY_REVIEW_BONUS, MAX_TRIP_PROMPTS, REVIEW_MAX_AGE_DAYS,
 } from '../lib/tripReview.js';
 
 let passed = 0, failed = 0;
@@ -50,6 +50,34 @@ assert('only finished, unanswered trips are prompted',
   JSON.stringify(askable) === JSON.stringify(['a']), JSON.stringify(askable));
 assert('an empty history prompts nothing', reviewableTrips([], now).length === 0);
 assert('junk input is safe', reviewableTrips(null, now).length === 0);
+
+console.log('\nask about a couple, not a backlog');
+// Found on real data: 25 finished, unreviewed trips all qualified at once and turned the history
+// screen into a wall of identical asks. Correct by the rules, awful to look at.
+const backlog = Array.from({ length: 25 }, (_, i) => ({
+  id: `t${i}`,
+  tripDate: new Date(now - (i + 1) * DAY).toISOString().slice(0, 10),
+  feedback: null,
+}));
+const prompts = tripsToPrompt(backlog, now);
+assert('a long backlog does not become a wall of prompts',
+  prompts.size === MAX_TRIP_PROMPTS, String(prompts.size));
+assert('it asks about the FRESHEST trips, not the oldest',
+  prompts.has('t0') && prompts.has('t1'), [...prompts].join(','));
+
+// A review is only as good as the memory behind it; a guess is worse than silence because it
+// feeds the avoid list a place they never really objected to.
+const stale = [{ id: 'old', tripDate: new Date(now - (REVIEW_MAX_AGE_DAYS + 5) * DAY).toISOString().slice(0, 10), feedback: null }];
+assert('a trip too old to remember is not asked about', tripsToPrompt(stale, now).size === 0);
+
+// Answering one should surface the next, so a motivated traveller can still work through them.
+const afterOne = tripsToPrompt(backlog.map((t) => (t.id === 't0' ? { ...t, feedback: 'up' } : t)), now);
+assert('answering one surfaces the next', afterOne.has('t2') && !afterOne.has('t0'), [...afterOne].join(','));
+
+assert('nothing to ask about is safe', tripsToPrompt([], now).size === 0);
+assert('junk input is safe', tripsToPrompt(null, now).size === 0);
+assert('an entry with no id is never prompted',
+  tripsToPrompt([{ tripDate: '2026-07-26', feedback: null }], now).size === 0);
 
 console.log('\nthe reward is a nudge, not a currency');
 assert('a first review pays', rewardForReview(0) === REVIEW_REWARD);

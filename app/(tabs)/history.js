@@ -20,7 +20,7 @@ import CTAButton from '../../components/brand/CTAButton';
 import BrandLogo from '../../components/brand/BrandLogo';
 import VersionTag from '../../components/brand/VersionTag';
 import TripReviewSheet from '../../components/history/TripReviewSheet';
-import { isTripOver, isReviewed } from '../../lib/tripReview';
+import { tripsToPrompt } from '../../lib/tripReview';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const FEEDBACK_REASONS = ['Closed', 'Too crowded', 'Not my style', 'Too far', 'Too expensive', 'Other'];
@@ -203,6 +203,10 @@ export default function HistoryScreen() {
   const [isDemo,          setIsDemo]          = useState(false);
   const [reviewTrip,      setReviewTrip]      = useState(null);
 
+  // Derived once per list rather than per row, so each card is a Set lookup. Recomputes when a
+  // review lands, which is what lets the next trip surface as soon as one is answered.
+  const promptIds = useMemo(() => tripsToPrompt(itineraries), [itineraries]);
+
   useFocusEffect(useCallback(() => {
     (async () => {
       try {
@@ -362,8 +366,9 @@ export default function HistoryScreen() {
               onFeedbackDown={() => handleThumbsDown(item, 'itinerary')}
               onOpen={() => router.push(`/itinerary/${item.id}`)}
               // Demo history is sample data — prompting for a review of a trip nobody took, and
-              // paying out a decision for it, would be nonsense.
-              askable={!isDemo && isTripOver(item) && !isReviewed(item)}
+              // paying out a decision for it, would be nonsense. promptIds caps the rest: every
+              // qualifying trip showing at once turned a real history into 25 identical asks.
+              askable={!isDemo && promptIds.has(item.id)}
               onReview={() => setReviewTrip(item)}
             />
           ))}
