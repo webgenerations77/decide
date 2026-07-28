@@ -181,6 +181,12 @@ async function main() {
   goTo(0);
   play();
   if (!reduced) startFX();
+
+  /* The host page owns the mute control, because the in-frame one is hidden and a control the
+     traveller cannot see is not a control. setMuted lives in this closure, so it is published
+     deliberately rather than reached for. Same-origin (served from public/), so HouseAd can
+     call it directly. It handles both layers — the narration and the synth score. */
+  window.__adSetMuted = function(m){ try { setMuted(!!m); } catch(e){} };
 })();`;
   const lastClose = html.lastIndexOf('})();');
   if (lastClose === -1) throw new Error('[build-house-ad] Could not find the player IIFE close.');

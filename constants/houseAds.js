@@ -34,7 +34,10 @@ export const HOUSE_ADS = [
     name: 'Cert to Table',
     // Their own trailer's headline. Short enough to survive a narrow phone.
     tagline: 'Hospitality certification, reinvented',
-    cta: 'Watch with sound',
+    // What the tap actually gets you: the full 81-second trailer, including the five scenes the
+    // embed cut drops. NOT "watch with sound" — the embed has sound now, so that promised
+    // something it was already doing.
+    cta: 'Watch the full trailer',
     media: require('../assets/ads/certotable.jpg'),
     // Portrait, matching the 560×1244 source screenshot it was cropped from.
     mediaAspect: 168 / 373,

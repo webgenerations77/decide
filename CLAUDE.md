@@ -113,7 +113,9 @@ a generic AI chat product, or an enterprise dashboard.
   INSTALLED PWAs — which is how Decide ships. The iframe MUST carry `allow="autoplay"` or it is
   blocked regardless of the parent's activation. Where a browser still refuses (iOS Safari) it
   degrades to silent, not broken: the scene timeline runs on requestAnimationFrame and
-  `voEl.play()` is already caught upstream.
+  `voEl.play()` is already caught upstream. The embed publishes `window.__adSetMuted(bool)` so
+  HouseAd's mute toggle can reach in (same-origin direct call, no postMessage handshake); the
+  trailer's own controls are hidden, and a control the traveller cannot see is not a control.
   ⚠ TRIMMING THE TIMELINE ALONE IS A BUG: the player indexes `querySelectorAll('.scene')` with
   the TL index, so the DOM sections must be pruned to match or the ad plays one scene's visuals
   under another's caption. The script does both, and EVERY edit is asserted — if the upstream
