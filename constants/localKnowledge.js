@@ -1,10 +1,25 @@
 // Cheddar's local knowledge — real-world nuance layered onto recommendations.
-// Each entry fires when a card's name/address matches a pattern AND conditions match.
-// severity: 'warning' (orange) | 'info' (teal) | 'tip' (gold)
+// Each entry fires when a stop is INSIDE the entry's region AND its name/address matches a
+// pattern AND conditions match. severity: 'warning' (orange) | 'info' (teal) | 'tip' (gold)
+//
+// ⚠ EVERY ENTRY MUST CARRY A `bbox`. This knowledge is region-specific, and matching on stop
+// text alone leaks it worldwide. Two real bugs this caused:
+//   · `delmarva_mosquitoes_dusk` had `patterns: []`, which the matcher read as "match every
+//     stop" — a Delmarva marsh warning fired on outdoor stops anywhere on the planet.
+//   · `ocean_city_boardwalk_tip` matched the bare word "Boardwalk", so Atlantic City, Santa
+//     Cruz and Venice Beach all got Ocean City's advice.
+// The geographic gate is now the FIRST check and there is no way to opt out of it. Empty
+// `patterns` now means "any stop of this category within the bbox", which is a useful and
+// bounded thing to say — not "everywhere".
+
+// The Delmarva peninsula: roughly Cape Henlopen down to Cape Charles, bay to ocean. Used as
+// the default region for entries about the peninsula as a whole rather than one town.
+export const DELMARVA_BBOX = { minLat: 37.0, maxLat: 39.8, minLng: -76.3, maxLng: -74.9 };
 
 export const LOCAL_KNOWLEDGE = [
   {
     id: 'assateague_biting_flies',
+    bbox: { minLat: 38.05, maxLat: 38.35, minLng: -75.25, maxLng: -75.05 },
     patterns: ['Assateague'],
     categories: ['outdoor'],
     conditions: { months: [6, 7, 8], windDirections: ['E', 'ENE', 'ESE', 'NE', 'SE'] },
@@ -13,6 +28,7 @@ export const LOCAL_KNOWLEDGE = [
   },
   {
     id: 'assateague_always',
+    bbox: { minLat: 38.05, maxLat: 38.35, minLng: -75.25, maxLng: -75.05 },
     patterns: ['Assateague'],
     categories: ['outdoor'],
     conditions: {},
@@ -21,6 +37,7 @@ export const LOCAL_KNOWLEDGE = [
   },
   {
     id: 'ocean_city_summer_traffic',
+    bbox: { minLat: 38.30, maxLat: 38.47, minLng: -75.12, maxLng: -75.02 },
     patterns: ['Ocean City', 'OC, MD'],
     categories: ['food', 'activity', 'outdoor', 'shopping'],
     conditions: { months: [6, 7, 8], dayOfWeek: ['Saturday', 'Sunday'] },
@@ -29,7 +46,11 @@ export const LOCAL_KNOWLEDGE = [
   },
   {
     id: 'ocean_city_boardwalk_tip',
-    patterns: ['Boardwalk', 'Ocean City Boardwalk'],
+    bbox: { minLat: 38.32, maxLat: 38.40, minLng: -75.10, maxLng: -75.04 },
+    // NOT a bare 'Boardwalk' — that matched Atlantic City, Santa Cruz and Venice Beach too.
+    // The bbox now gates it geographically, but the pattern is tightened as well so the
+    // entry can't fire on some unrelated boardwalk that happens to fall inside the box.
+    patterns: ['Ocean City Boardwalk', 'OC Boardwalk'],
     categories: ['outdoor', 'activity', 'shopping'],
     conditions: {},
     text: 'The boardwalk is best early morning (cooler, less crowded) or after 7 PM when the crowd thins and the lights come on.',
@@ -37,6 +58,7 @@ export const LOCAL_KNOWLEDGE = [
   },
   {
     id: 'rehoboth_parking',
+    bbox: { minLat: 38.68, maxLat: 38.75, minLng: -75.10, maxLng: -75.04 },
     patterns: ['Rehoboth', 'Rehoboth Beach'],
     categories: ['food', 'activity', 'outdoor', 'shopping'],
     conditions: { months: [6, 7, 8] },
@@ -45,6 +67,7 @@ export const LOCAL_KNOWLEDGE = [
   },
   {
     id: 'bethany_beach',
+    bbox: { minLat: 38.51, maxLat: 38.56, minLng: -75.08, maxLng: -75.03 },
     patterns: ['Bethany', 'Bethany Beach'],
     categories: ['outdoor'],
     conditions: {},
@@ -53,6 +76,7 @@ export const LOCAL_KNOWLEDGE = [
   },
   {
     id: 'dewey_beach_crowds',
+    bbox: { minLat: 38.66, maxLat: 38.70, minLng: -75.09, maxLng: -75.04 },
     patterns: ['Dewey Beach'],
     categories: ['food', 'outdoor', 'activity'],
     conditions: { months: [6, 7, 8] },
@@ -61,6 +85,7 @@ export const LOCAL_KNOWLEDGE = [
   },
   {
     id: 'fenwick_island',
+    bbox: { minLat: 38.44, maxLat: 38.48, minLng: -75.08, maxLng: -75.02 },
     patterns: ['Fenwick Island'],
     categories: ['outdoor'],
     conditions: {},
@@ -69,6 +94,7 @@ export const LOCAL_KNOWLEDGE = [
   },
   {
     id: 'blackwater_wildlife_refuge',
+    bbox: { minLat: 38.30, maxLat: 38.52, minLng: -76.20, maxLng: -75.95 },
     patterns: ['Blackwater', 'Blackwater National Wildlife'],
     categories: ['outdoor'],
     conditions: { months: [10, 11, 12, 1, 2] },
@@ -77,6 +103,7 @@ export const LOCAL_KNOWLEDGE = [
   },
   {
     id: 'chincoteague_pony_swim',
+    bbox: { minLat: 37.85, maxLat: 38.05, minLng: -75.45, maxLng: -75.20 },
     patterns: ['Chincoteague', 'Chincoteague National Wildlife'],
     categories: ['outdoor', 'activity'],
     conditions: { months: [7] },
@@ -85,6 +112,10 @@ export const LOCAL_KNOWLEDGE = [
   },
   {
     id: 'delmarva_mosquitoes_dusk',
+    bbox: DELMARVA_BBOX,
+    // Intentionally empty: this applies to ANY outdoor stop on the peninsula, not to a named
+    // place. That is only safe because bbox is now checked first — before the geographic gate
+    // existed, this fired on every outdoor stop in the world.
     patterns: [],
     categories: ['outdoor'],
     conditions: { months: [5, 6, 7, 8, 9], timeOfDay: 'evening' },
@@ -93,6 +124,7 @@ export const LOCAL_KNOWLEDGE = [
   },
   {
     id: 'ocean_pines_marina',
+    bbox: { minLat: 38.36, maxLat: 38.44, minLng: -75.20, maxLng: -75.10 },
     patterns: ['Ocean Pines', 'Ocean Pines Marina'],
     categories: ['outdoor', 'activity'],
     conditions: {},
@@ -101,8 +133,20 @@ export const LOCAL_KNOWLEDGE = [
   },
 ];
 
+function withinBbox(lat, lng, b) {
+  if (!b) return false;
+  const la = Number(lat), ln = Number(lng);
+  if (!Number.isFinite(la) || !Number.isFinite(ln)) return false;
+  return la >= b.minLat && la <= b.maxLat && ln >= b.minLng && ln <= b.maxLng;
+}
+
 // Returns matching local knowledge entries for a stop given current conditions.
-export function getLocalKnowledge({ stopName = '', stopAddress = '', category = '', weather = null, date = null }) {
+//
+// `lat`/`lng` are REQUIRED for anything to match. A stop with no coordinates returns no local
+// knowledge at all — that is the correct, safe answer. The alternative (falling back to text
+// matching) is what leaked Delmarva mosquito warnings and Ocean City boardwalk advice into
+// plans in completely different states.
+export function getLocalKnowledge({ stopName = '', stopAddress = '', category = '', weather = null, date = null, lat = null, lng = null }) {
   const nameAddr = `${stopName} ${stopAddress}`.toLowerCase();
   const month    = date ? new Date(date).getMonth() + 1 : new Date().getMonth() + 1;
   const dow      = date
@@ -111,7 +155,12 @@ export function getLocalKnowledge({ stopName = '', stopAddress = '', category = 
   const windDir  = weather?.wind_dir ?? null;
 
   return LOCAL_KNOWLEDGE.filter((entry) => {
-    // Check pattern match (empty patterns = matches all for category)
+    // GEOGRAPHIC GATE FIRST, and there is no opting out of it. This is the check whose absence
+    // put Delmarva mosquitoes and Ocean City parking advice on stops in other states.
+    if (!withinBbox(lat, lng, entry.bbox)) return false;
+
+    // Empty patterns now means "any stop of this category inside the bbox" — bounded by the
+    // gate above — rather than the old "matches everything, everywhere".
     const patternsMatch =
       entry.patterns.length === 0 ||
       entry.patterns.some((p) => nameAddr.includes(p.toLowerCase()));

@@ -12,8 +12,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { getLocalKnowledge, getAllergyAlerts } from '../../constants/localKnowledge';
 import { hapticTap } from '../../services/hapticsService';
 import { placePhotoUrl } from '../../services/placesService';
-import { openMaps } from './helpers';
-import PriceLegendModal from './PriceLegendModal';
+import LegOptionsSheet from './LegOptionsSheet';
 
 const FEEDBACK_REASONS = ['Closed', 'Too crowded', 'Not my style', 'Too far', 'Too expensive', 'Other'];
 
@@ -39,7 +38,7 @@ function FeedbackModal({ visible, placeName, onClose, onSelect }) {
         <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={onClose} />
           <View style={styles.fbCard}>
             <View style={styles.fbHandle} />
-            <Text style={styles.fbTitle}>What was the issue?</Text>
+            <Text style={styles.fbTitle}>Why swap this one?</Text>
             <Text style={styles.fbPlace} numberOfLines={1}>{placeName}</Text>
             {FEEDBACK_REASONS.map((reason, i) => (
               <TouchableOpacity
@@ -88,13 +87,15 @@ function VerifiedChip({ stop, styles, colors }) {
 }
 
 // ─── StopCard ─────────────────────────────────────────────────────────────────
-function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, weather, planDate, sensitivities }) {
+function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, weather, planDate, sensitivities, leg = null }) {
   const [feedback,          setFeedback]          = useState(null);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
-  const [showLegend,        setShowLegend]        = useState(false);
+  const [showLegOptions,    setShowLegOptions]    = useState(false);
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const { icon: catIcon, color } = categoryVisual(stop.category);  // data-layer: category → icon/color
+  // Only the colour is used now — the category chip is gone, since the left border and the
+  // timeline dot already carry the category twice. The icon still drives the detail modal.
+  const { color } = categoryVisual(stop.category);
 
   // Staggered entrance animation
   const enterAnim  = useRef(new Animated.Value(0)).current;
@@ -125,11 +126,56 @@ function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, 
     setFeedback(type);
   };
 
-  const localTips    = getLocalKnowledge({ stopName: stop.name, stopAddress: stop.address ?? '', category: stop.category, weather, date: planDate });
+  // lat/lng are required — without them local knowledge is geographically ungated and leaks
+  // regional advice into other states. A coordless stop correctly gets no local tips.
+  const localTips    = getLocalKnowledge({ stopName: stop.name, stopAddress: stop.address ?? '', category: stop.category, weather, date: planDate, lat: stop.lat, lng: stop.lng });
   const allergyAlerts = getAllergyAlerts({ category: stop.category, stopName: stop.name, stopAddress: stop.address ?? '', sensitivities });
+
+  // The card shows exactly one caveat. Priority is a safety ordering, not a stylistic one:
+  // an allergy alert outranks everything because a missed one has consequences a detour note
+  // does not. Below that, a detour costs real time on the road, and a warning-severity local
+  // tip is a genuine heads-up. Info/tip-severity local knowledge is interesting but not
+  // urgent, so it stays in the detail modal rather than competing here.
+  const caveat = useMemo(() => {
+    if (allergyAlerts.length) {
+      const a = allergyAlerts[0];
+      return { tone: 'alert', icon: 'warning-outline', text: `${a.sensitivity}: ${a.text}` };
+    }
+    if (stop.detour && stop.detour_note) {
+      return { tone: 'warm', icon: 'git-branch-outline', text: stop.detour_note };
+    }
+    const warn = localTips.find((t) => t.severity === 'warning');
+    if (warn) return { tone: 'warm', icon: 'alert-circle-outline', text: warn.text };
+    return null;
+  }, [allergyAlerts, localTips, stop.detour, stop.detour_note]);
 
   return (
     <>
+      {/* How you get TO this stop. Rendered ABOVE the card in the timeline gutter rather
+          than inside it — this card already carries fourteen conditional badges, and another
+          row in the body walks straight into the badge-wall anti-reference. Only appears when
+          the leg differs from the day's verdict (see isNotableLeg), so a driving day doesn't
+          repeat "drive 12 min" five times. */}
+      {leg?.chip ? (
+        <View style={styles.legChipRow}>
+          <TouchableOpacity
+            style={styles.legChip}
+            activeOpacity={0.7}
+            onPress={() => { hapticTap(); setShowLegOptions(true); }}
+            accessibilityRole="button"
+            accessibilityLabel={`${leg.chip}. Other ways to cover this stretch.`}
+          >
+            <Ionicons
+              name={leg.mode === 'walk' ? 'walk-outline' : leg.mode === 'bike' ? 'bicycle-outline' : 'car-outline'}
+              size={11}
+              color={colors.primary}
+            />
+            <Text style={styles.legChipTxt}>{leg.chip}</Text>
+            <Ionicons name="chevron-forward" size={10} color={colors.primary} />
+          </TouchableOpacity>
+        </View>
+      ) : null}
+
       <Animated.View style={[styles.stopRow, { opacity: enterAnim, transform: [{ translateY: slideAnim }] }]}>
         <View style={styles.timelineCol}>
           <View style={[styles.timelineDot, { backgroundColor: color }]} />
@@ -150,167 +196,69 @@ function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, 
               <LinearGradient colors={['transparent', colors.surface]} style={styles.photoGradient} pointerEvents="none" />
             </View>
           ) : null}
-          <View style={styles.stopHeaderRow}>
-            <View style={[styles.timeChip, { backgroundColor: color + '22', borderColor: color + '55' }]}>
-              <Text style={[styles.timeText, { color }]}>{stop.time}</Text>
-            </View>
+          {/* THE TICKET LINE. Time, name, why — and nothing that competes with them.
+              Category is carried by the left border and the timeline dot, which already say
+              it twice; a third chip spelling it out was noise. Address, distance, admission,
+              parking, live music, price, contacts and provenance all live in the detail
+              modal, which previously duplicated the card and so bought the traveller nothing
+              on tap. Mono per the Mono Is Structural rule — times should read as a timetable. */}
+          <View style={styles.ticketLine}>
+            <Text style={[styles.timeText, { color }]}>{stop.time}</Text>
             <Text style={styles.durationText}>{stop.duration_mins} min</Text>
-            <View style={[styles.catChip, { backgroundColor: color + '22' }]}>
-              <Ionicons name={catIcon} size={13} color={color} />
-              <Text style={[styles.catLabel, { color }]}>{stop.category}</Text>
-            </View>
+            <View style={{ flex: 1 }} />
+            {/* Trust in the time claim belongs ON the time, not three rows below it.
+                Verified wins over any hedge; the server already suppresses time_note on
+                verified stops, and this ordering is belt-and-suspenders. */}
+            {stop.verified ? (
+              <VerifiedChip stop={stop} styles={styles} colors={colors} />
+            ) : (stop.time_note || stop.unverified) ? (
+              <Text style={styles.timeHedge} numberOfLines={1}>worth confirming</Text>
+            ) : null}
           </View>
 
-          {/* Verified wins — a stop with a confirmed event time gets the ✓ receipt
-              chip instead of any hedge. (Server already suppresses time_note/unverified
-              on verified stops; this ordering is belt-and-suspenders.) Otherwise: honest
-              hedging — soft, non-alarming. time_note wins; else a plain "worth confirming"
-              nudge when the stop is flagged unverified. */}
-          {stop.verified ? (
-            <VerifiedChip stop={stop} styles={styles} colors={colors} />
-          ) : stop.time_note ? (
-            <View style={styles.confirmChip}>
-              <Text style={styles.confirmChipTxt}>≈ {stop.time_note}</Text>
-            </View>
-          ) : stop.unverified ? (
-            <View style={styles.confirmChip}>
-              <Text style={styles.confirmChipTxt}>≈ Worth a quick call to confirm</Text>
-            </View>
-          ) : null}
+          <Text style={styles.stopName} numberOfLines={2}>{stop.name}</Text>
 
-          <Text style={styles.stopName} numberOfLines={1}>{stop.name}</Text>
-          {stop.address ? <Text style={styles.stopAddress} numberOfLines={1}>{stop.address}</Text> : null}
-
-          {stop.distance ? (
-            <TouchableOpacity onPress={() => openMaps(stop)} activeOpacity={0.7} style={styles.distancePill}>
-              <Ionicons name="location-outline" size={12} color={colors.primary} style={{ marginRight: 3 }} />
-              <Text style={styles.distancePillTxt}>{stop.distance}</Text>
-            </TouchableOpacity>
-          ) : null}
-
-          {/* A stop that sits well off the route. Stated plainly with the cost, so it's a
-              decision the traveller can make rather than a surprise on the road. */}
-          {stop.detour && stop.detour_note ? (
-            <View style={styles.detourNote}>
-              <Ionicons name="git-branch-outline" size={12} color={colors.gold} style={{ marginRight: 5, marginTop: 1 }} />
-              <Text style={styles.detourNoteTxt}>{stop.detour_note}</Text>
-            </View>
-          ) : null}
-
-          {stop.admission_cost && (
-            <View style={styles.admissionBadge}>
-              <Ionicons name="ticket-outline" size={12} color={colors.gold} style={{ marginRight: 4 }} />
-              <Text style={styles.admissionBadgeTxt}>{stop.admission_cost}</Text>
-            </View>
-          )}
-
-          {stop.parking ? (
-            <View style={styles.parkingBadge}>
-              <Ionicons name="car-outline" size={12} color={colors.textSecondary} style={{ marginRight: 4 }} />
-              <Text style={styles.parkingBadgeTxt} numberOfLines={1}>{stop.parking}</Text>
-            </View>
-          ) : null}
-
-          {stop.live_music?.note ? (
-            <View style={styles.liveMusicBadge}>
-              <Ionicons name="musical-notes-outline" size={12} color={colors.primary} style={{ marginRight: 4 }} />
-              <Text style={styles.liveMusicTxt} numberOfLines={1}>{stop.live_music.note}</Text>
-            </View>
-          ) : null}
-
-          {stop.provenance?.why && !stop.live_music?.note ? (
-            <View style={styles.provenanceBadge}>
-              <Text style={styles.provenanceTxt} numberOfLines={1}>✨ Found this week</Text>
-            </View>
-          ) : null}
-
-          {stop.price_level >= 1 && stop.price_level <= 4 ? (
-            <TouchableOpacity onPress={() => setShowLegend(true)} activeOpacity={0.7} style={styles.pricePill}>
-              <Text style={styles.pricePillTxt}>{['', '$', '$$', '$$$', '$$$$'][stop.price_level] ?? ''} ⓘ</Text>
-            </TouchableOpacity>
-          ) : null}
-
-          {stop.splurge ? (
-            <View style={styles.splurgeChip}>
-              <Ionicons name="sparkles-outline" size={11} color={colors.primary} style={{ marginRight: 4 }} />
-              <Text style={styles.splurgeChipTxt}>Splurge</Text>
-            </View>
-          ) : null}
-
-          {(stop.website || stop.phone) ? (
-            <View style={styles.contactRow}>
-              {stop.phone ? (
-                <TouchableOpacity style={styles.contactBtn} onPress={() => Linking.openURL(`tel:${stop.phone}`)} activeOpacity={0.7}>
-                  <Ionicons name="call-outline" size={13} color={colors.primary} style={{ marginRight: 4 }} />
-                  <Text style={styles.contactBtnTxt}>Call</Text>
-                </TouchableOpacity>
-              ) : null}
-              {stop.website ? (
-                <TouchableOpacity style={styles.contactBtn} onPress={() => Linking.openURL(stop.website)} activeOpacity={0.7}>
-                  <Ionicons name="globe-outline" size={13} color={colors.primary} style={{ marginRight: 4 }} />
-                  <Text style={styles.contactBtnTxt}>Website</Text>
-                </TouchableOpacity>
-              ) : null}
-            </View>
-          ) : null}
-
+          {/* Promoted from a boxed 13px italic aside to the loudest prose on the card.
+              "Every recommendation carries its reason" is a stated product principle — it
+              should read like a sentence from a friend, not a system callout. */}
           {stop.reason ? (
-            <View style={styles.reasonRow}>
-              <Text style={styles.stopReason}>{stop.reason}</Text>
+            <Text style={styles.stopReason} numberOfLines={3}>{stop.reason}</Text>
+          ) : null}
+
+          {/* ONE caveat slot, strict priority: allergy > detour > warning-severity local tip.
+              An allergy alert always wins and always shows — accommodation is core behaviour,
+              and a shellfish warning behind a tap is a product failure, not a design choice.
+              Anything displaced by priority is still in the detail modal. */}
+          {caveat ? (
+            <View style={[styles.caveat, caveat.tone === 'alert' ? styles.caveatAlert : styles.caveatWarm]}>
+              <Ionicons
+                name={caveat.icon}
+                size={13}
+                color={caveat.tone === 'alert' ? colors.error : colors.gold}
+                style={{ marginTop: 1 }}
+              />
+              <Text style={[styles.caveatTxt, caveat.tone === 'alert' && styles.caveatTxtAlert]}>
+                {caveat.text}
+              </Text>
             </View>
           ) : null}
 
-          {localTips.map((tip) => (
-            <View key={tip.id} style={[
-              styles.localKnowledgeBadge,
-              tip.severity === 'warning' ? styles.lkWarning
-              : tip.severity === 'info'  ? styles.lkInfo
-              : styles.lkTip,
-            ]}>
-              <Text style={styles.lkIcon}>
-                {tip.severity === 'warning' ? '⚠' : tip.severity === 'info' ? 'ℹ' : '💡'}
-              </Text>
-              <Text style={styles.lkText}>{tip.text}</Text>
-            </View>
-          ))}
-
-          {allergyAlerts.map((alert, i) => (
-            <View key={i} style={styles.allergyBadge}>
-              <Ionicons name="warning-outline" size={14} color={colors.error} style={{ marginRight: 6 }} />
-              <Text style={styles.allergyText}>{alert.sensitivity}: {alert.text}</Text>
-            </View>
-          ))}
-
-          <View style={styles.cardActionsRow}>
-            {stop.excitement_score > 0
-              ? <View style={styles.exciteBadge}><Text style={styles.exciteText}>⚡ {stop.excitement_score}</Text></View>
-              : <View />
-            }
-            {onSwap ? (
-              <TouchableOpacity style={styles.swapBtn} onPress={() => { hapticTap(); onSwap(); }} disabled={isSwapping} activeOpacity={0.7}>
-                {isSwapping
-                  ? <View style={styles.swapLoadingRow}>
-                      <ActivityIndicator size="small" color={colors.textMuted} style={{ marginRight: 5 }} />
-                      <Text style={styles.swapBtnText}>Finding…</Text>
-                    </View>
-                  : <Text style={styles.swapBtnText}>Try another →</Text>
-                }
-              </TouchableOpacity>
-            ) : <View />}
-          </View>
-
-          <View style={styles.thumbsRow}>
-            <TouchableOpacity style={[styles.thumbBtn, feedback === 'up' && styles.thumbBtnUp]} onPress={() => saveFeedback('up')} activeOpacity={0.7}>
-              <Text style={styles.thumbTxt}>👍</Text>
+          {/* Swap is the positioning-critical escape hatch, so it stays — as one quiet link
+              rather than a footer of controls. The excitement badge, thumbs row and "Tap for
+              details" hint are gone: an internal score wearing a costume, feedback furniture
+              repeated eight times a plan, and eleven words explaining an affordance the
+              press-scale animation already provides. */}
+          {onSwap ? (
+            <TouchableOpacity style={styles.swapBtn} onPress={() => { hapticTap(); setShowFeedbackModal(true); }} disabled={isSwapping} activeOpacity={0.7}>
+              {isSwapping
+                ? <View style={styles.swapLoadingRow}>
+                    <ActivityIndicator size="small" color={colors.textMuted} style={{ marginRight: 5 }} />
+                    <Text style={styles.swapBtnText}>Finding…</Text>
+                  </View>
+                : <Text style={styles.swapBtnText}>Try another →</Text>
+              }
             </TouchableOpacity>
-            <View style={styles.thumbDivider} />
-            <TouchableOpacity style={[styles.thumbBtn, feedback === 'down' && styles.thumbBtnDown]} onPress={() => setShowFeedbackModal(true)} activeOpacity={0.7}>
-              <Text style={styles.thumbTxt}>👎</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.tapHint}>
-            <Text style={styles.tapHintTxt}>Tap for details</Text>
-          </View>
+          ) : null}
         </Animated.View>
         </TouchableOpacity>
       </Animated.View>
@@ -319,9 +267,18 @@ function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, 
         visible={showFeedbackModal}
         placeName={stop.name}
         onClose={() => setShowFeedbackModal(false)}
-        onSelect={(reason) => { saveFeedback('down', reason); setShowFeedbackModal(false); }}
+        // Records the reason AND performs the swap. This is the only writer of
+        // @decide/feedback_*, which app/(tabs)/plan.js reads to build dislikedPlaces /
+        // dislikedReasons — the synthesis prompt's HARD AVOID list. When the thumbs row was
+        // removed, wiring this to the swap kept that loop alive; dropping it outright would
+        // have silently stopped the app learning what a traveller rejects.
+        onSelect={(reason) => {
+          saveFeedback('down', reason);
+          setShowFeedbackModal(false);
+          onSwap?.();
+        }}
       />
-      <PriceLegendModal visible={showLegend} onClose={() => setShowLegend(false)} />
+      <LegOptionsSheet visible={showLegOptions} leg={leg} onClose={() => setShowLegOptions(false)} />
     </>
   );
 }
@@ -329,6 +286,20 @@ function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, 
 export default StopCard;
 
 const makeStyles = (c) => StyleSheet.create({
+  // Leg chip — sits in the 28px timeline gutter above the card it describes.
+  // Indented to align with the timeline rail rather than the card edge, so it reads as
+  // part of the connector rather than as another badge belonging to the stop.
+  legChipRow: { paddingLeft: 6, marginBottom: 6 },
+  legChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 9, paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: c.sky100,
+    borderWidth: 1, borderColor: c.borderLight,
+  },
+  legChipTxt: { fontSize: 11, color: c.primary, fontFamily: FONTS.bodySemiBold },
+
   // Stop card + timeline
   stopRow:     { flexDirection: 'row', marginBottom: 14 },
   timelineCol: { width: 28, alignItems: 'center' },
@@ -346,62 +317,23 @@ const makeStyles = (c) => StyleSheet.create({
   photoImg:      { width: '100%', height: '100%' },
   photoGradient: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 104 },
 
-  stopHeaderRow:    { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  timeChip:         { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, borderWidth: 1 },
-  timeText:         { fontSize: 16, fontFamily: FONTS.bodyBold },
-  durationText:     { fontSize: 11, color: c.textMuted, fontFamily: FONTS.body },
-  catChip:          { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 },
-  catLabel:         { fontSize: 11, fontFamily: FONTS.bodySemiBold },
-  stopName:         { fontSize: 17, color: c.textPrimary, fontFamily: FONTS.display },
-  stopAddress:      { fontSize: 12, color: c.textMuted, lineHeight: 17 },
+  // The ticket line: time, duration, and the trust receipt on one row.
+  ticketLine:   { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  // Space Mono — the Mono Is Structural rule exists so times read as a timetable.
+  timeText:     { fontSize: 15, fontFamily: FONTS.monoBold, letterSpacing: 0.2 },
+  durationText: { fontSize: 11, color: c.textMuted, fontFamily: FONTS.body },
+  timeHedge:    { fontSize: 11, color: c.textMuted, fontFamily: FONTS.bodyMedium },
+
+  stopName:     { fontSize: 18, color: c.textPrimary, fontFamily: FONTS.display, lineHeight: 23 },
 
   // Distance pill
-  distancePill: {
-    flexDirection: 'row', alignItems: 'center',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10, paddingVertical: 5,
-    borderRadius: 999, backgroundColor: c.surfaceAlt,
-    borderWidth: 1, borderColor: c.border,
-  },
-  distancePillTxt: { fontSize: 12, color: c.primary, fontFamily: FONTS.bodySemiBold },
 
   // Gold, not error red — an out-of-the-way stop is a tradeoff worth flagging, not a fault.
   // goldText carries the AA-passing warm text value; gold itself is too light on paper.
-  detourNote: {
-    flexDirection: 'row', alignItems: 'flex-start',
-    alignSelf: 'flex-start', marginTop: 6,
-    paddingHorizontal: 10, paddingVertical: 6,
-    borderRadius: RADII.sm, backgroundColor: c.gold + '22',
-  },
-  detourNoteTxt: { flex: 1, fontSize: 11, lineHeight: 15, color: c.goldText, fontFamily: FONTS.body },
 
   // Admission badge
-  admissionBadge: {
-    flexDirection: 'row', alignItems: 'flex-start',
-    alignSelf: 'flex-start', maxWidth: '100%',
-    paddingHorizontal: 10, paddingVertical: 5,
-    borderRadius: 14, backgroundColor: c.gold + '22',
-    borderWidth: 1, borderColor: c.gold + '44',
-  },
-  admissionBadgeTxt: { flexShrink: 1, fontSize: 12, color: c.goldText, fontFamily: FONTS.bodySemiBold, lineHeight: 16 },
-  parkingBadge: {
-    flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', maxWidth: '100%',
-    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999,
-    backgroundColor: c.surfaceAlt, borderWidth: 1, borderColor: c.border,
-  },
-  parkingBadgeTxt: { flexShrink: 1, fontSize: 12, color: c.textSecondary, fontFamily: FONTS.bodyMedium },
-  liveMusicBadge: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', maxWidth: '100%', marginTop: 6, paddingHorizontal: 8, paddingVertical: 4, borderRadius: RADII.sm, backgroundColor: c.sky100 },
-  liveMusicTxt:   { flexShrink: 1, fontFamily: FONTS.bodyMedium, fontSize: 12, color: c.primary },
-  provenanceBadge: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', marginTop: 6, paddingHorizontal: 8, paddingVertical: 4, borderRadius: RADII.sm, backgroundColor: c.sky100 },
-  provenanceTxt:   { fontFamily: FONTS.bodyMedium, fontSize: 12, color: c.primary },
 
   // Honest hedging chip (time_note / unverified) — muted, non-alarming
-  confirmChip: {
-    alignSelf: 'flex-start', maxWidth: '100%',
-    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999,
-    backgroundColor: c.surfaceAlt, borderWidth: 1, borderColor: c.border,
-  },
-  confirmChipTxt: { flexShrink: 1, fontSize: 12, color: c.textMuted, fontFamily: FONTS.bodyMedium, lineHeight: 16 },
 
   // Verified chip (confirmed event time, tappable → source URL) — success-tinted trust receipt
   verifiedChip: {
@@ -414,75 +346,38 @@ const makeStyles = (c) => StyleSheet.create({
   verifiedHostTxt: { flexShrink: 1, fontSize: 12, color: c.textSecondary, fontFamily: FONTS.bodyMedium },
 
   // Splurge chip (above-budget pick) — cobalt-led, tasteful
-  splurgeChip: {
-    flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start',
-    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999,
-    backgroundColor: c.primary + '18', borderWidth: 1, borderColor: c.primary + '40',
-  },
-  splurgeChipTxt: { fontSize: 11, color: c.primary, fontFamily: FONTS.bodySemiBold, letterSpacing: 0.3 },
 
   // Price tier pill
-  pricePill: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10, paddingVertical: 5,
-    borderRadius: 999, backgroundColor: c.gold + '22',
-    borderWidth: 1, borderColor: c.gold + '44',
-  },
-  pricePillTxt: { fontSize: 12, color: c.goldText, fontFamily: FONTS.bodyBold },
 
   // Contact links (website / call)
-  contactRow:    { flexDirection: 'row', gap: 8, marginTop: 8 },
-  contactBtn:    { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 5, borderRadius: RADII.sm, borderWidth: 1, borderColor: c.borderLight, backgroundColor: c.surface },
-  contactBtnTxt: { fontFamily: FONTS.bodySemiBold, fontSize: 12, color: c.primary },
 
-  // Reason row
-  reasonRow: {
-    backgroundColor: c.surfaceAlt, borderRadius: 10,
-    paddingHorizontal: 12, paddingVertical: 9,
-    borderLeftWidth: 2, borderLeftColor: c.gold + '66',
+  // The reason — plain prose, not a boxed aside. It is the product's differentiator, so it
+  // gets body size and the secondary text ramp rather than a container that frames it as
+  // supplementary. No italic: a whole paragraph of italic reads as a system note.
+  stopReason: { fontSize: 15, color: c.textSecondary, lineHeight: 21, fontFamily: FONTS.body },
+
+  // The single caveat slot. Two tones only: alert (allergy — the one with consequences) and
+  // warm (detour, warning tip — real tradeoffs, not faults). goldText/error carry the copy
+  // because gold and the raw tint values are too light for text on paper.
+  caveat: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: 7,
+    paddingHorizontal: 10, paddingVertical: 8,
+    borderRadius: RADII.sm, marginTop: 2,
   },
-  stopReason: { fontSize: 13, color: c.textSecondary, lineHeight: 18, fontStyle: 'italic', fontFamily: FONTS.body },
+  caveatWarm:     { backgroundColor: c.gold + '22' },
+  caveatAlert:    { backgroundColor: c.error + '14', borderLeftWidth: 3, borderLeftColor: c.error },
+  caveatTxt:      { flex: 1, fontSize: 12, lineHeight: 17, color: c.goldText, fontFamily: FONTS.body },
+  caveatTxtAlert: { color: c.error },
 
   // Local knowledge callout
-  localKnowledgeBadge: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: 8,
-    borderRadius: 10, padding: 10, marginTop: 2,
-    borderLeftWidth: 3,
-  },
-  lkWarning: { backgroundColor: c.warning + '12', borderLeftColor: c.warning },
-  lkInfo:    { backgroundColor: c.amber + '10', borderLeftColor: c.amber },
-  lkTip:     { backgroundColor: c.primary + '10', borderLeftColor: c.primary },
-  lkIcon:    { fontSize: 13, lineHeight: 18 },
-  lkText:    { flex: 1, fontSize: 12, color: c.textSecondary, lineHeight: 17, fontFamily: FONTS.body },
 
   // Allergy alert
-  allergyBadge: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: 6,
-    backgroundColor: c.error + '12', borderRadius: 10, padding: 10,
-    borderLeftWidth: 3, borderLeftColor: c.error, marginTop: 2,
-  },
-  allergyText: { flex: 1, fontSize: 12, color: c.error, lineHeight: 17 },
 
-  cardActionsRow:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
-  exciteBadge:      { backgroundColor: c.gold + '22', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1, borderColor: c.gold + '44' },
-  exciteText:       { color: c.goldText, fontSize: 10, fontFamily: FONTS.bodyBold },
   swapBtn:          { paddingVertical: 4, paddingHorizontal: 6 },
   swapBtnText:      { color: c.textMuted, fontSize: 12, fontFamily: FONTS.bodyMedium },
   swapLoadingRow:   { flexDirection: 'row', alignItems: 'center' },
-  thumbsRow: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end',
-    marginTop: 8, paddingTop: 8,
-    borderTopWidth: 1, borderTopColor: c.border,
-  },
-  thumbBtn:     { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
-  thumbBtnUp:   { backgroundColor: c.success + '22' },
-  thumbBtnDown: { backgroundColor: c.error + '22' },
-  thumbTxt:     { fontSize: 15 },
-  thumbDivider: { width: 1, height: 18, backgroundColor: c.border, marginHorizontal: 6 },
 
   // Tap hint
-  tapHint:    { alignItems: 'center', paddingTop: 6, paddingBottom: 2 },
-  tapHintTxt: { fontSize: 11, color: c.textMuted, fontFamily: FONTS.bodyMedium },
 
   // Feedback modal
   fbOverlay: { ...WEB_OVERLAY_FIX, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'flex-end' },

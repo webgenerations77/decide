@@ -48,7 +48,9 @@ export default function ItineraryDetailView({ entry, sensitivities = [], onBack 
     );
   }
 
-  const { itinerary, weather, meta } = entry;
+  // `transport` is absent on plans saved before this feature shipped — every consumer
+  // below treats null as "render nothing", so old entries degrade cleanly.
+  const { itinerary, weather, meta, transport = null } = entry;
 
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
@@ -57,7 +59,7 @@ export default function ItineraryDetailView({ entry, sensitivities = [], onBack 
           <Header onBack={onBack} weather={weather} />
           <View style={styles.body}>
             <ItineraryMeta meta={meta} stopCount={itinerary.length} research={null} weather={weather} />
-            <RouteMap stops={itinerary} />
+            <RouteMap stops={itinerary} transport={transport} />
             {itinerary.map((stop, i) => (
               <StopCard
                 key={`${stop.place_id}-${i}`}
@@ -68,6 +70,7 @@ export default function ItineraryDetailView({ entry, sensitivities = [], onBack 
                 weather={weather}
                 planDate={entry.timestamp}
                 sensitivities={sensitivities}
+                leg={transport?.legs?.find((l) => l.index === i) ?? null}
               />
             ))}
           </View>

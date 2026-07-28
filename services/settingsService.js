@@ -14,6 +14,7 @@ export const KEYS = {
   SENSITIVITIES:      '@decide/sensitivities',    // array of sensitivity names (food + environmental)
   NEURODIVERGENT:     '@decide/neurodivergent',   // boolean — sensory-friendly itinerary bias
   MAX_DISTANCE:       '@decide/max_distance',
+  GETTING_AROUND:     '@decide/getting_around',  // 'car' | 'walk' | 'transit' — shapes generation, not just display
   DEFAULT_PACE:       '@decide/default_pace',
   DEFAULT_BUDGET:     '@decide/default_budget',
   DEFAULT_GROUP:      '@decide/default_group',
@@ -40,6 +41,9 @@ const DEFAULTS = {
   sensitivities:  [],
   neurodivergent: false,
   maxDistance:    10,
+  // 'car' preserves the behaviour every existing plan was built under. Anything else is a
+  // real constraint on generation, not a display preference.
+  gettingAround:  'car',
   pace:           'moderate',
   budget:         '$$',
   group:          'couple',
@@ -73,6 +77,7 @@ export async function loadAllSettings() {
       sensitivities:  map[KEYS.SENSITIVITIES]       ?? DEFAULTS.sensitivities,
       neurodivergent: map[KEYS.NEURODIVERGENT]      ?? DEFAULTS.neurodivergent,
       maxDistance:    map[KEYS.MAX_DISTANCE]        ?? DEFAULTS.maxDistance,
+      gettingAround:  map[KEYS.GETTING_AROUND]      ?? DEFAULTS.gettingAround,
       pace:           map[KEYS.DEFAULT_PACE]        ?? DEFAULTS.pace,
       budget:         map[KEYS.DEFAULT_BUDGET]      ?? DEFAULTS.budget,
       group:          map[KEYS.DEFAULT_GROUP]       ?? DEFAULTS.group,
@@ -88,9 +93,10 @@ export async function loadAllSettings() {
 
 export async function loadPlanDefaults() {
   try {
-    const [[, p], [, b], [, g], [, s], [, e], [, c]] = await AsyncStorage.multiGet([
+    const [[, p], [, b], [, g], [, s], [, e], [, c], [, ga]] = await AsyncStorage.multiGet([
       KEYS.DEFAULT_PACE, KEYS.DEFAULT_BUDGET, KEYS.DEFAULT_GROUP,
       KEYS.DEFAULT_START_TIME, KEYS.DEFAULT_END_TIME, KEYS.CUISINES,
+      KEYS.GETTING_AROUND,
     ]);
     return {
       pace:      p ?? DEFAULTS.pace,
@@ -99,9 +105,10 @@ export async function loadPlanDefaults() {
       startTime: s ?? DEFAULTS.startTime,
       endTime:   e ?? DEFAULTS.endTime,
       cuisines:  c ? JSON.parse(c) : DEFAULTS.cuisines,
+      gettingAround: ga ?? DEFAULTS.gettingAround,
     };
   } catch {
-    return { pace: DEFAULTS.pace, budget: DEFAULTS.budget, group: DEFAULTS.group, startTime: DEFAULTS.startTime, endTime: DEFAULTS.endTime, cuisines: DEFAULTS.cuisines };
+    return { pace: DEFAULTS.pace, budget: DEFAULTS.budget, group: DEFAULTS.group, startTime: DEFAULTS.startTime, endTime: DEFAULTS.endTime, cuisines: DEFAULTS.cuisines, gettingAround: DEFAULTS.gettingAround };
   }
 }
 
