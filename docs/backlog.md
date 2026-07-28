@@ -126,13 +126,25 @@ the admin dashboard shows credits remaining and approximate plans left.
 **Options, cheapest first:**
 1. **Price the next tier.** Likely trivial next to the engineering time of avoiding it. Do this
    before optimising — everything below trades away quality or costs real work.
-2. **Share the discovery cache.** `discoveryCache` is a module-level `Map` with a 4h TTL, so it
-   lives only as long as one warm serverless instance — on Vercel most invocations miss it. Two
-   travellers planning the same town an hour apart pay twice. Keyed on region + interests + day
-   in Firestore, this could cut spend several-fold on a geographically clustered tester group,
-   and would shorten the research phase as a side effect.
-3. **Halve the discovery search budget** (4 → 2 in `lib/smart/discovery.js`). Roughly halves
-   spend, costs research breadth.
+2. **Cache the VERIFY SCRAPES, not the discovery searches.** Measured decomposition of the ~14
+   credits: discovery ~4 (~30%), verification ~7–9 (~55%), events 1 (~7%).
+
+   ⚠ An earlier version of this file claimed a shared discovery cache "could cut spend
+   several-fold". That was wrong and unmeasured. `discoveryCache`'s key is
+   `location :: sorted-interest-hash`, and the scout generates interests fresh from each
+   traveller's trip note — so two people planning the same town on the same day rarely share a
+   key. It mostly hits when the SAME user re-generates. Even a 100% hit rate saves only its ~30%
+   share: 71 plans/month → ~100. A realistic 40% hit rate → ~81. Not a tier change.
+
+   Verification is the bigger half and caches far better: those are scrapes keyed on **venue
+   URLs**, and in a region like Delmarva the same pages recur constantly. Plausibly ~150–175
+   plans/month. Caveats: depends on testers being geographically clustered, and verification is
+   already skipped when research passes 15s (`SKIP_VERIFY_AFTER_MS`), so some of that is spent.
+
+   Secondary benefit either way: fewer requests means less queueing against `maxConcurrency: 2`,
+   which shortens the research phase that squeezes synthesis.
+3. **Halve the discovery search budget** (4 → 2 in `lib/smart/discovery.js`). Saves ~15% of total
+   spend, costs research breadth. Smaller than it sounds, for the same reason as above.
 
 ---
 
