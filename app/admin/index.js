@@ -232,6 +232,32 @@ export default function AdminScreen() {
                   should be set from — read p80, not p50: a clock that expires early on one run
                   in two is worse than one that finishes early. Put the value in
                   ESTIMATED_SECONDS in components/LoadingAnimation.js. */}
+              {/* Live-research budget. On the dashboard because running out is INVISIBLE from
+                  the app: events.js returns [] when Firecrawl is unavailable, so an exhausted
+                  quota looks exactly like a quiet news day. `Plans left` rather than raw credits
+                  — credits are an abstraction, "about nine more plans" is a decision. */}
+              <Text style={styles.subhead}>Live research budget</Text>
+              {usage.firecrawl ? (
+                <>
+                  <Row
+                    label={usage.firecrawl.low ? 'Credits left · running low' : 'Credits left'}
+                    value={`${usage.firecrawl.remaining} / ${usage.firecrawl.total}`}
+                  />
+                  <Row label="Plans left (approx)" value={`~${usage.firecrawl.plansLeft}`} />
+                  {usage.firecrawl.periodEnd ? (
+                    <Row label="Resets" value={String(usage.firecrawl.periodEnd).slice(0, 10)} />
+                  ) : null}
+                  {usage.firecrawl.low ? (
+                    <Text style={styles.pricingNote}>
+                      When this runs out, every plan silently loses its live research — no error,
+                      no banner. Watch this number, not the symptom.
+                    </Text>
+                  ) : null}
+                </>
+              ) : (
+                <Text style={styles.pricingNote}>Firecrawl balance unavailable.</Text>
+              )}
+
               {/* The funnel. `Died` is the alarm — requests that started and never came back,
                   which is what a Vercel kill looks like from the inside. `Hit deadline` is NOT
                   a failure: those are days that would previously have died and now arrive as a

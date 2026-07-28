@@ -81,5 +81,33 @@ assert('no generation rows at all reads as null, not a row of zeros',
   summarizeGeneration([{ route: 'scout', model: 'claude-haiku-4-5-20251001' }]) === null);
 assert('funnel rides along on the aggregate', 'funnel' in agg);
 
+console.log('live-research budget');
+// Running out is invisible from the app — events.js returns [] and a plan just quietly loses its
+// research. These assert the dashboard can show the ceiling BEFORE it is hit.
+const { summarizeCredits } = await import('../lib/admin/firecrawlCredits.js');
+
+const c = summarizeCredits({ remainingCredits: 891, planCredits: 1000 }, 14);
+assert('reports the raw balance', c.remaining === 891 && c.total === 1000);
+// Credits are an abstraction; plans are a decision.
+assert('converts credits into plans left', c.plansLeft === Math.floor(891 / 14), String(c.plansLeft));
+assert('reports how much is spent', c.usedPct === 11, String(c.usedPct));
+assert('a healthy balance is not flagged low', c.low === false);
+
+const low = summarizeCredits({ remainingCredits: 90, planCredits: 1000 }, 14);
+assert('a nearly-spent balance IS flagged', low.low === true);
+assert('and still says how many plans remain', low.plansLeft === 6, String(low.plansLeft));
+
+// Both API shapes are in the wild (v1 snake_case, v2 camelCase) — reading only one would show
+// "unavailable" forever after a version bump, which is the same silence this panel exists to end.
+const snake = summarizeCredits({ remaining_credits: 500, plan_credits: 1000 }, 14);
+assert('accepts the v1 snake_case shape', snake?.remaining === 500);
+
+assert('a junk payload reads as unavailable, not as zero credits',
+  summarizeCredits({}) === null && summarizeCredits(null) === null);
+assert('a zero-credit plan does not divide by zero',
+  summarizeCredits({ remainingCredits: 0, planCredits: 0 }) === null);
+assert('a nonsense cost-per-plan still yields a number',
+  Number.isFinite(summarizeCredits({ remainingCredits: 100, planCredits: 1000 }, 0).plansLeft));
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

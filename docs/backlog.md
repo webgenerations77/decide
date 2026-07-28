@@ -98,3 +98,30 @@ resurrected by another device's stale cache. Pre-existing; documented in `CLAUDE
 
 The standalone place-detail / search / geocode endpoints do not wrap `runWithUser`, so their rows
 log as anonymous in the admin dashboard. Pre-existing; documented in `CLAUDE.md`.
+
+---
+
+## Firecrawl capacity — the ceiling that gets worse as the app succeeds
+
+Measured 2026-07-28: **1,000 credits/month**, ~**14 credits per generation**, so roughly
+**70 plans a month across ALL users**. The quota was exhausted in a day. `maxConcurrency` is 2,
+which also serialises the discovery searches and lengthens the research phase that squeezes
+synthesis.
+
+Running out is invisible from the app: `lib/smart/events.js` returns `[]` when Firecrawl is
+unavailable, so an exhausted quota looks exactly like a quiet news day. Live research — the
+headline differentiator — switches itself off and nothing says so.
+
+**Done:** quota/rate failures now log `firecrawl-out-of-credits` / `firecrawl-rate-limited`, and
+the admin dashboard shows credits remaining and approximate plans left.
+
+**Options, cheapest first:**
+1. **Price the next tier.** Likely trivial next to the engineering time of avoiding it. Do this
+   before optimising — everything below trades away quality or costs real work.
+2. **Share the discovery cache.** `discoveryCache` is a module-level `Map` with a 4h TTL, so it
+   lives only as long as one warm serverless instance — on Vercel most invocations miss it. Two
+   travellers planning the same town an hour apart pay twice. Keyed on region + interests + day
+   in Firestore, this could cut spend several-fold on a geographically clustered tester group,
+   and would shorten the research phase as a side effect.
+3. **Halve the discovery search budget** (4 → 2 in `lib/smart/discovery.js`). Roughly halves
+   spend, costs research breadth.
