@@ -164,3 +164,34 @@ depend on trust.
 **What is still only prose**, and would need a different approach: the cost-design rationale in
 `lib/transport/`, the honesty contracts, and the "why" behind decisions. Those are the parts worth
 reading, and the parts most likely to go stale next.
+
+---
+
+## Unit economics — what a plan actually costs
+
+Measured 2026-07-28 from one complete Brooklyn generation with live research (6 stops):
+
+| | per plan | share |
+|---|---|---|
+| Google Places | $0.068 | 31% |
+| Anthropic (Sonnet $0.046 + Haiku $0.016) | $0.062 | 28% |
+| Google Routes (9 elements) | $0.045 | 20% |
+| Firecrawl (at the $16 / 5,000 tier) | $0.045 | 20% |
+| **Total** | **~$0.22** | |
+
+A Delmarva plan with no live research is cheaper — closer to $0.13, since Firecrawl and part of
+the Haiku spend drop out. Treat $0.22 as the loaded case, not the average.
+
+**Fixed alongside this:** Google Routes was uncosted, so the admin dashboard under-reported every
+plan by about 20%.
+
+### ⚠ The free tier costs more than Pro earns
+
+At 5 decisions/day a single free user can generate up to ~150 plans a month — **~$33** at the
+loaded rate. Pro is $3.99/month for unlimited, so a Pro subscriber breaks even at about **18
+plans a month** and is loss-making beyond that.
+
+Nobody uses their full allowance, so this is a ceiling rather than a forecast — but it is not a
+comfortable ceiling, and it gets worse as engagement improves. Worth modelling against real usage
+before any paid launch. The levers are the free daily limit, the Pro price, or the per-plan cost
+(Places and Sonnet are the two biggest lines, not Firecrawl).
