@@ -272,6 +272,23 @@ assert('no leg, no hint', legHintText(null) === null);
 assert('hint never borrows the chip’s imperative',
   !/Walk it|Drive it|Bike it/.test(legHintText({ mode: 'walk', miles: 0.4, mins: 8 })));
 
+// Don't echo the day verdict under every stop. A real Delmarva "Drive it" day rendered
+// "8.7 mi by car" four times beneath a verdict that had already said it — the module's own rule
+// is that the mode is stated ONCE, at day level. The icon still carries it.
+assert('a leg agreeing with the day drops the redundant manner',
+  legHintText({ mode: 'drive', miles: 8.7 }, { mode: 'drive' }) === '8.7 mi',
+  legHintText({ mode: 'drive', miles: 8.7 }, { mode: 'drive' }));
+assert('…and keeps the time when there is one',
+  legHintText({ mode: 'drive', miles: 8.7, mins: 14 }, { mode: 'drive' }) === '8.7 mi · 14 min');
+// But a leg that DIFFERS still names itself — "0.4 mi on foot" on a transit day is real news.
+assert('a leg differing from the day still names the manner',
+  legHintText({ mode: 'walk', miles: 0.4, mins: 8 }, { mode: 'transit' }) === '0.4 mi on foot · 8 min',
+  legHintText({ mode: 'walk', miles: 0.4, mins: 8 }, { mode: 'transit' }));
+assert('no verdict supplied behaves as before',
+  legHintText({ mode: 'drive', miles: 8.7 }) === '8.7 mi by car');
+assert('an agreeing leg with no distance says nothing rather than echoing',
+  legHintText({ mode: 'drive' }, { mode: 'drive' }) === null);
+
 console.log('transitViaText — naming the train');
 assert('names a single line', transitViaText({ fromName: 'Birdy’s', toName: 'DUMBO', lines: ['R Line'] })
   === 'Birdy’s → DUMBO runs via the R Line');
