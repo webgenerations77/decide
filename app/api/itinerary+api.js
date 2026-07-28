@@ -359,7 +359,7 @@ export async function POST(request) {
         return Response.json({ error: 'latitude and longitude are required' }, { status: 400 });
       }
 
-      const { pace = 'moderate', budget = '$$', group_type = 'couple', cuisines = [], sensitivities = [], activityStyles = [], dietary = [], neurodivergent = false, interests = [], gettingAround = 'car' } = preferences;
+      const { pace = 'moderate', budget = '$$', group_type = 'couple', cuisines = [], sensitivities = [], activityStyles = [], dietary = [], neurodivergent = false, interests = [], gettingAround = 'car', transitPref = null, transitPrefLabel = null } = preferences;
       // Clamp BEFORE Places is queried. Searching a 25-mile radius for a walking day mostly
       // surfaces places the traveller cannot reach, which then crowd out the ones they can.
       const effectiveMiles = clampSearchMiles(gettingAround, Math.min(maxDistanceMiles, 50));
@@ -406,7 +406,7 @@ export async function POST(request) {
         maxMiles: effectiveMiles,
         weather,
         sun: weather ? { sunrise: weather.sunrise ?? null, sunset: weather.sunset ?? null } : null,
-        prefs: { pace, budget, group_type, cuisines, activityStyles, dietary, neurodivergent, interests, gettingAround },
+        prefs: { pace, budget, group_type, cuisines, activityStyles, dietary, neurodivergent, interests, gettingAround, transitPref, transitPrefLabel },
         feedback: { likedPlaces, dislikedPlaces, dislikedReasons },
         tripNote,
         startTime, endTime,
