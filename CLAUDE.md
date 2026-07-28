@@ -86,6 +86,22 @@ a generic AI chat product, or an enterprise dashboard.
   renders in the timeline GUTTER, not the card body (that card is already at its badge ceiling),
   and only when the leg differs from the day verdict — see isNotableLeg.
 - components/itinerary/        — StopCard, PlaceDetailModal + PriceLegendModal (bottom sheets), WeatherArt (photo-backed weather band; `fill` prop = faded full-card background), ItineraryMeta (renders the WeatherPill centered below the date), WeatherPill. Stop icons/colors come from constants/categoryVisuals.js (not the legacy 4 CATEGORY_EMOJIS).
+- components/LoadingAnimation.js — the wait after "Build my day". THREE ZONES, top to bottom:
+  (1) a HouseAd for another Spinach Creations app, falling back to the live-facts card when there
+  is no ad; (2) BrandLogo + status label + COUNTDOWN; (3) the Lottie globe, 140px and no longer
+  the centrepiece. ⚠ The countdown's `ESTIMATED_SECONDS` is an ESTIMATE, not a promise: it never
+  shows 0:00, never counts negative and never freezes — at zero it stops being a clock and becomes
+  a sentence. Set it from admin → "Itinerary generation" → **p80** (not p50: a clock that expires
+  early on one run in two is worse than one that finishes early). The phase lines under it are
+  TIME-driven, not progress-driven — the client makes one POST and cannot see server phases, so
+  they must never be reworded into completion claims.
+- components/HouseAd.js + constants/houseAds.js — "More from Spinach Creations". HOUSE ADS ONLY:
+  no SDK, no network, no tracking — the registry is one file plus a bundled image, which is what
+  keeps this clear of a consent surface and of the ad-supported-free-app anti-reference. ⚠ The
+  link MUST open in a new tab (HouseAd does this explicitly, not via react-native-web's Linking):
+  navigating the PWA away mid-generation kills the in-flight request and the traveller loses the
+  day they just waited for. Same honesty rule as lib/transport/ — no pricing, ratings or install
+  counts, and never the word "AI" even when the advertised product's own marketing uses it.
 - hooks/useViewportOverlay.js  — pins RN Modal overlays to the VISUAL viewport on web (fixes mobile-web sheet drift); exports useViewportOverlay(visible) + WEB_OVERLAY_FIX style. ALWAYS pair with Modal animationType="fade" (never "slide" — its transform traps position:fixed)
 - constants/theme.js           — COLORS + FONTS + RADII + SHADOWS + PRICE_LEGEND + CATEGORY_COLORS/EMOJIS
 - constants/localKnowledge.js  — Cheddar local tips (Delmarva/DE/MD beach region)
@@ -93,6 +109,12 @@ a generic AI chat product, or an enterprise dashboard.
 - constants/categoryVisuals.js  — categoryVisual(rawCategory) → {icon (Ionicons), color (theme token)}; normalizes the AI's FREE-FORM stop categories via word-boundary matching to distinct icons/colors, default = location-pin/gray (fixes the old "lightning bolt on every stop")
 - lib/bourdainQuotes.js        — rotating quote under the DECIDE button (once per app launch); food/drink/travel only, verified quotes
 - lib/history/                 — merge.js (pure mergeById) + store.js (Firestore admin, users/{uid}/{itineraries|decisions})
+- lib/usageLog.js              — logUsage(); optional `durationMs` records WALL-CLOCK time for a
+  completed generation (both itinerary twins, success path only — a failed run says nothing about
+  how long a working one takes). Written as a conditional field because Firestore rejects an
+  explicit `undefined`. Aggregated by `summarizeDurations` in lib/admin/usage.js into p50/p80/p95
+  and surfaced in the admin dashboard — this is the ONLY source of truth for the loading
+  countdown, which ran on an eyeball guess before it existed.
 - lib/usageContext.js          — request-scoped userId for usage attribution; AsyncLocalStorage anchored on globalThis (the module loads twice across the ESM/CJS graph — a plain module singleton mis-attributed every request as anonymous)
 - lib/admin/auth.js            — getUidFromAuth(header): verify ID token → uid or null (never throws)
 - lib/admin/userStats.js       — getUserStats(uid): counts itineraries/decisions/distinct cities from Firestore; served via /api/admin/users?uid=
