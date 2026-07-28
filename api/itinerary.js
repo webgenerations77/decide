@@ -337,6 +337,10 @@ export default async function handler(req, res) {
       const smart = await runSmartEngine({
         ctx,
         places: { food: annotate(food), activity: annotate(activity), shopping: annotate(shopping), outdoor: annotate(allOutdoor) },
+        // Lets synthesis — the only unbounded step — know how much of the 60s function budget is
+        // left. Without it a well-researched day is killed mid-flight and the traveller waits a
+        // full minute for an error; with it they get a fallback itinerary instead.
+        startedAt,
       });
 
       let itinerary, isFallback = false;

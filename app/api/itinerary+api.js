@@ -419,7 +419,10 @@ export async function POST(request) {
         formattedDate,
         holiday: getUSHoliday(travelDateISO),
       };
-      const smart = await runSmartEngine({ ctx, places: { food: annotate(food), activity: annotate(activity), shopping: annotate(shopping), outdoor: annotate(allOutdoor) } });
+      // `startedAt` lets synthesis — the only unbounded step — know how much of the 60s function
+      // budget is left. Without it a well-researched day is killed mid-flight and the traveller
+      // waits a full minute for an error; with it they get a fallback itinerary instead.
+      const smart = await runSmartEngine({ ctx, places: { food: annotate(food), activity: annotate(activity), shopping: annotate(shopping), outdoor: annotate(allOutdoor) }, startedAt });
 
       let itinerary, isFallback = false;
       if (smart.itinerary && smart.itinerary.length) {
