@@ -214,6 +214,51 @@ assert('a walkable carless day offers no ride', carlessGoodPlan.unreachable.leng
 assert('coordless unreachable leg is dropped, not rendered as a dead link',
   dayVerdict([{ mode: 'drive', miles: 14, mins: 24 }], { transit: 'no', gettingAround: 'walk' }).unreachable.length === 0);
 
+console.log('transit-covered legs — the false-alarm fix');
+// The Brooklyn evidence: a carless day was told a 3.1 mi leg was "too far to cover without a
+// car" when in Brooklyn it is a subway ride. buildTransport re-checks exactly those legs and
+// marks a covered one `mode: 'transit'`; from dayVerdict's side it simply stops being a drive.
+const rescued = dayVerdict(
+  [
+    { mode: 'walk', miles: 0.3, mins: 6 },
+    { mode: 'transit', miles: 3.1, mins: 14, leg: { to: { lat: 40.70, lng: -73.99 }, toName: 'DUMBO' } },
+  ],
+  { transit: 'yes', gettingAround: 'transit', transitMins: 30, driveMins: 26 },
+);
+assert('a transit-covered leg raises no reach warning', rescued.reachWarning === null, String(rescued.reachWarning));
+assert('and offers no ride for a leg that needs none', rescued.unreachable.length === 0);
+assert('the day is still a transit day', rescued.mode === 'transit');
+
+// The other half: a leg transit genuinely does NOT cover must still strand loudly. This is the
+// direction that must never silently soften — it is the one that leaves someone at stop three.
+const stillStranded = dayVerdict(
+  [
+    { mode: 'transit', miles: 3.1, mins: 14 },
+    { mode: 'drive', miles: 14, mins: 24, leg: { to: { lat: 38.3, lng: -75.1 }, toName: 'Assateague' } },
+  ],
+  { transit: 'yes', gettingAround: 'transit', transitMins: 30, driveMins: 26 },
+);
+assert('an uncovered leg still strands', /One stretch/.test(stillStranded.reachWarning ?? ''), String(stillStranded.reachWarning));
+assert('and still offers the ride', stillStranded.unreachable.length === 1);
+assert('naming the stop it cannot reach', stillStranded.unreachable[0].name === 'Assateague');
+
+// A traveller who said WALK never gets a warning cleared by a train they never agreed to take.
+// buildTransport gates the rescue on gettingAround === 'transit'; this asserts the walking day
+// still behaves correctly if a transit leg ever reaches it.
+const walkerWithDrive = dayVerdict(
+  [{ mode: 'walk', miles: 0.3, mins: 6 }, { mode: 'drive', miles: 9, mins: 18 }],
+  { transit: 'yes', gettingAround: 'walk' },
+);
+assert('a walking day still strands on a drive leg', typeof walkerWithDrive.reachWarning === 'string');
+assert('and is never told to drive', walkerWithDrive.mode !== 'drive');
+
+console.log('chip + hint copy for a transit leg');
+assert('chip names the mode, not a car', legChipText({ mode: 'transit', miles: 3.1, mins: 14 }) === 'Take transit · 3.1 mi, 14 min',
+  legChipText({ mode: 'transit', miles: 3.1, mins: 14 }));
+assert('hint states it quietly', legHintText({ mode: 'transit', miles: 3.1, mins: 14 }) === '3.1 mi by transit · 14 min',
+  legHintText({ mode: 'transit', miles: 3.1, mins: 14 }));
+assert('a transit leg on a transit day is not notable', isNotableLeg({ mode: 'transit' }, { mode: 'transit' }) === false);
+
 console.log('legHintText — the quiet volume');
 // Every leg must be tappable; the loud chip must stay rare. So both must produce copy, and
 // they must not sound alike — the chip commands, the hint states.

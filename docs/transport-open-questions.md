@@ -31,15 +31,8 @@ Three visibility gaps, all now fixed:
 
 ### Still open from this plan
 
-- **The warning may be a false alarm in a metro.** That same Brooklyn day produced
-  `verdict.mode === 'transit'` AND "too far to cover without a car" about a 3.1 mi leg that is,
-  in Brooklyn, a subway ride. Legs are classified walk/bike/drive from road geometry only —
-  transit is never consulted **per leg**, so any leg past the walk cutoff reads as car-only.
-  Deliberately not fixed here: the honest fix is a per-leg transit check, which is exactly the
-  per-leg spend the ambiguous-band design exists to avoid, and making reachability depend on a
-  network call means a blip can silently switch the warning off. The rideshare link was added
-  *without* touching the warning's logic. **This is now the most likely wrong thing in the
-  feature** — ahead of the 20-minute walk cutoff.
+- ~~**The warning may be a false alarm in a metro.**~~ **Fixed** — see "Rescuing a stranded leg"
+  below. The 20-minute walk cutoff is now the most likely wrong thing in the feature.
 - **The 20-minute walk cutoff still untested in a grid city.** Brooklyn's ambiguous legs did not
   land near the boundary.
 
@@ -64,6 +57,9 @@ Roughly 2–4 billable elements per itinerary:
 - transit probe: 2 (TRANSIT + DRIVE, in parallel, cached per region+day)
 - line naming: 1, and **only on a day whose verdict is `transit`** — cached per point pair, so a
   re-generate over the same stretch is free. Outside a metro this is never spent.
+- stranded-leg rescue: 0–3, and **only** when the traveller chose `transit`, the probe found
+  transit, and the reach warning would otherwise fire. Usually 1, usually the same point pair
+  the line-naming call wants — so in practice the two share one billed request rather than two.
 
 **In a dense city this rises** — more legs land in the 0.3–3 mi band, so maybe 4–6 elements.
 Still far inside the 10,000/month Essentials free tier.
@@ -72,6 +68,33 @@ The two rules that keep it there, neither of which should be "simplified" later:
 1. Only the ambiguous band gets a call. A 22-mile leg needs no API to be a drive.
 2. Every request is one origin × one destination. Route Matrix bills per **element**, so
    batching N pairs to read the diagonal bills N² for N answers.
+
+## Rescuing a stranded leg — the one place per-leg transit is bought
+
+`reachWarning` is the most alarming thing this feature says, so it had better be true. It was
+not: legs are classified walk/bike/drive from road geometry alone, so anything past the walk
+cutoff reads as car-only, and a real Brooklyn day was told a 3.1 mi **subway ride** was "too far
+to cover without a car" on a day the same verdict called `transit`.
+
+`buildTransport` step 3b now re-checks exactly the legs that would trigger that warning. A leg
+with a real transit route comes back as `mode: 'transit'` and simply stops being a drive leg —
+`dayVerdict` needs no knowledge of any of this, it just stops seeing it.
+
+**The gate is the whole design.** All four must hold:
+1. `gettingAround === 'transit'` — NOT merely carless. Someone who chose *walk* must never have
+   a warning cleared by a bus they never said they would take.
+2. The day probe already found transit here.
+3. The warning would actually fire.
+4. A Routes key exists.
+
+So a driver pays nothing, a Delmarva walking day pays nothing, a transit-less region pays
+nothing. Capped at 3 legs, cached per point pair, and it usually makes the line-naming call in
+step 4 free because the rescued leg is normally also the longest.
+
+**It fails conservative, and that direction is not negotiable.** No route, or no answer, leaves
+the leg a drive and the warning standing. A blip can only ever leave the warning ON. The
+opposite — a network hiccup quietly clearing a true warning — is what actually strands someone
+at stop three, and no future refactor should trade this the other way for tidiness.
 
 ## Chip suppression — two volumes, one tap target
 

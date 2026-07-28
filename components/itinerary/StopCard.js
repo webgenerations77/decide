@@ -86,6 +86,16 @@ function VerifiedChip({ stop, styles, colors }) {
   );
 }
 
+// Leg-chip glyphs. 'transit' is not decoration: a leg the road geometry called a drive can be
+// re-resolved as a train ride (see lib/transport/index.js step 3b), and showing a car beside
+// "Take transit" would contradict the copy next to it.
+const LEG_MODE_ICON = {
+  walk:    'walk-outline',
+  bike:    'bicycle-outline',
+  transit: 'bus-outline',
+  drive:   'car-outline',
+};
+
 // ─── StopCard ─────────────────────────────────────────────────────────────────
 function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, weather, planDate, sensitivities, leg = null }) {
   const [feedback,          setFeedback]          = useState(null);
@@ -174,7 +184,7 @@ function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, 
             accessibilityLabel={`${leg.chip ?? leg.hint}. Other ways to cover this stretch.`}
           >
             <Ionicons
-              name={leg.mode === 'walk' ? 'walk-outline' : leg.mode === 'bike' ? 'bicycle-outline' : 'car-outline'}
+              name={LEG_MODE_ICON[leg.mode] ?? 'car-outline'}
               size={11}
               color={leg.chip ? colors.primary : colors.textMuted}
             />

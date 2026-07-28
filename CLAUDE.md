@@ -168,6 +168,14 @@ a generic AI chat product, or an enterprise dashboard.
   unlike the probe's origin→last-stop pair. `verdict.transitVia` names both endpoints
   ("Birdy's → DUMBO runs via the R Line") so it cannot be misread as the whole day's route.
   📄 Unvalidated thresholds and known gaps: `docs/transport-open-questions.md`.
+  ⚠ STRANDED-LEG RESCUE (`buildTransport` step 3b) is the ONE place per-leg transit is bought,
+  and the gate is the design: only when `gettingAround === 'transit'` (NOT merely carless — a
+  walker must never have a warning cleared by a bus), the probe already found transit, and
+  `reachWarning` would fire. Capped at 3, cached. It exists because road geometry alone called a
+  3.1 mi Brooklyn SUBWAY RIDE "too far to cover without a car". A covered leg returns as
+  `mode: 'transit'` and stops being a drive leg, so dayVerdict needs no knowledge of it.
+  ⚠ It FAILS CONSERVATIVE and must stay that way: no route or no answer leaves the warning ON.
+  A blip clearing a true warning is what actually strands someone; never trade this for tidiness.
   `gettingAround.js` is the single source of truth for the 'car'|'walk'|'transit' constraint,
   shared by the picker, the synthesis prompt and the day verdict so the three cannot drift on
   what 'walk' means. ⚠ dayVerdict must NEVER return 'drive' for a carless traveller — when the
