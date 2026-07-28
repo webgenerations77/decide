@@ -364,6 +364,13 @@ export async function POST(request) {
         return Response.json({ error: 'latitude and longitude are required' }, { status: 400 });
       }
 
+      // A request that dies leaves NO trace, because every other row is written on the way to a
+      // success. That is precisely how a real outage hid for hours: generations were being killed
+      // mid-flight and the only symptom was the ABSENCE of a synthesis row, which is invisible
+      // unless you already suspect it. Marking the start makes "started but never finished"
+      // countable by subtraction. Logged after validation so a 400 never inflates the count.
+      logUsage({ route: 'itinerary', model: 'generation-start' });
+
       const { pace = 'moderate', budget = '$$', group_type = 'couple', cuisines = [], sensitivities = [], activityStyles = [], dietary = [], neurodivergent = false, interests = [], gettingAround = 'car', transitPref = null, transitPrefLabel = null } = preferences;
       // Clamp BEFORE Places is queried. Searching a 25-mile radius for a walking day mostly
       // surfaces places the traveller cannot reach, which then crowd out the ones they can.

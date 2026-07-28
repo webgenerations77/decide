@@ -232,6 +232,30 @@ export default function AdminScreen() {
                   should be set from — read p80, not p50: a clock that expires early on one run
                   in two is worse than one that finishes early. Put the value in
                   ESTIMATED_SECONDS in components/LoadingAnimation.js. */}
+              {/* The funnel. `Died` is the alarm — requests that started and never came back,
+                  which is what a Vercel kill looks like from the inside. `Hit deadline` is NOT
+                  a failure: those are days that would previously have died and now arrive as a
+                  simpler plan instead. */}
+              <Text style={styles.subhead}>Generation funnel</Text>
+              {usage.funnel ? (
+                <>
+                  <Row label="Started" value={String(usage.funnel.started)} />
+                  <Row label="Completed" value={String(usage.funnel.completed)} />
+                  <Row
+                    label={usage.funnel.died > 0 ? 'Died · investigate' : 'Died'}
+                    value={String(usage.funnel.died)}
+                  />
+                  <Row label="Hit synthesis deadline" value={String(usage.funnel.deadline)} />
+                  {usage.funnel.skipped > 0 ? (
+                    <Row label="Skipped — no budget left" value={String(usage.funnel.skipped)} />
+                  ) : null}
+                </>
+              ) : (
+                <Text style={styles.pricingNote}>
+                  No generations recorded in this range.
+                </Text>
+              )}
+
               <Text style={styles.subhead}>Itinerary generation</Text>
               {usage.generation ? (
                 <>

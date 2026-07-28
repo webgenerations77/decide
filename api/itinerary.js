@@ -285,6 +285,13 @@ export default async function handler(req, res) {
       const { latitude, longitude, date, preferences = {}, startTime = '11:00 AM', endTime = '8:00 PM', feedback = {}, tripNote = '', locationLabel = '', locationShort = '' } = req.body;
       if (!latitude || !longitude) return res.status(400).json({ error: 'latitude and longitude are required' });
 
+      // A request that dies leaves NO trace, because every other row is written on the way to a
+      // success. That is precisely how a real outage hid for hours: generations were being killed
+      // mid-flight and the only symptom was the ABSENCE of a synthesis row, which is invisible
+      // unless you already suspect it. Marking the start makes "started but never finished"
+      // countable by subtraction. Logged after validation so a 400 never inflates the count.
+      logUsage({ route: 'itinerary', model: 'generation-start' });
+
       const { pace='moderate', budget='$$', group_type='couple', cuisines=[], activityStyles=[], dietary=[], neurodivergent=false, interests=[], gettingAround='car', transitPref=null, transitPrefLabel=null } = preferences;
       // Clamp BEFORE Places is queried. Searching a wide radius for a walking day mostly
       // surfaces places the traveller cannot reach, which then crowd out the ones they can.

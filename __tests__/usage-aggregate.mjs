@@ -1,5 +1,5 @@
 // __tests__/usage-aggregate.mjs — run: node __tests__/usage-aggregate.mjs
-import { aggregateUsage, rangeStartMs, summarizeDurations } from '../lib/admin/usage.js';
+import { aggregateUsage, rangeStartMs, summarizeDurations, summarizeGeneration } from '../lib/admin/usage.js';
 let passed = 0, failed = 0;
 const assert = (l, c, d = '') => c ? (console.log(`  ✓ ${l}`), passed++) : (console.error(`  ✗ ${l}${d ? ` — ${d}` : ''}`), failed++);
 const close = (a, b) => Math.abs(a - b) < 1e-9;
@@ -49,6 +49,37 @@ assert('garbage durations are dropped',
 assert('a single run still produces an estimate', summarizeDurations([{ durationMs: 41_000 }]).p80 === 41_000);
 assert('unsorted input is sorted before ranking',
   summarizeDurations([{ durationMs: 90_000 }, { durationMs: 10_000 }, { durationMs: 50_000 }]).p50 === 50_000);
+
+console.log('generation funnel — making a dead request visible');
+// The bug this exists for: a killed request writes nothing, so the only symptom was a MISSING
+// synthesis row. started - completed is the number that never came back.
+const funnel = summarizeGeneration([
+  { route: 'itinerary', model: 'generation-start' },
+  { route: 'itinerary', model: 'generation-start' },
+  { route: 'itinerary', model: 'generation-start' },
+  { route: 'itinerary', model: 'generation', durationMs: 41_000 },
+  { route: 'synthesis', model: 'synthesis-deadline' },
+  { route: 'synthesis', model: 'claude-sonnet-4-6', inputTokens: 10 },
+]);
+assert('counts starts', funnel.started === 3);
+assert('counts completions', funnel.completed === 1);
+assert('surfaces the ones that never came back', funnel.died === 2, String(funnel.died));
+assert('counts deadline saves separately from deaths', funnel.deadline === 1);
+assert('a normal synthesis row is not mistaken for either', funnel.completed === 1 && funnel.deadline === 1);
+
+// A deadline hit still COMPLETES — it returns a fallback. So it must never be counted as a death,
+// or the alarm cries wolf every time the safety net does its job.
+const saved = summarizeGeneration([
+  { route: 'itinerary', model: 'generation-start' },
+  { route: 'synthesis', model: 'synthesis-deadline' },
+  { route: 'itinerary', model: 'generation', durationMs: 52_000 },
+]);
+assert('a deadline save is not counted as a death', saved.died === 0, String(saved.died));
+assert('and is still visible as a deadline hit', saved.deadline === 1);
+
+assert('no generation rows at all reads as null, not a row of zeros',
+  summarizeGeneration([{ route: 'scout', model: 'claude-haiku-4-5-20251001' }]) === null);
+assert('funnel rides along on the aggregate', 'funnel' in agg);
 
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);
