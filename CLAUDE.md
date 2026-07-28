@@ -104,9 +104,16 @@ a generic AI chat product, or an enterprise dashboard.
   embed failure) falls back to a still card — never a blank frame.
 - scripts/build-house-ad.js → public/ads/certotable-embed.html — regenerate with
   `node scripts/build-house-ad.js`. Derives a PLAYABLE cut from the published Cert to Table
-  trailer: strips the voiceover, never calls Music.init() (every method guards on `ac`, so the
-  synth score stays inert), trims 11 scenes to 6 so the closing CTA lands inside a ~45s wait
-  instead of never playing, auto-starts without the tap gate, and loops. 3.11MB → 0.79MB.
+  trailer: keeps the voiceover for the 6 surviving scenes and drops the other 5, starts the
+  synthesised score (Music.init() — zero bytes, generated in-browser), trims 11 scenes to 6 so the
+  closing CTA lands inside a ~45s wait instead of never playing, auto-starts without the tap gate,
+  and loops. 3.11MB → 1.47MB.
+  ⚠ IT PLAYS WITH SOUND, by explicit product decision. That works because the tap on "Build my
+  day" gives the page sticky user activation, and Chrome separately grants autoplay-with-sound to
+  INSTALLED PWAs — which is how Decide ships. The iframe MUST carry `allow="autoplay"` or it is
+  blocked regardless of the parent's activation. Where a browser still refuses (iOS Safari) it
+  degrades to silent, not broken: the scene timeline runs on requestAnimationFrame and
+  `voEl.play()` is already caught upstream.
   ⚠ TRIMMING THE TIMELINE ALONE IS A BUG: the player indexes `querySelectorAll('.scene')` with
   the TL index, so the DOM sections must be pruned to match or the ad plays one scene's visuals
   under another's caption. The script does both, and EVERY edit is asserted — if the upstream

@@ -69,7 +69,12 @@ export default function HouseAd({ ad, onUnavailable }) {
             <View style={[styles.frame, { aspectRatio: ad.embedAspect ?? 16 / 9 }]}>
               {createElement('iframe', {
                 src: ad.embed,
-                title: `${ad.name} — silent preview`,
+                title: `${ad.name} — preview`,
+                // Without this an iframe cannot start audio at all, whatever the parent page's
+                // activation state. Same-origin (served from public/), so the tap on "Build my
+                // day" carries in. Where a browser still refuses, the ad plays silently — the
+                // timeline is driven by rAF, not by audio.
+                allow: 'autoplay',
                 loading: 'lazy',
                 scrolling: 'no',
                 tabIndex: -1,
