@@ -35,6 +35,7 @@ import StopCard from '../../components/itinerary/StopCard';
 import ItineraryMeta from '../../components/itinerary/ItineraryMeta';
 import RouteMap from '../../components/itinerary/RouteMap';
 import { GETTING_AROUND_OPTIONS, DEFAULT_GETTING_AROUND } from '../../lib/transport/gettingAround';
+import { getTransitOptions, defaultTransitPref, onlyRideshare } from '../../lib/transport/availability';
 
 // ─── Date helpers ─────────────────────────────────────────────────────────────
 function getNextSevenDays() {
@@ -165,6 +166,75 @@ function PillRow({ options, selected, onSelect, disabled }) {
   );
 }
 
+// ─── TransitPrefList ──────────────────────────────────────────────────────────
+// The named ways to get around WITHOUT a car at this specific location.
+//
+// A vertical list rather than another pill row, for three reasons: real service names
+// ("Cape May–Lewes Ferry") wrap badly in a chip at 375px; only the chosen row needs to
+// carry its caveat, which keeps this from becoming a wall of options; and a full-width
+// row is a far better thumb target than a chip.
+//
+// One selection, not many. Decide commits to a plan rather than handing over a menu — the
+// best option here is already chosen when this appears, and changing it is the escape hatch.
+function TransitPrefList({ options, selected, onSelect, disabled }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  return (
+    <View style={styles.transitList} accessibilityRole="radiogroup">
+      {options.map((o) => {
+        const active = o.id === selected;
+        return (
+          <View key={o.id} style={[styles.transitRow, active && styles.transitRowActive]}>
+            <TouchableOpacity
+              style={styles.transitRowHead}
+              onPress={() => onSelect(o.id)}
+              disabled={disabled}
+              activeOpacity={0.7}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: active, disabled: !!disabled }}
+              accessibilityLabel={o.label}
+            >
+              <Ionicons name={o.icon} size={17} color={active ? colors.primary : colors.textMuted} />
+              <Text
+                style={[styles.transitRowLabel, active && styles.transitRowLabelActive]}
+                numberOfLines={2}
+              >
+                {o.label}
+              </Text>
+              <Ionicons
+                name={active ? 'radio-button-on' : 'radio-button-off'}
+                size={18}
+                color={active ? colors.primary : colors.textMuted}
+              />
+            </TouchableOpacity>
+
+            {active && o.note ? (
+              <View style={styles.transitRowBody}>
+                {/* Curated pointer, never a live feed — this copy must not name a time or a fare. */}
+                <Text style={styles.transitRowNote}>{o.note}</Text>
+                {o.url ? (
+                  <TouchableOpacity
+                    onPress={() => Linking.openURL(o.url)}
+                    activeOpacity={0.7}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    style={styles.transitLinkBtn}
+                    accessibilityRole="link"
+                    accessibilityLabel={`Check times and routes for ${o.label}`}
+                  >
+                    <Text style={styles.transitLinkText}>Check times &amp; routes</Text>
+                    <Ionicons name="open-outline" size={13} color={colors.primary} />
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+            ) : null}
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
 // ─── PlanScreen ───────────────────────────────────────────────────────────────
 export default function PlanScreen() {
   const { colors } = useTheme();
@@ -193,6 +263,10 @@ export default function PlanScreen() {
   const [endTime,   setEndTime]   = useState('8:00 PM');
   const [cuisines,  setCuisines]  = useState([]);
   const [gettingAround, setGettingAround] = useState(DEFAULT_GETTING_AROUND);
+  // Which named service they intend to ride. Deliberately NOT persisted: the available set is
+  // location-dependent, so a saved "Beach Bus" would follow them to Boston and have to be
+  // invalidated anyway. Re-picking the best local default every time is simpler and truer.
+  const [transitPref, setTransitPref] = useState(null);
   const [tripNote,  setTripNote]  = useState('');
   const [maxDistance, setMaxDistance] = useState(25);
 
@@ -361,6 +435,24 @@ export default function PlanScreen() {
     AsyncStorage.setItem(KEYS.GETTING_AROUND, String(v)).catch(() => {});
   };
 
+  // What actually runs where they are standing. Derived from coordinates alone — no network
+  // call, so this recomputes freely as GPS lands or they change the manual location. The date
+  // matters because seasonal services (the trolley, the beach routes) do not run year-round.
+  const transitOptions = useMemo(
+    () => getTransitOptions(coords, planDate),
+    [coords?.latitude, coords?.longitude, planDate],
+  );
+
+  // Keep the choice honest as the ground shifts. If the location moves and the selected service
+  // is no longer offered there, silently fall back to the best local option rather than sending
+  // the planner a preference for a bus that does not run in the new place.
+  useEffect(() => {
+    if (gettingAround === 'car') { setTransitPref(null); return; }
+    setTransitPref((prev) => (
+      prev && transitOptions.some((o) => o.id === prev) ? prev : defaultTransitPref(transitOptions)
+    ));
+  }, [gettingAround, transitOptions]);
+
   useEffect(() => {
     if (!params.date || params.date === seenDateRef.current) return;
     seenDateRef.current = params.date;
@@ -490,7 +582,13 @@ export default function PlanScreen() {
       const data = await generateItinerary({
         latitude:  coords.latitude,
         longitude: coords.longitude,
-        preferences: { pace, budget, group_type: groupType, cuisines, sensitivities, gettingAround },
+        preferences: {
+          pace, budget, group_type: groupType, cuisines, sensitivities, gettingAround,
+          // The chosen service travels with the request so the plan is built around it, rather
+          // than being a label the picker shows and the planner never sees.
+          transitPref,
+          transitPrefLabel: transitOptions.find((o) => o.id === transitPref)?.label ?? null,
+        },
         startTime, endTime, date: planDate,
         feedback: feedbackCtx,
         maxDistanceMiles,
@@ -738,6 +836,32 @@ export default function PlanScreen() {
                     ? 'We’ll keep the whole day inside one walkable stretch — fewer stops, all close together.'
                     : 'We’ll keep stops close and near main roads, so you’re never stranded somewhere with no way back.'}
                 </Text>
+              ) : null}
+
+              {/* Only shown to a carless traveller, and only ever listing services that exist at
+                  these coordinates. Coverage is knowingly partial, so the copy says "we don't
+                  know of" rather than "there is none" — claiming a transit desert we haven't
+                  verified would be the same dishonesty as inventing a bus. */}
+              {gettingAround === 'transit' ? (
+                transitOptions.length === 0 ? (
+                  <Text style={styles.constraintHint}>
+                    Still pinning down where you are — options for getting around will show up here.
+                  </Text>
+                ) : (
+                  <>
+                    <Text style={styles.transitHeading}>
+                      {onlyRideshare(transitOptions)
+                        ? 'No bus or train we know of around here'
+                        : 'What you’ll ride'}
+                    </Text>
+                    <TransitPrefList
+                      options={transitOptions}
+                      selected={transitPref}
+                      onSelect={setTransitPref}
+                      disabled={loading}
+                    />
+                  </>
+                )
               ) : null}
 
               <DistanceSlider value={maxDistance} onChange={handleMaxDistance} />
@@ -1049,6 +1173,43 @@ const makeStyles = (c) => StyleSheet.create({
     backgroundColor: c.surfaceAlt, borderColor: c.border,
   },
   prefPillActive:     { backgroundColor: c.primary, borderColor: c.primary },
+  // Transit options — a list of real services, not a second row of chips.
+  transitHeading: {
+    marginTop: 14, marginBottom: 8,
+    fontSize: 13, fontFamily: FONTS.bodySemiBold, color: c.textSecondary,
+  },
+  transitList:  { gap: 8 },
+  transitRow: {
+    borderRadius: 12, borderWidth: 1,
+    backgroundColor: c.surface, borderColor: c.border,
+    overflow: 'hidden',
+  },
+  transitRowActive: { borderColor: c.primary, backgroundColor: c.sky100 },
+  transitRowHead: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    // 12 + 12 + ~20 line box clears the 44px touch minimum with the row at its shortest.
+    paddingHorizontal: 12, paddingVertical: 12, minHeight: 44,
+  },
+  transitRowLabel: {
+    flex: 1, fontSize: 14, lineHeight: 20,
+    fontFamily: FONTS.bodySemiBold, color: c.textSecondary,
+  },
+  transitRowLabelActive: { color: c.textPrimary },
+  transitRowBody: { paddingHorizontal: 12, paddingBottom: 12, gap: 8 },
+  transitRowNote: {
+    fontSize: 12.5, lineHeight: 18,
+    fontFamily: FONTS.body, color: c.textSecondary,
+  },
+  // An outlined chip, not a coloured text link. Cobalt-on-tint only reaches ~3.6:1 in the dark
+  // appearance, so the label carries full-contrast ink and cobalt does the signalling from the
+  // border and the icon — where 3:1 is the bar. It also gets a real 44px target out of it.
+  transitLinkBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    alignSelf: 'flex-start', minHeight: 44,
+    paddingHorizontal: 12, paddingVertical: 10,
+    borderRadius: 10, borderWidth: 1, borderColor: c.primary,
+  },
+  transitLinkText: { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: c.textPrimary },
   prefPillText:       { fontSize: 13, fontFamily: FONTS.bodySemiBold, color: c.textSecondary },
   prefPillTextActive: { color: c.primaryText },
   timePickerRow:      { flexDirection: 'row', alignItems: 'center', gap: 10 },

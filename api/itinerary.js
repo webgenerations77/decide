@@ -285,7 +285,7 @@ export default async function handler(req, res) {
       const { latitude, longitude, date, preferences = {}, startTime = '11:00 AM', endTime = '8:00 PM', feedback = {}, tripNote = '', locationLabel = '', locationShort = '' } = req.body;
       if (!latitude || !longitude) return res.status(400).json({ error: 'latitude and longitude are required' });
 
-      const { pace='moderate', budget='$$', group_type='couple', cuisines=[], activityStyles=[], dietary=[], neurodivergent=false, interests=[], gettingAround='car' } = preferences;
+      const { pace='moderate', budget='$$', group_type='couple', cuisines=[], activityStyles=[], dietary=[], neurodivergent=false, interests=[], gettingAround='car', transitPref=null, transitPrefLabel=null } = preferences;
       // Clamp BEFORE Places is queried. Searching a wide radius for a walking day mostly
       // surfaces places the traveller cannot reach, which then crowd out the ones they can.
       const effectiveMiles = clampSearchMiles(gettingAround, 25);
@@ -326,7 +326,7 @@ export default async function handler(req, res) {
         maxMiles: effectiveMiles,
         weather,
         sun: weather ? { sunrise: weather.sunrise ?? null, sunset: weather.sunset ?? null } : null,
-        prefs: { pace, budget, group_type, cuisines, activityStyles, dietary, neurodivergent, interests, gettingAround },
+        prefs: { pace, budget, group_type, cuisines, activityStyles, dietary, neurodivergent, interests, gettingAround, transitPref, transitPrefLabel },
         feedback: { likedPlaces, dislikedPlaces, dislikedReasons },
         tripNote,
         startTime, endTime,
