@@ -133,3 +133,22 @@ the admin dashboard shows credits remaining and approximate plans left.
    and would shorten the research phase as a side effect.
 3. **Halve the discovery search budget** (4 → 2 in `lib/smart/discovery.js`). Roughly halves
    spend, costs research breadth.
+
+---
+
+## Documentation drift — three false claims in one session
+
+`CLAUDE.md` asserted three things the code did not do: that per-stop feedback reached the
+synthesis prompt, that the transport reach warning was accurate in a metro, and that cross-device
+history delete did not exist. Each was plausible, each cost real time, and each survived because
+nobody re-checks something that is written down.
+
+**Done:** `__tests__/project-invariants.mjs` makes the mechanically-checkable claims executable —
+the Vercel function cap, twin pairing, `globalThis` singletons, the haptics wrapper, the modal
+rule, theme tokens, forbidden copy, and the PWA output settings. An audit of all sixteen found
+everything else accurate, so the doc is not broadly unreliable — but the checkable parts no longer
+depend on trust.
+
+**What is still only prose**, and would need a different approach: the cost-design rationale in
+`lib/transport/`, the honesty contracts, and the "why" behind decisions. Those are the parts worth
+reading, and the parts most likely to go stale next.
