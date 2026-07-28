@@ -255,8 +255,14 @@ a generic AI chat product, or an enterprise dashboard.
   as an offline-durable cache. `services/historyService.js` reads cache first, then `syncHistory()`
   union-merges cache+server by id (newest `updatedAt ?? timestamp` wins) — this also does migration
   and offline-write flush. All writes/reads/clear go through the service, never raw AsyncStorage.
-- KNOWN LIMITATION: "Clear History" is device-local (union merge has no deletion tracking; a clear is
-  resurrected by another device's stale cache). Cross-device delete needs tombstones (queued follow-up).
+- Cross-device delete WORKS — this doc previously claimed it did not, and the claim was wrong (verified
+  2026-07-28). "Clear History" writes a `clearedAt` high-water mark, `clearUserHistory` prunes docs older
+  than it server-side and advances a per-user mark, `syncHistory` takes `max(local, server)` and feeds it
+  to `mergeById`, which drops anything stamped before it — so a stale device cannot resurrect cleared
+  history, and an offline clear propagates on the next sync. There is no per-item delete in the UI, so a
+  single mark is sufficient. ⚠ SAFETY: a falsy `clearedAt` is a no-op on BOTH sides — `clearUserHistory`
+  returns early so a bodyless DELETE cannot wipe an account, and `mergeById` keeps everything so a missing
+  mark cannot empty the cache. Covered by `__tests__/history-merge.mjs`; do not "simplify" either guard.
 - API usage is attributed per-user via request-scoped `AsyncLocalStorage` (`lib/usageContext.js`, anchored
   on globalThis): handlers `runWithUser(uid, ...)`, `logUsage` reads `currentUserId()`. Admin dashboard maps
   uid→email. Itinerary + swap attribute; the standalone place-detail/search + geocode endpoints don't wrap

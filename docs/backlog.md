@@ -89,10 +89,18 @@ A complete, tested feature sitting unmerged: location-aware transit options on t
 (`lib/transport/availability.js` + ~160 lines of `plan.js`, with its own test suite). Merges into
 `main` cleanly. It is either worth shipping or worth deleting; leaving it is the only bad option.
 
-## Cross-device history delete needs tombstones
+## ~~Cross-device history delete needs tombstones~~ — already built (verified 2026-07-28)
 
-"Clear History" is device-local. The union merge has no deletion tracking, so a clear is
-resurrected by another device's stale cache. Pre-existing; documented in `CLAUDE.md`.
+Not a gap. `clearedAt` is a high-water mark: written on clear, persisted per-user server-side by
+`clearUserHistory`, synced as `max(local, server)` by `syncHistory`, and applied by `mergeById`,
+which drops anything stamped before it. An offline clear propagates on the next sync. There is no
+per-item delete in the UI, so one mark is sufficient — full tombstones would be building for a
+delete that does not exist.
+
+It had **no test coverage**, which for a deletion path is the wrong place to be blind — the two
+failure modes are resurrecting cleared history and destroying live history. Now covered in
+`__tests__/history-merge.mjs`, including the safety property that a falsy mark is a no-op on both
+sides.
 
 ## Usage attribution gaps
 
