@@ -86,6 +86,33 @@ a generic AI chat product, or an enterprise dashboard.
   renders in the timeline GUTTER, not the card body (that card is already at its badge ceiling),
   and only when the leg differs from the day verdict — see isNotableLeg.
 - components/itinerary/        — StopCard, PlaceDetailModal + PriceLegendModal (bottom sheets), WeatherArt (photo-backed weather band; `fill` prop = faded full-card background), ItineraryMeta (renders the WeatherPill centered below the date), WeatherPill. Stop icons/colors come from constants/categoryVisuals.js (not the legacy 4 CATEGORY_EMOJIS).
+- components/LoadingAnimation.js — the wait after "Build my day". THREE ZONES, top to bottom:
+  (1) a HouseAd for another Spinach Creations app, falling back to the live-facts card when there
+  is no ad; (2) BrandLogo + status label + COUNTDOWN; (3) the Lottie globe, 140px and no longer
+  the centrepiece. ⚠ The countdown's `ESTIMATED_SECONDS` is an ESTIMATE, not a promise: it never
+  shows 0:00, never counts negative and never freezes — at zero it stops being a clock and becomes
+  a sentence. Set it from admin → "Itinerary generation" → **p80** (not p50: a clock that expires
+  early on one run in two is worse than one that finishes early). The phase lines under it are
+  TIME-driven, not progress-driven — the client makes one POST and cannot see server phases, so
+  they must never be reworded into completion claims.
+- components/HouseAd.js + constants/houseAds.js — "More from Spinach Creations". HOUSE ADS ONLY:
+  no SDK, no network, no tracking — the registry is one file plus bundled/served assets, which is
+  what keeps this clear of a consent surface and of the ad-supported-free-app anti-reference. ⚠ The
+  link MUST open in a new tab (HouseAd does this explicitly, not via react-native-web's Linking):
+  navigating the PWA away mid-generation kills the in-flight request and the traveller loses the
+  day they just waited for. Two renderings: on web an `embed` PLAYS in an iframe; native (and any
+  embed failure) falls back to a still card — never a blank frame.
+- scripts/build-house-ad.js → public/ads/certotable-embed.html — regenerate with
+  `node scripts/build-house-ad.js`. Derives a PLAYABLE cut from the published Cert to Table
+  trailer: strips the voiceover, never calls Music.init() (every method guards on `ac`, so the
+  synth score stays inert), trims 11 scenes to 6 so the closing CTA lands inside a ~45s wait
+  instead of never playing, auto-starts without the tap gate, and loops. 3.11MB → 0.79MB.
+  ⚠ TRIMMING THE TIMELINE ALONE IS A BUG: the player indexes `querySelectorAll('.scene')` with
+  the TL index, so the DOM sections must be pruned to match or the ad plays one scene's visuals
+  under another's caption. The script does both, and EVERY edit is asserted — if the upstream
+  trailer is republished with different markup the build FAILS rather than shipping a broken ad.
+  Never hand-edit the generated file. ⚠ `vercel.json` needs its `/ads/(.*)` rewrite ahead of the
+  SPA catch-all, or the ad slot can render the Decide app recursively inside itself.
 - hooks/useViewportOverlay.js  — pins RN Modal overlays to the VISUAL viewport on web (fixes mobile-web sheet drift); exports useViewportOverlay(visible) + WEB_OVERLAY_FIX style. ALWAYS pair with Modal animationType="fade" (never "slide" — its transform traps position:fixed)
 - constants/theme.js           — COLORS + FONTS + RADII + SHADOWS + PRICE_LEGEND + CATEGORY_COLORS/EMOJIS
 - constants/localKnowledge.js  — Cheddar local tips (Delmarva/DE/MD beach region)
@@ -93,6 +120,12 @@ a generic AI chat product, or an enterprise dashboard.
 - constants/categoryVisuals.js  — categoryVisual(rawCategory) → {icon (Ionicons), color (theme token)}; normalizes the AI's FREE-FORM stop categories via word-boundary matching to distinct icons/colors, default = location-pin/gray (fixes the old "lightning bolt on every stop")
 - lib/bourdainQuotes.js        — rotating quote under the DECIDE button (once per app launch); food/drink/travel only, verified quotes
 - lib/history/                 — merge.js (pure mergeById) + store.js (Firestore admin, users/{uid}/{itineraries|decisions})
+- lib/usageLog.js              — logUsage(); optional `durationMs` records WALL-CLOCK time for a
+  completed generation (both itinerary twins, success path only — a failed run says nothing about
+  how long a working one takes). Written as a conditional field because Firestore rejects an
+  explicit `undefined`. Aggregated by `summarizeDurations` in lib/admin/usage.js into p50/p80/p95
+  and surfaced in the admin dashboard — this is the ONLY source of truth for the loading
+  countdown, which ran on an eyeball guess before it existed.
 - lib/usageContext.js          — request-scoped userId for usage attribution; AsyncLocalStorage anchored on globalThis (the module loads twice across the ESM/CJS graph — a plain module singleton mis-attributed every request as anonymous)
 - lib/admin/auth.js            — getUidFromAuth(header): verify ID token → uid or null (never throws)
 - lib/admin/userStats.js       — getUserStats(uid): counts itineraries/decisions/distinct cities from Firestore; served via /api/admin/users?uid=
@@ -541,3 +574,19 @@ A planning response is complete only when it:
 *Personal preferences belong in `.claude/user-preferences.md`.
 Session history belongs in `.claude/sessions/`.
 Keep this file universally applicable across all users.*
+
+<!-- trellis-dev:begin (managed by Trellis installer — do not edit inside) -->
+## Trellis session reporting
+This project reports dev activity to Trellis. Maintain `.trellis/report.json`
+(schema + examples: `.trellis/README.md`):
+- CREATE/OVERWRITE it near the end of any session that changed files — fresh
+  each session, never append to the previous session's report.
+- Record every bug you FIND or FIX as a bug event with a stable kebab-case
+  `key` (reuse the same key when fixing a bug found earlier), a severity
+  (critical/high/medium/low), plus test results, version/deploy changes, and
+  notable review/security findings or TODOs.
+- Keep `summary` plain-language — the reader is a non-developer.
+- A Stop hook sends the file automatically; if asked to write the report
+  before stopping, do so immediately, then stop. `/trellis-report` sends on
+  demand. Never edit `.trellis/report.mjs`, `config.json`, or this block.
+<!-- trellis-dev:end -->

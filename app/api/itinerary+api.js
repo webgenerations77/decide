@@ -344,6 +344,11 @@ export async function POST(request) {
       const alts = await legAlternatives(from, to);
       return Response.json(alts ?? { options: [] });
     }
+    // Wall-clock for the whole generation — the time the traveller actually stares at the
+    // loading screen, which is a different question from token spend and cannot be derived from
+    // it. The countdown on that screen is set from the p80 of this figure; before it existed the
+    // estimate was an eyeball guess. Started before validation so a 400 is not silently free.
+    const startedAt = Date.now();
     try {
       const {
         latitude, longitude, date, preferences = {},
@@ -445,6 +450,12 @@ export async function POST(request) {
         stops: priced, originLat: latitude, originLng: longitude, dateISO: travelDateISO,
         gettingAround,
       });
+
+      // Timed only on the success path: a generation that threw tells us nothing about how long
+      // a working one takes, and folding failures in would drag the countdown's p80 around for
+      // reasons that have nothing to do with waiting. `model: 'generation'` carries no PRICING
+      // entry, so computeCost returns 0 and this row never pollutes spend.
+      logUsage({ route: 'itinerary', model: 'generation', durationMs: Date.now() - startedAt });
 
       return Response.json({
         itinerary: priced,

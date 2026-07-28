@@ -276,6 +276,11 @@ export default async function handler(req, res) {
       return res.json(alts ?? { options: [] });
     }
 
+    // Wall-clock for the whole generation — the time the traveller actually stares at the
+    // loading screen, which is a different question from token spend and cannot be derived from
+    // it. The countdown on that screen is set from the p80 of this figure; before it existed the
+    // estimate was an eyeball guess. Started before validation so a 400 is not silently free.
+    const startedAt = Date.now();
     try {
       const { latitude, longitude, date, preferences = {}, startTime = '11:00 AM', endTime = '8:00 PM', feedback = {}, tripNote = '', locationLabel = '', locationShort = '' } = req.body;
       if (!latitude || !longitude) return res.status(400).json({ error: 'latitude and longitude are required' });
@@ -354,6 +359,11 @@ export default async function handler(req, res) {
       // annotateRoute just produced; never throws — a null transport block renders nothing
       // rather than costing anyone their plan.
       const transport = await buildTransport({ stops: priced, originLat: latitude, originLng: longitude, dateISO: travelDateISO, gettingAround });
+      // Timed only on the success path: a generation that threw tells us nothing about how long
+      // a working one takes, and folding failures in would drag the countdown's p80 around for
+      // reasons that have nothing to do with waiting. `model: 'generation'` carries no PRICING
+      // entry, so computeCost returns 0 and this row never pollutes spend.
+      logUsage({ route: 'itinerary', model: 'generation', durationMs: Date.now() - startedAt });
       return res.json({itinerary:priced,weather,transport,meta:{date:formattedDate,day_of_week:dayOfWeek,time_window:`${startTime} – ${endTime}`,preferences:{pace,budget,group_type},city:cityStr,cost_summary:costSummary?.label??null},discovery:{hadLiveData:smart.hadLiveData,findCount:smart.finds.length,anchorCount:smart.anchors.length,anchors:smart.anchors.map((a)=>({title:a.find?.title,interest:a.find?.interest,why:a.rationale,url:a.find?.url||null})),localHappenings:smart.localHappenings??null},generated_at:new Date().toISOString(),isFallback});
     } catch(err) {
       console.error('[itinerary] error:',err);

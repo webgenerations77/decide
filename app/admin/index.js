@@ -25,6 +25,8 @@ const PREVIEW_FALLBACK_COORDS = { latitude: 38.3226, longitude: -75.2179 };
 
 const RANGES = ['day', 'week', 'month'];
 const money = (n) => `$${(n || 0).toFixed(2)}`;
+// Milliseconds are the wrong unit for a number a human is about to copy into a countdown.
+const secs = (ms) => (Number.isFinite(ms) ? `${(ms / 1000).toFixed(1)}s` : '—');
 
 export default function AdminScreen() {
   const { colors } = useTheme();
@@ -182,7 +184,10 @@ export default function AdminScreen() {
             <Ionicons name="play-circle-outline" size={20} color={colors.primary} />
             <View style={{ flex: 1 }}>
               <Text style={styles.toolLabel}>Test loading screen</Text>
-              <Text style={styles.toolSub}>Preview the animation + rotating info cards</Text>
+              {/* Copy tracks what the screen actually shows. The info cards are now the ad
+                  slot's FALLBACK rather than a permanent fixture, so promising them here would
+                  send an admin looking for something that usually is not there. */}
+              <Text style={styles.toolSub}>Preview the ad slot, countdown and globe</Text>
             </View>
             <Text style={styles.toolChevron}>›</Text>
           </Pressable>
@@ -222,6 +227,25 @@ export default function AdminScreen() {
                 .map(([uid, b]) => (
                   <Row key={uid} label={userLabel(uid)} value={`${b.requests} req · ${money(b.estCost)}`} />
                 ))}
+
+              {/* How long people actually waited. THIS is what the loading screen's countdown
+                  should be set from — read p80, not p50: a clock that expires early on one run
+                  in two is worse than one that finishes early. Put the value in
+                  ESTIMATED_SECONDS in components/LoadingAnimation.js. */}
+              <Text style={styles.subhead}>Itinerary generation</Text>
+              {usage.generation ? (
+                <>
+                  <Row label="p50" value={secs(usage.generation.p50)} />
+                  <Row label="p80 · use this" value={secs(usage.generation.p80)} />
+                  <Row label="p95" value={secs(usage.generation.p95)} />
+                  <Row label="Slowest" value={secs(usage.generation.max)} />
+                  <Row label="Timed runs" value={String(usage.generation.n)} />
+                </>
+              ) : (
+                <Text style={styles.pricingNote}>
+                  Nothing timed in this range yet — the countdown is still running on an estimate.
+                </Text>
+              )}
             </View>
           )}
         </Card>
