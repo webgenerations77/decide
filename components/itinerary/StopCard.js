@@ -153,25 +153,33 @@ function StopCard({ stop, index = 0, isLast, onSwap, isSwapping, onViewDetails, 
     <>
       {/* How you get TO this stop. Rendered ABOVE the card in the timeline gutter rather
           than inside it — this card already carries fourteen conditional badges, and another
-          row in the body walks straight into the badge-wall anti-reference. Only appears when
-          the leg differs from the day's verdict (see isNotableLeg), so a driving day doesn't
-          repeat "drive 12 min" five times. */}
-      {leg?.chip ? (
+          row in the body walks straight into the badge-wall anti-reference.
+
+          TWO VOLUMES, ONE TAP TARGET:
+          · chip (loud, cobalt pill) — only when the leg disagrees with the day's verdict
+            (isNotableLeg), so a driving day doesn't repeat "drive 12 min" five times.
+          · hint (quiet, muted text) — every other leg. This exists because gating the tap on
+            "is it news?" also gated the leg-alternatives sheet, the ONLY home of subway detail
+            and rideshare: a real Brooklyn transit day rendered 1 tappable leg out of 6, so
+            "could I take the subway instead?" was unanswerable on the other five. The quiet
+            row stays type-only — no pill, no fill, no border — so it reads as connector rather
+            than badge, and it fills a gutter the reshaped card left empty. */}
+      {leg?.chip || leg?.hint ? (
         <View style={styles.legChipRow}>
           <TouchableOpacity
-            style={styles.legChip}
+            style={leg.chip ? styles.legChip : styles.legHint}
             activeOpacity={0.7}
             onPress={() => { hapticTap(); setShowLegOptions(true); }}
             accessibilityRole="button"
-            accessibilityLabel={`${leg.chip}. Other ways to cover this stretch.`}
+            accessibilityLabel={`${leg.chip ?? leg.hint}. Other ways to cover this stretch.`}
           >
             <Ionicons
               name={leg.mode === 'walk' ? 'walk-outline' : leg.mode === 'bike' ? 'bicycle-outline' : 'car-outline'}
               size={11}
-              color={colors.primary}
+              color={leg.chip ? colors.primary : colors.textMuted}
             />
-            <Text style={styles.legChipTxt}>{leg.chip}</Text>
-            <Ionicons name="chevron-forward" size={10} color={colors.primary} />
+            <Text style={leg.chip ? styles.legChipTxt : styles.legHintTxt}>{leg.chip ?? leg.hint}</Text>
+            <Ionicons name="chevron-forward" size={10} color={leg.chip ? colors.primary : colors.textMuted} />
           </TouchableOpacity>
         </View>
       ) : null}
@@ -299,6 +307,16 @@ const makeStyles = (c) => StyleSheet.create({
     borderWidth: 1, borderColor: c.borderLight,
   },
   legChipTxt: { fontSize: 11, color: c.primary, fontFamily: FONTS.bodySemiBold },
+
+  // The quiet volume. Same row, same tap target, none of the pill's weight — six of these down
+  // a timeline must read as connective tissue, which is the whole reason the loud chip stays
+  // rare enough to mean something. Vertical padding only, to keep the touch target honest.
+  legHint: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    alignSelf: 'flex-start',
+    paddingVertical: 4, paddingRight: 4,
+  },
+  legHintTxt: { fontSize: 11, color: c.textMuted, fontFamily: FONTS.bodyMedium },
 
   // Stop card + timeline
   stopRow:     { flexDirection: 'row', marginBottom: 14 },

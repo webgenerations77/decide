@@ -83,8 +83,12 @@ a generic AI chat product, or an enterprise dashboard.
 - components/itinerary/TransportSummary.js — the day's ONE travel verdict ("Drive it — 31 mi…"),
   rendered inside RouteMap's body. Deliberately not a mode picker: four modes side by side is the
   search-results anti-reference. Alternatives live behind a tap on a leg chip. StopCard's leg chip
-  renders in the timeline GUTTER, not the card body (that card is already at its badge ceiling),
-  and only when the leg differs from the day verdict — see isNotableLeg.
+  renders in the timeline GUTTER, not the card body (that card is already at its badge ceiling).
+  ⚠ TWO VOLUMES, ONE TAP TARGET: the loud cobalt chip (`legChipText`) appears only when the leg
+  differs from the day verdict — see isNotableLeg — and EVERY other leg gets a muted type-only
+  row (`legHintText`, no pill/fill/border). Exactly one of `leg.chip`/`leg.hint` is set; both open
+  the sheet. Suppressing the quiet row is not a density fix — it takes the alternatives sheet away
+  entirely, which is what left a real Brooklyn transit day with 1 tappable leg in 6.
 - components/itinerary/        — StopCard, PlaceDetailModal + PriceLegendModal (bottom sheets), WeatherArt (photo-backed weather band; `fill` prop = faded full-card background), ItineraryMeta (renders the WeatherPill centered below the date), WeatherPill. Stop icons/colors come from constants/categoryVisuals.js (not the legacy 4 CATEGORY_EMOJIS).
 - components/LoadingAnimation.js — the wait after "Build my day". THREE ZONES, top to bottom:
   (1) a HouseAd for another Spinach Creations app, falling back to the live-facts card when there
@@ -150,13 +154,19 @@ a generic AI chat product, or an enterprise dashboard.
   never per leg. Budget ~2–4 elements/itinerary against a 10k/month free tier.
   ⚠ HONESTY — `local.js` entries are curated pointers with source URLs, NOT live feeds: they
   must never state a departure time or current price as fact. Rideshare has no public API
-  (Uber and Lyft both retired theirs), so it is a deep link with no ETA/price claim.
+  (Uber and Lyft both retired theirs), so it is a deep link with no ETA/price claim. It appears
+  in TWO places: the leg-alternatives sheet, and inside `reachWarning` — the one moment the app
+  is CERTAIN a car is needed, where it used to say "plan a ride" and offer no way to.
+  `dayVerdict` returns `unreachable` (those legs' destinations) to make that link possible.
   ⚠ Transit is decided by COMPETITIVENESS, not distance: `transitIsCompetitive()` compares the
   probe's transit duration against its drive duration (tolerance 1.75, because a routing API's
   drive estimate hides parking). This replaced a flat "day under 15 miles" ceiling that got
   cities backwards — a 22-mile Brooklyn→Queens day was told to DRIVE. `legAlternatives` uses
-  computeRoutes (not the matrix) so it can NAME the line — "via R Line → 1 Line"; the day-level
-  probe uses the matrix and so can only say "Take transit", not which train.
+  computeRoutes (not the matrix) so it can NAME the line — "via R Line → 1 Line". The day verdict
+  now names one too: ONE extra computeRoutes call, spent only when the verdict is `transit`
+  (a drive day pays nothing), on the day's LONGEST leg — a stretch the traveller actually rides,
+  unlike the probe's origin→last-stop pair. `verdict.transitVia` names both endpoints
+  ("Birdy's → DUMBO runs via the R Line") so it cannot be misread as the whole day's route.
   📄 Unvalidated thresholds and known gaps: `docs/transport-open-questions.md`.
   `gettingAround.js` is the single source of truth for the 'car'|'walk'|'transit' constraint,
   shared by the picker, the synthesis prompt and the day verdict so the three cannot drift on
