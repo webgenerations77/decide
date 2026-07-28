@@ -42,6 +42,13 @@ Brand primitives (`components/brand/`) — compose tokens; use these instead of 
 - `CollapsibleCard` (title + persisted collapse state via KEYS.COLLAPSED_SECTIONS; `defaultCollapsed`)
 - `VersionTag` (app version from `expo-constants`; `APP_VERSION` export — single source of truth)
 
+## Backlog
+
+`docs/backlog.md` is the single list of what is worth doing next and is not being done. Put
+follow-ups THERE, not in an inline "(queued follow-up)" comment nobody can find. Items carry
+their design risk with them — e.g. auto-posting reviews to Google is not achievable (the Places
+API is read-only for reviews), and the workable shape is a deep link into Google's own composer.
+
 ## Design Context
 
 Two root files govern design decisions. Read them before changing anything visual.
