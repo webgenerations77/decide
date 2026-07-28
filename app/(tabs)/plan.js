@@ -612,6 +612,11 @@ export default function PlanScreen() {
         const id = asEdit && currentItineraryId ? currentItineraryId : `itinerary_${Date.now()}`;
         const entry = {
           id, timestamp: Date.now(), meta: data.meta, weather: data.weather,
+          // The day the trip is FOR, not the day it was planned. `meta.date` is display text
+          // ("Tuesday, July 28"), so the review prompt cannot read it. Without this a plan made
+          // on Monday for Saturday looks finished on Tuesday, and the app asks how a trip went
+          // before it happened. Older entries lack it and fall back to `timestamp`.
+          tripDate: planDate ?? null,
           stops: summary, itinerary: data.itinerary ?? [], v: 2,
           // Saved so a reopened plan still knows how the day moves. It's a small object
           // (one verdict + one entry per leg), not per-stop duplication.

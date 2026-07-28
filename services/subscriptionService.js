@@ -50,11 +50,28 @@ export async function incrementSpinCount() {
   return incrementCount('@decide/usage_spins_');
 }
 
+/**
+ * Today's decision allowance: the free tier plus anything earned by reviewing a finished trip.
+ *
+ * Read through a dynamic import so this module stays free of a static cycle — reviewRewards
+ * imports from lib/tripReview, and keeping the dependency one-way here avoids a load-order
+ * surprise in the bundler. Falls back to the plain limit if anything goes wrong: a broken bonus
+ * lookup must never lock someone out of a plan they were entitled to.
+ */
+async function decisionAllowance() {
+  try {
+    const { getReviewBonusToday } = await import('./reviewRewards');
+    return FREE_DECISIONS_PER_DAY + (await getReviewBonusToday());
+  } catch {
+    return FREE_DECISIONS_PER_DAY;
+  }
+}
+
 export async function isAtDecisionLimit() {
   const demo = await AsyncStorage.getItem('@decide/demo_mode').catch(() => null);
   if (demo === 'true') return false;
   if (await isPro()) return false;
-  return (await getDecisionCount()) >= FREE_DECISIONS_PER_DAY;
+  return (await getDecisionCount()) >= (await decisionAllowance());
 }
 
 export async function isAtSpinLimit() {
@@ -67,7 +84,7 @@ export async function isAtSpinLimit() {
 export async function getRemainingDecisions() {
   if (await isPro()) return Infinity;
   const count = await getDecisionCount();
-  return Math.max(0, FREE_DECISIONS_PER_DAY - count);
+  return Math.max(0, (await decisionAllowance()) - count);
 }
 
 export async function getRemainingSpins() {

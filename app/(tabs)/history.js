@@ -3,6 +3,7 @@ import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView, Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { DEMO_HISTORY } from '../../services/demoData';
@@ -18,6 +19,8 @@ import Card from '../../components/brand/Card';
 import CTAButton from '../../components/brand/CTAButton';
 import BrandLogo from '../../components/brand/BrandLogo';
 import VersionTag from '../../components/brand/VersionTag';
+import TripReviewSheet from '../../components/history/TripReviewSheet';
+import { isTripOver, isReviewed } from '../../lib/tripReview';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const FEEDBACK_REASONS = ['Closed', 'Too crowded', 'Not my style', 'Too far', 'Too expensive', 'Other'];
@@ -54,7 +57,7 @@ function FeedbackModal({ visible, itemName, onClose, onSelect }) {
 }
 
 // ─── ItineraryEntry ───────────────────────────────────────────────────────────
-function ItineraryEntry({ item, onFeedbackUp, onFeedbackDown, onOpen }) {
+function ItineraryEntry({ item, onFeedbackUp, onFeedbackDown, onOpen, askable = false, onReview }) {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const prefs   = item.meta?.preferences ?? {};
@@ -124,6 +127,23 @@ function ItineraryEntry({ item, onFeedbackUp, onFeedbackDown, onOpen }) {
           </View>
         ) : null}
 
+        {/* The nudge. Only on days that have actually finished and have not been answered —
+            see lib/tripReview.js. Asking about a trip in progress reads as not paying
+            attention, and asking twice reads as nagging. */}
+        {askable ? (
+          <TouchableOpacity
+            style={styles.reviewNudge}
+            onPress={onReview}
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel="Review this trip"
+          >
+            <Ionicons name="chatbubble-ellipses-outline" size={15} color={colors.primary} />
+            <Text style={styles.reviewNudgeTxt}>How was it? Tell us and get a decision back</Text>
+            <Ionicons name="chevron-forward" size={13} color={colors.primary} />
+          </TouchableOpacity>
+        ) : null}
+
         <View style={[styles.thumbsRow, { borderTopWidth: 0.5, borderTopColor: colors.border, paddingTop: 10, marginTop: 8 }]}>
           <TouchableOpacity
             style={[styles.thumbBtn, item.feedback === 'up' && styles.thumbBtnUp]}
@@ -181,6 +201,7 @@ export default function HistoryScreen() {
   const [pendingItem,     setPendingItem]     = useState(null);
   const [pendingType,     setPendingType]     = useState(null);
   const [isDemo,          setIsDemo]          = useState(false);
+  const [reviewTrip,      setReviewTrip]      = useState(null);
 
   useFocusEffect(useCallback(() => {
     (async () => {
@@ -340,6 +361,10 @@ export default function HistoryScreen() {
               onFeedbackUp={() => handleThumbsUp(item, 'itinerary')}
               onFeedbackDown={() => handleThumbsDown(item, 'itinerary')}
               onOpen={() => router.push(`/itinerary/${item.id}`)}
+              // Demo history is sample data — prompting for a review of a trip nobody took, and
+              // paying out a decision for it, would be nonsense.
+              askable={!isDemo && isTripOver(item) && !isReviewed(item)}
+              onReview={() => setReviewTrip(item)}
             />
           ))}
 
@@ -352,6 +377,22 @@ export default function HistoryScreen() {
           itemName={pendingItem?.name ?? pendingItem?.meta?.day_of_week ?? ''}
           onClose={() => { setFeedbackModal(false); setPendingItem(null); setPendingType(null); }}
           onSelect={(reason) => applyFeedback('down', reason)}
+        />
+
+        <TripReviewSheet
+          visible={!!reviewTrip}
+          trip={reviewTrip}
+          onClose={() => setReviewTrip(null)}
+          onSubmitted={async ({ verdict }) => {
+            // The day-level verdict rides on the itinerary record, which already syncs through
+            // Firestore — so a review survives a reinstall and follows the traveller across
+            // devices, and `isReviewed` stops prompting for it everywhere.
+            const trip = reviewTrip;
+            setReviewTrip(null);
+            if (!trip) return;
+            await updateFeedback('itineraries', trip.id, verdict, null).catch(() => {});
+            setItineraries((prev) => prev.map((e) => (e.id === trip.id ? { ...e, feedback: verdict } : e)));
+          }}
         />
       </SafeAreaView>
     </ScreenBackground>
@@ -399,6 +440,17 @@ const makeStyles = (c) => StyleSheet.create({
   feedbackTagTxt: { fontSize: 11, fontFamily: FONTS.bodySemiBold, color: c.error },
 
   // Thumbs row (shared) — right-aligned
+  // Cobalt on sky, like every other invitation in the system. Sits above the existing thumbs
+  // rather than replacing them — the thumbs stay the one-tap answer for anyone who does not
+  // want the longer form.
+  reviewNudge: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    marginTop: 10, paddingHorizontal: 10, paddingVertical: 9,
+    borderRadius: 10, backgroundColor: c.sky100,
+    borderWidth: 1, borderColor: c.borderLight,
+  },
+  reviewNudgeTxt: { flex: 1, fontFamily: FONTS.bodySemiBold, fontSize: 12, color: c.primary },
+
   thumbsRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end',
     paddingHorizontal: 14, paddingVertical: 8,
