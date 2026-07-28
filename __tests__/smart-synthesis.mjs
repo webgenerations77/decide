@@ -29,8 +29,14 @@ console.log('\nsynthesis deadline');
 const { runSynthesis } = await import('../lib/smart/synthesis.js');
 const { SYNTHESIS_BUDGET_MS, runSmartEngine } = await import('../lib/smart/index.js');
 
+// Measured, not assumed: a real deadline run reported durationMs=50722 against a 50s budget, so
+// everything after synthesis (routes, links, serialisation) costs well under a second. The upper
+// bound here is what keeps a margin against Vercel's 60s kill.
 assert('budget leaves room after synthesis inside a 60s function',
-  SYNTHESIS_BUDGET_MS > 0 && SYNTHESIS_BUDGET_MS <= 55_000, String(SYNTHESIS_BUDGET_MS));
+  SYNTHESIS_BUDGET_MS > 0 && SYNTHESIS_BUDGET_MS <= 56_000, String(SYNTHESIS_BUDGET_MS));
+const { SKIP_VERIFY_AFTER_MS } = await import('../lib/smart/index.js');
+assert('verification is abandoned well before the synthesis budget runs out',
+  SKIP_VERIFY_AFTER_MS < SYNTHESIS_BUDGET_MS / 2, `${SKIP_VERIFY_AFTER_MS} vs ${SYNTHESIS_BUDGET_MS}`);
 
 // Already out of budget: must not spend an expensive call it cannot use.
 const t0 = Date.now();

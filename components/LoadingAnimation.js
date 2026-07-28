@@ -40,7 +40,7 @@ const ROTATE_MS = 5500;
  *
  * ⚠ THIS NUMBER IS NOW COUPLED TO TWO OTHERS. Do not raise it in isolation:
  *     45s  this countdown
- *     50s  SYNTHESIS_BUDGET_MS (lib/smart/index.js) — synthesis aborts and the day falls back
+ *     54s  SYNTHESIS_BUDGET_MS (lib/smart/index.js) — synthesis aborts and the day falls back
  *     60s  Vercel maxDuration (vercel.json) — the function is killed outright
  * The ordering is the design: the clock runs out BEFORE the server gives up, so "almost there"
  * is still true when it appears — a plan really is coming, just a simpler one. Push this past
