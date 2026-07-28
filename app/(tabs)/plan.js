@@ -945,11 +945,18 @@ export default function PlanScreen() {
             </View>
 
             <View style={styles.itineraryContainer}>
+              {/* ⚠ This does NOT mean the traveller is offline, and it must not say so. A
+                  fallback fires whenever the smart engine returns nothing — most often now
+                  because synthesis hit its 50s deadline (lib/smart/index.js) on a day where the
+                  live research ran long. Their connection is usually fine. Genuine offline is
+                  already reported, correctly and separately, by components/OfflineBanner.js via
+                  NetInfo; claiming it here was both wrong and a duplicate. State what actually
+                  happened and let the cause stay unasserted. */}
               {isFallback && (
                 <View style={styles.fallbackBanner}>
-                  <Ionicons name="cloud-offline-outline" size={14} color={colors.gold} style={{ marginRight: 6 }} />
+                  <Ionicons name="flash-outline" size={14} color={colors.gold} style={{ marginRight: 6 }} />
                   <Text style={styles.fallbackBannerTxt}>
-                    Offline mode — showing top-rated nearby places.
+                    Quick plan — top-rated places nearby. Today’s live research didn’t finish in time.
                   </Text>
                 </View>
               )}

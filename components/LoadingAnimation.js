@@ -37,6 +37,14 @@ const ROTATE_MS = 5500;
  * and a clock that expires early on one run in two is worse than one that finishes early.
  *
  * It must stay an estimate in the UI's mind, not a promise. See the zero behaviour below.
+ *
+ * ⚠ THIS NUMBER IS NOW COUPLED TO TWO OTHERS. Do not raise it in isolation:
+ *     45s  this countdown
+ *     50s  SYNTHESIS_BUDGET_MS (lib/smart/index.js) — synthesis aborts and the day falls back
+ *     60s  Vercel maxDuration (vercel.json) — the function is killed outright
+ * The ordering is the design: the clock runs out BEFORE the server gives up, so "almost there"
+ * is still true when it appears — a plan really is coming, just a simpler one. Push this past
+ * the synthesis budget and the countdown starts promising time the server has already spent.
  */
 const ESTIMATED_SECONDS = 45;
 
