@@ -96,12 +96,23 @@ a generic AI chat product, or an enterprise dashboard.
   TIME-driven, not progress-driven — the client makes one POST and cannot see server phases, so
   they must never be reworded into completion claims.
 - components/HouseAd.js + constants/houseAds.js — "More from Spinach Creations". HOUSE ADS ONLY:
-  no SDK, no network, no tracking — the registry is one file plus a bundled image, which is what
-  keeps this clear of a consent surface and of the ad-supported-free-app anti-reference. ⚠ The
+  no SDK, no network, no tracking — the registry is one file plus bundled/served assets, which is
+  what keeps this clear of a consent surface and of the ad-supported-free-app anti-reference. ⚠ The
   link MUST open in a new tab (HouseAd does this explicitly, not via react-native-web's Linking):
   navigating the PWA away mid-generation kills the in-flight request and the traveller loses the
-  day they just waited for. Same honesty rule as lib/transport/ — no pricing, ratings or install
-  counts, and never the word "AI" even when the advertised product's own marketing uses it.
+  day they just waited for. Two renderings: on web an `embed` PLAYS in an iframe; native (and any
+  embed failure) falls back to a still card — never a blank frame.
+- scripts/build-house-ad.js → public/ads/certotable-embed.html — regenerate with
+  `node scripts/build-house-ad.js`. Derives a PLAYABLE cut from the published Cert to Table
+  trailer: strips the voiceover, never calls Music.init() (every method guards on `ac`, so the
+  synth score stays inert), trims 11 scenes to 6 so the closing CTA lands inside a ~45s wait
+  instead of never playing, auto-starts without the tap gate, and loops. 3.11MB → 0.79MB.
+  ⚠ TRIMMING THE TIMELINE ALONE IS A BUG: the player indexes `querySelectorAll('.scene')` with
+  the TL index, so the DOM sections must be pruned to match or the ad plays one scene's visuals
+  under another's caption. The script does both, and EVERY edit is asserted — if the upstream
+  trailer is republished with different markup the build FAILS rather than shipping a broken ad.
+  Never hand-edit the generated file. ⚠ `vercel.json` needs its `/ads/(.*)` rewrite ahead of the
+  SPA catch-all, or the ad slot can render the Decide app recursively inside itself.
 - hooks/useViewportOverlay.js  — pins RN Modal overlays to the VISUAL viewport on web (fixes mobile-web sheet drift); exports useViewportOverlay(visible) + WEB_OVERLAY_FIX style. ALWAYS pair with Modal animationType="fade" (never "slide" — its transform traps position:fixed)
 - constants/theme.js           — COLORS + FONTS + RADII + SHADOWS + PRICE_LEGEND + CATEGORY_COLORS/EMOJIS
 - constants/localKnowledge.js  — Cheddar local tips (Delmarva/DE/MD beach region)
@@ -563,3 +574,19 @@ A planning response is complete only when it:
 *Personal preferences belong in `.claude/user-preferences.md`.
 Session history belongs in `.claude/sessions/`.
 Keep this file universally applicable across all users.*
+
+<!-- trellis-dev:begin (managed by Trellis installer — do not edit inside) -->
+## Trellis session reporting
+This project reports dev activity to Trellis. Maintain `.trellis/report.json`
+(schema + examples: `.trellis/README.md`):
+- CREATE/OVERWRITE it near the end of any session that changed files — fresh
+  each session, never append to the previous session's report.
+- Record every bug you FIND or FIX as a bug event with a stable kebab-case
+  `key` (reuse the same key when fixing a bug found earlier), a severity
+  (critical/high/medium/low), plus test results, version/deploy changes, and
+  notable review/security findings or TODOs.
+- Keep `summary` plain-language — the reader is a non-developer.
+- A Stop hook sends the file automatically; if asked to write the report
+  before stopping, do so immediately, then stop. `/trellis-report` sends on
+  demand. Never edit `.trellis/report.mjs`, `config.json`, or this block.
+<!-- trellis-dev:end -->
