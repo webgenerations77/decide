@@ -1013,7 +1013,7 @@ export default function PlanScreen() {
             />
           </Animated.View>
           {!loading && remainingDecisions != null && remainingDecisions !== Infinity && (
-            <Text style={styles.remainingText}>{remainingDecisions}/{LIMITS.FREE_DECISIONS_PER_DAY} decisions left today</Text>
+            <Text style={styles.remainingText}>{remainingDecisions}/{LIMITS.FREE_DECISIONS_PER_MONTH} decisions left this month</Text>
           )}
         </View>
       )}

@@ -7,7 +7,7 @@
 
 import {
   isTripOver, isReviewed, reviewableTrips, rewardForReview, googleReviewUrl,
-  tripsToPrompt, REVIEW_REWARD, MAX_DAILY_REVIEW_BONUS, MAX_TRIP_PROMPTS, REVIEW_MAX_AGE_DAYS,
+  tripsToPrompt, REVIEW_REWARD, MAX_REVIEW_BONUS_PER_PERIOD, MAX_TRIP_PROMPTS, REVIEW_MAX_AGE_DAYS,
 } from '../lib/tripReview.js';
 
 let passed = 0, failed = 0;
@@ -81,12 +81,12 @@ assert('an entry with no id is never prompted',
 
 console.log('\nthe reward is a nudge, not a currency');
 assert('a first review pays', rewardForReview(0) === REVIEW_REWARD);
-assert('it stops at the daily cap', rewardForReview(MAX_DAILY_REVIEW_BONUS) === 0);
+assert('it stops at the daily cap', rewardForReview(MAX_REVIEW_BONUS_PER_PERIOD) === 0);
 // Someone sitting on a month of history should not be able to mint a pile of decisions.
 assert('a backlog of old trips cannot be farmed',
-  rewardForReview(MAX_DAILY_REVIEW_BONUS - 1) + rewardForReview(MAX_DAILY_REVIEW_BONUS) <= REVIEW_REWARD);
+  rewardForReview(MAX_REVIEW_BONUS_PER_PERIOD - 1) + rewardForReview(MAX_REVIEW_BONUS_PER_PERIOD) <= REVIEW_REWARD);
 assert('the cap is never exceeded by a partial grant',
-  rewardForReview(MAX_DAILY_REVIEW_BONUS - 1) <= REVIEW_REWARD);
+  rewardForReview(MAX_REVIEW_BONUS_PER_PERIOD - 1) <= REVIEW_REWARD);
 assert('a nonsense balance does not pay out extra', rewardForReview(-99) <= REVIEW_REWARD);
 assert('a nonsense balance does not go negative', rewardForReview('lots') >= 0);
 

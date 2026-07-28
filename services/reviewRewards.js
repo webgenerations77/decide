@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { rewardForReview, MAX_DAILY_REVIEW_BONUS } from '../lib/tripReview';
+import { rewardForReview, MAX_REVIEW_BONUS_PER_PERIOD } from '../lib/tripReview';
 
 // Bonus decisions earned by reviewing a finished trip.
 //
@@ -9,15 +9,18 @@ import { rewardForReview, MAX_DAILY_REVIEW_BONUS } from '../lib/tripReview';
 // that. This adds headroom instead, and stays legible: usage counts what happened, bonus counts
 // what was earned.
 //
-// Same per-day key shape as the usage counters, so it expires with them.
+// ⚠ Bucketed PER MONTH, matching the decision allowance it tops up. These must share a period or
+// the reward silently misbehaves: with a monthly allowance and a daily bonus, a traveller who
+// earned two extra plans on Tuesday would find them gone on Wednesday — mid-trip, with no
+// explanation. Whatever the allowance period is, this has to be the same one.
 
 const BONUS_PREFIX = '@decide/review_bonus_';
 
-const todayKey = () => new Date().toISOString().split('T')[0];
+const monthKey = () => new Date().toISOString().slice(0, 7); // YYYY-MM
 
-export async function getReviewBonusToday() {
+export async function getReviewBonus() {
   try {
-    const raw = await AsyncStorage.getItem(`${BONUS_PREFIX}${todayKey()}`);
+    const raw = await AsyncStorage.getItem(`${BONUS_PREFIX}${monthKey()}`);
     const n = parseInt(raw ?? '0', 10);
     return Number.isFinite(n) && n > 0 ? n : 0;
   } catch { return 0; }
@@ -28,7 +31,7 @@ export async function getReviewBonusToday() {
  * something the cap will refuse.
  */
 export async function pendingReviewReward() {
-  return rewardForReview(await getReviewBonusToday());
+  return rewardForReview(await getReviewBonus());
 }
 
 /**
@@ -37,12 +40,12 @@ export async function pendingReviewReward() {
  */
 export async function grantReviewReward() {
   try {
-    const already = await getReviewBonusToday();
+    const already = await getReviewBonus();
     const amount = rewardForReview(already);
     if (amount <= 0) return 0;
-    await AsyncStorage.setItem(`${BONUS_PREFIX}${todayKey()}`, String(already + amount));
+    await AsyncStorage.setItem(`${BONUS_PREFIX}${monthKey()}`, String(already + amount));
     return amount;
   } catch { return 0; }
 }
 
-export { MAX_DAILY_REVIEW_BONUS };
+export { MAX_REVIEW_BONUS_PER_PERIOD };

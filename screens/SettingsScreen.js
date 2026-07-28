@@ -902,8 +902,10 @@ export default function SettingsScreen() {
             {!proStatus && (
               <>
                 <View style={[styles.appRow, styles.appRowBorder]}>
-                  <Text style={styles.appRowLabel}>Decisions today</Text>
-                  <Text style={styles.appRowValue}>{usageDecisions}/{LIMITS.FREE_DECISIONS_PER_DAY}</Text>
+                  {/* Decisions are capped per MONTH (a plan costs ~$0.22); spins per day
+                      (~$0.017). The labels have to match or the counter reads as broken. */}
+                  <Text style={styles.appRowLabel}>Decisions this month</Text>
+                  <Text style={styles.appRowValue}>{usageDecisions}/{LIMITS.FREE_DECISIONS_PER_MONTH}</Text>
                 </View>
                 <View style={[styles.appRow, styles.appRowBorder]}>
                   <Text style={styles.appRowLabel}>Spins today</Text>

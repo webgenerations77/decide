@@ -10,8 +10,10 @@ import ScreenBackground from '../components/brand/ScreenBackground';
 import CTAButton from '../components/brand/CTAButton';
 import Card from '../components/brand/Card';
 
+// Must match services/subscriptionService.js. A paywall that advertises the wrong allowance is
+// the worst place in the app to be out of date — it is the screen people read before paying.
 const FREE_FEATURES = [
-  { text: '5 decisions per day' },
+  { text: '3 full day plans per month' },
   { text: '3 quick spins per day' },
   { text: 'Basic history' },
 ];
