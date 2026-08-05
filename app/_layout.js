@@ -6,6 +6,7 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { useFonts } from 'expo-font';
+import { initTrellis } from '../lib/trellis-beacon';
 import {
   BricolageGrotesque_400Regular,
   BricolageGrotesque_600SemiBold,
@@ -198,6 +199,11 @@ function RootLayoutBody() {
 }
 
 export default function RootLayout() {
+  useEffect(() => {
+    // Report app load to Trellis (fire and forget, never blocks)
+    initTrellis();
+  }, []);
+
   return (
     <SafeAreaProvider>
       <ThemeProvider>
