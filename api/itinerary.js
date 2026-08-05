@@ -413,7 +413,7 @@ export default async function handler(req, res) {
       // reasons that have nothing to do with waiting. `model: 'generation'` carries no PRICING
       // entry, so computeCost returns 0 and this row never pollutes spend.
       logUsage({ route: 'itinerary', model: 'generation', durationMs: Date.now() - startedAt });
-      return res.json({itinerary:priced,weather,transport,meta:{date:formattedDate,day_of_week:dayOfWeek,time_window:`${startTime} – ${endTime}`,preferences:{pace,budget,group_type},city:cityStr,cost_summary:costSummary?.label??null},discovery:{hadLiveData:smart.hadLiveData,findCount:smart.finds.length,anchorCount:smart.anchors.length,anchors:smart.anchors.map((a)=>({title:a.find?.title,interest:a.find?.interest,why:a.rationale,url:a.find?.url||null})),localHappenings:smart.localHappenings??null},generated_at:new Date().toISOString(),isFallback});
+      return res.json({itinerary:priced,weather,transport,meta:{date:formattedDate,day_of_week:dayOfWeek,time_window:`${startTime} – ${endTime}`,preferences:{pace,budget,group_type},city:cityStr,cost_summary:costSummary?.label??null},discovery:{hadLiveData:smart.hadLiveData,liveDataDegraded:smart.liveDataDegraded??null,findCount:smart.finds.length,anchorCount:smart.anchors.length,anchors:smart.anchors.map((a)=>({title:a.find?.title,interest:a.find?.interest,why:a.rationale,url:a.find?.url||null})),localHappenings:smart.localHappenings??null},generated_at:new Date().toISOString(),isFallback});
     } catch(err) {
       console.error('[itinerary] error:',err);
       return res.status(500).json({error:err.message});

@@ -121,7 +121,11 @@ unavailable, so an exhausted quota looks exactly like a quiet news day. Live res
 headline differentiator — switches itself off and nothing says so.
 
 **Done:** quota/rate failures now log `firecrawl-out-of-credits` / `firecrawl-rate-limited`, and
-the admin dashboard shows credits remaining and approximate plans left.
+the admin dashboard shows credits remaining and approximate plans left. That covered the monthly
+aggregate but not the individual plan it happened to — `runSmartEngine`'s result (and both
+itinerary API twins' `discovery` payload) now also carries a per-request `liveDataDegraded` flag,
+so a single generation that ran during an outage is distinguishable from one that genuinely found
+nothing (`lib/usageContext.js` `markFirecrawlDegraded`/`currentFirecrawlDegraded`).
 
 **Options, cheapest first:**
 1. **Price the next tier.** Likely trivial next to the engineering time of avoiding it. Do this
