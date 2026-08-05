@@ -510,6 +510,9 @@ export async function POST(request) {
         },
         discovery: {
           hadLiveData: smart.hadLiveData,
+          // 'firecrawl-out-of-credits' | 'firecrawl-rate-limited' | null. Set when THIS request's
+          // live research was cut off, not merely empty — see lib/usageContext.js.
+          liveDataDegraded: smart.liveDataDegraded ?? null,
           findCount: smart.finds.length,
           anchorCount: smart.anchors.length,
           anchors: smart.anchors.map((a) => ({ title: a.find?.title, interest: a.find?.interest, why: a.rationale, url: a.find?.url || null })),

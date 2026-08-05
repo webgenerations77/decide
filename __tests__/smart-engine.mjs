@@ -1,5 +1,6 @@
 // __tests__/smart-engine.mjs — run: node __tests__/smart-engine.mjs
 import { runSmartEngine } from '../lib/smart/index.js';
+import { runWithUser, markFirecrawlDegraded } from '../lib/usageContext.js';
 let passed = 0, failed = 0;
 const assert = (l, c, d = '') => c ? (console.log(`  ✓ ${l}`), passed++) : (console.error(`  ✗ ${l}${d ? ` — ${d}` : ''}`), failed++);
 
@@ -17,6 +18,19 @@ const assert = (l, c, d = '') => c ? (console.log(`  ✓ ${l}`), passed++) : (co
   });
   assert('returns itinerary on success', Array.isArray(ok.itinerary) && ok.itinerary.length === 1);
   assert('hadLiveData true when finds present', ok.hadLiveData === true);
+  assert('liveDataDegraded is null when nothing failed', ok.liveDataDegraded === null);
+
+  // A Firecrawl quota outage mid-request must surface on THIS response, distinct from a
+  // genuinely quiet news day (zero finds, liveDataDegraded null) — the bug this test guards.
+  const degraded = await runWithUser('user-degraded', () => runSmartEngine({ ctx, places }, {
+    runScout: async () => [],
+    runDiscovery: async () => [],
+    pickAnchors: async () => [],
+    runSynthesis: async () => [],
+    runEvents: async () => { markFirecrawlDegraded('firecrawl-out-of-credits'); return []; },
+  }));
+  assert('a quiet-looking result still reports zero finds', degraded.finds.length === 0);
+  assert('but liveDataDegraded distinguishes it from a genuinely quiet day', degraded.liveDataDegraded === 'firecrawl-out-of-credits');
 
   // Synthesis failure → itinerary null (caller falls back)
   const bad = await runSmartEngine({ ctx, places }, {
