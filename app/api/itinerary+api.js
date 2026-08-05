@@ -2,16 +2,20 @@ import { logUsage } from '../../lib/usageLog.js';
 import { runSmartEngine } from '../../lib/smart/index.js';
 import { computeCostSummary, pickForecastFromOpenMeteo, attachPriceLevels, fillFoodPriceLevels, shouldResolveContact, withHours, parseLocationLabel } from '../../lib/itineraryHelpers.js';
 import { getUSHoliday } from '../../lib/smart/holidays.js';
-import { getUidFromAuth } from '../../lib/admin/auth.js';
+import { getAuthIdentity } from '../../lib/admin/auth.js';
 import { runWithUser } from '../../lib/usageContext.js';
+import { checkAndConsumeQuota } from '../../lib/apiQuota.js';
 import { getClarifyingQuestion } from '../../lib/clarify.js';
 import { annotateRoute } from '../../lib/smart/routing.js';
 import { buildTransport, legAlternatives } from '../../lib/transport/index.js';
 import { clampSearchMiles } from '../../lib/transport/gettingAround.js';
 
+// ⚠ Migration shim — see the twin in api/itinerary.js for the full reasoning. These keys are
+// server-side only; the EXPO_PUBLIC_ prefix would inline them into the client bundle if anything
+// under app/ or components/ ever imported them. Prefer the unprefixed name.
 const GOOGLE_KEY    = process.env.GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
-const NPS_KEY       = process.env.EXPO_PUBLIC_NPS_API_KEY;
-const RIDB_KEY      = process.env.EXPO_PUBLIC_RIDB_API_KEY;
+const NPS_KEY       = process.env.NPS_API_KEY  || process.env.EXPO_PUBLIC_NPS_API_KEY;
+const RIDB_KEY      = process.env.RIDB_API_KEY || process.env.EXPO_PUBLIC_RIDB_API_KEY;
 const NEARBY_URL    = 'https://places.googleapis.com/v1/places:searchNearby';
 
 const PLACE_TYPES = {
@@ -325,12 +329,22 @@ export async function GET() {
 }
 
 export async function POST(request) {
-  const uid = await getUidFromAuth(request.headers.get('authorization'));
+  const identity = await getAuthIdentity(request.headers.get('authorization'));
+  const uid = identity?.uid ?? null;
   return runWithUser(uid, async () => {
+    // ⚠ THIS ENDPOINT IS NO LONGER PUBLIC. See the twin in api/itinerary.js for the full reasoning:
+    // it used to read the uid for attribution only and never reject, so anyone on the internet
+    // could POST here and spend ~$0.22 a call. Keep both twins in sync.
+    if (!identity) return Response.json({ error: 'Sign in to generate a plan.' }, { status: 401 });
+
     // Cheddar's single follow-up clarifying question (folded in from /api/clarify to stay under
     // Vercel's 12-function cap). Fails open to { skip: true }; never blocks generation.
+    // Weight 0: a follow-up question must not eat a monthly plan allowance, but it still counts
+    // against the hourly burst window.
     const mode = new URL(request.url).searchParams.get('mode');
     if (mode === 'clarify') {
+      const gate = await checkAndConsumeQuota({ uid, email: identity.email, weight: 0 });
+      if (!gate.allowed) return Response.json({ error: 'Too many requests. Try again shortly.', retryAfter: gate.retryAfter }, { status: 429 });
       const { tripNote = '' } = await request.json().catch(() => ({}));
       return Response.json(await getClarifyingQuestion(tripNote));
     }
@@ -340,6 +354,8 @@ export async function POST(request) {
     // Deliberately not part of generation: 3 elements per leg is exactly the spend the
     // ambiguous-band design exists to avoid paying on every itinerary.
     if (mode === 'transport-leg') {
+      const gate = await checkAndConsumeQuota({ uid, email: identity.email, weight: 0 });
+      if (!gate.allowed) return Response.json({ error: 'Too many requests. Try again shortly.', retryAfter: gate.retryAfter }, { status: 429 });
       const { from, to } = await request.json().catch(() => ({}));
       const alts = await legAlternatives(from, to);
       return Response.json(alts ?? { options: [] });
@@ -362,6 +378,19 @@ export async function POST(request) {
 
       if (!latitude || !longitude) {
         return Response.json({ error: 'latitude and longitude are required' }, { status: 400 });
+      }
+
+      // Charged AFTER validation so a malformed request never burns a traveller's allowance, and
+      // BEFORE any paid call so a refused request costs nothing. Weight 1 — this is the $0.22 one.
+      const gate = await checkAndConsumeQuota({ uid, email: identity.email, weight: 1 });
+      if (!gate.allowed) {
+        return Response.json({
+          error: gate.reason === 'burst'
+            ? 'Too many plans at once. Give it a few minutes.'
+            : 'You have hit this month\'s plan limit.',
+          reason: gate.reason,
+          ...(gate.retryAfter ? { retryAfter: gate.retryAfter } : {}),
+        }, { status: 429 });
       }
 
       // A request that dies leaves NO trace, because every other row is written on the way to a

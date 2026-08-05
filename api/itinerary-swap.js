@@ -1,6 +1,7 @@
 import { logUsage } from '../lib/usageLog.js';
-import { getUidFromAuth } from '../lib/admin/auth.js';
+import { getAuthIdentity } from '../lib/admin/auth.js';
 import { runWithUser } from '../lib/usageContext.js';
+import { checkAndConsumeQuota } from '../lib/apiQuota.js';
 
 const GOOGLE_KEY = process.env.GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 const NEARBY_URL = 'https://places.googleapis.com/v1/places:searchNearby';
@@ -29,15 +30,24 @@ async function fetchPlaces(lat, lng, types, radius = 30000) {
 }
 
 export default async function handler(req, res) {
-  const uid = await getUidFromAuth(req.headers.authorization);
+  const identity = await getAuthIdentity(req.headers.authorization);
+  const uid = identity?.uid ?? null;
   return runWithUser(uid, async () => {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+    // Same reasoning as api/itinerary.js: a swap is a Places search plus a haiku call, and this
+    // endpoint was open to the internet. Weight 0 — a swap is a fraction of a plan and must not
+    // spend a monthly allowance the traveller already paid for, but it pays the hourly burst cost.
+    if (!identity) return res.status(401).json({ error: 'Sign in to swap a stop.' });
 
     try {
       const { itinerary, stopIndex, latitude, longitude } = req.body;
       if (!itinerary || stopIndex == null || !latitude || !longitude) {
         return res.status(400).json({ error: 'itinerary, stopIndex, latitude, and longitude are required' });
       }
+
+      const gate = await checkAndConsumeQuota({ uid, email: identity.email, weight: 0 });
+      if (!gate.allowed) return res.status(429).json({ error: 'Too many requests. Try again shortly.', retryAfter: gate.retryAfter });
 
       const stop = itinerary[stopIndex];
       const types = PLACE_TYPES[stop.category] ?? PLACE_TYPES.activity;

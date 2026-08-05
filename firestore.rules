@@ -1,0 +1,68 @@
+rules_version = '2';
+
+// Decide — Firestore security rules
+//
+// ⚠ NOT YET DEPLOYED. This file was written to put the project's ACTUAL, INTENDED policy under
+// version control, where it can be reviewed and diffed. The live rules currently exist only in the
+// Firebase console and were never checked in. DIFF THIS AGAINST THE CONSOLE BEFORE DEPLOYING —
+// if the console is more permissive in a way something quietly depends on, deploying this will
+// break that thing, and the symptom (a silent fallback, not an error) is hard to trace. See
+// docs/security-hardening.md for the deploy procedure and the verification steps.
+//
+// WHAT IS ALREADY TRUE (verified 2026-07-29 by unauthenticated REST probe against
+// firestore.googleapis.com): anonymous reads of /users, /betaInvites, /apiQuota and
+// /users/{uid}/itineraries all return 403 PERMISSION_DENIED. The database is NOT open to the
+// public. What remains unverified is whether one SIGNED-IN user can read another's documents;
+// that test needs two real accounts and is written up in docs/security-hardening.md.
+//
+// THE MODEL: almost nothing is client-writable. History (itineraries/decisions) and quota are
+// written exclusively by the Firebase Admin SDK in lib/history/store.js and lib/apiQuota.js, and
+// the Admin SDK BYPASSES these rules entirely — so denying the client here costs the server
+// nothing. The client's only legitimate direct reads are its own role and its own invite
+// (services/rolesService.js). Everything else goes through the authenticated /api/* endpoints.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isSelf(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    // A user's own profile/role document. Read-only from the client: role is assigned server-side
+    // (api/admin/users.js) and a client that could write here could promote itself to admin.
+    match /users/{uid} {
+      allow get: if isSelf(uid);
+      allow list, write: if false;
+
+      // History. Written and read server-side only, via /api/history with a verified ID token.
+      // The client's copy lives in AsyncStorage and syncs through that endpoint, never directly.
+      match /{sub=**} {
+        allow read, write: if false;
+      }
+    }
+
+    // A pending invite an admin created before this person ever signed in, keyed by lowercased
+    // email. The exact rule services/rolesService.js:11-14 documents as its requirement.
+    // `get` only — `list` would let any signed-in user enumerate every invited email address.
+    match /betaInvites/{inviteEmail} {
+      allow get: if signedIn() && request.auth.token.email == inviteEmail;
+      allow list, write: if false;
+    }
+
+    // Server-side abuse ceiling (lib/apiQuota.js). Deliberately opaque to the client: a user who
+    // could read this learns exactly how much room is left, and one who could write it has no
+    // quota at all.
+    match /apiQuota/{uid} {
+      allow read, write: if false;
+    }
+
+    // Default deny. Anything not named above is unreachable from a client SDK.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

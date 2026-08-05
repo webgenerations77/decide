@@ -1,7 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { logUsage } from '../../lib/usageLog.js';
-import { getUidFromAuth } from '../../lib/admin/auth.js';
+import { getAuthIdentity } from '../../lib/admin/auth.js';
 import { runWithUser } from '../../lib/usageContext.js';
+import { checkAndConsumeQuota } from '../../lib/apiQuota.js';
 
 const GOOGLE_KEY = process.env.GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 const NEARBY_URL = 'https://places.googleapis.com/v1/places:searchNearby';
@@ -76,14 +77,22 @@ function extractJSON(text) {
 }
 
 export async function POST(request) {
-  const uid = await getUidFromAuth(request.headers.get('authorization'));
+  const identity = await getAuthIdentity(request.headers.get('authorization'));
+  const uid = identity?.uid ?? null;
   return runWithUser(uid, async () => {
+    // Keep in sync with the prod twin api/itinerary-swap.js. Weight 0: burst-limited, not charged
+    // against the monthly plan allowance.
+    if (!identity) return Response.json({ error: 'Sign in to swap a stop.' }, { status: 401 });
+
     try {
       const { itinerary, stopIndex, latitude, longitude } = await request.json();
 
       if (!itinerary || stopIndex == null || !latitude || !longitude) {
         return Response.json({ error: 'itinerary, stopIndex, latitude, and longitude are required' }, { status: 400 });
       }
+
+      const gate = await checkAndConsumeQuota({ uid, email: identity.email, weight: 0 });
+      if (!gate.allowed) return Response.json({ error: 'Too many requests. Try again shortly.', retryAfter: gate.retryAfter }, { status: 429 });
 
       const stop  = itinerary[stopIndex];
       const types = PLACE_TYPES[stop.category] ?? PLACE_TYPES.activity;

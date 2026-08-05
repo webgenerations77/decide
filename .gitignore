@@ -54,3 +54,8 @@ yarn-error.*
 
 # impeccable — local live-mode session state (config.json and design.json ARE tracked)
 .impeccable/live/sessions/
+# Trellis (transient)
+.trellis/config.json
+.trellis/report.json
+.trellis/.last-sent.json
+.trellis/.state.json

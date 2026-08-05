@@ -241,8 +241,25 @@ a generic AI chat product, or an enterprise dashboard.
 - Stop `category` values are FREE-FORM strings from the AI (no fixed enum) — always resolve icon/color via
   constants/categoryVisuals.js; never assume the 4 legacy CATEGORY_EMOJIS/CATEGORY_COLORS keys.
 - Auth for server data: client sends `Authorization: Bearer <idToken>` (`auth.currentUser.getIdToken()`);
-  server verifies via `getUidFromAuth` (lib/admin/auth.js). Itinerary endpoints stay public (log-only
-  attribution); `/api/history` and `/api/admin/*` require a valid uid (401 otherwise).
+  server verifies via `getUidFromAuth` (log-only attribution, never rejects) or `getAuthIdentity`
+  (returns `{uid,email}` or null, for endpoints that must REJECT). `/api/history` and `/api/admin/*`
+  require a valid uid (401 otherwise).
+- ⚠ THE ITINERARY ENDPOINTS ARE NO LONGER PUBLIC (changed 2026-07-29). `/api/itinerary` (all modes)
+  and `/api/itinerary-swap` return 401 without a verified token. They were open to the internet with
+  attribution-only auth, which meant anyone with curl could spend ~$0.22 a call indefinitely — the
+  3-plans-a-month cap lives in the CLIENT's AsyncStorage and never applied to anything that skipped
+  the app. `lib/apiQuota.js` adds a per-account ceiling behind the 401.
+  ⚠ THE SERVER CEILING IS NOT THE PRODUCT CAP and must never be "corrected" to match it: a free user
+  can legitimately reach 6 plans a month (3 free + up to 3 earned via review bonus, banked in
+  AsyncStorage where the server cannot see them), so a server stopping at 3 would 403 someone who
+  earned a 4th. It sits at 25/month + 8/hour — far above honest use, there only to bound worst-case
+  spend. It FAILS OPEN on a Firestore error (an outage must not become a product outage; the 401 in
+  front is the real defence). Generation weighs 1; swap/clarify/transport-leg weigh 0 but still pay
+  the hourly burst cost. Covered by `__tests__/api-quota.mjs`.
+- ⚠ `services/itineraryService.js` `authHeader()` must NEVER fall back to sending no header. It used
+  to `catch { return {} }`, which was harmless only while the endpoints ignored the header — with the
+  401 in place that turns a transient token-refresh failure into "sign in" for someone already signed
+  in. It now retries once with a forced refresh, then throws.
 - Module singletons shared across the import graph MUST be anchored on `globalThis` (`globalThis.__x ??= ...`).
   This project bundles the same module twice across the ESM/CJS boundary — it forced firebaseAdmin to `.cjs`
   and made usageContext's AsyncLocalStorage log everything as anonymous until moved to globalThis.
@@ -336,16 +353,31 @@ Client never calls Anthropic directly.
 ## Environment Variables
 GOOGLE_PLACES_API_KEY=             (server-only; Places Nearby, Autocomplete, Details, Geocoding — proxied via /api/places/* and /api/geocode)
 ANTHROPIC_API_KEY=                 (server-side only)
-EXPO_PUBLIC_NPS_API_KEY=           (National Park Service)
-EXPO_PUBLIC_RIDB_API_KEY=          (Recreation.gov)
+NPS_API_KEY=                       (National Park Service; server-only)
+RIDB_API_KEY=                      (Recreation.gov; server-only)
+                                   ⚠ Both were EXPO_PUBLIC_* until 2026-07-29. That prefix makes Metro
+                                   inline the value into the PUBLIC client bundle wherever it is
+                                   referenced — these escaped only because nothing under app/ or
+                                   components/ imports them, which is luck, not design. Code reads the
+                                   unprefixed name and falls back to the old one so Vercel can migrate
+                                   without downtime; delete the fallback once it has. Same applies to
+                                   GOOGLE_PLACES_API_KEY, which production STILL serves from
+                                   EXPO_PUBLIC_GOOGLE_PLACES_API_KEY via that fallback — removing it
+                                   before renaming the Vercel var takes prod down. See
+                                   docs/security-hardening.md.
 GOOGLE_ROUTES_API_KEY=             (server-only; Google Routes API for walk/bike/drive/transit legs.
                                     Falls back to GOOGLE_PLACES_API_KEY if unset — but Routes is a
                                     SEPARATE API that must be enabled on the GCP project, and it has
                                     its own billing SKU. Transport degrades to distance-only
                                     estimates when absent; nothing breaks.)
-EXPO_PUBLIC_OPENROUTE_API_KEY=     (UNUSED as of the transport feature — enrichWithDrivingTimes was
-                                    deleted from both twins. It cost one ORS call per leg per
-                                    generate and wrote drive_to_next_mins, which nothing rendered.)
+⚠ DEAD KEYS — read by NO code in the repo (verified 2026-07-29), but still live credentials in the
+Vercel project. REVOKE at the issuer rather than just deleting the variable; a key nothing uses is
+pure liability. Do not re-add any of them without a call site.
+  EXPO_PUBLIC_OPENROUTE_API_KEY    (enrichWithDrivingTimes was deleted with the transport work)
+  EXPO_PUBLIC_OPENWEATHER_API_KEY  (weather comes from Open-Meteo, which needs no key)
+  EXPO_PUBLIC_TICKETMASTER_API_KEY (never wired up)
+  EXPO_PUBLIC_EVENTBRITE_API_KEY   (never wired up)
+  GEMINI_API_KEY                   (never wired up)
 EXPO_PUBLIC_BETA_TESTER_EMAILS=    (optional, comma-separated emails granted beta_tester role — see constants/betaTesters.js; use this instead of editing that file when you don't want a tester's address committed to source)
 
 ## Cost Management

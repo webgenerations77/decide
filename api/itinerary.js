@@ -2,16 +2,23 @@ import { logUsage } from '../lib/usageLog.js';
 import { runSmartEngine } from '../lib/smart/index.js';
 import { computeCostSummary, pickForecastFromOpenMeteo, attachPriceLevels, fillFoodPriceLevels, shouldResolveContact, withHours, parseLocationLabel } from '../lib/itineraryHelpers.js';
 import { getUSHoliday } from '../lib/smart/holidays.js';
-import { getUidFromAuth } from '../lib/admin/auth.js';
+import { getAuthIdentity } from '../lib/admin/auth.js';
 import { runWithUser } from '../lib/usageContext.js';
+import { checkAndConsumeQuota } from '../lib/apiQuota.js';
 import { getClarifyingQuestion } from '../lib/clarify.js';
 import { annotateRoute } from '../lib/smart/routing.js';
 import { buildTransport, legAlternatives } from '../lib/transport/index.js';
 import { clampSearchMiles } from '../lib/transport/gettingAround.js';
 
+// ⚠ THE `EXPO_PUBLIC_` FALLBACKS ARE A MIGRATION SHIM, NOT A DESIGN. Every one of these keys is
+// server-side only, but the EXPO_PUBLIC_ prefix tells Metro to inline the value into the CLIENT
+// bundle wherever it is referenced. They escape today only because nothing under app/ or
+// components/ imports them — one stray import and the key ships to every browser, permanently and
+// silently. Prefer the unprefixed name; the fallback exists so prod keeps working until the Vercel
+// variables are renamed (see docs/security-hardening.md). Delete the fallbacks once that is done.
 const GOOGLE_KEY    = process.env.GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
-const NPS_KEY       = process.env.EXPO_PUBLIC_NPS_API_KEY;
-const RIDB_KEY      = process.env.EXPO_PUBLIC_RIDB_API_KEY;
+const NPS_KEY       = process.env.NPS_API_KEY  || process.env.EXPO_PUBLIC_NPS_API_KEY;
+const RIDB_KEY      = process.env.RIDB_API_KEY || process.env.EXPO_PUBLIC_RIDB_API_KEY;
 const NEARBY_URL    = 'https://places.googleapis.com/v1/places:searchNearby';
 const CACHE_TTL     = 3600000;
 
@@ -254,14 +261,30 @@ function buildFallbackItinerary({food,activity,shopping,outdoor,startTime,endTim
 }
 
 export default async function handler(req, res) {
-  const uid = await getUidFromAuth(req.headers.authorization);
+  const identity = await getAuthIdentity(req.headers.authorization);
+  const uid = identity?.uid ?? null;
   return runWithUser(uid, async () => {
     if (req.method === 'GET') return res.json({ status: 'ok', message: 'Itinerary API is running' });
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+    // ⚠ THIS ENDPOINT IS NO LONGER PUBLIC. It used to read the uid for usage attribution only and
+    // never reject, which meant anyone on the internet could POST here and spend ~$0.22 of
+    // Anthropic + Places + Routes + Firecrawl per call, forever. The client-side cap in
+    // services/subscriptionService.js was the ONLY limit and it lives in AsyncStorage, so it
+    // never applied to anything that skipped the app.
+    //
+    // Requiring a verified Firebase token makes a real account the price of entry; the quota
+    // below bounds what one account can then spend. The GET health check above stays open on
+    // purpose — it costs nothing and returns nothing.
+    if (!identity) return res.status(401).json({ error: 'Sign in to generate a plan.' });
+
     // Cheddar's single follow-up clarifying question (folded in from /api/clarify to stay under
     // Vercel's 12-function cap). Fails open to { skip: true }; never blocks generation.
+    // Weight 0: a follow-up question is a fraction of a plan's cost and must not eat a
+    // traveller's monthly allowance — but it still counts against the hourly burst window.
     if (req.query.mode === 'clarify') {
+      const gate = await checkAndConsumeQuota({ uid, email: identity.email, weight: 0 });
+      if (!gate.allowed) return res.status(429).json({ error: 'Too many requests. Try again shortly.', retryAfter: gate.retryAfter });
       const { tripNote = '' } = req.body || {};
       return res.json(await getClarifyingQuestion(tripNote));
     }
@@ -271,6 +294,8 @@ export default async function handler(req, res) {
     // Deliberately not part of generation: 3 elements per leg is exactly the spend the
     // ambiguous-band design exists to avoid paying on every itinerary.
     if (req.query.mode === 'transport-leg') {
+      const gate = await checkAndConsumeQuota({ uid, email: identity.email, weight: 0 });
+      if (!gate.allowed) return res.status(429).json({ error: 'Too many requests. Try again shortly.', retryAfter: gate.retryAfter });
       const { from, to } = req.body || {};
       const alts = await legAlternatives(from, to);
       return res.json(alts ?? { options: [] });
@@ -284,6 +309,19 @@ export default async function handler(req, res) {
     try {
       const { latitude, longitude, date, preferences = {}, startTime = '11:00 AM', endTime = '8:00 PM', feedback = {}, tripNote = '', locationLabel = '', locationShort = '' } = req.body;
       if (!latitude || !longitude) return res.status(400).json({ error: 'latitude and longitude are required' });
+
+      // Charged AFTER validation so a malformed request never burns a traveller's allowance, and
+      // BEFORE any paid call so a refused request costs nothing. Weight 1 — this is the $0.22 one.
+      const gate = await checkAndConsumeQuota({ uid, email: identity.email, weight: 1 });
+      if (!gate.allowed) {
+        return res.status(429).json({
+          error: gate.reason === 'burst'
+            ? 'Too many plans at once. Give it a few minutes.'
+            : 'You have hit this month\'s plan limit.',
+          reason: gate.reason,
+          ...(gate.retryAfter ? { retryAfter: gate.retryAfter } : {}),
+        });
+      }
 
       // A request that dies leaves NO trace, because every other row is written on the way to a
       // success. That is precisely how a real outage hid for hours: generations were being killed

@@ -4,12 +4,31 @@ import Constants from 'expo-constants';
 import { getDemoItinerary } from './demoData';
 import { auth } from './firebase';
 
+/**
+ * Bearer header for the API — or a thrown error. NEVER a silent omission.
+ *
+ * ⚠ This used to `catch { return {} }`, sending the request with no Authorization header at all.
+ * That was harmless only while the endpoints treated the header as optional attribution. They now
+ * reject an unverified caller with a 401, so failing open here would turn a transient token
+ * refresh hiccup — a signed-in traveller on a flaky connection — into "sign in to generate a
+ * plan", which is both wrong and impossible to act on because they ARE signed in.
+ *
+ * The retry is the actual fix: getIdToken() only touches the network when the cached token has
+ * expired, so the common failure is a stale token plus a moment of bad signal. Forcing a refresh
+ * resolves that outright. If it still fails, say so honestly rather than firing a request that is
+ * now guaranteed to be refused.
+ */
 async function authHeader() {
+  const user = auth.currentUser;
+  if (!user) throw new Error('You need to be signed in to do that.');
   try {
-    const token = await auth.currentUser?.getIdToken();
-    return token ? { Authorization: `Bearer ${token}` } : {};
+    return { Authorization: `Bearer ${await user.getIdToken()}` };
   } catch {
-    return {};
+    try {
+      return { Authorization: `Bearer ${await user.getIdToken(true)}` };
+    } catch {
+      throw new Error('Could not verify your session. Check your connection and try again.');
+    }
   }
 }
 
